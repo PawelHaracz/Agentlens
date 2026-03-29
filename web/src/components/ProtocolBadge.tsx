@@ -1,15 +1,17 @@
 import type { Protocol } from '../types'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
-const styles: Record<Protocol, string> = {
-  a2a: 'bg-blue-100 text-blue-800',
-  mcp: 'bg-green-100 text-green-800',
-  a2ui: 'bg-purple-100 text-purple-800',
+const protocolStyles: Record<Protocol, string> = {
+  a2a: 'bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200',
+  mcp: 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200',
+  a2ui: 'bg-purple-100 text-purple-800 hover:bg-purple-100 border-purple-200',
 }
 
 export default function ProtocolBadge({ protocol }: { protocol: Protocol }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase ${styles[protocol]}`}>
+    <Badge variant="outline" className={cn('uppercase', protocolStyles[protocol])}>
       {protocol}
-    </span>
+    </Badge>
   )
 }

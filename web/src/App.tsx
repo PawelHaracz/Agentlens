@@ -1,15 +1,15 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
-import AgentList from './components/AgentList'
-import AgentDetail from './components/AgentDetail'
+import CatalogList from './components/CatalogList'
+import EntryDetail from './components/EntryDetail'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Layout>
         <Routes>
-          <Route path="/" element={<AgentList />} />
-          <Route path="/agents/:id" element={<AgentDetail />} />
+          <Route path="/" element={<CatalogList />} />
+          <Route path="/catalog/:id" element={<EntryDetail />} />
         </Routes>
       </Layout>
     </BrowserRouter>

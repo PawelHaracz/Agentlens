@@ -1,4 +1,5 @@
 import type { Stats } from '../types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function StatsBar({ stats }: { stats: Stats }) {
   const healthy = stats.by_status['healthy'] ?? 0
@@ -8,19 +9,25 @@ export default function StatsBar({ stats }: { stats: Stats }) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-      <Stat label="Total" value={stats.total} color="text-gray-900" />
-      <Stat label="Healthy" value={healthy} color="text-green-600" />
-      <Stat label="Degraded" value={degraded} color="text-yellow-600" />
-      <Stat label="Down" value={down + unknown} color="text-red-600" />
+      <StatCard label="Total" value={stats.total} className="text-foreground" />
+      <StatCard label="Healthy" value={healthy} className="text-green-600" />
+      <StatCard label="Degraded" value={degraded} className="text-yellow-600" />
+      <StatCard label="Down" value={down + unknown} className="text-destructive" />
     </div>
   )
 }
 
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
+function StatCard({ label, value, className }: { label: string; value: number; className: string }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-      <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-    </div>
+    <Card>
+      <CardHeader className="pb-2 pt-4 px-4">
+        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 pb-4 pt-0">
+        <p className={`text-2xl font-bold ${className}`}>{value}</p>
+      </CardContent>
+    </Card>
   )
 }
