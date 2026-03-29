@@ -15,6 +15,7 @@ GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
 .PHONY: all build test lint format run clean help \
         test-coverage test-race vet \
         web-install web-build web-lint \
+        helm-lint docker-build docker-scan \
         deps tools
 
 ## help: Show this help message
@@ -97,3 +98,20 @@ web-build:
 ## web-lint: Lint frontend (TypeScript check)
 web-lint:
 	cd web && npx tsc --noEmit
+
+# ---------------------------------------------------------------------------
+# Docker & Helm targets
+# ---------------------------------------------------------------------------
+
+## docker-build: Build the Docker image
+docker-build:
+	docker build -t agentlens:local .
+
+## docker-scan: Scan Docker image for vulnerabilities (requires Trivy)
+docker-scan: docker-build
+	trivy image --severity CRITICAL,HIGH agentlens:local
+
+## helm-lint: Lint the Helm chart
+helm-lint:
+	helm lint deploy/helm/agentlens
+	helm template agentlens deploy/helm/agentlens --debug > /dev/null
