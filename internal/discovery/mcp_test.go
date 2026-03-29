@@ -41,7 +41,7 @@ func TestParseMCPCard_MissingName(t *testing.T) {
 
 func TestParseMCPCard_NoRemotes(t *testing.T) {
 	raw := []byte(`{"name": "No Remotes MCP"}`)
-	entry, err := discovery.ParseMCPCard(raw, model.SourceConfig)
-	require.NoError(t, err)
-	assert.Empty(t, entry.Endpoint)
+	_, err := discovery.ParseMCPCard(raw, model.SourceConfig)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "remotes")
 }

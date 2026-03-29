@@ -72,11 +72,11 @@ func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry
 	if card.Name == "" {
 		return nil, fmt.Errorf("mcp card missing required field: name")
 	}
-
-	var endpoint string
-	if len(card.Remotes) > 0 {
-		endpoint = card.Remotes[0].URL
+	if len(card.Remotes) == 0 || card.Remotes[0].URL == "" {
+		return nil, fmt.Errorf("mcp card missing required field: remotes[0].url")
 	}
+
+	endpoint := card.Remotes[0].URL
 
 	skills := make([]model.Skill, 0, len(card.Tools))
 	for _, t := range card.Tools {

@@ -9,6 +9,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/PawelHaracz/agentlens/internal/api"
 	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
@@ -117,6 +121,18 @@ func main() {
 	if len(cfg.Sources) > 0 {
 		sources = append(sources, discovery.NewStaticSource(cfg.Sources))
 	}
+	if cfg.Kubernetes.Enabled {
+		k8sClient, err := buildK8sClient()
+		if err != nil {
+			slog.Error("failed to create kubernetes client", "err", err)
+			os.Exit(1)
+		}
+		namespaces := cfg.Kubernetes.Namespaces
+		if len(namespaces) == 0 {
+			namespaces = []string{"default"}
+		}
+		sources = append(sources, discovery.NewK8sSource(k8sClient, namespaces))
+	}
 
 	// Start discovery manager
 	if len(sources) > 0 {
@@ -136,4 +152,30 @@ func main() {
 		slog.Error("server error", "err", err)
 		os.Exit(1)
 	}
+}
+
+// buildK8sClient creates a Kubernetes client using in-cluster config first,
+// falling back to kubeconfig (KUBECONFIG env var or default location).
+func buildK8sClient() (kubernetes.Interface, error) {
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		// Fall back to kubeconfig
+		kubeconfig := os.Getenv("KUBECONFIG")
+		if kubeconfig == "" {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return nil, fmt.Errorf("unable to determine home directory for kubeconfig: %w", err)
+			}
+			kubeconfig = filepath.Join(home, ".kube", "config")
+		}
+		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			return nil, fmt.Errorf("building kubernetes config: %w", err)
+		}
+	}
+	client, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("creating kubernetes client: %w", err)
+	}
+	return client, nil
 }

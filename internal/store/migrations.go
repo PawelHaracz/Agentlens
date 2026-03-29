@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS catalog_entries (
     display_name     TEXT NOT NULL,
     description      TEXT NOT NULL DEFAULT '',
     protocol         TEXT NOT NULL,
-    endpoint         TEXT NOT NULL,
+    endpoint         TEXT NOT NULL UNIQUE,
     version          TEXT NOT NULL DEFAULT '',
     status           TEXT NOT NULL DEFAULT 'unknown',
     source           TEXT NOT NULL,
@@ -26,6 +26,5 @@ CREATE TABLE IF NOT EXISTS catalog_entries (
 CREATE INDEX IF NOT EXISTS idx_catalog_entries_protocol ON catalog_entries(protocol);
 CREATE INDEX IF NOT EXISTS idx_catalog_entries_status ON catalog_entries(status);
 CREATE INDEX IF NOT EXISTS idx_catalog_entries_source ON catalog_entries(source);
-CREATE INDEX IF NOT EXISTS idx_catalog_entries_endpoint ON catalog_entries(endpoint);
 CREATE INDEX IF NOT EXISTS idx_catalog_entries_provider ON catalog_entries(provider);
 `

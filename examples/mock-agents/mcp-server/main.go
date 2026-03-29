@@ -13,10 +13,12 @@ type MCPServerCard struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Version     string   `json:"version"`
-	Protocol    string   `json:"protocol"`
-	Endpoint    string   `json:"endpoint"`
+	Remotes     []Remote `json:"remotes"`
 	Tools       []Tool   `json:"tools"`
-	Tags        []string `json:"tags"`
+}
+
+type Remote struct {
+	URL string `json:"url"`
 }
 
 type Tool struct {
@@ -33,9 +35,7 @@ func main() {
 		Name:        name,
 		Description: "A demo MCP server for AgentLens testing",
 		Version:     "1.0.0",
-		Protocol:    "mcp",
-		Endpoint:    host,
-		Tags:        []string{"demo", "mcp"},
+		Remotes:     []Remote{{URL: host}},
 		Tools: []Tool{
 			{Name: "read_file", Description: "Read a file from the filesystem"},
 			{Name: "write_file", Description: "Write content to a file"},

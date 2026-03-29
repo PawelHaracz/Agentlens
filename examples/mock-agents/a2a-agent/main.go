@@ -13,17 +13,20 @@ type AgentCard struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Version     string   `json:"version"`
-	Protocol    string   `json:"protocol"`
-	Endpoint    string   `json:"endpoint"`
+	URL         string   `json:"url"`
+	Provider    Provider `json:"provider,omitempty"`
 	Skills      []Skill  `json:"skills"`
-	Tags        []string `json:"tags"`
+}
+
+type Provider struct {
+	Organization string `json:"organization"`
 }
 
 type Skill struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
-	InputModes  []string `json:"input_modes"`
-	OutputModes []string `json:"output_modes"`
+	InputModes  []string `json:"inputModes"`
+	OutputModes []string `json:"outputModes"`
 }
 
 func main() {
@@ -35,9 +38,8 @@ func main() {
 		Name:        name,
 		Description: "A demo A2A agent for AgentLens testing",
 		Version:     "1.0.0",
-		Protocol:    "a2a",
-		Endpoint:    host,
-		Tags:        []string{"demo", "a2a"},
+		URL:         host,
+		Provider:    Provider{Organization: "AgentLens Demo"},
 		Skills: []Skill{
 			{
 				Name:        "echo",

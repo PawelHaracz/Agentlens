@@ -69,4 +69,4 @@ Please open a GitHub issue with:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the same terms as the project, as specified in the LICENSE file (currently the Business Source License 1.1).

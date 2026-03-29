@@ -55,6 +55,6 @@ func (s *StaticSource) fetchOne(ctx context.Context, src config.SourceConfig) (*
 	case "mcp":
 		return ParseMCPCard(raw, model.SourceConfig)
 	default:
-		return ParseA2ACard(raw, model.SourceConfig)
+		return nil, fmt.Errorf("unsupported source type: %q (must be \"a2a\" or \"mcp\")", src.Type)
 	}
 }
