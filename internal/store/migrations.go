@@ -27,4 +27,5 @@ CREATE INDEX IF NOT EXISTS idx_catalog_entries_protocol ON catalog_entries(proto
 CREATE INDEX IF NOT EXISTS idx_catalog_entries_status ON catalog_entries(status);
 CREATE INDEX IF NOT EXISTS idx_catalog_entries_source ON catalog_entries(source);
 CREATE INDEX IF NOT EXISTS idx_catalog_entries_endpoint ON catalog_entries(endpoint);
+CREATE INDEX IF NOT EXISTS idx_catalog_entries_provider ON catalog_entries(provider);
 `
