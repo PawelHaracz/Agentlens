@@ -12,9 +12,12 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/api"
 	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
-	"github.com/PawelHaracz/agentlens/internal/health"
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/server"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	healthplugin "github.com/PawelHaracz/agentlens/plugins/health"
+	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
+	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
 func main() {
@@ -64,10 +67,40 @@ func main() {
 	}
 	defer s.Close()
 
+	// Create kernel
+	lic := kernel.CommunityLicense()
+	core := kernel.NewCore(s, cfg, logger, lic)
+
+	// Create plugin manager and register plugins
+	pm := kernel.NewPluginManager(core)
+	pm.Register(a2aplugin.New())
+	pm.Register(mcpplugin.New())
+
+	if cfg.HealthCheck.Enabled {
+		pm.Register(healthplugin.New(
+			cfg.HealthCheck.Interval,
+			cfg.HealthCheck.Timeout,
+			cfg.HealthCheck.Concurrency,
+		))
+	}
+
+	// Initialize all plugins
+	if err := pm.InitAll(); err != nil {
+		slog.Error("failed to initialize plugins", "err", err)
+		os.Exit(1)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Build discovery sources
+	// Start all plugins
+	if err := pm.StartAll(ctx); err != nil {
+		slog.Error("failed to start plugins", "err", err)
+		os.Exit(1)
+	}
+	defer pm.StopAll(ctx)
+
+	// Build discovery sources (still use internal/discovery for orchestration)
 	var sources []discovery.Source
 	if len(cfg.Sources) > 0 {
 		sources = append(sources, discovery.NewStaticSource(cfg.Sources))
@@ -79,20 +112,6 @@ func main() {
 		go func() {
 			if err := mgr.Run(ctx); err != nil {
 				slog.Error("discovery manager error", "err", err)
-			}
-		}()
-	}
-
-	// Start health checker
-	if cfg.HealthCheck.Enabled {
-		hc := health.NewChecker(s,
-			cfg.HealthCheck.Interval,
-			cfg.HealthCheck.Timeout,
-			cfg.HealthCheck.Concurrency,
-		)
-		go func() {
-			if err := hc.Run(ctx); err != nil {
-				slog.Error("health checker error", "err", err)
 			}
 		}()
 	}
