@@ -25,8 +25,9 @@ func ValidateLicense(key string) LicenseInfo {
 	if key == "" {
 		return CommunityLicense()
 	}
-	// Future: Parse JWT, validate HMAC-SHA256 signature, extract claims.
-	// For now, return community license on any validation failure.
+	// TODO: Implement JWT license key validation.
+	// Parse JWT, validate HMAC-SHA256 signature, extract claims (tier, features, exp, sub).
+	// Return enterprise LicenseInfo on success, community fallback on error.
 	return CommunityLicense()
 }
 

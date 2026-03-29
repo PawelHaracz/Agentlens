@@ -94,6 +94,7 @@ func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry
 	var provider model.Provider
 	if card.Provider != nil {
 		provider.Organization = card.Provider.Organization
+		// A2A cards don't have a separate team field; use organization as team.
 		provider.Team = card.Provider.Organization
 		provider.URL = card.Provider.URL
 	}

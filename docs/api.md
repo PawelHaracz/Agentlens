@@ -19,22 +19,22 @@ Returns server health status.
 
 ---
 
-## Agents
+## Catalog
 
-### `GET /api/v1/agents`
+### `GET /api/v1/catalog`
 
-List all registered agents with optional filtering.
+List all catalog entries with optional filtering.
 
 **Query Parameters:**
 
 | Parameter | Type | Description |
 |---|---|---|
-| `q` | string | Full-text search on name, description |
+| `q` | string | Full-text search on display name, description |
 | `protocol` | string | Filter by protocol: `a2a`, `mcp`, `a2ui` |
 | `status` | string | Filter by status: `healthy`, `degraded`, `down`, `unknown` |
 | `source` | string | Filter by source: `k8s`, `config`, `push`, `upstream` |
-| `team` | string | Filter by team name |
-| `tags` | string | Comma-separated tag filter |
+| `team` | string | Filter by provider team name |
+| `categories` | string | Comma-separated category filter |
 | `limit` | int | Maximum results to return (default: no limit) |
 | `offset` | int | Pagination offset |
 
@@ -43,16 +43,18 @@ List all registered agents with optional filtering.
 [
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "my-agent",
+    "display_name": "my-agent",
     "description": "Handles customer support",
     "protocol": "a2a",
     "endpoint": "http://my-agent.default.svc:8080",
     "version": "1.0.0",
     "status": "healthy",
     "source": "k8s",
-    "namespace": "default",
-    "team": "platform",
-    "tags": ["nlp", "support"],
+    "provider": {
+      "organization": "Acme Corp",
+      "team": "platform"
+    },
+    "categories": ["nlp", "support"],
     "skills": [
       {
         "name": "answer_question",
@@ -61,7 +63,12 @@ List all registered agents with optional filtering.
         "output_modes": ["text"]
       }
     ],
-    "last_seen": "2024-01-15T10:30:00Z",
+    "validity": {
+      "last_seen": "2024-01-15T10:30:00Z"
+    },
+    "metadata": {
+      "kubernetes.namespace": "default"
+    },
     "created_at": "2024-01-01T00:00:00Z",
     "updated_at": "2024-01-15T10:30:00Z"
   }
@@ -70,20 +77,23 @@ List all registered agents with optional filtering.
 
 ---
 
-### `POST /api/v1/agents`
+### `POST /api/v1/catalog`
 
-Register an agent via push.
+Register a catalog entry via push.
 
 **Request Body:**
 ```json
 {
-  "name": "my-agent",
+  "display_name": "my-agent",
   "description": "Does amazing things",
   "protocol": "a2a",
   "endpoint": "http://my-agent.internal:8080",
   "version": "1.2.3",
-  "team": "platform",
-  "tags": ["nlp"],
+  "provider": {
+    "organization": "Acme Corp",
+    "team": "platform"
+  },
+  "categories": ["nlp"],
   "skills": [
     {
       "name": "chat",
@@ -95,45 +105,45 @@ Register an agent via push.
 }
 ```
 
-**Response 201:** Returns the created agent object with generated `id`.
+**Response 201:** Returns the created catalog entry with generated `id`.
 
 **Response 400:** Invalid request body.
 
 ---
 
-### `GET /api/v1/agents/{id}`
+### `GET /api/v1/catalog/{id}`
 
-Get a specific agent by ID.
+Get a specific catalog entry by ID.
 
 **Path Parameters:**
-- `id` — Agent UUID
+- `id` — Entry UUID
 
-**Response 200:** Agent object.
+**Response 200:** Catalog entry object.
 
 **Response 404:**
 ```json
-{"error": "agent not found"}
+{"error": "entry not found"}
 ```
 
 ---
 
-### `DELETE /api/v1/agents/{id}`
+### `DELETE /api/v1/catalog/{id}`
 
-Delete an agent from the catalog.
+Delete an entry from the catalog.
 
 **Response 204:** No content.
 
-**Response 404:** Agent not found.
+**Response 404:** Entry not found.
 
 ---
 
-### `GET /api/v1/agents/{id}/card`
+### `GET /api/v1/catalog/{id}/card`
 
-Get the raw agent card JSON (A2A or MCP card fetched from the agent).
+Get the raw protocol card JSON (A2A or MCP card fetched from the agent).
 
 **Response 200:** Raw JSON card (content varies by protocol).
 
-**Response 404:** Agent or card not found.
+**Response 404:** Entry or card not found.
 
 ---
 
@@ -141,7 +151,7 @@ Get the raw agent card JSON (A2A or MCP card fetched from the agent).
 
 ### `GET /api/v1/skills`
 
-Search agents by skill name.
+Search catalog entries by skill name.
 
 **Query Parameters:**
 
@@ -149,7 +159,7 @@ Search agents by skill name.
 |---|---|---|
 | `q` | string | Skill name search query |
 
-**Response 200:** Array of Agent objects that have matching skills.
+**Response 200:** Array of CatalogEntry objects that have matching skills.
 
 ---
 
@@ -207,7 +217,7 @@ All errors return JSON with an `error` field:
 
 | Value | Description |
 |---|---|
-| `k8s` | Discovered via Kubernetes pod annotations |
+| `k8s` | Discovered via Kubernetes Service annotations |
 | `config` | Registered via static config file |
-| `push` | Self-registered via `POST /api/v1/agents` |
+| `push` | Self-registered via `POST /api/v1/catalog` |
 | `upstream` | Crawled from an upstream registry |
