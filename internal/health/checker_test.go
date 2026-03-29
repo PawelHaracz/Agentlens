@@ -53,7 +53,9 @@ func TestChecker_Healthy(t *testing.T) {
 	checker := health.NewChecker(s, 100*time.Millisecond, 5*time.Second, 2)
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
-	go checker.Run(ctx)
+	go func() {
+		_ = checker.Run(ctx)
+	}()
 	time.Sleep(300 * time.Millisecond)
 
 	e, err := s.Get(context.Background(), "h1")
@@ -68,7 +70,9 @@ func TestChecker_Down(t *testing.T) {
 	checker := health.NewChecker(s, 100*time.Millisecond, 500*time.Millisecond, 2)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	go checker.Run(ctx)
+	go func() {
+		_ = checker.Run(ctx)
+	}()
 	time.Sleep(1 * time.Second)
 
 	e, err := s.Get(context.Background(), "d1")

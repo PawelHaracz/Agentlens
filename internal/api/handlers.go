@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -100,6 +101,23 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate required fields
+	if strings.TrimSpace(entry.DisplayName) == "" {
+		ErrorResponse(w, http.StatusBadRequest, "display_name is required")
+		return
+	}
+	if strings.TrimSpace(entry.Endpoint) == "" {
+		ErrorResponse(w, http.StatusBadRequest, "endpoint is required")
+		return
+	}
+	switch entry.Protocol {
+	case model.ProtocolA2A, model.ProtocolMCP, model.ProtocolA2UI:
+		// valid
+	default:
+		ErrorResponse(w, http.StatusBadRequest, "protocol must be one of: a2a, mcp, a2ui")
+		return
+	}
+
 	now := time.Now().UTC()
 	entry.ID = uuid.NewString()
 	entry.Source = model.SourcePush
@@ -109,6 +127,10 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 	entry.Validity.LastSeen = now
 
 	if err := h.store.Create(r.Context(), &entry); err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			ErrorResponse(w, http.StatusConflict, "an entry with this endpoint already exists")
+			return
+		}
 		ErrorResponse(w, http.StatusInternalServerError, "failed to create catalog entry")
 		return
 	}
@@ -152,7 +174,9 @@ func (h *Handler) GetEntryCard(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(entry.RawCard)
+	if _, err := w.Write(entry.RawCard); err != nil {
+		slog.Error("failed to write card response", "err", err)
+	}
 }
 
 // SearchSkills handles GET /api/v1/skills.

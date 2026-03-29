@@ -122,7 +122,7 @@ Get a specific catalog entry by ID.
 
 **Response 404:**
 ```json
-{"error": "entry not found"}
+{"error": "catalog entry not found"}
 ```
 
 ---

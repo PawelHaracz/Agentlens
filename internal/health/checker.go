@@ -23,6 +23,9 @@ type Checker struct {
 
 // NewChecker creates a new Checker.
 func NewChecker(s store.Store, interval, timeout time.Duration, concurrency int) *Checker {
+	if concurrency < 1 {
+		concurrency = 1
+	}
 	return &Checker{
 		store:       s,
 		interval:    interval,

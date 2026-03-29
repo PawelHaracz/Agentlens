@@ -114,7 +114,11 @@ func main() {
 		slog.Error("failed to start plugins", "err", err)
 		os.Exit(1)
 	}
-	defer pm.StopAll(ctx)
+	defer func() {
+		if err := pm.StopAll(ctx); err != nil {
+			slog.Error("failed to stop plugins", "err", err)
+		}
+	}()
 
 	// Build discovery sources (still use internal/discovery for orchestration)
 	var sources []discovery.Source

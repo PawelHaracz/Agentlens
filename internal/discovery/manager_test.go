@@ -53,7 +53,9 @@ func TestManager_Upsert_NewEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	go mgr.Run(ctx)
+	go func() {
+		_ = mgr.Run(ctx)
+	}()
 	time.Sleep(200 * time.Millisecond)
 
 	entries, err := s.List(context.Background(), store.ListFilter{})
@@ -80,7 +82,9 @@ func TestManager_Upsert_ExistingEntry(t *testing.T) {
 	mgrCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	go mgr.Run(mgrCtx)
+	go func() {
+		_ = mgr.Run(mgrCtx)
+	}()
 	time.Sleep(200 * time.Millisecond)
 
 	got, err := s.Get(ctx, "existing-id")
@@ -106,7 +110,9 @@ func TestManager_MarksMissingEntriesDown(t *testing.T) {
 	mgrCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	go mgr.Run(mgrCtx)
+	go func() {
+		_ = mgr.Run(mgrCtx)
+	}()
 	time.Sleep(200 * time.Millisecond)
 
 	got, err := s.Get(ctx, "missing-id")

@@ -24,6 +24,9 @@ type Plugin struct {
 
 // New creates a new health checker plugin.
 func New(interval, timeout time.Duration, concurrency int) *Plugin {
+	if concurrency < 1 {
+		concurrency = 1
+	}
 	return &Plugin{
 		interval:    interval,
 		timeout:     timeout,
