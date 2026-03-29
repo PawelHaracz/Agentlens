@@ -1,0 +1,7 @@
+web/node_modules/
+data/
+*.db
+.env
+bin/
+coverage.out
+coverage.html

@@ -1,0 +1,25 @@
+# Stage 1: Build frontend
+FROM node:20-alpine AS frontend
+WORKDIR /web
+COPY web/package*.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
+# Stage 2: Build Go binary
+FROM golang:1.24-alpine AS builder
+RUN apk add --no-cache gcc musl-dev
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+COPY --from=frontend /web/dist ./web/dist
+RUN CGO_ENABLED=1 go build -o agentlens ./cmd/agentlens
+
+# Stage 3: Runtime
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
+WORKDIR /app
+COPY --from=builder /app/agentlens .
+EXPOSE 8080
+CMD ["./agentlens"]
