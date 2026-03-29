@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/pawelharacz/agentlens
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+clusterRole:
+  create: true
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+env:
+  AGENTLENS_PORT: "8080"
+  AGENTLENS_DATA_DIR: "/data"
+  AGENTLENS_LOG_LEVEL: "info"
+  AGENTLENS_KUBERNETES_ENABLED: "true"
+  AGENTLENS_HEALTH_CHECK_ENABLED: "true"
+
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 1Gi
+  accessMode: ReadWriteOnce
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: agentlens
+description: AgentLens – real-time AI agent catalog for Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - ai
+  - agent
+  - catalog
+  - observability
+home: https://github.com/PawelHaracz/agentlens
+sources:
+  - https://github.com/PawelHaracz/agentlens
