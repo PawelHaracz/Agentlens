@@ -143,4 +143,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT
+AgentLens is licensed under the [Business Source License 1.1](LICENSE).
+
+**What this means in plain language:**
+
+- ✅ You can use AgentLens freely for any purpose, including production and internal business use
+- ✅ You can modify, fork, and create derivative works
+- ✅ You can redistribute the source code
+- ❌ You may **not** offer AgentLens as a commercial hosted or managed service competing with AgentLens commercial offerings
+- 🔄 Each release automatically converts to **Apache License 2.0** after four years
+
+For commercial hosting/managed service licensing, contact the Licensor.
