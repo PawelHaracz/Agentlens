@@ -15,6 +15,10 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/server"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	"github.com/PawelHaracz/agentlens/plugins/enterprise/audit"
+	"github.com/PawelHaracz/agentlens/plugins/enterprise/postgres"
+	"github.com/PawelHaracz/agentlens/plugins/enterprise/rbac"
+	"github.com/PawelHaracz/agentlens/plugins/enterprise/sso"
 	healthplugin "github.com/PawelHaracz/agentlens/plugins/health"
 	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
@@ -67,12 +71,14 @@ func main() {
 	}
 	defer s.Close()
 
-	// Create kernel
-	lic := kernel.CommunityLicense()
+	// Validate license
+	lic := kernel.ValidateLicense(cfg.LicenseKey)
 	core := kernel.NewCore(s, cfg, logger, lic)
 
 	// Create plugin manager and register plugins
 	pm := kernel.NewPluginManager(core)
+
+	// Core plugins
 	pm.Register(a2aplugin.New())
 	pm.Register(mcpplugin.New())
 
@@ -83,6 +89,12 @@ func main() {
 			cfg.HealthCheck.Concurrency,
 		))
 	}
+
+	// Enterprise plugins (skipped with warning if no license)
+	pm.Register(sso.New())
+	pm.Register(rbac.New())
+	pm.Register(audit.New())
+	pm.Register(postgres.New())
 
 	// Initialize all plugins
 	if err := pm.InitAll(); err != nil {

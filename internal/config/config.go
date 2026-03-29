@@ -45,6 +45,7 @@ type Config struct {
 	Port         int               `yaml:"port"`
 	DataDir      string            `yaml:"data_dir"`
 	LogLevel     string            `yaml:"log_level"`
+	LicenseKey   string            `yaml:"license_key"`
 	PollInterval time.Duration     `yaml:"poll_interval"`
 	Sources      []SourceConfig    `yaml:"sources"`
 	Kubernetes   KubernetesConfig  `yaml:"kubernetes"`
@@ -96,6 +97,9 @@ func applyEnv(cfg *Config) {
 	}
 	if v := env("LOG_LEVEL"); v != "" {
 		cfg.LogLevel = v
+	}
+	if v := env("LICENSE_KEY"); v != "" {
+		cfg.LicenseKey = v
 	}
 	if v := env("POLL_INTERVAL"); v != "" {
 		if d, err := time.ParseDuration(v); err == nil {
