@@ -27,29 +27,29 @@ func TestParseA2ACard_Valid(t *testing.T) {
 		]
 	}`)
 
-	agent, err := discovery.ParseA2ACard(raw, model.SourceConfig)
+	entry, err := discovery.ParseA2ACard(raw, model.SourceConfig)
 	require.NoError(t, err)
-	assert.Equal(t, "Weather Agent", agent.Name)
-	assert.Equal(t, "Provides weather info", agent.Description)
-	assert.Equal(t, "http://weather.example.com", agent.Endpoint)
-	assert.Equal(t, "1.2.3", agent.Version)
-	assert.Equal(t, "Acme Corp", agent.Team)
-	assert.Equal(t, model.ProtocolA2A, agent.Protocol)
-	require.Len(t, agent.Skills, 1)
-	assert.Equal(t, "get-weather", agent.Skills[0].Name)
-	assert.Equal(t, []string{"text"}, agent.Skills[0].InputModes)
-	assert.Equal(t, []string{"text", "json"}, agent.Skills[0].OutputModes)
-	assert.NotEmpty(t, agent.RawCard)
+	assert.Equal(t, "Weather Agent", entry.DisplayName)
+	assert.Equal(t, "Provides weather info", entry.Description)
+	assert.Equal(t, "http://weather.example.com", entry.Endpoint)
+	assert.Equal(t, "1.2.3", entry.Version)
+	assert.Equal(t, "Acme Corp", entry.Provider.Organization)
+	assert.Equal(t, model.ProtocolA2A, entry.Protocol)
+	require.Len(t, entry.Skills, 1)
+	assert.Equal(t, "get-weather", entry.Skills[0].Name)
+	assert.Equal(t, []string{"text"}, entry.Skills[0].InputModes)
+	assert.Equal(t, []string{"text", "json"}, entry.Skills[0].OutputModes)
+	assert.NotEmpty(t, entry.RawCard)
 }
 
 func TestParseA2ACard_Minimal(t *testing.T) {
 	raw := []byte(`{"name": "Minimal Agent", "url": "http://minimal.example.com"}`)
-	agent, err := discovery.ParseA2ACard(raw, model.SourceConfig)
+	entry, err := discovery.ParseA2ACard(raw, model.SourceConfig)
 	require.NoError(t, err)
-	assert.Equal(t, "Minimal Agent", agent.Name)
-	assert.Equal(t, "http://minimal.example.com", agent.Endpoint)
-	assert.Empty(t, agent.Team)
-	assert.Empty(t, agent.Skills)
+	assert.Equal(t, "Minimal Agent", entry.DisplayName)
+	assert.Equal(t, "http://minimal.example.com", entry.Endpoint)
+	assert.Empty(t, entry.Provider.Organization)
+	assert.Empty(t, entry.Skills)
 }
 
 func TestParseA2ACard_MissingName(t *testing.T) {

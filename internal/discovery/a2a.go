@@ -29,8 +29,8 @@ type a2aSkill struct {
 	OutputModes []string `json:"outputModes,omitempty"`
 }
 
-// ParseA2ACard parses an A2A agent card JSON blob into an Agent.
-func ParseA2ACard(raw []byte, source model.SourceType) (*model.Agent, error) {
+// ParseA2ACard parses an A2A agent card JSON blob into a CatalogEntry.
+func ParseA2ACard(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
 	var card a2aCard
 	if err := json.Unmarshal(raw, &card); err != nil {
 		return nil, fmt.Errorf("parsing a2a card: %w", err)
@@ -52,24 +52,24 @@ func ParseA2ACard(raw []byte, source model.SourceType) (*model.Agent, error) {
 		})
 	}
 
-	var team string
+	var provider model.Provider
 	if card.Provider != nil {
-		team = card.Provider.Organization
+		provider.Organization = card.Provider.Organization
 	}
 
 	now := time.Now().UTC()
-	return &model.Agent{
-		Name:        card.Name,
+	return &model.CatalogEntry{
+		DisplayName: card.Name,
 		Description: card.Description,
 		Protocol:    model.ProtocolA2A,
 		Endpoint:    card.URL,
 		Version:     card.Version,
 		Status:      model.StatusUnknown,
 		Source:      source,
-		Team:        team,
+		Provider:    provider,
 		Skills:      skills,
 		RawCard:     json.RawMessage(raw),
-		LastSeen:    now,
+		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}, nil

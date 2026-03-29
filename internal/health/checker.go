@@ -1,4 +1,4 @@
-// Package health provides periodic health checking for registered agents.
+// Package health provides periodic health checking for registered catalog entries.
 package health
 
 import (
@@ -12,7 +12,7 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/store"
 )
 
-// Checker periodically checks the health of all agents and updates their status.
+// Checker periodically checks the health of all catalog entries and updates their status.
 type Checker struct {
 	store       store.Store
 	interval    time.Duration
@@ -48,29 +48,29 @@ func (c *Checker) Run(ctx context.Context) error {
 }
 
 func (c *Checker) checkAll(ctx context.Context) {
-	agents, err := c.store.List(ctx, store.ListFilter{})
+	entries, err := c.store.List(ctx, store.ListFilter{})
 	if err != nil {
-		c.log.Warn("failed to list agents for health check", "err", err)
+		c.log.Warn("failed to list entries for health check", "err", err)
 		return
 	}
 
 	sem := make(chan struct{}, c.concurrency)
 	var wg sync.WaitGroup
-	for _, a := range agents {
-		a := a
+	for _, e := range entries {
+		e := e
 		wg.Add(1)
 		sem <- struct{}{}
 		go func() {
 			defer wg.Done()
 			defer func() { <-sem }()
-			c.checkOne(ctx, &a)
+			c.checkOne(ctx, &e)
 		}()
 	}
 	wg.Wait()
 }
 
-func (c *Checker) checkOne(ctx context.Context, agent *model.Agent) {
-	if agent.Endpoint == "" {
+func (c *Checker) checkOne(ctx context.Context, entry *model.CatalogEntry) {
+	if entry.Endpoint == "" {
 		return
 	}
 
@@ -78,15 +78,15 @@ func (c *Checker) checkOne(ctx context.Context, agent *model.Agent) {
 	defer cancel()
 
 	client := &http.Client{Timeout: c.timeout}
-	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, agent.Endpoint, nil)
+	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, entry.Endpoint, nil)
 	if err != nil {
-		c.updateStatus(ctx, agent, model.StatusDown)
+		c.updateStatus(ctx, entry, model.StatusDown)
 		return
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		c.updateStatus(ctx, agent, model.StatusDown)
+		c.updateStatus(ctx, entry, model.StatusDown)
 		return
 	}
 	resp.Body.Close()
@@ -101,15 +101,15 @@ func (c *Checker) checkOne(ctx context.Context, agent *model.Agent) {
 		status = model.StatusUnknown
 	}
 
-	c.updateStatus(ctx, agent, status)
+	c.updateStatus(ctx, entry, status)
 }
 
-func (c *Checker) updateStatus(ctx context.Context, agent *model.Agent, status model.Status) {
+func (c *Checker) updateStatus(ctx context.Context, entry *model.CatalogEntry, status model.Status) {
 	now := time.Now().UTC()
-	agent.Status = status
-	agent.LastSeen = now
-	agent.UpdatedAt = now
-	if err := c.store.Update(ctx, agent); err != nil {
-		c.log.Warn("failed to update agent status", "id", agent.ID, "err", err)
+	entry.Status = status
+	entry.Validity.LastSeen = now
+	entry.UpdatedAt = now
+	if err := c.store.Update(ctx, entry); err != nil {
+		c.log.Warn("failed to update entry status", "id", entry.ID, "err", err)
 	}
 }

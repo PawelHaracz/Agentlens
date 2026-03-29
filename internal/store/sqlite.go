@@ -45,90 +45,130 @@ func (s *SQLiteStore) Close() error {
 	return s.db.Close()
 }
 
-// Create inserts a new agent into the store.
-func (s *SQLiteStore) Create(ctx context.Context, agent *model.Agent) error {
-	tags, err := json.Marshal(agent.Tags)
+// Create inserts a new catalog entry into the store.
+func (s *SQLiteStore) Create(ctx context.Context, entry *model.CatalogEntry) error {
+	provider, err := json.Marshal(entry.Provider)
 	if err != nil {
-		return fmt.Errorf("marshaling tags: %w", err)
+		return fmt.Errorf("marshaling provider: %w", err)
 	}
-	skills, err := json.Marshal(agent.Skills)
+	categories, err := json.Marshal(entry.Categories)
+	if err != nil {
+		return fmt.Errorf("marshaling categories: %w", err)
+	}
+	skills, err := json.Marshal(entry.Skills)
 	if err != nil {
 		return fmt.Errorf("marshaling skills: %w", err)
 	}
+	metadata, err := json.Marshal(entry.Metadata)
+	if err != nil {
+		return fmt.Errorf("marshaling metadata: %w", err)
+	}
 	var rawCard *string
-	if len(agent.RawCard) > 0 {
-		s := string(agent.RawCard)
-		rawCard = &s
+	if len(entry.RawCard) > 0 {
+		rc := string(entry.RawCard)
+		rawCard = &rc
+	}
+	var validityFrom, validityTo *time.Time
+	if entry.Validity.From != nil {
+		t := entry.Validity.From.UTC()
+		validityFrom = &t
+	}
+	if entry.Validity.To != nil {
+		t := entry.Validity.To.UTC()
+		validityTo = &t
 	}
 	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO agents (id, name, description, protocol, endpoint, version, status, source,
-		    namespace, team, tags, skills, raw_card, last_seen, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		agent.ID, agent.Name, agent.Description, string(agent.Protocol), agent.Endpoint,
-		agent.Version, string(agent.Status), string(agent.Source),
-		agent.Namespace, agent.Team, string(tags), string(skills), rawCard,
-		agent.LastSeen.UTC(), agent.CreatedAt.UTC(), agent.UpdatedAt.UTC(),
+		INSERT INTO catalog_entries (id, display_name, description, protocol, endpoint, version, status, source,
+		    provider, categories, skills, validity_from, validity_to, validity_last_seen, raw_card, metadata,
+		    created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		entry.ID, entry.DisplayName, entry.Description, string(entry.Protocol), entry.Endpoint,
+		entry.Version, string(entry.Status), string(entry.Source),
+		string(provider), string(categories), string(skills),
+		validityFrom, validityTo, entry.Validity.LastSeen.UTC(),
+		rawCard, string(metadata),
+		entry.CreatedAt.UTC(), entry.UpdatedAt.UTC(),
 	)
 	if err != nil {
-		return fmt.Errorf("inserting agent: %w", err)
+		return fmt.Errorf("inserting catalog entry: %w", err)
 	}
 	return nil
 }
 
-// Get retrieves an agent by ID.
-func (s *SQLiteStore) Get(ctx context.Context, id string) (*model.Agent, error) {
-	row := s.db.QueryRowContext(ctx, `SELECT * FROM agents WHERE id = ?`, id)
-	agent, err := scanAgent(row)
+// Get retrieves a catalog entry by ID.
+func (s *SQLiteStore) Get(ctx context.Context, id string) (*model.CatalogEntry, error) {
+	row := s.db.QueryRowContext(ctx, `SELECT * FROM catalog_entries WHERE id = ?`, id)
+	entry, err := scanEntry(row)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("getting agent: %w", err)
+		return nil, fmt.Errorf("getting catalog entry: %w", err)
 	}
-	return agent, nil
+	return entry, nil
 }
 
-// Update modifies an existing agent.
-func (s *SQLiteStore) Update(ctx context.Context, agent *model.Agent) error {
-	tags, err := json.Marshal(agent.Tags)
+// Update modifies an existing catalog entry.
+func (s *SQLiteStore) Update(ctx context.Context, entry *model.CatalogEntry) error {
+	provider, err := json.Marshal(entry.Provider)
 	if err != nil {
-		return fmt.Errorf("marshaling tags: %w", err)
+		return fmt.Errorf("marshaling provider: %w", err)
 	}
-	skills, err := json.Marshal(agent.Skills)
+	categories, err := json.Marshal(entry.Categories)
+	if err != nil {
+		return fmt.Errorf("marshaling categories: %w", err)
+	}
+	skills, err := json.Marshal(entry.Skills)
 	if err != nil {
 		return fmt.Errorf("marshaling skills: %w", err)
 	}
+	metadata, err := json.Marshal(entry.Metadata)
+	if err != nil {
+		return fmt.Errorf("marshaling metadata: %w", err)
+	}
 	var rawCard *string
-	if len(agent.RawCard) > 0 {
-		s := string(agent.RawCard)
-		rawCard = &s
+	if len(entry.RawCard) > 0 {
+		rc := string(entry.RawCard)
+		rawCard = &rc
+	}
+	var validityFrom, validityTo *time.Time
+	if entry.Validity.From != nil {
+		t := entry.Validity.From.UTC()
+		validityFrom = &t
+	}
+	if entry.Validity.To != nil {
+		t := entry.Validity.To.UTC()
+		validityTo = &t
 	}
 	_, err = s.db.ExecContext(ctx, `
-		UPDATE agents SET name=?, description=?, protocol=?, endpoint=?, version=?, status=?,
-		    source=?, namespace=?, team=?, tags=?, skills=?, raw_card=?, last_seen=?, updated_at=?
+		UPDATE catalog_entries SET display_name=?, description=?, protocol=?, endpoint=?, version=?, status=?,
+		    source=?, provider=?, categories=?, skills=?, validity_from=?, validity_to=?, validity_last_seen=?,
+		    raw_card=?, metadata=?, updated_at=?
 		WHERE id=?`,
-		agent.Name, agent.Description, string(agent.Protocol), agent.Endpoint,
-		agent.Version, string(agent.Status), string(agent.Source),
-		agent.Namespace, agent.Team, string(tags), string(skills), rawCard,
-		agent.LastSeen.UTC(), agent.UpdatedAt.UTC(), agent.ID,
+		entry.DisplayName, entry.Description, string(entry.Protocol), entry.Endpoint,
+		entry.Version, string(entry.Status), string(entry.Source),
+		string(provider), string(categories), string(skills),
+		validityFrom, validityTo, entry.Validity.LastSeen.UTC(),
+		rawCard, string(metadata),
+		entry.UpdatedAt.UTC(), entry.ID,
 	)
 	if err != nil {
-		return fmt.Errorf("updating agent: %w", err)
+		return fmt.Errorf("updating catalog entry: %w", err)
 	}
 	return nil
 }
 
-// Delete removes an agent by ID.
+// Delete removes a catalog entry by ID.
 func (s *SQLiteStore) Delete(ctx context.Context, id string) error {
-	_, err := s.db.ExecContext(ctx, `DELETE FROM agents WHERE id = ?`, id)
+	_, err := s.db.ExecContext(ctx, `DELETE FROM catalog_entries WHERE id = ?`, id)
 	if err != nil {
-		return fmt.Errorf("deleting agent: %w", err)
+		return fmt.Errorf("deleting catalog entry: %w", err)
 	}
 	return nil
 }
 
-// List returns agents matching the given filter.
-func (s *SQLiteStore) List(ctx context.Context, filter ListFilter) ([]model.Agent, error) {
+// List returns catalog entries matching the given filter.
+func (s *SQLiteStore) List(ctx context.Context, filter ListFilter) ([]model.CatalogEntry, error) {
 	where := []string{"1=1"}
 	args := []interface{}{}
 
@@ -145,20 +185,20 @@ func (s *SQLiteStore) List(ctx context.Context, filter ListFilter) ([]model.Agen
 		args = append(args, string(*filter.Source))
 	}
 	if filter.Team != "" {
-		where = append(where, "team = ?")
-		args = append(args, filter.Team)
+		where = append(where, "provider LIKE ?")
+		args = append(args, "%"+filter.Team+"%")
 	}
 	if filter.Query != "" {
-		where = append(where, "(name LIKE ? OR description LIKE ?)")
+		where = append(where, "(display_name LIKE ? OR description LIKE ?)")
 		q := "%" + filter.Query + "%"
 		args = append(args, q, q)
 	}
-	for _, tag := range filter.Tags {
-		where = append(where, "tags LIKE ?")
-		args = append(args, "%"+tag+"%")
+	for _, cat := range filter.Categories {
+		where = append(where, "categories LIKE ?")
+		args = append(args, "%"+cat+"%")
 	}
 
-	query := "SELECT * FROM agents WHERE " + strings.Join(where, " AND ") + " ORDER BY name"
+	query := "SELECT * FROM catalog_entries WHERE " + strings.Join(where, " AND ") + " ORDER BY display_name"
 	if filter.Limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", filter.Limit)
 	}
@@ -168,67 +208,67 @@ func (s *SQLiteStore) List(ctx context.Context, filter ListFilter) ([]model.Agen
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("listing agents: %w", err)
+		return nil, fmt.Errorf("listing catalog entries: %w", err)
 	}
 	defer rows.Close()
 
-	var agents []model.Agent
+	var entries []model.CatalogEntry
 	for rows.Next() {
-		a, err := scanAgent(rows)
+		e, err := scanEntry(rows)
 		if err != nil {
-			return nil, fmt.Errorf("scanning agent: %w", err)
+			return nil, fmt.Errorf("scanning catalog entry: %w", err)
 		}
-		agents = append(agents, *a)
+		entries = append(entries, *e)
 	}
-	return agents, rows.Err()
+	return entries, rows.Err()
 }
 
-// FindByEndpoint returns the agent with the given endpoint URL.
-func (s *SQLiteStore) FindByEndpoint(ctx context.Context, endpoint string) (*model.Agent, error) {
-	row := s.db.QueryRowContext(ctx, `SELECT * FROM agents WHERE endpoint = ? LIMIT 1`, endpoint)
-	agent, err := scanAgent(row)
+// FindByEndpoint returns the catalog entry with the given endpoint URL.
+func (s *SQLiteStore) FindByEndpoint(ctx context.Context, endpoint string) (*model.CatalogEntry, error) {
+	row := s.db.QueryRowContext(ctx, `SELECT * FROM catalog_entries WHERE endpoint = ? LIMIT 1`, endpoint)
+	entry, err := scanEntry(row)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("finding by endpoint: %w", err)
 	}
-	return agent, nil
+	return entry, nil
 }
 
-// SearchSkills returns agents whose skills match the query string.
-func (s *SQLiteStore) SearchSkills(ctx context.Context, query string) ([]model.Agent, error) {
+// SearchSkills returns catalog entries whose skills match the query string.
+func (s *SQLiteStore) SearchSkills(ctx context.Context, query string) ([]model.CatalogEntry, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT * FROM agents WHERE skills LIKE ?`, "%"+query+"%")
+		`SELECT * FROM catalog_entries WHERE skills LIKE ?`, "%"+query+"%")
 	if err != nil {
 		return nil, fmt.Errorf("searching skills: %w", err)
 	}
 	defer rows.Close()
 
-	var agents []model.Agent
+	var entries []model.CatalogEntry
 	for rows.Next() {
-		a, err := scanAgent(rows)
+		e, err := scanEntry(rows)
 		if err != nil {
-			return nil, fmt.Errorf("scanning agent: %w", err)
+			return nil, fmt.Errorf("scanning catalog entry: %w", err)
 		}
-		agents = append(agents, *a)
+		entries = append(entries, *e)
 	}
-	return agents, rows.Err()
+	return entries, rows.Err()
 }
 
-// Stats returns aggregate statistics about agents in the store.
+// Stats returns aggregate statistics about catalog entries in the store.
 func (s *SQLiteStore) Stats(ctx context.Context) (*StoreStats, error) {
 	stats := &StoreStats{
 		ByStatus: make(map[string]int),
 		BySource: make(map[string]int),
 	}
 
-	row := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM agents`)
+	row := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM catalog_entries`)
 	if err := row.Scan(&stats.Total); err != nil {
-		return nil, fmt.Errorf("counting agents: %w", err)
+		return nil, fmt.Errorf("counting catalog entries: %w", err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, `SELECT status, COUNT(*) FROM agents GROUP BY status`)
+	rows, err := s.db.QueryContext(ctx, `SELECT status, COUNT(*) FROM catalog_entries GROUP BY status`)
 	if err != nil {
 		return nil, fmt.Errorf("counting by status: %w", err)
 	}
@@ -242,7 +282,7 @@ func (s *SQLiteStore) Stats(ctx context.Context) (*StoreStats, error) {
 		stats.ByStatus[k] = v
 	}
 
-	rows2, err := s.db.QueryContext(ctx, `SELECT source, COUNT(*) FROM agents GROUP BY source`)
+	rows2, err := s.db.QueryContext(ctx, `SELECT source, COUNT(*) FROM catalog_entries GROUP BY source`)
 	if err != nil {
 		return nil, fmt.Errorf("counting by source: %w", err)
 	}
@@ -264,41 +304,55 @@ type scanner interface {
 	Scan(dest ...interface{}) error
 }
 
-func scanAgent(s scanner) (*model.Agent, error) {
-	var a model.Agent
+func scanEntry(s scanner) (*model.CatalogEntry, error) {
+	var e model.CatalogEntry
 	var protocol, status, source string
-	var tagsJSON, skillsJSON string
+	var providerJSON, categoriesJSON, skillsJSON, metadataJSON string
 	var rawCard sql.NullString
-	var lastSeen, createdAt, updatedAt time.Time
+	var validityFrom, validityTo sql.NullTime
+	var validityLastSeen, createdAt, updatedAt time.Time
 
 	err := s.Scan(
-		&a.ID, &a.Name, &a.Description,
-		&protocol, &a.Endpoint, &a.Version,
+		&e.ID, &e.DisplayName, &e.Description,
+		&protocol, &e.Endpoint, &e.Version,
 		&status, &source,
-		&a.Namespace, &a.Team,
-		&tagsJSON, &skillsJSON, &rawCard,
-		&lastSeen, &createdAt, &updatedAt,
+		&providerJSON, &categoriesJSON, &skillsJSON,
+		&validityFrom, &validityTo, &validityLastSeen,
+		&rawCard, &metadataJSON,
+		&createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	a.Protocol = model.Protocol(protocol)
-	a.Status = model.Status(status)
-	a.Source = model.SourceType(source)
-	a.LastSeen = lastSeen
-	a.CreatedAt = createdAt
-	a.UpdatedAt = updatedAt
-
-	if err := json.Unmarshal([]byte(tagsJSON), &a.Tags); err != nil {
-		a.Tags = nil
+	e.Protocol = model.Protocol(protocol)
+	e.Status = model.Status(status)
+	e.Source = model.SourceType(source)
+	e.Validity.LastSeen = validityLastSeen
+	if validityFrom.Valid {
+		e.Validity.From = &validityFrom.Time
 	}
-	if err := json.Unmarshal([]byte(skillsJSON), &a.Skills); err != nil {
-		a.Skills = nil
+	if validityTo.Valid {
+		e.Validity.To = &validityTo.Time
+	}
+	e.CreatedAt = createdAt
+	e.UpdatedAt = updatedAt
+
+	if err := json.Unmarshal([]byte(providerJSON), &e.Provider); err != nil {
+		e.Provider = model.Provider{}
+	}
+	if err := json.Unmarshal([]byte(categoriesJSON), &e.Categories); err != nil {
+		e.Categories = nil
+	}
+	if err := json.Unmarshal([]byte(skillsJSON), &e.Skills); err != nil {
+		e.Skills = nil
+	}
+	if err := json.Unmarshal([]byte(metadataJSON), &e.Metadata); err != nil {
+		e.Metadata = nil
 	}
 	if rawCard.Valid {
-		a.RawCard = json.RawMessage(rawCard.String)
+		e.RawCard = json.RawMessage(rawCard.String)
 	}
 
-	return &a, nil
+	return &e, nil
 }

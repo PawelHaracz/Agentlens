@@ -25,11 +25,11 @@ func NewRouter(s store.Store) *chi.Mux {
 	r.Get("/healthz", h.Healthz)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/agents", h.ListAgents)
-		r.Post("/agents", h.CreateAgent)
-		r.Get("/agents/{id}", h.GetAgent)
-		r.Delete("/agents/{id}", h.DeleteAgent)
-		r.Get("/agents/{id}/card", h.GetAgentCard)
+		r.Get("/catalog", h.ListCatalog)
+		r.Post("/catalog", h.CreateEntry)
+		r.Get("/catalog/{id}", h.GetEntry)
+		r.Delete("/catalog/{id}", h.DeleteEntry)
+		r.Get("/catalog/{id}/card", h.GetEntryCard)
 		r.Get("/skills", h.SearchSkills)
 		r.Get("/stats", h.GetStats)
 	})

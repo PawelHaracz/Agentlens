@@ -29,8 +29,8 @@ func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
 	JSONResponse(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// ListAgents handles GET /api/v1/agents.
-func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
+// ListCatalog handles GET /api/v1/catalog.
+func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
 	filter := store.ListFilter{}
 	q := r.URL.Query()
 
@@ -52,8 +52,8 @@ func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 	if v := q.Get("q"); v != "" {
 		filter.Query = v
 	}
-	if v := q.Get("tags"); v != "" {
-		filter.Tags = strings.Split(v, ",")
+	if v := q.Get("categories"); v != "" {
+		filter.Categories = strings.Split(v, ",")
 	}
 	if v := q.Get("limit"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
@@ -66,107 +66,107 @@ func (h *Handler) ListAgents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	agents, err := h.store.List(r.Context(), filter)
+	entries, err := h.store.List(r.Context(), filter)
 	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to list agents")
+		ErrorResponse(w, http.StatusInternalServerError, "failed to list catalog entries")
 		return
 	}
-	if agents == nil {
-		agents = []model.Agent{}
+	if entries == nil {
+		entries = []model.CatalogEntry{}
 	}
-	JSONResponse(w, http.StatusOK, agents)
+	JSONResponse(w, http.StatusOK, entries)
 }
 
-// GetAgent handles GET /api/v1/agents/{id}.
-func (h *Handler) GetAgent(w http.ResponseWriter, r *http.Request) {
+// GetEntry handles GET /api/v1/catalog/{id}.
+func (h *Handler) GetEntry(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	agent, err := h.store.Get(r.Context(), id)
+	entry, err := h.store.Get(r.Context(), id)
 	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to get agent")
+		ErrorResponse(w, http.StatusInternalServerError, "failed to get catalog entry")
 		return
 	}
-	if agent == nil {
-		ErrorResponse(w, http.StatusNotFound, "agent not found")
+	if entry == nil {
+		ErrorResponse(w, http.StatusNotFound, "catalog entry not found")
 		return
 	}
-	JSONResponse(w, http.StatusOK, agent)
+	JSONResponse(w, http.StatusOK, entry)
 }
 
-// CreateAgent handles POST /api/v1/agents.
-func (h *Handler) CreateAgent(w http.ResponseWriter, r *http.Request) {
-	var agent model.Agent
-	if err := json.NewDecoder(r.Body).Decode(&agent); err != nil {
+// CreateEntry handles POST /api/v1/catalog.
+func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
+	var entry model.CatalogEntry
+	if err := json.NewDecoder(r.Body).Decode(&entry); err != nil {
 		ErrorResponse(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	now := time.Now().UTC()
-	agent.ID = uuid.NewString()
-	agent.Source = model.SourcePush
-	agent.Status = model.StatusUnknown
-	agent.CreatedAt = now
-	agent.UpdatedAt = now
-	agent.LastSeen = now
+	entry.ID = uuid.NewString()
+	entry.Source = model.SourcePush
+	entry.Status = model.StatusUnknown
+	entry.CreatedAt = now
+	entry.UpdatedAt = now
+	entry.Validity.LastSeen = now
 
-	if err := h.store.Create(r.Context(), &agent); err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to create agent")
+	if err := h.store.Create(r.Context(), &entry); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "failed to create catalog entry")
 		return
 	}
-	JSONResponse(w, http.StatusCreated, agent)
+	JSONResponse(w, http.StatusCreated, entry)
 }
 
-// DeleteAgent handles DELETE /api/v1/agents/{id}.
-func (h *Handler) DeleteAgent(w http.ResponseWriter, r *http.Request) {
+// DeleteEntry handles DELETE /api/v1/catalog/{id}.
+func (h *Handler) DeleteEntry(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	agent, err := h.store.Get(r.Context(), id)
+	entry, err := h.store.Get(r.Context(), id)
 	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to get agent")
+		ErrorResponse(w, http.StatusInternalServerError, "failed to get catalog entry")
 		return
 	}
-	if agent == nil {
-		ErrorResponse(w, http.StatusNotFound, "agent not found")
+	if entry == nil {
+		ErrorResponse(w, http.StatusNotFound, "catalog entry not found")
 		return
 	}
 	if err := h.store.Delete(r.Context(), id); err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to delete agent")
+		ErrorResponse(w, http.StatusInternalServerError, "failed to delete catalog entry")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// GetAgentCard handles GET /api/v1/agents/{id}/card.
-func (h *Handler) GetAgentCard(w http.ResponseWriter, r *http.Request) {
+// GetEntryCard handles GET /api/v1/catalog/{id}/card.
+func (h *Handler) GetEntryCard(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	agent, err := h.store.Get(r.Context(), id)
+	entry, err := h.store.Get(r.Context(), id)
 	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to get agent")
+		ErrorResponse(w, http.StatusInternalServerError, "failed to get catalog entry")
 		return
 	}
-	if agent == nil {
-		ErrorResponse(w, http.StatusNotFound, "agent not found")
+	if entry == nil {
+		ErrorResponse(w, http.StatusNotFound, "catalog entry not found")
 		return
 	}
-	if len(agent.RawCard) == 0 {
+	if len(entry.RawCard) == 0 {
 		ErrorResponse(w, http.StatusNotFound, "no card available")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(agent.RawCard)
+	w.Write(entry.RawCard)
 }
 
 // SearchSkills handles GET /api/v1/skills.
 func (h *Handler) SearchSkills(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
-	agents, err := h.store.SearchSkills(r.Context(), q)
+	entries, err := h.store.SearchSkills(r.Context(), q)
 	if err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "failed to search skills")
 		return
 	}
-	if agents == nil {
-		agents = []model.Agent{}
+	if entries == nil {
+		entries = []model.CatalogEntry{}
 	}
-	JSONResponse(w, http.StatusOK, agents)
+	JSONResponse(w, http.StatusOK, entries)
 }
 
 // GetStats handles GET /api/v1/stats.

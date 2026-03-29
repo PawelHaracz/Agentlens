@@ -26,8 +26,8 @@ type mcpTool struct {
 	Description string `json:"description"`
 }
 
-// ParseMCPCard parses an MCP server card JSON blob into an Agent.
-func ParseMCPCard(raw []byte, source model.SourceType) (*model.Agent, error) {
+// ParseMCPCard parses an MCP server card JSON blob into a CatalogEntry.
+func ParseMCPCard(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
 	var card mcpCard
 	if err := json.Unmarshal(raw, &card); err != nil {
 		return nil, fmt.Errorf("parsing mcp card: %w", err)
@@ -50,8 +50,8 @@ func ParseMCPCard(raw []byte, source model.SourceType) (*model.Agent, error) {
 	}
 
 	now := time.Now().UTC()
-	return &model.Agent{
-		Name:        card.Name,
+	return &model.CatalogEntry{
+		DisplayName: card.Name,
 		Description: card.Description,
 		Protocol:    model.ProtocolMCP,
 		Endpoint:    endpoint,
@@ -60,7 +60,7 @@ func ParseMCPCard(raw []byte, source model.SourceType) (*model.Agent, error) {
 		Source:      source,
 		Skills:      skills,
 		RawCard:     json.RawMessage(raw),
-		LastSeen:    now,
+		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}, nil

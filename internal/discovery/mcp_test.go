@@ -22,15 +22,15 @@ func TestParseMCPCard_Valid(t *testing.T) {
 		]
 	}`)
 
-	agent, err := discovery.ParseMCPCard(raw, model.SourceConfig)
+	entry, err := discovery.ParseMCPCard(raw, model.SourceConfig)
 	require.NoError(t, err)
-	assert.Equal(t, "Code MCP", agent.Name)
-	assert.Equal(t, "Code execution server", agent.Description)
-	assert.Equal(t, "http://mcp.example.com", agent.Endpoint)
-	assert.Equal(t, "2.0.0", agent.Version)
-	assert.Equal(t, model.ProtocolMCP, agent.Protocol)
-	require.Len(t, agent.Skills, 2)
-	assert.Equal(t, "run-code", agent.Skills[0].Name)
+	assert.Equal(t, "Code MCP", entry.DisplayName)
+	assert.Equal(t, "Code execution server", entry.Description)
+	assert.Equal(t, "http://mcp.example.com", entry.Endpoint)
+	assert.Equal(t, "2.0.0", entry.Version)
+	assert.Equal(t, model.ProtocolMCP, entry.Protocol)
+	require.Len(t, entry.Skills, 2)
+	assert.Equal(t, "run-code", entry.Skills[0].Name)
 }
 
 func TestParseMCPCard_MissingName(t *testing.T) {
@@ -41,7 +41,7 @@ func TestParseMCPCard_MissingName(t *testing.T) {
 
 func TestParseMCPCard_NoRemotes(t *testing.T) {
 	raw := []byte(`{"name": "No Remotes MCP"}`)
-	agent, err := discovery.ParseMCPCard(raw, model.SourceConfig)
+	entry, err := discovery.ParseMCPCard(raw, model.SourceConfig)
 	require.NoError(t, err)
-	assert.Empty(t, agent.Endpoint)
+	assert.Empty(t, entry.Endpoint)
 }

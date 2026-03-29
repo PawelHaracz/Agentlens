@@ -15,7 +15,7 @@ import (
 // Source is the interface implemented by all discovery sources.
 type Source interface {
 	Name() string
-	Discover(ctx context.Context) ([]*model.Agent, error)
+	Discover(ctx context.Context) ([]*model.CatalogEntry, error)
 }
 
 // Manager orchestrates periodic discovery from all sources.
@@ -58,71 +58,72 @@ func (m *Manager) Run(ctx context.Context) error {
 
 func (m *Manager) runOnce(ctx context.Context) error {
 	for _, src := range m.sources {
-		agents, err := src.Discover(ctx)
+		entries, err := src.Discover(ctx)
 		if err != nil {
 			m.log.Warn("source discovery failed", "source", src.Name(), "err", err)
 			continue
 		}
-		if err := m.upsert(ctx, src.Name(), agents); err != nil {
+		if err := m.upsert(ctx, src.Name(), entries); err != nil {
 			m.log.Warn("upsert failed", "source", src.Name(), "err", err)
 		}
 	}
 	return nil
 }
 
-func (m *Manager) upsert(ctx context.Context, sourceName string, agents []*model.Agent) error {
+func (m *Manager) upsert(ctx context.Context, sourceName string, entries []*model.CatalogEntry) error {
 	seen := make(map[string]bool)
 
-	for _, a := range agents {
-		existing, err := m.store.FindByEndpoint(ctx, a.Endpoint)
+	for _, e := range entries {
+		existing, err := m.store.FindByEndpoint(ctx, e.Endpoint)
 		if err != nil {
 			return fmt.Errorf("finding by endpoint: %w", err)
 		}
 		now := time.Now().UTC()
 		if existing != nil {
-			// Do not touch push-registered agents
+			// Do not touch push-registered entries
 			if existing.Source == model.SourcePush {
 				continue
 			}
-			existing.Name = a.Name
-			existing.Description = a.Description
-			existing.Protocol = a.Protocol
-			existing.Version = a.Version
-			existing.Skills = a.Skills
-			existing.Tags = a.Tags
-			existing.Team = a.Team
-			existing.RawCard = a.RawCard
-			existing.LastSeen = now
+			existing.DisplayName = e.DisplayName
+			existing.Description = e.Description
+			existing.Protocol = e.Protocol
+			existing.Version = e.Version
+			existing.Skills = e.Skills
+			existing.Categories = e.Categories
+			existing.Provider = e.Provider
+			existing.Metadata = e.Metadata
+			existing.RawCard = e.RawCard
+			existing.Validity.LastSeen = now
 			existing.UpdatedAt = now
 			if err := m.store.Update(ctx, existing); err != nil {
-				m.log.Warn("failed to update agent", "id", existing.ID, "err", err)
+				m.log.Warn("failed to update entry", "id", existing.ID, "err", err)
 			}
 			seen[existing.ID] = true
 		} else {
-			a.ID = uuid.NewString()
-			a.LastSeen = now
-			a.CreatedAt = now
-			a.UpdatedAt = now
-			if err := m.store.Create(ctx, a); err != nil {
-				m.log.Warn("failed to create agent", "endpoint", a.Endpoint, "err", err)
+			e.ID = uuid.NewString()
+			e.Validity.LastSeen = now
+			e.CreatedAt = now
+			e.UpdatedAt = now
+			if err := m.store.Create(ctx, e); err != nil {
+				m.log.Warn("failed to create entry", "endpoint", e.Endpoint, "err", err)
 			} else {
-				seen[a.ID] = true
+				seen[e.ID] = true
 			}
 		}
 	}
 
-	// Mark missing non-push agents as down
+	// Mark missing non-push entries as down
 	src := m.sourceType(sourceName)
 	existing, err := m.store.List(ctx, store.ListFilter{Source: &src})
 	if err != nil {
-		return fmt.Errorf("listing agents for source: %w", err)
+		return fmt.Errorf("listing entries for source: %w", err)
 	}
-	for _, a := range existing {
-		if !seen[a.ID] {
-			a.Status = model.StatusDown
-			a.UpdatedAt = time.Now().UTC()
-			if err := m.store.Update(ctx, &a); err != nil {
-				m.log.Warn("failed to mark agent down", "id", a.ID, "err", err)
+	for _, e := range existing {
+		if !seen[e.ID] {
+			e.Status = model.StatusDown
+			e.UpdatedAt = time.Now().UTC()
+			if err := m.store.Update(ctx, &e); err != nil {
+				m.log.Warn("failed to mark entry down", "id", e.ID, "err", err)
 			}
 		}
 	}

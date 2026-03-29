@@ -45,28 +45,28 @@ func NewK8sSource(client kubernetes.Interface, namespaces []string) *K8sSource {
 func (k *K8sSource) Name() string { return "k8s" }
 
 // Discover lists Kubernetes Services and fetches agent cards for annotated ones.
-func (k *K8sSource) Discover(ctx context.Context) ([]*model.Agent, error) {
-	var agents []*model.Agent
+func (k *K8sSource) Discover(ctx context.Context) ([]*model.CatalogEntry, error) {
+	var entries []*model.CatalogEntry
 	for _, ns := range k.namespaces {
 		svcs, err := k.client.CoreV1().Services(ns).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("listing services in namespace %s: %w", ns, err)
 		}
 		for _, svc := range svcs.Items {
-			agent, err := k.processService(ctx, svc)
+			entry, err := k.processService(ctx, svc)
 			if err != nil {
 				k.log.Warn("failed to process service", "name", svc.Name, "namespace", svc.Namespace, "err", err)
 				continue
 			}
-			if agent != nil {
-				agents = append(agents, agent)
+			if entry != nil {
+				entries = append(entries, entry)
 			}
 		}
 	}
-	return agents, nil
+	return entries, nil
 }
 
-func (k *K8sSource) processService(ctx context.Context, svc corev1.Service) (*model.Agent, error) {
+func (k *K8sSource) processService(ctx context.Context, svc corev1.Service) (*model.CatalogEntry, error) {
 	ann := svc.Annotations
 	if ann == nil {
 		return nil, nil
@@ -95,26 +95,29 @@ func (k *K8sSource) processService(ctx context.Context, svc corev1.Service) (*mo
 		return nil, fmt.Errorf("fetching card from %s: %w", url, err)
 	}
 
-	var agent *model.Agent
+	var entry *model.CatalogEntry
 	switch agentType {
 	case "mcp":
-		agent, err = ParseMCPCard(raw, model.SourceK8s)
+		entry, err = ParseMCPCard(raw, model.SourceK8s)
 	default:
-		agent, err = ParseA2ACard(raw, model.SourceK8s)
+		entry, err = ParseA2ACard(raw, model.SourceK8s)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("parsing card: %w", err)
 	}
 
-	agent.Namespace = svc.Namespace
+	if entry.Metadata == nil {
+		entry.Metadata = make(map[string]string)
+	}
+	entry.Metadata["kubernetes.namespace"] = svc.Namespace
 	if team := ann[annotationTeam]; team != "" {
-		agent.Team = team
+		entry.Provider.Team = team
 	}
 	if tags := ann[annotationTags]; tags != "" {
-		agent.Tags = strings.Split(tags, ",")
+		entry.Categories = strings.Split(tags, ",")
 	}
 
-	return agent, nil
+	return entry, nil
 }
 
 func (k *K8sSource) firstPort(svc corev1.Service) int32 {

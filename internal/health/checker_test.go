@@ -23,22 +23,22 @@ func newTestStore(t *testing.T) store.Store {
 	return s
 }
 
-func insertAgent(t *testing.T, s store.Store, id, endpoint string) *model.Agent {
+func insertEntry(t *testing.T, s store.Store, id, endpoint string) *model.CatalogEntry {
 	t.Helper()
 	now := time.Now().UTC()
-	a := &model.Agent{
-		ID:        id,
-		Name:      "Test Agent",
-		Protocol:  model.ProtocolA2A,
-		Endpoint:  endpoint,
-		Status:    model.StatusUnknown,
-		Source:    model.SourcePush,
-		LastSeen:  now,
-		CreatedAt: now,
-		UpdatedAt: now,
+	e := &model.CatalogEntry{
+		ID:          id,
+		DisplayName: "Test Entry",
+		Protocol:    model.ProtocolA2A,
+		Endpoint:    endpoint,
+		Status:      model.StatusUnknown,
+		Source:      model.SourcePush,
+		Validity:    model.Validity{LastSeen: now},
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
-	require.NoError(t, s.Create(context.Background(), a))
-	return a
+	require.NoError(t, s.Create(context.Background(), e))
+	return e
 }
 
 func TestChecker_Healthy(t *testing.T) {
@@ -48,7 +48,7 @@ func TestChecker_Healthy(t *testing.T) {
 	defer ts.Close()
 
 	s := newTestStore(t)
-	insertAgent(t, s, "h1", ts.URL)
+	insertEntry(t, s, "h1", ts.URL)
 
 	checker := health.NewChecker(s, 100*time.Millisecond, 5*time.Second, 2)
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
@@ -56,14 +56,14 @@ func TestChecker_Healthy(t *testing.T) {
 	go checker.Run(ctx)
 	time.Sleep(300 * time.Millisecond)
 
-	a, err := s.Get(context.Background(), "h1")
+	e, err := s.Get(context.Background(), "h1")
 	require.NoError(t, err)
-	assert.Equal(t, model.StatusHealthy, a.Status)
+	assert.Equal(t, model.StatusHealthy, e.Status)
 }
 
 func TestChecker_Down(t *testing.T) {
 	s := newTestStore(t)
-	insertAgent(t, s, "d1", "http://localhost:19999") // nothing running here
+	insertEntry(t, s, "d1", "http://localhost:19999") // nothing running here
 
 	checker := health.NewChecker(s, 100*time.Millisecond, 500*time.Millisecond, 2)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -71,7 +71,7 @@ func TestChecker_Down(t *testing.T) {
 	go checker.Run(ctx)
 	time.Sleep(1 * time.Second)
 
-	a, err := s.Get(context.Background(), "d1")
+	e, err := s.Get(context.Background(), "d1")
 	require.NoError(t, err)
-	assert.Equal(t, model.StatusDown, a.Status)
+	assert.Equal(t, model.StatusDown, e.Status)
 }

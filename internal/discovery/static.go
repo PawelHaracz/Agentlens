@@ -29,21 +29,21 @@ func NewStaticSource(sources []config.SourceConfig) *StaticSource {
 func (s *StaticSource) Name() string { return "static" }
 
 // Discover fetches and parses all configured agent cards.
-func (s *StaticSource) Discover(ctx context.Context) ([]*model.Agent, error) {
-	var agents []*model.Agent
+func (s *StaticSource) Discover(ctx context.Context) ([]*model.CatalogEntry, error) {
+	var entries []*model.CatalogEntry
 	for _, src := range s.sources {
-		agent, err := s.fetchOne(ctx, src)
+		entry, err := s.fetchOne(ctx, src)
 		if err != nil {
-			s.log.Warn("failed to discover agent", "name", src.Name, "url", src.URL, "err", err)
+			s.log.Warn("failed to discover entry", "name", src.Name, "url", src.URL, "err", err)
 			continue
 		}
-		agent.Name = src.Name
-		agents = append(agents, agent)
+		entry.DisplayName = src.Name
+		entries = append(entries, entry)
 	}
-	return agents, nil
+	return entries, nil
 }
 
-func (s *StaticSource) fetchOne(ctx context.Context, src config.SourceConfig) (*model.Agent, error) {
+func (s *StaticSource) fetchOne(ctx context.Context, src config.SourceConfig) (*model.CatalogEntry, error) {
 	raw, err := s.crawler.FetchCard(ctx, src.URL)
 	if err != nil {
 		return nil, fmt.Errorf("fetching card: %w", err)

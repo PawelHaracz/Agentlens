@@ -36,58 +36,59 @@ func TestHealthz(t *testing.T) {
 	assert.Equal(t, "ok", resp["status"])
 }
 
-func TestListAgents_Empty(t *testing.T) {
+func TestListCatalog_Empty(t *testing.T) {
 	router, _ := newTestRouter(t)
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/agents", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestCreateAgent(t *testing.T) {
+func TestCreateEntry(t *testing.T) {
 	router, _ := newTestRouter(t)
 
 	body := map[string]interface{}{
-		"name":        "My Agent",
-		"description": "A great agent",
-		"protocol":    "a2a",
-		"endpoint":    "http://agent.example.com",
+		"display_name": "My Entry",
+		"description":  "A great entry",
+		"protocol":     "a2a",
+		"endpoint":     "http://agent.example.com",
 	}
 	bodyBytes, _ := json.Marshal(body)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/agents", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/catalog", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	var agent model.Agent
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &agent))
-	assert.NotEmpty(t, agent.ID)
-	assert.Equal(t, "My Agent", agent.Name)
-	assert.Equal(t, model.SourcePush, agent.Source)
-	assert.Equal(t, model.StatusUnknown, agent.Status)
+	var entry model.CatalogEntry
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &entry))
+	assert.NotEmpty(t, entry.ID)
+	assert.Equal(t, "My Entry", entry.DisplayName)
+	assert.Equal(t, model.SourcePush, entry.Source)
+	assert.Equal(t, model.StatusUnknown, entry.Status)
 }
 
-func TestGetAgent_NotFound(t *testing.T) {
+func TestGetEntry_NotFound(t *testing.T) {
 	router, _ := newTestRouter(t)
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/agents/does-not-exist", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog/does-not-exist", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestDeleteAgent(t *testing.T) {
+func TestDeleteEntry(t *testing.T) {
 	router, s := newTestRouter(t)
 
 	now := time.Now().UTC()
-	a := &model.Agent{
-		ID: "del-1", Name: "Del Agent", Protocol: model.ProtocolA2A,
+	e := &model.CatalogEntry{
+		ID: "del-1", DisplayName: "Del Entry", Protocol: model.ProtocolA2A,
 		Endpoint: "http://del.example.com", Status: model.StatusUnknown,
-		Source: model.SourcePush, LastSeen: now, CreatedAt: now, UpdatedAt: now,
+		Source: model.SourcePush, Validity: model.Validity{LastSeen: now},
+		CreatedAt: now, UpdatedAt: now,
 	}
-	require.NoError(t, s.Create(context.Background(), a))
+	require.NoError(t, s.Create(context.Background(), e))
 
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/agents/del-1", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/catalog/del-1", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNoContent, w.Code)

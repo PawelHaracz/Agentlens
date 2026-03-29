@@ -20,23 +20,23 @@ func newTestStore(t *testing.T) store.Store {
 	return s
 }
 
-func sampleAgent(id string) *model.Agent {
+func sampleEntry(id string) *model.CatalogEntry {
 	now := time.Now().UTC().Truncate(time.Second)
-	return &model.Agent{
+	return &model.CatalogEntry{
 		ID:          id,
-		Name:        "Test Agent " + id,
-		Description: "A test agent",
+		DisplayName: "Test Entry " + id,
+		Description: "A test entry",
 		Protocol:    model.ProtocolA2A,
 		Endpoint:    "http://example.com/" + id,
 		Version:     "1.0.0",
 		Status:      model.StatusUnknown,
 		Source:      model.SourcePush,
-		Team:        "team-a",
-		Tags:        []string{"tag1", "tag2"},
+		Provider:    model.Provider{Team: "team-a"},
+		Categories:  []string{"cat1", "cat2"},
 		Skills: []model.Skill{
 			{Name: "skill1", Description: "does stuff", InputModes: []string{"text"}, OutputModes: []string{"text"}},
 		},
-		LastSeen:  now,
+		Validity:  model.Validity{LastSeen: now},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -46,15 +46,15 @@ func TestCreate_Get(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	a := sampleAgent("agent-1")
+	a := sampleEntry("entry-1")
 	require.NoError(t, s.Create(ctx, a))
 
-	got, err := s.Get(ctx, "agent-1")
+	got, err := s.Get(ctx, "entry-1")
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, a.Name, got.Name)
+	assert.Equal(t, a.DisplayName, got.DisplayName)
 	assert.Equal(t, a.Protocol, got.Protocol)
-	assert.Equal(t, a.Tags, got.Tags)
+	assert.Equal(t, a.Categories, got.Categories)
 	assert.Len(t, got.Skills, 1)
 	assert.Equal(t, "skill1", got.Skills[0].Name)
 }
@@ -72,17 +72,17 @@ func TestUpdate(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	a := sampleAgent("agent-2")
+	a := sampleEntry("entry-2")
 	require.NoError(t, s.Create(ctx, a))
 
-	a.Name = "Updated Name"
+	a.DisplayName = "Updated Name"
 	a.Status = model.StatusHealthy
 	a.UpdatedAt = time.Now().UTC()
 	require.NoError(t, s.Update(ctx, a))
 
-	got, err := s.Get(ctx, "agent-2")
+	got, err := s.Get(ctx, "entry-2")
 	require.NoError(t, err)
-	assert.Equal(t, "Updated Name", got.Name)
+	assert.Equal(t, "Updated Name", got.DisplayName)
 	assert.Equal(t, model.StatusHealthy, got.Status)
 }
 
@@ -90,11 +90,11 @@ func TestDelete(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	a := sampleAgent("agent-3")
+	a := sampleEntry("entry-3")
 	require.NoError(t, s.Create(ctx, a))
-	require.NoError(t, s.Delete(ctx, "agent-3"))
+	require.NoError(t, s.Delete(ctx, "entry-3"))
 
-	got, err := s.Get(ctx, "agent-3")
+	got, err := s.Get(ctx, "entry-3")
 	require.NoError(t, err)
 	assert.Nil(t, got)
 }
@@ -103,18 +103,18 @@ func TestList(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	agents := []*model.Agent{
-		sampleAgent("a1"),
-		sampleAgent("a2"),
-		sampleAgent("a3"),
+	entries := []*model.CatalogEntry{
+		sampleEntry("a1"),
+		sampleEntry("a2"),
+		sampleEntry("a3"),
 	}
-	agents[1].Protocol = model.ProtocolMCP
-	agents[1].Endpoint = "http://example.com/a2"
-	agents[2].Status = model.StatusHealthy
-	agents[2].Endpoint = "http://example.com/a3"
+	entries[1].Protocol = model.ProtocolMCP
+	entries[1].Endpoint = "http://example.com/a2"
+	entries[2].Status = model.StatusHealthy
+	entries[2].Endpoint = "http://example.com/a3"
 
-	for _, a := range agents {
-		require.NoError(t, s.Create(ctx, a))
+	for _, e := range entries {
+		require.NoError(t, s.Create(ctx, e))
 	}
 
 	t.Run("list all", func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestFindByEndpoint(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	a := sampleAgent("agent-ep")
+	a := sampleEntry("entry-ep")
 	require.NoError(t, s.Create(ctx, a))
 
 	got, err := s.FindByEndpoint(ctx, a.Endpoint)
@@ -165,7 +165,7 @@ func TestSearchSkills(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	a := sampleAgent("agent-skills")
+	a := sampleEntry("entry-skills")
 	a.Skills = []model.Skill{
 		{Name: "translate", Description: "language translation"},
 	}
@@ -184,18 +184,18 @@ func TestStats(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	a1 := sampleAgent("s1")
+	a1 := sampleEntry("s1")
 	a1.Status = model.StatusHealthy
-	a2 := sampleAgent("s2")
+	a2 := sampleEntry("s2")
 	a2.Status = model.StatusDown
 	a2.Endpoint = "http://example.com/s2"
-	a3 := sampleAgent("s3")
+	a3 := sampleEntry("s3")
 	a3.Status = model.StatusHealthy
 	a3.Source = model.SourceK8s
 	a3.Endpoint = "http://example.com/s3"
 
-	for _, a := range []*model.Agent{a1, a2, a3} {
-		require.NoError(t, s.Create(ctx, a))
+	for _, e := range []*model.CatalogEntry{a1, a2, a3} {
+		require.NoError(t, s.Create(ctx, e))
 	}
 
 	stats, err := s.Stats(ctx)
