@@ -96,7 +96,7 @@ func main() {
 	defer func() {
 		sqlDB, err := database.DB.DB()
 		if err == nil {
-			sqlDB.Close()
+			_ = sqlDB.Close()
 		}
 	}()
 

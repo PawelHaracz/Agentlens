@@ -22,7 +22,7 @@ func newTestDB(t *testing.T) *db.DB {
 	t.Cleanup(func() {
 		sqlDB, _ := database.DB.DB()
 		if sqlDB != nil {
-			sqlDB.Close()
+			_ = sqlDB.Close()
 		}
 	})
 	return database
