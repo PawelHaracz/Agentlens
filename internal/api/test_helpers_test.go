@@ -16,49 +16,7 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/store"
 )
 
-// setupTestRouter creates a fully wired router with an in-memory test database.
-func setupTestRouter(t *testing.T) (*http.ServeMux, *db.DB, *auth.JWTService) {
-	t.Helper()
-
-	database, err := db.OpenMemory()
-	require.NoError(t, err)
-
-	migrator := db.NewMigrator(database, db.AllMigrations())
-	require.NoError(t, migrator.Migrate(context.Background()))
-
-	catalogStore := store.NewSQLStore(database)
-	userStore := store.NewUserStore(database)
-	roleStore := store.NewRoleStore(database)
-	settingsStore := store.NewSettingsStore(database)
-
-	jwtService := auth.NewJWTService(auth.JWTConfig{
-		Secret:        "test-secret",
-		Expiration:    time.Hour,
-		RefreshWindow: 10 * time.Minute,
-	})
-
-	router := api.NewRouter(api.RouterDeps{
-		Store:         catalogStore,
-		UserStore:     userStore,
-		RoleStore:     roleStore,
-		SettingsStore: settingsStore,
-		JWTService:    jwtService,
-	})
-
-	t.Cleanup(func() {
-		sqlDB, _ := database.DB.DB()
-		if sqlDB != nil {
-			sqlDB.Close()
-		}
-	})
-
-	// Wrap chi.Mux to satisfy the *http.ServeMux return type is not needed;
-	// we return the components separately.
-	_ = router
-	return nil, database, jwtService
-}
-
-// testRouter creates a chi router for testing.
+// testRouter creates a chi router for testing with a full in-memory DB.
 func testRouter(t *testing.T) (http.Handler, *db.DB, *auth.JWTService) {
 	t.Helper()
 
