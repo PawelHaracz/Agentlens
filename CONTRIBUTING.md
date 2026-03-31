@@ -67,6 +67,51 @@ Please open a GitHub issue with:
 - Expected vs actual behavior
 - Go/Node version and OS
 
+## Running with PostgreSQL
+
+To run AgentLens locally with PostgreSQL instead of SQLite:
+
+```bash
+cd examples
+docker compose -f docker-compose.postgres.yaml up
+```
+
+This starts AgentLens with a PostgreSQL 16 database, along with mock A2A and MCP agents for testing. The PostgreSQL data is persisted in a Docker volume (`pgdata`).
+
+To reset the database:
+
+```bash
+docker compose -f docker-compose.postgres.yaml down -v
+docker compose -f docker-compose.postgres.yaml up
+```
+
+## Adding a New Migration
+
+Database migrations are located in `internal/store/migrations/` and are applied automatically on startup.
+
+To add a new migration:
+
+1. Determine the next sequence number by checking existing files (e.g., if the latest is `002_*.sql`, create `003_*.sql`).
+2. Create a new file: `internal/store/migrations/003_your_description.sql`.
+3. Write idempotent SQL — use `CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, etc.
+4. Both SQLite and PostgreSQL must be supported. If syntax differs, use conditional logic or separate files suffixed with `_sqlite.sql` and `_postgres.sql`.
+5. Test by running the application against both database backends.
+
+## Adding a New Permission
+
+Permissions follow the `resource:action` format (e.g., `catalog:read`, `users:write`).
+
+To add a new permission:
+
+1. Define the permission constant in the auth/RBAC code (e.g., `myresource:read`).
+2. Add it to the appropriate default roles in the bootstrap migration or seed logic.
+3. Reference the permission in the middleware/handler where access control is enforced.
+4. Update the documentation:
+   - `docs/auth.md` — add the permission to the roles/permissions tables
+   - `docs/api.md` — note which endpoints require the new permission
+   - `README.md` — update the Roles & Permissions table if needed
+5. Write tests to verify the permission is enforced correctly.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the same terms as the project, as specified in the LICENSE file (currently the Business Source License 1.1).

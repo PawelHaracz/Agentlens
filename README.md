@@ -124,6 +124,25 @@ curl -X POST http://localhost:8080/api/v1/catalog \
 | `GET` | `/api/v1/catalog/{id}/card` | Get raw protocol card JSON |
 | `GET` | `/api/v1/skills?q=` | Search entries by skill name |
 | `GET` | `/api/v1/stats` | Aggregate stats |
+| `POST` | `/api/v1/auth/login` | Login and obtain JWT token |
+| `POST` | `/api/v1/auth/logout` | Logout (invalidate token) |
+| `POST` | `/api/v1/auth/refresh` | Refresh JWT token |
+| `GET` | `/api/v1/auth/me` | Get current user info |
+| `PUT` | `/api/v1/auth/password` | Change current user password |
+| `GET` | `/api/v1/users` | List users |
+| `POST` | `/api/v1/users` | Create user |
+| `GET` | `/api/v1/users/{id}` | Get user by ID |
+| `PUT` | `/api/v1/users/{id}` | Update user |
+| `DELETE` | `/api/v1/users/{id}` | Delete user |
+| `GET` | `/api/v1/roles` | List roles |
+| `POST` | `/api/v1/roles` | Create role |
+| `GET` | `/api/v1/roles/{id}` | Get role by ID |
+| `PUT` | `/api/v1/roles/{id}` | Update role |
+| `DELETE` | `/api/v1/roles/{id}` | Delete role |
+| `GET` | `/api/v1/settings` | List settings |
+| `GET` | `/api/v1/settings/{key}` | Get setting by key |
+| `PUT` | `/api/v1/settings/{key}` | Update setting |
+| `PUT` | `/api/v1/settings` | Bulk update settings |
 
 See [docs/api.md](docs/api.md) for full API documentation.
 
@@ -139,6 +158,113 @@ AgentLens uses a **microkernel plugin architecture**:
 - **Enterprise plugins** — SSO, RBAC, audit, PostgreSQL (license-gated)
 
 The domain model follows the **Product Archetype Pattern** where each discovered agent/server is a `CatalogEntry` wrapping a `ProductType` (protocol).
+
+---
+
+## Database
+
+AgentLens supports two database backends:
+
+- **SQLite** (default) — zero-config, file-based, ideal for single-instance deployments
+- **PostgreSQL** — recommended for production, multi-instance, and high-availability setups
+
+Configure via `database.dialect` in the config file or `AGENTLENS_DB_DIALECT` env var.
+
+### SQLite (default)
+```yaml
+database:
+  dialect: sqlite
+  sqlite:
+    path: ./data/agentlens.db
+```
+
+### PostgreSQL
+```yaml
+database:
+  dialect: postgres
+  postgres:
+    host: localhost
+    port: 5432
+    user: agentlens
+    password: secret
+    dbname: agentlens
+    sslmode: prefer
+```
+
+See [docs/database.md](docs/database.md) for full database documentation.
+
+---
+
+## Authentication
+
+AgentLens includes built-in authentication with JWT tokens and role-based access control.
+
+### First Run
+On first startup, AgentLens creates an `admin` user with a randomly generated password printed to stdout:
+
+```
+============================================
+  INITIAL ADMIN CREDENTIALS
+  Username: admin
+  Password: <generated>
+  CHANGE THIS PASSWORD IMMEDIATELY
+============================================
+```
+
+### Login
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "<your-password>"}'
+```
+
+The response includes a JWT token. Use it in subsequent requests:
+```bash
+curl http://localhost:8080/api/v1/catalog \
+  -H "Authorization: Bearer <token>"
+```
+
+See [docs/auth.md](docs/auth.md) for full authentication documentation.
+
+---
+
+## Roles & Permissions
+
+Three default roles are created on first run:
+
+| Role | Permissions |
+|------|------------|
+| **admin** | Full access: catalog, users, roles, settings (read/write/delete) |
+| **editor** | catalog:read/write, users:read, roles:read, settings:read |
+| **viewer** | catalog:read, users:read, roles:read, settings:read |
+
+All permissions follow the `resource:action` format (e.g., `catalog:read`, `users:write`).
+
+---
+
+## Configuration Reference
+
+| Environment Variable | Default | Description |
+|---|---|---|
+| `AGENTLENS_PORT` | `8080` | HTTP server port |
+| `AGENTLENS_DATA_DIR` | `./data` | Data directory for SQLite |
+| `AGENTLENS_LOG_LEVEL` | `info` | Log level (debug/info/warn/error) |
+| `AGENTLENS_POLL_INTERVAL` | `5m` | Discovery poll interval |
+| `AGENTLENS_DB_DIALECT` | `sqlite` | Database backend (sqlite/postgres) |
+| `AGENTLENS_DB_SQLITE_PATH` | `./data/agentlens.db` | SQLite database file path |
+| `AGENTLENS_DB_POSTGRES_HOST` | `localhost` | PostgreSQL host |
+| `AGENTLENS_DB_POSTGRES_PORT` | `5432` | PostgreSQL port |
+| `AGENTLENS_DB_POSTGRES_USER` | `agentlens` | PostgreSQL user |
+| `AGENTLENS_DB_POSTGRES_PASSWORD` | | PostgreSQL password |
+| `AGENTLENS_DB_POSTGRES_DBNAME` | `agentlens` | PostgreSQL database name |
+| `AGENTLENS_DB_POSTGRES_SSLMODE` | `disable` | PostgreSQL SSL mode |
+| `AGENTLENS_JWT_SECRET` | (auto-generated) | JWT signing secret |
+| `AGENTLENS_SESSION_DURATION` | `24h` | JWT token expiration |
+| `AGENTLENS_KUBERNETES_ENABLED` | `false` | Enable Kubernetes discovery |
+| `AGENTLENS_HEALTH_CHECK_ENABLED` | `true` | Enable health checking |
+| `AGENTLENS_HEALTH_CHECK_INTERVAL` | `30s` | Health check interval |
+| `AGENTLENS_HEALTH_CHECK_TIMEOUT` | `5s` | Health check timeout |
+| `AGENTLENS_HEALTH_CHECK_CONCURRENCY` | `10` | Health check parallelism |
 
 ---
 

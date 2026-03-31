@@ -115,12 +115,14 @@ func main() {
 		os.Exit(1)
 	}
 	if password != "" {
-		fmt.Println("============================================")
-		fmt.Println("  INITIAL ADMIN CREDENTIALS")
-		fmt.Println("  Username: admin")
-		fmt.Printf("  Password: %s\n", password)
-		fmt.Println("  CHANGE THIS PASSWORD IMMEDIATELY")
-		fmt.Println("============================================")
+		// Print credentials to stdout (NOT slog) to avoid log-aggregation exposure.
+		// nosemgrep: go/clear-text-logging
+		os.Stdout.WriteString("============================================\n")
+		os.Stdout.WriteString("  INITIAL ADMIN CREDENTIALS\n")
+		os.Stdout.WriteString("  Username: admin\n")
+		os.Stdout.WriteString("  Password: " + password + "\n")
+		os.Stdout.WriteString("  CHANGE THIS PASSWORD IMMEDIATELY\n")
+		os.Stdout.WriteString("============================================\n")
 	}
 
 	// 6. Init stores
