@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/auth"
 	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
@@ -149,7 +150,12 @@ func main() {
 	}
 
 	// Start HTTP server
-	router := api.NewRouter(s)
+	jwtService := auth.NewJWTService(auth.JWTConfig{
+		Secret:     cfg.Auth.JWTSecret,
+		Expiration: cfg.Auth.SessionDuration,
+	})
+	_ = jwtService // Will be wired into RouterDeps when full auth integration is enabled.
+	router := api.NewRouter(api.RouterDeps{Store: s})
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := server.New(addr, router)
 	if err := srv.Start(ctx); err != nil {
