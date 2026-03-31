@@ -133,8 +133,7 @@ All permissions follow the `resource:action` format:
 | `users:write` | Create/update users |
 | `users:delete` | Delete users |
 | `roles:read` | View roles |
-| `roles:write` | Create/update roles |
-| `roles:delete` | Delete roles |
+| `roles:write` | Create/update/delete roles |
 | `settings:read` | View settings |
 | `settings:write` | Update settings |
 

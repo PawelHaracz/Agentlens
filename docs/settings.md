@@ -14,17 +14,9 @@ Settings are organized by **category** and identified by a unique **key**. Each 
 
 | Key | Category | Default | Description |
 |---|---|---|---|
-| `general.instance_name` | general | `AgentLens` | Display name for this AgentLens instance |
-| `general.log_level` | general | `info` | Logging level (debug/info/warn/error) |
-| `discovery.poll_interval` | discovery | `5m` | How often to poll sources for agent discovery |
-| `discovery.kubernetes_enabled` | discovery | `false` | Enable Kubernetes service discovery |
-| `health.check_enabled` | health | `true` | Enable periodic health checking of agents |
-| `health.check_interval` | health | `30s` | Interval between health checks |
-| `health.check_timeout` | health | `5s` | Timeout for individual health checks |
-| `health.check_concurrency` | health | `10` | Number of concurrent health checks |
-| `auth.session_duration` | auth | `24h` | JWT token expiration duration |
-| `auth.max_failed_attempts` | auth | `5` | Failed login attempts before lockout |
-| `auth.lockout_duration` | auth | `15m` | Account lockout duration |
+| `app.name` | general | `AgentLens` | Application display name |
+| `app.registration_enabled` | auth | `true` | Allow new user registration |
+| `app.default_role` | auth | `viewer` | Default role for new users |
 
 ---
 
@@ -33,8 +25,6 @@ Settings are organized by **category** and identified by a unique **key**. Each 
 | Category | Description |
 |---|---|
 | `general` | General instance settings |
-| `discovery` | Agent discovery settings |
-| `health` | Health check settings |
 | `auth` | Authentication and session settings |
 
 ---
@@ -52,10 +42,9 @@ curl http://localhost:8080/api/v1/settings \
 ```json
 [
   {
-    "key": "general.instance_name",
+    "key": "app.name",
     "value": "AgentLens",
-    "default_value": "AgentLens",
-    "description": "Display name for this AgentLens instance",
+    "description": "Application display name",
     "category": "general",
     "updated_at": "2024-01-15T10:30:00Z"
   }
@@ -65,41 +54,9 @@ curl http://localhost:8080/api/v1/settings \
 ### Get Settings by Category
 
 ```bash
-curl http://localhost:8080/api/v1/settings?category=health \
+curl http://localhost:8080/api/v1/settings/auth \
   -H "Authorization: Bearer <token>"
 ```
-
-### Get a Single Setting
-
-```bash
-curl http://localhost:8080/api/v1/settings/general.instance_name \
-  -H "Authorization: Bearer <token>"
-```
-
-**Response 200:**
-```json
-{
-  "key": "general.instance_name",
-  "value": "AgentLens",
-  "default_value": "AgentLens",
-  "description": "Display name for this AgentLens instance",
-  "category": "general",
-  "updated_at": "2024-01-15T10:30:00Z"
-}
-```
-
-### Update a Setting
-
-```bash
-curl -X PUT http://localhost:8080/api/v1/settings/general.instance_name \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"value": "My AgentLens"}'
-```
-
-**Response 200:** Returns the updated setting object.
-
-> **Permission required:** `settings:write` (admin role by default).
 
 ### Bulk Update Settings
 
@@ -107,13 +64,13 @@ curl -X PUT http://localhost:8080/api/v1/settings/general.instance_name \
 curl -X PUT http://localhost:8080/api/v1/settings \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '[
-    {"key": "health.check_interval", "value": "60s"},
-    {"key": "health.check_concurrency", "value": "20"}
-  ]'
+  -d '{
+    "app.name": "My AgentLens",
+    "app.default_role": "editor"
+  }'
 ```
 
-**Response 200:** Returns the list of updated setting objects.
+**Response 200:** Confirmation message.
 
 > **Permission required:** `settings:write` (admin role by default).
 

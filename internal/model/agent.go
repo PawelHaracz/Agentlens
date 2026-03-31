@@ -64,32 +64,32 @@ func (v Validity) IsActiveAt(t time.Time) bool {
 // This follows the Product archetype pattern where CatalogEntry
 // is the commercial offering wrapping a ProductType.
 type CatalogEntry struct {
-	ID          string          `json:"id" gorm:"primaryKey;type:text"`
-	DisplayName string          `json:"display_name" gorm:"not null;type:text"`
-	Description string          `json:"description" gorm:"type:text;default:''"`
-	Protocol    Protocol        `json:"protocol" gorm:"not null;type:text;index"`
-	Endpoint    string          `json:"endpoint" gorm:"uniqueIndex;type:text"`
-	Version     string          `json:"version" gorm:"type:text;default:''"`
-	Status      Status          `json:"status" gorm:"not null;type:text;default:'unknown';index"`
-	Source      SourceType      `json:"source" gorm:"not null;type:text;index"`
-	Provider    Provider        `json:"provider,omitempty" gorm:"-"`
-	Categories  []string        `json:"categories,omitempty" gorm:"-"`
-	Skills      []Skill         `json:"skills,omitempty" gorm:"-"`
-	Validity    Validity        `json:"validity" gorm:"-"`
-	RawCard     json.RawMessage `json:"raw_card,omitempty" gorm:"-"`
+	ID          string            `json:"id" gorm:"primaryKey;type:text"`
+	DisplayName string            `json:"display_name" gorm:"not null;type:text"`
+	Description string            `json:"description" gorm:"type:text;default:''"`
+	Protocol    Protocol          `json:"protocol" gorm:"not null;type:text;index"`
+	Endpoint    string            `json:"endpoint" gorm:"uniqueIndex;type:text"`
+	Version     string            `json:"version" gorm:"type:text;default:''"`
+	Status      Status            `json:"status" gorm:"not null;type:text;default:'unknown';index"`
+	Source      SourceType        `json:"source" gorm:"not null;type:text;index"`
+	Provider    Provider          `json:"provider,omitempty" gorm:"-"`
+	Categories  []string          `json:"categories,omitempty" gorm:"-"`
+	Skills      []Skill           `json:"skills,omitempty" gorm:"-"`
+	Validity    Validity          `json:"validity" gorm:"-"`
+	RawCard     json.RawMessage   `json:"raw_card,omitempty" gorm:"-"`
 	Metadata    map[string]string `json:"metadata,omitempty" gorm:"-"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 
 	// Database-serialized JSON fields (used by GORM, hidden from JSON API).
-	ProviderJSON  string     `json:"-" gorm:"column:provider;type:text;not null;default:'{}';index"`
-	CategoriesJSON string    `json:"-" gorm:"column:categories;type:text;not null;default:'[]'"`
-	SkillsJSON    string     `json:"-" gorm:"column:skills;type:text;not null;default:'[]'"`
-	MetadataJSON  string     `json:"-" gorm:"column:metadata;type:text;not null;default:'{}'"`
-	RawCardStr    *string    `json:"-" gorm:"column:raw_card;type:text"`
-	ValidFrom     *time.Time `json:"-" gorm:"column:validity_from"`
-	ValidTo       *time.Time `json:"-" gorm:"column:validity_to"`
-	LastSeen      time.Time  `json:"-" gorm:"column:validity_last_seen;not null"`
+	ProviderJSON   string     `json:"-" gorm:"column:provider;type:text;not null;default:'{}';index"`
+	CategoriesJSON string     `json:"-" gorm:"column:categories;type:text;not null;default:'[]'"`
+	SkillsJSON     string     `json:"-" gorm:"column:skills;type:text;not null;default:'[]'"`
+	MetadataJSON   string     `json:"-" gorm:"column:metadata;type:text;not null;default:'{}'"`
+	RawCardStr     *string    `json:"-" gorm:"column:raw_card;type:text"`
+	ValidFrom      *time.Time `json:"-" gorm:"column:validity_from"`
+	ValidTo        *time.Time `json:"-" gorm:"column:validity_to"`
+	LastSeen       time.Time  `json:"-" gorm:"column:validity_last_seen;not null"`
 }
 
 // TableName overrides the GORM table name.

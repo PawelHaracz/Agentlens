@@ -37,6 +37,9 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 	r.Route("/api/v1", func(r chi.Router) {
 		// Public auth routes.
 		if deps.JWTService != nil {
+			if deps.UserStore == nil || deps.RoleStore == nil {
+				panic("JWTService requires UserStore and RoleStore to be provided")
+			}
 			authHandler := NewAuthHandler(deps.UserStore, deps.RoleStore, deps.JWTService)
 			r.Post("/auth/login", authHandler.Login)
 			r.Post("/auth/logout", authHandler.Logout)

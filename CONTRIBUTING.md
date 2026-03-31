@@ -87,15 +87,16 @@ docker compose -f docker-compose.postgres.yaml up
 
 ## Adding a New Migration
 
-Database migrations are located in `internal/store/migrations/` and are applied automatically on startup.
+Database migrations are implemented in Go under `internal/db` and are applied automatically on startup through the migrator (see the `AllMigrations()` function).
 
 To add a new migration:
 
-1. Determine the next sequence number by checking existing files (e.g., if the latest is `002_*.sql`, create `003_*.sql`).
-2. Create a new file: `internal/store/migrations/003_your_description.sql`.
-3. Write idempotent SQL — use `CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, etc.
-4. Both SQLite and PostgreSQL must be supported. If syntax differs, use conditional logic or separate files suffixed with `_sqlite.sql` and `_postgres.sql`.
-5. Test by running the application against both database backends.
+1. Inspect the existing migrations in `internal/db` (and their registration in `AllMigrations()`) to determine the next sequence/order number.
+2. Add a new migration in `internal/db` (following the existing patterns), including `Up` logic.
+3. Ensure the migration is safe to run multiple times or is otherwise handled idempotently by the migrator.
+4. Make sure the migration works for both SQLite and PostgreSQL (e.g., by branching on the database driver or using dialect-agnostic SQL as done in existing migrations).
+5. Register the new migration in `AllMigrations()` so it is included when the application starts.
+6. Test by running the application against both database backends.
 
 ## Adding a New Permission
 

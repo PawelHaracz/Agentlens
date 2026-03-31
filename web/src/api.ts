@@ -57,7 +57,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers['Content-Type'] = 'application/json'
   }
   const res = await fetch(BASE + path, { ...init, headers })
-  if (res.status === 401) {
+  if (res.status === 401 && authToken) {
     authToken = null
     if (window.location.pathname !== '/login') {
       window.location.href = '/login'

@@ -58,6 +58,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if the account is active.
+	if !user.IsActive {
+		ErrorResponse(w, http.StatusForbidden, "account is disabled")
+		return
+	}
+
 	// Check if the account is locked.
 	if user.LockedUntil != nil && time.Now().Before(*user.LockedUntil) {
 		ErrorResponse(w, http.StatusLocked, "account is locked, try again later")

@@ -96,9 +96,9 @@ AgentLens runs database migrations automatically on startup. Migrations are embe
 
 ### Adding a New Migration
 
-1. Create a new `.sql` file in `internal/store/migrations/` with the next sequential number (e.g., `003_add_new_table.sql`).
-2. Write idempotent SQL (use `IF NOT EXISTS`, `IF EXISTS` where appropriate).
-3. The migration will be automatically picked up and applied on the next startup.
+1. Add a new `Migration` entry in the Go code under `internal/db` (alongside the existing migrations).
+2. Assign it the next migration version (keeping versions strictly increasing) and implement the migration logic in the `Migration` definition.
+3. Ensure it is included in `AllMigrations()` so the `Migrator` can apply it; it will then be automatically picked up and run on the next startup.
 
 ---
 

@@ -483,7 +483,7 @@ Update a role. **Requires auth.** Permission: `roles:write`.
 
 ### `DELETE /api/v1/roles/{id}`
 
-Delete a role. **Requires auth.** Permission: `roles:delete`.
+Delete a role. **Requires auth.** Permission: `roles:write`.
 
 **Response 204:** No content.
 
@@ -497,20 +497,13 @@ Delete a role. **Requires auth.** Permission: `roles:delete`.
 
 List all settings. **Requires auth.** Permission: `settings:read`.
 
-**Query Parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `category` | string | Filter by category (e.g., `general`, `health`, `auth`) |
-
 **Response 200:**
 ```json
 [
   {
-    "key": "general.instance_name",
+    "key": "app.name",
     "value": "AgentLens",
-    "default_value": "AgentLens",
-    "description": "Display name for this AgentLens instance",
+    "description": "Application display name",
     "category": "general",
     "updated_at": "2024-01-15T10:30:00Z"
   }
@@ -519,41 +512,24 @@ List all settings. **Requires auth.** Permission: `settings:read`.
 
 ---
 
-### `GET /api/v1/settings/{key}`
+### `GET /api/v1/settings/{category}`
 
-Get a single setting by key. **Requires auth.** Permission: `settings:read`.
+Get settings filtered by category. **Requires auth.** Permission: `settings:read`.
 
-**Response 200:** Setting object.
-
-**Response 404:** Setting not found.
-
----
-
-### `PUT /api/v1/settings/{key}`
-
-Update a single setting. **Requires auth.** Permission: `settings:write`.
-
-**Request Body:**
-```json
-{
-  "value": "new-value"
-}
-```
-
-**Response 200:** Returns the updated setting.
+**Response 200:** Array of setting objects in the given category.
 
 ---
 
 ### `PUT /api/v1/settings`
 
-Bulk update multiple settings. **Requires auth.** Permission: `settings:write`.
+Bulk update settings. **Requires auth.** Permission: `settings:write`.
 
 **Request Body:**
 ```json
-[
-  {"key": "health.check_interval", "value": "60s"},
-  {"key": "health.check_concurrency", "value": "20"}
-]
+{
+  "app.name": "My AgentLens",
+  "app.default_role": "editor"
+}
 ```
 
-**Response 200:** Returns the list of updated settings.
+**Response 200:** Confirmation message.

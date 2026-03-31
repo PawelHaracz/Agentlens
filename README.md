@@ -136,12 +136,10 @@ curl -X POST http://localhost:8080/api/v1/catalog \
 | `DELETE` | `/api/v1/users/{id}` | Delete user |
 | `GET` | `/api/v1/roles` | List roles |
 | `POST` | `/api/v1/roles` | Create role |
-| `GET` | `/api/v1/roles/{id}` | Get role by ID |
 | `PUT` | `/api/v1/roles/{id}` | Update role |
 | `DELETE` | `/api/v1/roles/{id}` | Delete role |
 | `GET` | `/api/v1/settings` | List settings |
-| `GET` | `/api/v1/settings/{key}` | Get setting by key |
-| `PUT` | `/api/v1/settings/{key}` | Update setting |
+| `GET` | `/api/v1/settings/{category}` | List settings in a category |
 | `PUT` | `/api/v1/settings` | Bulk update settings |
 
 See [docs/api.md](docs/api.md) for full API documentation.

@@ -24,17 +24,17 @@ func AllMigrations() []Migration {
 // catalogEntry is the GORM model for migration 001.
 // It mirrors the CatalogEntry schema used by the store.
 type catalogEntry struct {
-	ID          string    `gorm:"primaryKey;type:text;column:id"`
-	DisplayName string    `gorm:"not null;type:text;column:display_name"`
-	Description string    `gorm:"type:text;default:'';column:description"`
-	Protocol    string    `gorm:"not null;type:text;column:protocol;index"`
-	Endpoint    string    `gorm:"uniqueIndex;type:text;column:endpoint"`
-	Version     string    `gorm:"type:text;default:'';column:version"`
-	Status      string    `gorm:"not null;type:text;default:'unknown';column:status;index"`
-	Source      string    `gorm:"not null;type:text;column:source;index"`
-	Provider    string    `gorm:"not null;type:text;default:'{}';column:provider;index"`
-	Categories  string    `gorm:"not null;type:text;default:'[]';column:categories"`
-	Skills      string    `gorm:"not null;type:text;default:'[]';column:skills"`
+	ID          string     `gorm:"primaryKey;type:text;column:id"`
+	DisplayName string     `gorm:"not null;type:text;column:display_name"`
+	Description string     `gorm:"type:text;default:'';column:description"`
+	Protocol    string     `gorm:"not null;type:text;column:protocol;index"`
+	Endpoint    string     `gorm:"uniqueIndex;type:text;column:endpoint"`
+	Version     string     `gorm:"type:text;default:'';column:version"`
+	Status      string     `gorm:"not null;type:text;default:'unknown';column:status;index"`
+	Source      string     `gorm:"not null;type:text;column:source;index"`
+	Provider    string     `gorm:"not null;type:text;default:'{}';column:provider;index"`
+	Categories  string     `gorm:"not null;type:text;default:'[]';column:categories"`
+	Skills      string     `gorm:"not null;type:text;default:'[]';column:skills"`
 	ValidFrom   *time.Time `gorm:"column:validity_from"`
 	ValidTo     *time.Time `gorm:"column:validity_to"`
 	LastSeen    time.Time  `gorm:"not null;column:validity_last_seen"`

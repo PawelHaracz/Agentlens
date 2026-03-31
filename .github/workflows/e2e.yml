@@ -72,7 +72,7 @@ jobs:
           echo "Server is ready"
 
           # Extract admin password and mask it so it never appears in logs
-          ADMIN_PW=$(grep -oP 'Password: \K.+' "$DATA_DIR/server.out" || true)
+          ADMIN_PW=$(awk -F 'Password: ' '/Password: / { print $2; exit }' "$DATA_DIR/server.out" || true)
           if [ -z "$ADMIN_PW" ]; then
             echo "::error::Could not extract admin password"
             cat "$DATA_DIR/server.out"

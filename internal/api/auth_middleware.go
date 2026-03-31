@@ -13,7 +13,7 @@ type contextKey string
 
 const (
 	ctxUserID      contextKey = "userID"
-	ctxUsername     contextKey = "username"
+	ctxUsername    contextKey = "username"
 	ctxRoleID      contextKey = "roleID"
 	ctxPermissions contextKey = "permissions"
 )

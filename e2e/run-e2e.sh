@@ -59,7 +59,7 @@ done
 echo "  Server ready."
 
 # Extract the admin password from the server's stdout.
-ADMIN_PW=$(grep -oP 'Password: \K.+' "$SERVER_OUT" || true)
+ADMIN_PW=$(awk -F 'Password: ' '/Password: / { print $2; exit }' "$SERVER_OUT" || true)
 if [ -z "$ADMIN_PW" ]; then
   echo "✘ Could not extract admin password from server output."
   cat "$SERVER_OUT"
