@@ -52,10 +52,10 @@ kubernetes:
 `
 	f, err := os.CreateTemp("", "agentlens-*.yaml")
 	require.NoError(t, err)
-	defer os.Remove(f.Name())
+	defer func() { _ = os.Remove(f.Name()) }()
 	_, err = f.WriteString(content)
 	require.NoError(t, err)
-	f.Close()
+	require.NoError(t, f.Close())
 
 	cfg, err := config.Load(f.Name())
 	require.NoError(t, err)

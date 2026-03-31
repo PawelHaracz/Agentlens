@@ -41,7 +41,7 @@ func NewSQLiteStore(path string) (*SQLStore, error) {
 	if err := migrator.Migrate(context.Background()); err != nil {
 		sqlDB, _ := database.DB.DB()
 		if sqlDB != nil {
-			sqlDB.Close()
+			_ = sqlDB.Close()
 		}
 		return nil, fmt.Errorf("running migrations: %w", err)
 	}

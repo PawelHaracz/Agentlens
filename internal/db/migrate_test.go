@@ -14,7 +14,7 @@ func testDB(t *testing.T) *DB {
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		sqlDB, _ := d.DB.DB()
-		sqlDB.Close()
+		_ = sqlDB.Close()
 	})
 	return d
 }

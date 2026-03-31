@@ -115,7 +115,7 @@ func (p *Plugin) checkOne(ctx context.Context, entry *model.CatalogEntry) {
 		p.updateStatus(ctx, entry, model.StatusDown)
 		return
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	var status model.Status
 	switch {

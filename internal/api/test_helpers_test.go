@@ -48,7 +48,7 @@ func testRouter(t *testing.T) (http.Handler, *db.DB, *auth.JWTService) {
 	t.Cleanup(func() {
 		sqlDB, _ := database.DB.DB()
 		if sqlDB != nil {
-			sqlDB.Close()
+			_ = sqlDB.Close()
 		}
 	})
 
