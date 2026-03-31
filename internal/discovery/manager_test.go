@@ -42,7 +42,7 @@ func newMockEntry(id, endpoint string) *model.CatalogEntry {
 func TestManager_Upsert_NewEntry(t *testing.T) {
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	src := &mockSource{
 		name:    "static",
@@ -67,7 +67,7 @@ func TestManager_Upsert_NewEntry(t *testing.T) {
 func TestManager_Upsert_ExistingEntry(t *testing.T) {
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	ctx := context.Background()
 	existing := newMockEntry("existing-id", "http://existing.example.com")
@@ -96,7 +96,7 @@ func TestManager_Upsert_ExistingEntry(t *testing.T) {
 func TestManager_MarksMissingEntriesDown(t *testing.T) {
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	ctx := context.Background()
 	existing := newMockEntry("missing-id", "http://gone.example.com")

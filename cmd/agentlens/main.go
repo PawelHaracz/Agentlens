@@ -117,12 +117,12 @@ func main() {
 	if password != "" {
 		// Print credentials to stdout (NOT slog) to avoid log-aggregation exposure.
 		// nosemgrep: go/clear-text-logging
-		os.Stdout.WriteString("============================================\n")
-		os.Stdout.WriteString("  INITIAL ADMIN CREDENTIALS\n")
-		os.Stdout.WriteString("  Username: admin\n")
-		os.Stdout.WriteString("  Password: " + password + "\n")
-		os.Stdout.WriteString("  CHANGE THIS PASSWORD IMMEDIATELY\n")
-		os.Stdout.WriteString("============================================\n")
+		_, _ = os.Stdout.WriteString("============================================\n")
+		_, _ = os.Stdout.WriteString("  INITIAL ADMIN CREDENTIALS\n")
+		_, _ = os.Stdout.WriteString("  Username: admin\n")
+		_, _ = os.Stdout.WriteString("  Password: " + password + "\n")
+		_, _ = os.Stdout.WriteString("  CHANGE THIS PASSWORD IMMEDIATELY\n")
+		_, _ = os.Stdout.WriteString("============================================\n")
 	}
 
 	// 6. Init stores

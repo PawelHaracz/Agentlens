@@ -25,14 +25,9 @@ func TestDefaults(t *testing.T) {
 }
 
 func TestEnvOverrides(t *testing.T) {
-	os.Setenv("AGENTLENS_PORT", "9090")
-	os.Setenv("AGENTLENS_LOG_LEVEL", "debug")
-	os.Setenv("AGENTLENS_DATA_DIR", "/tmp/data")
-	defer func() {
-		os.Unsetenv("AGENTLENS_PORT")
-		os.Unsetenv("AGENTLENS_LOG_LEVEL")
-		os.Unsetenv("AGENTLENS_DATA_DIR")
-	}()
+	t.Setenv("AGENTLENS_PORT", "9090")
+	t.Setenv("AGENTLENS_LOG_LEVEL", "debug")
+	t.Setenv("AGENTLENS_DATA_DIR", "/tmp/data")
 
 	cfg, err := config.Load("")
 	require.NoError(t, err)
