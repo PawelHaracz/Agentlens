@@ -15,6 +15,7 @@ GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
 .PHONY: all build test lint format run clean help \
         test-coverage test-race vet \
         web-install web-build web-lint \
+        e2e-install e2e-test \
         helm-lint docker-build docker-scan \
         deps tools
 
@@ -98,6 +99,19 @@ web-build:
 ## web-lint: Lint frontend (TypeScript check)
 web-lint:
 	cd web && npx tsc --noEmit
+
+# ---------------------------------------------------------------------------
+# E2E test targets
+# ---------------------------------------------------------------------------
+
+## e2e-install: Install Playwright and browser dependencies
+e2e-install:
+	cd e2e && npm ci
+	cd e2e && npx playwright install chromium
+
+## e2e-test: Run Playwright E2E tests (requires built binary and frontend)
+e2e-test:
+	./e2e/run-e2e.sh
 
 # ---------------------------------------------------------------------------
 # Docker & Helm targets
