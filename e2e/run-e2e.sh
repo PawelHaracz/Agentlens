@@ -66,7 +66,7 @@ if [ -z "$ADMIN_PW" ]; then
   exit 1
 fi
 export AGENTLENS_ADMIN_PASSWORD="$ADMIN_PW"
-echo "  Admin password captured."
+echo "  Admin password captured (not shown for security)."
 
 echo "▶ Installing Playwright dependencies …"
 cd "$E2E_DIR"

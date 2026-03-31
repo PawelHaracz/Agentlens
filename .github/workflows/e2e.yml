@@ -71,13 +71,14 @@ jobs:
           done
           echo "Server is ready"
 
-          # Extract admin password
+          # Extract admin password and mask it so it never appears in logs
           ADMIN_PW=$(grep -oP 'Password: \K.+' "$DATA_DIR/server.out" || true)
           if [ -z "$ADMIN_PW" ]; then
             echo "::error::Could not extract admin password"
             cat "$DATA_DIR/server.out"
             exit 1
           fi
+          echo "::add-mask::$ADMIN_PW"
           echo "admin_password=$ADMIN_PW" >> "$GITHUB_OUTPUT"
 
       # ── Run Playwright tests ──
