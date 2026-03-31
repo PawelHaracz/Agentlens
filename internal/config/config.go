@@ -40,6 +40,40 @@ type HealthCheckConfig struct {
 	Concurrency int           `yaml:"concurrency"`
 }
 
+// SQLiteConfig holds SQLite-specific database settings.
+type SQLiteConfig struct {
+	Path string `yaml:"path"`
+}
+
+// PostgresConfig holds PostgreSQL-specific database settings.
+type PostgresConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	DBName   string `yaml:"dbname"`
+	SSLMode  string `yaml:"sslmode"`
+}
+
+// DSN returns a PostgreSQL connection string.
+func (p PostgresConfig) DSN() string {
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		p.Host, p.Port, p.User, p.Password, p.DBName, p.SSLMode)
+}
+
+// DatabaseConfig holds database connection settings.
+type DatabaseConfig struct {
+	Dialect  string         `yaml:"dialect"`
+	SQLite   SQLiteConfig   `yaml:"sqlite"`
+	Postgres PostgresConfig `yaml:"postgres"`
+}
+
+// AuthTokenConfig holds JWT and session settings.
+type AuthTokenConfig struct {
+	JWTSecret       string        `yaml:"jwt_secret"`
+	SessionDuration time.Duration `yaml:"session_duration"`
+}
+
 // Config holds all AgentLens configuration.
 type Config struct {
 	Port         int               `yaml:"port"`
@@ -50,6 +84,8 @@ type Config struct {
 	Sources      []SourceConfig    `yaml:"sources"`
 	Kubernetes   KubernetesConfig  `yaml:"kubernetes"`
 	HealthCheck  HealthCheckConfig `yaml:"health_check"`
+	Database     DatabaseConfig    `yaml:"database"`
+	Auth         AuthTokenConfig   `yaml:"auth"`
 }
 
 // Load reads configuration from a YAML file at path (may be empty) and applies
@@ -82,6 +118,20 @@ func defaults() *Config {
 			Interval:    30 * time.Second,
 			Timeout:     5 * time.Second,
 			Concurrency: 10,
+		},
+		Database: DatabaseConfig{
+			Dialect: "sqlite",
+			SQLite:  SQLiteConfig{Path: "./data/agentlens.db"},
+			Postgres: PostgresConfig{
+				Host:    "localhost",
+				Port:    5432,
+				User:    "agentlens",
+				DBName:  "agentlens",
+				SSLMode: "disable",
+			},
+		},
+		Auth: AuthTokenConfig{
+			SessionDuration: 24 * time.Hour,
 		},
 	}
 }
@@ -125,6 +175,42 @@ func applyEnv(cfg *Config) {
 	if v := env("HEALTH_CHECK_CONCURRENCY"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			cfg.HealthCheck.Concurrency = n
+		}
+	}
+	// Database env overrides
+	if v := env("DB_DIALECT"); v != "" {
+		cfg.Database.Dialect = v
+	}
+	if v := env("DB_SQLITE_PATH"); v != "" {
+		cfg.Database.SQLite.Path = v
+	}
+	if v := env("DB_POSTGRES_HOST"); v != "" {
+		cfg.Database.Postgres.Host = v
+	}
+	if v := env("DB_POSTGRES_PORT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.Database.Postgres.Port = n
+		}
+	}
+	if v := env("DB_POSTGRES_USER"); v != "" {
+		cfg.Database.Postgres.User = v
+	}
+	if v := env("DB_POSTGRES_PASSWORD"); v != "" {
+		cfg.Database.Postgres.Password = v
+	}
+	if v := env("DB_POSTGRES_DBNAME"); v != "" {
+		cfg.Database.Postgres.DBName = v
+	}
+	if v := env("DB_POSTGRES_SSLMODE"); v != "" {
+		cfg.Database.Postgres.SSLMode = v
+	}
+	// Auth env overrides
+	if v := env("JWT_SECRET"); v != "" {
+		cfg.Auth.JWTSecret = v
+	}
+	if v := env("SESSION_DURATION"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			cfg.Auth.SessionDuration = d
 		}
 	}
 }

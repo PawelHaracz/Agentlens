@@ -1,0 +1,57 @@
+services:
+  agentlens:
+    build: ..
+    ports:
+      - "8080:8080"
+    environment:
+      AGENTLENS_PORT: "8080"
+      AGENTLENS_DATA_DIR: "/data"
+      AGENTLENS_LOG_LEVEL: "info"
+      AGENTLENS_HEALTH_CHECK_ENABLED: "true"
+      AGENTLENS_DB_DIALECT: "postgres"
+      AGENTLENS_DB_POSTGRES_HOST: "postgres"
+      AGENTLENS_DB_POSTGRES_PORT: "5432"
+      AGENTLENS_DB_POSTGRES_USER: "agentlens"
+      AGENTLENS_DB_POSTGRES_PASSWORD: "agentlens"
+      AGENTLENS_DB_POSTGRES_DBNAME: "agentlens"
+      AGENTLENS_DB_POSTGRES_SSLMODE: "disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      a2a-agent:
+        condition: service_started
+      mcp-server:
+        condition: service_started
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agentlens
+      POSTGRES_PASSWORD: agentlens
+      POSTGRES_DB: agentlens
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentlens"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  a2a-agent:
+    build: mock-agents/a2a-agent
+    ports:
+      - "9001:9001"
+    environment:
+      PORT: "9001"
+      AGENT_NAME: "demo-a2a-agent"
+
+  mcp-server:
+    build: mock-agents/mcp-server
+    ports:
+      - "9002:9002"
+    environment:
+      PORT: "9002"
+      AGENT_NAME: "demo-mcp-server"
+
+volumes:
+  pgdata:

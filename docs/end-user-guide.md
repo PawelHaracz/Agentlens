@@ -7,6 +7,7 @@ Welcome to AgentLens — a real-time AI agent catalog for discovering, tracking,
 ## Table of Contents
 
 - [Getting Started](#getting-started)
+- [Signing In](#signing-in)
 - [Dashboard Overview](#dashboard-overview)
 - [Browsing the Catalog](#browsing-the-catalog)
 - [Searching and Filtering](#searching-and-filtering)
@@ -14,6 +15,10 @@ Welcome to AgentLens — a real-time AI agent catalog for discovering, tracking,
 - [Registering an Agent](#registering-an-agent)
 - [Understanding Status Indicators](#understanding-status-indicators)
 - [Protocol Types](#protocol-types)
+- [Settings](#settings)
+- [User Management](#user-management)
+- [Role Management](#role-management)
+- [My Account](#my-account)
 - [Using the REST API](#using-the-rest-api)
 - [FAQ](#faq)
 
@@ -21,7 +26,43 @@ Welcome to AgentLens — a real-time AI agent catalog for discovering, tracking,
 
 ## Getting Started
 
-Open your browser and navigate to the AgentLens URL (default: `http://localhost:8080`). No login is required — the dashboard loads immediately with the current catalog view.
+Open your browser and navigate to the AgentLens URL (default: `http://localhost:8080`). You will be redirected to the login page.
+
+### First Run — Admin Credentials
+
+On the very first startup, AgentLens generates an initial admin account and prints the credentials to the server console:
+
+```
+============================================
+  INITIAL ADMIN CREDENTIALS
+  Username: admin
+  Password: <generated>
+  CHANGE THIS PASSWORD IMMEDIATELY
+============================================
+```
+
+Use these credentials to sign in. After logging in, change your password immediately via **Settings → My Account → Change password**.
+
+---
+
+## Signing In
+
+![Login Page](images/login-page.png)
+
+Enter your **username** and **password**, then click **Sign in**. After successful authentication you are redirected to the catalog dashboard.
+
+If your account has been locked due to too many failed attempts (5 failed logins trigger a 15-minute lockout), contact your administrator.
+
+### Navigation Bar
+
+After signing in, the top navigation bar shows:
+
+- **AgentLens** — click to return to the catalog from anywhere
+- **Catalog** — direct link to the agent catalog
+- **Settings** — link to the settings page (visible only to users with `settings:read` permission)
+- **User avatar (initials)** — opens a dropdown with My Account, Settings, and Logout
+
+![User Dropdown](images/user-dropdown.png)
 
 ---
 
@@ -31,7 +72,7 @@ The AgentLens dashboard provides a single-pane view of all discovered AI agents 
 
 ![Dashboard Overview](images/dashboard-overview.png)
 
-The dashboard consists of three main sections:
+The dashboard consists of three main sections, all accessible after signing in:
 
 ### Stats Bar
 
@@ -129,6 +170,8 @@ The detail view shows the complete information for a catalog entry:
 - **Version** — the agent's reported version
 - **Status** — current health status with color indicator
 - **Source** — how this agent was discovered
+
+Users with `catalog:delete` permission will also see a **Delete** button in the top-right corner of the detail view.
 
 ### Provider
 
@@ -282,46 +325,184 @@ The Agent-to-UI protocol defines how agents present interactive interfaces to us
 
 ---
 
-## Using the REST API
+## Settings
 
-AgentLens exposes a REST API for programmatic access. All responses use JSON.
+The **Settings** page is accessible from the top navigation bar (or from the user dropdown → **Settings**). It requires the `settings:read` permission.
+
+![Settings — General](images/settings-general.png)
+
+The Settings page has four tabs:
+
+| Tab | Description |
+|-----|-------------|
+| **General** | Appearance (theme) and display preferences |
+| **Users** | User account management — requires `users:read` |
+| **Roles** | Role and permission management — requires `roles:read` |
+| **My Account** | Edit your own profile and change your password |
+
+### General Tab
+
+The **General** tab has two sections:
+
+**Appearance** — choose between Light, Dark, and System themes. The selected theme is saved to your settings and applied immediately.
+
+**Display** — configure:
+- *Items per page* — how many catalog entries to show per page
+- *Poll interval* — how often (in seconds) the UI refreshes data
+- *Health check interval* — background health check frequency
+
+Click **Save settings** to persist changes.
+
+---
+
+## User Management
+
+The **Users** tab (requires `users:read`) shows all user accounts:
+
+![Settings — Users](images/settings-users.png)
+
+| Column | Description |
+|--------|-------------|
+| **Username** | The user's login name |
+| **Email** | Contact email (optional) |
+| **Role** | The assigned role badge |
+| **Status** | Active or Locked |
+| **Actions** | Edit, Lock/Unlock, Delete buttons |
+
+### Actions (require `users:write` / `users:delete`)
+
+- **Edit** (pencil icon) — opens a dialog to update display name, email, and role
+- **Lock / Unlock** (padlock icon) — toggles account lock state, preventing or restoring login
+- **Delete** (trash icon) — permanently removes the user (cannot delete your own account or the last admin)
+
+### Adding a New User
+
+Click **Add user** to open the creation dialog. Fill in:
+- **Username** (required) — must be unique
+- **Display name** — shown in the UI
+- **Email** — optional
+- **Password** — must meet strength requirements (10+ characters, uppercase, lowercase, digit, special character)
+- **Role** — select from available roles
+
+---
+
+## Role Management
+
+The **Roles** tab (requires `roles:read`) lists all roles and their permissions:
+
+![Settings — Roles](images/settings-roles.png)
+
+Three **system roles** are created by default and cannot be deleted:
+
+| Role | Permissions |
+|------|-------------|
+| **admin** | Full access: catalog, users, roles, settings (read/write/delete) |
+| **editor** | catalog:read/write, users:read, roles:read, settings:read |
+| **viewer** | catalog:read, users:read, roles:read, settings:read |
+
+System roles are marked with a shield icon and cannot be modified or deleted.
+
+### Custom Roles (requires `roles:write`)
+
+Click **Add role** to create a custom role. Select a name, description, and any combination of the available permissions:
+
+- `catalog:read` / `catalog:write` / `catalog:delete`
+- `users:read` / `users:write` / `users:delete`
+- `roles:read` / `roles:write`
+- `settings:read` / `settings:write`
+
+---
+
+## My Account
+
+The **My Account** tab allows you to manage your own profile and credentials:
+
+![Settings — My Account](images/settings-account.png)
+
+### Profile
+
+Update your **Display name** and **Email**. Your **Username** is read-only and cannot be changed after creation. Click **Update profile** to save.
+
+### Change Password
+
+Enter your **Current password**, then your **New password** (twice to confirm). Password requirements:
+- At least 10 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one digit
+- At least one special character (`!@#$%^&*()`)
+
+Click **Change password** to apply. You will remain logged in with the new password.
+
+---
+
+AgentLens exposes a REST API for programmatic access. All responses use JSON. Most endpoints require a JWT token obtained from the login endpoint.
+
+### Authenticating
+
+```bash
+# Login and get a token
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "your-password"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+
+# Use the token in subsequent requests
+curl http://localhost:8080/api/v1/catalog \
+  -H "Authorization: Bearer $TOKEN"
+```
 
 ### Quick Reference
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/healthz` | Server health check |
-| `GET` | `/api/v1/catalog` | List all entries (supports filters) |
-| `POST` | `/api/v1/catalog` | Register a new entry |
-| `GET` | `/api/v1/catalog/{id}` | Get entry by ID |
-| `DELETE` | `/api/v1/catalog/{id}` | Delete an entry |
-| `GET` | `/api/v1/catalog/{id}/card` | Get raw protocol card |
-| `GET` | `/api/v1/skills?q=...` | Search by skill name |
-| `GET` | `/api/v1/stats` | Aggregate statistics |
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| `GET` | `/healthz` | None | Server health check |
+| `POST` | `/api/v1/auth/login` | None | Get JWT token |
+| `POST` | `/api/v1/auth/logout` | None | Invalidate session cookie |
+| `GET` | `/api/v1/auth/me` | Any | Current user info |
+| `PUT` | `/api/v1/auth/password` | Any | Change password |
+| `GET` | `/api/v1/catalog` | `catalog:read` | List all entries (supports filters) |
+| `POST` | `/api/v1/catalog` | `catalog:write` | Register a new entry |
+| `GET` | `/api/v1/catalog/{id}` | `catalog:read` | Get entry by ID |
+| `DELETE` | `/api/v1/catalog/{id}` | `catalog:delete` | Delete an entry |
+| `GET` | `/api/v1/catalog/{id}/card` | `catalog:read` | Get raw protocol card |
+| `GET` | `/api/v1/skills?q=...` | `catalog:read` | Search by skill name |
+| `GET` | `/api/v1/stats` | `catalog:read` | Aggregate statistics |
+| `GET` | `/api/v1/users` | `users:read` | List users |
+| `POST` | `/api/v1/users` | `users:write` | Create user |
+| `GET` | `/api/v1/roles` | `roles:read` | List roles |
+| `GET` | `/api/v1/settings` | `settings:read` | Get all settings |
+| `PUT` | `/api/v1/settings` | `settings:write` | Update settings |
 
 ### Filtering the Catalog
 
 ```bash
 # Filter by protocol
-curl "http://localhost:8080/api/v1/catalog?protocol=a2a"
+curl "http://localhost:8080/api/v1/catalog?protocol=a2a" \
+  -H "Authorization: Bearer $TOKEN"
 
 # Filter by status
-curl "http://localhost:8080/api/v1/catalog?status=healthy"
+curl "http://localhost:8080/api/v1/catalog?status=healthy" \
+  -H "Authorization: Bearer $TOKEN"
 
 # Search by text
-curl "http://localhost:8080/api/v1/catalog?q=support"
+curl "http://localhost:8080/api/v1/catalog?q=support" \
+  -H "Authorization: Bearer $TOKEN"
 
 # Combine filters
-curl "http://localhost:8080/api/v1/catalog?protocol=mcp&status=healthy&q=code"
+curl "http://localhost:8080/api/v1/catalog?protocol=mcp&status=healthy&q=code" \
+  -H "Authorization: Bearer $TOKEN"
 
 # Paginate results
-curl "http://localhost:8080/api/v1/catalog?limit=10&offset=20"
+curl "http://localhost:8080/api/v1/catalog?limit=10&offset=20" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Getting Statistics
 
 ```bash
-curl http://localhost:8080/api/v1/stats
+curl http://localhost:8080/api/v1/stats \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 Returns:
@@ -351,11 +532,11 @@ By default, every 30 seconds. Configure this via `health_check.interval` in the 
 
 ### Can I remove an agent from the catalog?
 
-Yes — use `DELETE /api/v1/catalog/{id}` or wait for the next discovery cycle, which will mark missing agents as "down".
+Yes — use `DELETE /api/v1/catalog/{id}` (requires `catalog:delete` permission) or wait for the next discovery cycle, which will mark missing agents as "down".
 
 ### Does AgentLens require authentication?
 
-Not by default. Enterprise features including SSO and RBAC are available with an enterprise license.
+Yes. All catalog and management endpoints require a valid JWT token. Obtain one via `POST /api/v1/auth/login`. See [docs/auth.md](auth.md) for full details.
 
 ### What happens if I register the same endpoint twice?
 
@@ -368,3 +549,18 @@ Yes — use the static configuration (`sources:` in `agentlens.yaml`) or push re
 ### How do I enable Kubernetes discovery?
 
 Set `kubernetes.enabled: true` in the config file or `AGENTLENS_KUBERNETES_ENABLED=true` as an environment variable. The Helm chart enables this by default.
+
+### I forgot the admin password — how do I reset it?
+
+Connect directly to the SQLite database and update the password hash, or delete the database file and restart AgentLens to regenerate the admin credentials. For PostgreSQL, update the `password_hash` column in the `users` table with a new bcrypt hash.
+
+### How do I create additional users?
+
+Administrators can create users via the **Settings → Users** page or via the API:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"SecurePass1!","role_id":"role-editor"}'
+```

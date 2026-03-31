@@ -92,7 +92,7 @@ func (c *Checker) checkOne(ctx context.Context, entry *model.CatalogEntry) {
 		c.updateStatus(ctx, entry, model.StatusDown)
 		return
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	var status model.Status
 	switch {

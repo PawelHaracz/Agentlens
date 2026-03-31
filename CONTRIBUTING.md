@@ -67,6 +67,52 @@ Please open a GitHub issue with:
 - Expected vs actual behavior
 - Go/Node version and OS
 
+## Running with PostgreSQL
+
+To run AgentLens locally with PostgreSQL instead of SQLite:
+
+```bash
+cd examples
+docker compose -f docker-compose.postgres.yaml up
+```
+
+This starts AgentLens with a PostgreSQL 16 database, along with mock A2A and MCP agents for testing. The PostgreSQL data is persisted in a Docker volume (`pgdata`).
+
+To reset the database:
+
+```bash
+docker compose -f docker-compose.postgres.yaml down -v
+docker compose -f docker-compose.postgres.yaml up
+```
+
+## Adding a New Migration
+
+Database migrations are implemented in Go under `internal/db` and are applied automatically on startup through the migrator (see the `AllMigrations()` function).
+
+To add a new migration:
+
+1. Inspect the existing migrations in `internal/db` (and their registration in `AllMigrations()`) to determine the next sequence/order number.
+2. Add a new migration in `internal/db` (following the existing patterns), including `Up` logic.
+3. Ensure the migration is safe to run multiple times or is otherwise handled idempotently by the migrator.
+4. Make sure the migration works for both SQLite and PostgreSQL (e.g., by branching on the database driver or using dialect-agnostic SQL as done in existing migrations).
+5. Register the new migration in `AllMigrations()` so it is included when the application starts.
+6. Test by running the application against both database backends.
+
+## Adding a New Permission
+
+Permissions follow the `resource:action` format (e.g., `catalog:read`, `users:write`).
+
+To add a new permission:
+
+1. Define the permission constant in the auth/RBAC code (e.g., `myresource:read`).
+2. Add it to the appropriate default roles in the bootstrap migration or seed logic.
+3. Reference the permission in the middleware/handler where access control is enforced.
+4. Update the documentation:
+   - `docs/auth.md` — add the permission to the roles/permissions tables
+   - `docs/api.md` — note which endpoints require the new permission
+   - `README.md` — update the Roles & Permissions table if needed
+5. Write tests to verify the permission is enforced correctly.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the same terms as the project, as specified in the LICENSE file (currently the Business Source License 1.1).

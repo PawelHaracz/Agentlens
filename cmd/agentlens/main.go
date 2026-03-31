@@ -8,13 +8,16 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/auth"
 	"github.com/PawelHaracz/agentlens/internal/config"
+	"github.com/PawelHaracz/agentlens/internal/db"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/server"
@@ -33,6 +36,7 @@ func main() {
 	configFlag := flag.String("config", "", "Path to config file")
 	flag.Parse()
 
+	// 1. Load config
 	cfg, err := config.Load(*configFlag)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
@@ -43,7 +47,7 @@ func main() {
 		cfg.Port = *portFlag
 	}
 
-	// Setup structured logging
+	// 2. Setup structured logging
 	var logLevel slog.Level
 	switch cfg.LogLevel {
 	case "debug":
@@ -66,20 +70,78 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Open SQLite store
-	dbPath := filepath.Join(cfg.DataDir, "agentlens.db")
-	s, err := store.NewSQLiteStore(dbPath)
-	if err != nil {
-		slog.Error("failed to open store", "err", err)
+	// 3. Open DB based on config dialect
+	var database *db.DB
+	switch db.Dialect(cfg.Database.Dialect) {
+	case db.DialectSQLite:
+		dbPath := cfg.Database.SQLite.Path
+		if dbPath == "" {
+			dbPath = filepath.Join(cfg.DataDir, "agentlens.db")
+		}
+		if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+			slog.Error("failed to create db directory", "err", err)
+			os.Exit(1)
+		}
+		database, err = db.Open(db.DialectSQLite, dbPath)
+	case db.DialectPostgres:
+		database, err = db.Open(db.DialectPostgres, cfg.Database.Postgres.DSN())
+	default:
+		fmt.Fprintf(os.Stderr, "unsupported database dialect: %s\n", cfg.Database.Dialect)
 		os.Exit(1)
 	}
-	defer s.Close()
+	if err != nil {
+		slog.Error("failed to open database", "err", err)
+		os.Exit(1)
+	}
+	defer func() {
+		sqlDB, err := database.DB.DB()
+		if err == nil {
+			_ = sqlDB.Close()
+		}
+	}()
+
+	// 4. Run migrations
+	migrator := db.NewMigrator(database, db.AllMigrations())
+	if err := migrator.Migrate(context.Background()); err != nil {
+		slog.Error("failed to run migrations", "err", err)
+		os.Exit(1)
+	}
+
+	// 5. Bootstrap admin
+	userStore := store.NewUserStore(database)
+	password, err := auth.BootstrapAdmin(context.Background(), userStore)
+	if err != nil {
+		slog.Error("failed to bootstrap admin", "err", err)
+		os.Exit(1)
+	}
+	if password != "" {
+		// Print credentials to stdout (NOT slog) to avoid log-aggregation exposure.
+		// nosemgrep: go/clear-text-logging
+		_, _ = os.Stdout.WriteString("============================================\n")
+		_, _ = os.Stdout.WriteString("  INITIAL ADMIN CREDENTIALS\n")
+		_, _ = os.Stdout.WriteString("  Username: admin\n")
+		_, _ = os.Stdout.WriteString("  Password: " + password + "\n")
+		_, _ = os.Stdout.WriteString("  CHANGE THIS PASSWORD IMMEDIATELY\n")
+		_, _ = os.Stdout.WriteString("============================================\n")
+	}
+
+	// 6. Init stores
+	catalogStore := store.NewSQLStore(database)
+	roleStore := store.NewRoleStore(database)
+	settingsStore := store.NewSettingsStore(database)
+
+	// 7. Init JWT service
+	jwtService := auth.NewJWTService(auth.JWTConfig{
+		Secret:        cfg.Auth.JWTSecret,
+		Expiration:    cfg.Auth.SessionDuration,
+		RefreshWindow: time.Hour,
+	})
 
 	// Validate license
 	lic := kernel.ValidateLicense(cfg.LicenseKey)
-	core := kernel.NewCore(s, cfg, logger, lic)
+	core := kernel.NewCore(catalogStore, cfg, logger, lic)
 
-	// Create plugin manager and register plugins
+	// 9. Plugin manager setup
 	pm := kernel.NewPluginManager(core)
 
 	// Core plugins
@@ -120,7 +182,7 @@ func main() {
 		}
 	}()
 
-	// Build discovery sources (still use internal/discovery for orchestration)
+	// 10. Discovery sources
 	var sources []discovery.Source
 	if len(cfg.Sources) > 0 {
 		sources = append(sources, discovery.NewStaticSource(cfg.Sources))
@@ -140,7 +202,7 @@ func main() {
 
 	// Start discovery manager
 	if len(sources) > 0 {
-		mgr := discovery.NewManager(sources, s, cfg.PollInterval)
+		mgr := discovery.NewManager(sources, catalogStore, cfg.PollInterval)
 		go func() {
 			if err := mgr.Run(ctx); err != nil {
 				slog.Error("discovery manager error", "err", err)
@@ -148,8 +210,14 @@ func main() {
 		}()
 	}
 
-	// Start HTTP server
-	router := api.NewRouter(s)
+	// 8. Create router with full RouterDeps & 11. HTTP server with graceful shutdown
+	router := api.NewRouter(api.RouterDeps{
+		Store:         catalogStore,
+		UserStore:     userStore,
+		RoleStore:     roleStore,
+		SettingsStore: settingsStore,
+		JWTService:    jwtService,
+	})
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := server.New(addr, router)
 	if err := srv.Start(ctx); err != nil {

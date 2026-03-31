@@ -21,8 +21,8 @@ func newTestRouter(t *testing.T) (http.Handler, store.Store) {
 	t.Helper()
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	t.Cleanup(func() { s.Close() })
-	return api.NewRouter(s), s
+	t.Cleanup(func() { _ = s.Close() })
+	return api.NewRouter(api.RouterDeps{Store: s}), s
 }
 
 func TestHealthz(t *testing.T) {
