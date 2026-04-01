@@ -32,8 +32,8 @@ all: format lint test build
 # Go targets
 # ---------------------------------------------------------------------------
 
-## build: Build the agentlens binary (CGO enabled for SQLite)
-build:
+## build: Build the agentlens binary (CGO enabled for SQLite) — runs lint first
+build: lint
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GOFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/agentlens
 
 ## test: Run all Go tests
@@ -90,15 +90,15 @@ tools:
 
 ## web-install: Install frontend dependencies
 web-install:
-	cd web && npm ci
+	cd web && bun install
 
 ## web-build: Build the frontend
 web-build:
-	cd web && npm run build
+	cd web && bun run build
 
 ## web-lint: Lint frontend (TypeScript check)
 web-lint:
-	cd web && npx tsc --noEmit
+	cd web && bunx tsc --noEmit
 
 # ---------------------------------------------------------------------------
 # E2E test targets
@@ -106,8 +106,8 @@ web-lint:
 
 ## e2e-install: Install Playwright and browser dependencies
 e2e-install:
-	cd e2e && npm ci
-	cd e2e && npx playwright install chromium
+	cd e2e && bun install
+	cd e2e && bunx playwright install chromium
 
 ## e2e-test: Run Playwright E2E tests (requires built binary and frontend)
 e2e-test:

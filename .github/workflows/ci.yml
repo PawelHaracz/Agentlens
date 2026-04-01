@@ -28,11 +28,9 @@ jobs:
         with:
           version: v2.11.4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: web/package-lock.json
+          bun-version-file: ".bun-version"
 
       - name: Install frontend dependencies
         run: make web-install
@@ -73,11 +71,9 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: web/package-lock.json
+          bun-version-file: ".bun-version"
 
       - name: Install frontend dependencies
         run: make web-install

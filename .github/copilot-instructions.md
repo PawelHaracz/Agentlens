@@ -1,0 +1,1 @@
+Read CLAUDE.md in the root of this repository before answering any questions or making any suggestions. It contains project-specific conventions, architecture, security rules, and the feature development checklist that must be followed.
