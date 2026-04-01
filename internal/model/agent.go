@@ -78,6 +78,8 @@ type CatalogEntry struct {
 	Validity    Validity          `json:"validity" gorm:"-"`
 	RawCard     json.RawMessage   `json:"raw_card,omitempty" gorm:"-"`
 	Metadata    map[string]string `json:"metadata,omitempty" gorm:"-"`
+	SpecVersion string            `json:"spec_version,omitempty" gorm:"type:text;not null;default:''"`
+	TypedMeta   []TypedMetadata   `json:"typed_meta,omitempty" gorm:"-"`
 	CreatedAt   time.Time         `json:"created_at"`
 	UpdatedAt   time.Time         `json:"updated_at"`
 
@@ -90,6 +92,7 @@ type CatalogEntry struct {
 	ValidFrom      *time.Time `json:"-" gorm:"column:validity_from"`
 	ValidTo        *time.Time `json:"-" gorm:"column:validity_to"`
 	LastSeen       time.Time  `json:"-" gorm:"column:validity_last_seen;not null"`
+	TypedMetaJSON  string     `json:"-" gorm:"column:typed_meta;type:text;not null;default:'[]'"`
 }
 
 // TableName overrides the GORM table name.
@@ -101,20 +104,24 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 	type Alias CatalogEntry
 	return json.Marshal(struct {
 		Alias
-		Provider   Provider          `json:"provider,omitempty"`
-		Categories []string          `json:"categories,omitempty"`
-		Skills     []Skill           `json:"skills,omitempty"`
-		Validity   Validity          `json:"validity"`
-		RawCard    json.RawMessage   `json:"raw_card,omitempty"`
-		Metadata   map[string]string `json:"metadata,omitempty"`
+		Provider    Provider          `json:"provider,omitempty"`
+		Categories  []string          `json:"categories,omitempty"`
+		Skills      []Skill           `json:"skills,omitempty"`
+		Validity    Validity          `json:"validity"`
+		RawCard     json.RawMessage   `json:"raw_card,omitempty"`
+		Metadata    map[string]string `json:"metadata,omitempty"`
+		SpecVersion string            `json:"spec_version,omitempty"`
+		TypedMeta   []TypedMetadata   `json:"typed_meta,omitempty"`
 	}{
-		Alias:      Alias(e),
-		Provider:   e.Provider,
-		Categories: e.Categories,
-		Skills:     e.Skills,
-		Validity:   e.Validity,
-		RawCard:    e.RawCard,
-		Metadata:   e.Metadata,
+		Alias:       Alias(e),
+		Provider:    e.Provider,
+		Categories:  e.Categories,
+		Skills:      e.Skills,
+		Validity:    e.Validity,
+		RawCard:     e.RawCard,
+		Metadata:    e.Metadata,
+		SpecVersion: e.SpecVersion,
+		TypedMeta:   e.TypedMeta,
 	})
 }
 
@@ -141,6 +148,9 @@ func (e *CatalogEntry) SyncToDB() {
 	e.ValidFrom = e.Validity.From
 	e.ValidTo = e.Validity.To
 	e.LastSeen = e.Validity.LastSeen
+	if b, err := MarshalTypedMetaJSON(e.TypedMeta); err == nil {
+		e.TypedMetaJSON = string(b)
+	}
 }
 
 // SyncFromDB deserializes GORM database columns into public fields.
@@ -159,6 +169,9 @@ func (e *CatalogEntry) SyncFromDB() {
 	}
 	if e.RawCardStr != nil {
 		e.RawCard = json.RawMessage(*e.RawCardStr)
+	}
+	if e.TypedMetaJSON != "" {
+		e.TypedMeta, _ = UnmarshalTypedMetaJSON([]byte(e.TypedMetaJSON))
 	}
 	e.Validity = Validity{
 		From:     e.ValidFrom,

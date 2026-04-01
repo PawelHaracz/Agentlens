@@ -8,5 +8,27 @@
     "gopls-lsp@claude-plugins-official": true,
     "superpowers-lab@superpowers-marketplace": true,
     "cc-skills-golang@samber": false
+  },
+  "deny": [
+    "Bash(git add *)",
+    "Bash(git commit *)",
+    "Bash(git push *)"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/git-unsafe.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/git-safe.sh"
+          }
+        ]
+      }
+    ]
   }
 }

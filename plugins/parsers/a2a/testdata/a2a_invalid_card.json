@@ -1,0 +1,21 @@
+{
+  "description": "Missing name and endpoints",
+  "version": "1.0.0",
+  "capabilities": {
+    "extensions": [
+      {"required": true},
+      {"uri": "urn:valid:ext", "required": false}
+    ]
+  },
+  "skills": [
+    {
+      "name": "Incomplete Skill",
+      "inputModes": ["text"]
+    },
+    {
+      "id": "valid-skill",
+      "name": "Valid Skill",
+      "description": "This skill is valid"
+    }
+  ]
+}

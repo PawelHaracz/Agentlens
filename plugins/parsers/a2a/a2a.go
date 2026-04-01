@@ -11,26 +11,9 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/model"
 )
 
-// a2aCard is the JSON structure of an A2A agent card.
-type a2aCard struct {
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	URL         string       `json:"url"`
-	Version     string       `json:"version"`
-	Provider    *a2aProvider `json:"provider,omitempty"`
-	Skills      []a2aSkill   `json:"skills,omitempty"`
-}
-
 type a2aProvider struct {
 	Organization string `json:"organization"`
 	URL          string `json:"url,omitempty"`
-}
-
-type a2aSkill struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	InputModes  []string `json:"inputModes,omitempty"`
-	OutputModes []string `json:"outputModes,omitempty"`
 }
 
 // Plugin implements the A2A parser plugin.
@@ -70,33 +53,82 @@ func (p *Plugin) Stop(ctx context.Context) error { return nil }
 
 // Parse parses an A2A agent card JSON blob into a CatalogEntry.
 func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
-	var card a2aCard
+	var card fullCard
 	if err := json.Unmarshal(raw, &card); err != nil {
 		return nil, fmt.Errorf("parsing a2a card: %w", err)
 	}
 	if card.Name == "" {
 		return nil, fmt.Errorf("a2a card missing required field: name")
 	}
-	if card.URL == "" {
-		return nil, fmt.Errorf("a2a card missing required field: url")
+
+	// Determine endpoint: prefer first supportedInterfaces URL, fallback to url.
+	endpoint := card.URL
+	if len(card.SupportedInterfaces) > 0 && card.SupportedInterfaces[0].URL != "" {
+		endpoint = card.SupportedInterfaces[0].URL
+	}
+	if endpoint == "" {
+		return nil, fmt.Errorf("a2a card missing required field: url or supportedInterfaces")
 	}
 
+	// Convert skills.
 	skills := make([]model.Skill, 0, len(card.Skills))
 	for _, s := range card.Skills {
 		skills = append(skills, model.Skill{
 			Name:        s.Name,
 			Description: s.Description,
+			Tags:        s.Tags,
 			InputModes:  s.InputModes,
 			OutputModes: s.OutputModes,
 		})
 	}
 
+	// Build provider.
 	var provider model.Provider
 	if card.Provider != nil {
 		provider.Organization = card.Provider.Organization
-		// A2A cards don't have a separate team field; use organization as team.
 		provider.Team = card.Provider.Organization
 		provider.URL = card.Provider.URL
+	}
+
+	// Detect spec version.
+	specVersion := detectSpecVersion(&card)
+
+	// Build typed metadata.
+	var typedMeta []model.TypedMetadata
+
+	// Extensions from capabilities.
+	if card.Capabilities != nil {
+		for _, ext := range card.Capabilities.Extensions {
+			typedMeta = append(typedMeta, &model.A2AExtension{
+				URI:      ext.URI,
+				Required: ext.Required,
+			})
+		}
+	}
+
+	// Security schemes.
+	for _, sec := range card.SecuritySchemes {
+		typedMeta = append(typedMeta, &model.A2ASecurityScheme{
+			Type:   sec.Type,
+			Method: sec.Method,
+			Name:   sec.Name,
+		})
+	}
+
+	// Interfaces.
+	for _, iface := range card.SupportedInterfaces {
+		typedMeta = append(typedMeta, &model.A2AInterface{
+			URL:     iface.URL,
+			Binding: iface.Binding,
+		})
+	}
+
+	// Signatures.
+	for _, sig := range card.Signatures {
+		typedMeta = append(typedMeta, &model.A2ASignature{
+			Algorithm: sig.Algorithm,
+			KeyID:     sig.KeyID,
+		})
 	}
 
 	now := time.Now().UTC()
@@ -104,12 +136,14 @@ func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry
 		DisplayName: card.Name,
 		Description: card.Description,
 		Protocol:    model.ProtocolA2A,
-		Endpoint:    card.URL,
+		Endpoint:    endpoint,
 		Version:     card.Version,
 		Status:      model.StatusUnknown,
 		Source:      source,
 		Provider:    provider,
 		Skills:      skills,
+		SpecVersion: specVersion,
+		TypedMeta:   typedMeta,
 		Validity:    model.Validity{LastSeen: now},
 		RawCard:     json.RawMessage(raw),
 		CreatedAt:   now,

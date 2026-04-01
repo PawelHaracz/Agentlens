@@ -4,6 +4,7 @@ import {
   loginViaUI,
   createCatalogEntry,
   deleteCatalogEntry,
+  validateAgentCard,
   authHeader,
   BASE,
 } from './helpers';
@@ -173,5 +174,76 @@ test.describe('Catalog Management', () => {
 
     // Cleanup
     await deleteCatalogEntry(request, token, entry.id);
+  });
+
+  test('validate valid A2A v1.0 card returns 200 with preview', async ({ request }) => {
+    const card = JSON.stringify({
+      name: 'E2E Validation Agent',
+      description: 'Tests validation endpoint',
+      version: '1.0.0',
+      supportedInterfaces: [{ url: `http://validate-${Date.now()}.example.com/a2a`, binding: 'jsonrpc' }],
+      capabilities: {
+        extensions: [{ uri: 'urn:test:ext', required: true }],
+        supportsExtendedAgentCard: true,
+      },
+      securitySchemes: [{ type: 'bearer', method: 'header', name: 'Authorization' }],
+      skills: [{ id: 's1', name: 'Skill One', description: 'A test skill' }],
+    });
+
+    const { status, body } = await validateAgentCard(request, token, card);
+    expect(status).toBe(200);
+    expect(body.valid).toBe(true);
+    expect(body.spec_version).toBe('1.0');
+    expect(body.preview.display_name).toBe('E2E Validation Agent');
+    expect(body.preview.extensions_count).toBe(1);
+    expect(body.preview.security_schemes).toContain('bearer');
+  });
+
+  test('validate invalid card returns 422 with errors', async ({ request }) => {
+    const card = JSON.stringify({
+      description: 'Missing name and endpoints',
+      skills: [{ name: 'No ID' }],
+    });
+
+    const { status, body } = await validateAgentCard(request, token, card);
+    expect(status).toBe(422);
+    expect(body.valid).toBe(false);
+    expect(body.errors.length).toBeGreaterThan(0);
+
+    const fields = body.errors.map((e: { field: string }) => e.field);
+    expect(fields).toContain('name');
+    expect(fields).toContain('supportedInterfaces');
+  });
+
+  test('register agent via UI modal', async ({ page }) => {
+    await loginViaUI(page);
+
+    // Open register dialog.
+    await page.getByRole('button', { name: 'Register Agent' }).click();
+    await expect(page.getByText('Register Agent').nth(1)).toBeVisible();
+
+    // Paste valid JSON.
+    const card = JSON.stringify({
+      name: `UI Register Agent ${Date.now()}`,
+      description: 'Registered via UI E2E test',
+      version: '1.0.0',
+      url: `http://ui-register-${Date.now()}.example.com`,
+      skills: [{ id: 'echo', name: 'Echo', description: 'Echoes input' }],
+    }, null, 2);
+
+    const textarea = page.locator('textarea');
+    await textarea.fill(card);
+
+    // Validate.
+    await page.getByRole('button', { name: 'Validate' }).click();
+
+    // Should advance to preview (or show preview).
+    await expect(page.getByText('Card validated successfully')).toBeVisible({ timeout: 10_000 });
+
+    // Register.
+    await page.getByRole('button', { name: 'Register Agent' }).click();
+
+    // Should close dialog and refresh catalog.
+    await expect(page.getByText('UI Register Agent')).toBeVisible({ timeout: 10_000 });
   });
 });

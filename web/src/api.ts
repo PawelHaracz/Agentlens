@@ -1,4 +1,4 @@
-import type { CatalogEntry, ListFilter, Stats } from './types'
+import type { CatalogEntry, ListFilter, Stats, ValidationResult } from './types'
 
 const BASE = '/api/v1'
 
@@ -96,6 +96,20 @@ export function deleteEntry(id: string): Promise<void> {
 
 export function getStats(): Promise<Stats> {
   return request<Stats>('/stats')
+}
+
+export function validateAgentCard(cardJson: string): Promise<ValidationResult> {
+  return request<ValidationResult>('/catalog/validate', {
+    method: 'POST',
+    body: cardJson,
+  })
+}
+
+export function createAgentFromCard(cardJson: string): Promise<CatalogEntry> {
+  return request<CatalogEntry>('/catalog', {
+    method: 'POST',
+    body: cardJson,
+  })
 }
 
 /* ─── Auth API ─── */

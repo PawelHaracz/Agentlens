@@ -57,6 +57,7 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 				r.Use(RequireAuth(deps.JWTService))
 				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog", h.ListCatalog)
 				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog", h.CreateEntry)
+				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/validate", h.ValidateAgentCard)
 				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}", h.GetEntry)
 				r.With(RequirePermission(auth.PermCatalogDelete)).Delete("/catalog/{id}", h.DeleteEntry)
 				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}/card", h.GetEntryCard)
@@ -107,6 +108,7 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 			// No auth configured — register catalog routes without protection.
 			r.Get("/catalog", h.ListCatalog)
 			r.Post("/catalog", h.CreateEntry)
+			r.Post("/catalog/validate", h.ValidateAgentCard)
 			r.Get("/catalog/{id}", h.GetEntry)
 			r.Delete("/catalog/{id}", h.DeleteEntry)
 			r.Get("/catalog/{id}/card", h.GetEntryCard)

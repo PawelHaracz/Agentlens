@@ -53,6 +53,34 @@ func TestUnmarshalTypedMetadata_EmptyArray(t *testing.T) {
 	assert.Empty(t, result)
 }
 
+func TestCatalogEntry_SyncTypedMeta_RoundTrip(t *testing.T) {
+	entry := &CatalogEntry{
+		ID:          "test-1",
+		DisplayName: "Test",
+		Protocol:    ProtocolA2A,
+		SpecVersion: "1.0",
+		TypedMeta: []TypedMetadata{
+			&A2AExtension{URI: "urn:test", Required: true},
+			&A2AInterface{URL: "https://example.com", Binding: "jsonrpc"},
+		},
+	}
+	entry.SyncToDB()
+
+	assert.NotEqual(t, "[]", entry.TypedMetaJSON)
+	assert.Equal(t, "1.0", entry.SpecVersion)
+
+	restored := &CatalogEntry{
+		SpecVersion:   entry.SpecVersion,
+		TypedMetaJSON: entry.TypedMetaJSON,
+	}
+	restored.SyncFromDB()
+
+	require.Len(t, restored.TypedMeta, 2)
+	ext, ok := restored.TypedMeta[0].(*A2AExtension)
+	require.True(t, ok)
+	assert.Equal(t, "urn:test", ext.URI)
+}
+
 func TestUnmarshalTypedMetadata_UnknownKind(t *testing.T) {
 	input := `[{"kind":"unknown.type","foo":"bar"},{"kind":"also.unknown"}]`
 	result, err := UnmarshalTypedMetaJSON([]byte(input))
