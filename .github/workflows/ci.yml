@@ -23,13 +23,14 @@ jobs:
       - name: Run generate placeholder HTML
         run: make add-html-placeholder
 
+      - name: Install golangci-lint
+        run: make tools
+
       - name: Run go vet
         run: make vet
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.11.4
+        run: make lint
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -76,6 +77,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+
+      - name: Install golangci-lint
+        run: make tools
 
       - uses: oven-sh/setup-bun@v2
         with:
