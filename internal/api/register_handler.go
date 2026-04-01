@@ -22,7 +22,7 @@ func (h *Handler) RegisterAgentCard(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(w, http.StatusBadRequest, "failed to read request body")
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if len(raw) == 0 {
 		ErrorResponse(w, http.StatusBadRequest, "request body is empty")

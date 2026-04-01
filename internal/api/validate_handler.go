@@ -14,7 +14,7 @@ func (h *Handler) ValidateAgentCard(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(w, http.StatusBadRequest, "failed to read request body")
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	result := a2a.ValidateCard(raw)
 

@@ -98,8 +98,8 @@ func ValidateCard(raw []byte) ValidationResult {
 	var card fullCard
 	if err := json.Unmarshal(raw, &card); err != nil {
 		return ValidationResult{
-			Valid:   false,
-			Errors:  []ValidationError{{Field: "json", Message: "invalid JSON: " + err.Error()}},
+			Valid:    false,
+			Errors:   []ValidationError{{Field: "json", Message: "invalid JSON: " + err.Error()}},
 			Warnings: []string{},
 		}
 	}

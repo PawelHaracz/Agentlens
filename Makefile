@@ -12,7 +12,7 @@ COVERAGE_HTML := coverage.html
 # Go source files
 GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
 
-.PHONY: all build test lint format run clean help \
+.PHONY: all check build test lint format run clean help \
         test-coverage test-race vet \
         web-install web-build web-lint web-test \
         e2e-install e2e-test \
@@ -27,6 +27,9 @@ help:
 
 ## all: Run format, lint, test, and build
 all: format lint test build
+
+## check: Run all static analysis — format, vet, lint (Go + frontend)
+check: format vet lint web-lint
 
 # ---------------------------------------------------------------------------
 # Go targets
