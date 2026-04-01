@@ -54,7 +54,7 @@ test-race:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) test ./... -race $(GOFLAGS)
 
 ## lint: Run golangci-lint
-lint:
+lint: add-html-placeholder
 	golangci-lint run ./...
 
 ## vet: Run go vet
@@ -129,3 +129,12 @@ docker-scan: docker-build
 helm-lint:
 	helm lint deploy/helm/agentlens
 	helm template agentlens deploy/helm/agentlens --debug > /dev/null
+
+add-html-placeholder:
+	@mkdir -p web/dist
+	@if [ ! -f web/dist/index.html ]; then \
+		echo "Creating stub web/dist/index.html..."; \
+		printf '<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>AgentLens</title>\n  </head>\n  <body>\n    <div id="root"></div>\n  </body>\n</html>\n' > web/dist/index.html; \
+	else \
+		echo "Placeholder already exists in index.html"; \
+	fi

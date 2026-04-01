@@ -20,6 +20,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Run generate placeholder HTML
+        run: make add-html-placeholder
+
       - name: Run go vet
         run: make vet
 
