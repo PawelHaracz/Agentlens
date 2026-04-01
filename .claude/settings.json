@@ -1,0 +1,12 @@
+{
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "superpowers-lab@superpowers-marketplace": true,
+    "cc-skills-golang@samber": false
+  }
+}

@@ -27,8 +27,8 @@ CGO_ENABLED=1 go build -o "$BINARY" ./cmd/agentlens/
 
 echo "▶ Building frontend …"
 cd "$ROOT/web"
-npm ci --silent
-npm run build
+bun install --silent
+bun run build
 
 echo "▶ Starting AgentLens on :${PORT} (data: $DATA_DIR) …"
 export AGENTLENS_PORT="$PORT"
@@ -70,9 +70,9 @@ echo "  Admin password captured (not shown for security)."
 
 echo "▶ Installing Playwright dependencies …"
 cd "$E2E_DIR"
-npm ci --silent
-npx playwright install chromium --with-deps 2>/dev/null || npx playwright install chromium
+bun install --silent
+bunx playwright install chromium --with-deps 2>/dev/null || bunx playwright install chromium
 
 echo "▶ Running Playwright tests …"
-npx playwright test "$@"
+bunx playwright test "$@"
 echo "✔ All E2E tests passed."

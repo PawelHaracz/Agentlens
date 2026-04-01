@@ -1,0 +1,18 @@
+# Global owner — reviews required on all PRs
+* @PawelHaracz
+
+# Core backend
+/internal/ @PawelHaracz
+/cmd/ @PawelHaracz
+/plugins/ @PawelHaracz
+
+# Frontend
+/web/ @PawelHaracz
+
+# Infrastructure & deployment
+/deploy/ @PawelHaracz
+/e2e/ @PawelHaracz
+/.github/ @PawelHaracz
+
+# Documentation
+/docs/ @PawelHaracz

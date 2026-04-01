@@ -4,7 +4,7 @@ Thank you for your interest in contributing! This guide covers how to get starte
 
 ## Development Setup
 
-**Prerequisites:** Go 1.23+, Node.js 20+, SQLite
+**Prerequisites:** Go 1.26.1, Bun 1.3+, SQLite
 
 ```bash
 git clone https://github.com/PawelHaracz/agentlens
@@ -17,17 +17,17 @@ go build ./...
 go test ./...
 
 # Build frontend
-cd web && npm install && npm run build && cd ..
+cd web && bun install && bun run build && cd ..
 
 # Run locally
 go run ./cmd/agentlens
 ```
 
-The server starts on http://localhost:8080.
+The server starts on <http://localhost:8080>.
 
 ## Project Structure
 
-```
+```text
 cmd/agentlens/      # Main entrypoint
 internal/
   api/              # HTTP handlers, router, middleware
@@ -49,7 +49,7 @@ docs/               # API documentation
 2. Write tests for new functionality.
 3. Run `go test ./...` to ensure tests pass.
 4. Run `go vet ./...` and `go build ./...`.
-5. If changing the frontend, run `cd web && npm run build`.
+5. If changing the frontend, run `cd web && bun run build`.
 6. Open a pull request with a clear description of the change.
 
 ## Code Style
@@ -62,10 +62,11 @@ docs/               # API documentation
 ## Reporting Issues
 
 Please open a GitHub issue with:
+
 - A clear description of the problem
 - Steps to reproduce
 - Expected vs actual behavior
-- Go/Node version and OS
+- Go/Bun version and OS
 
 ## Running with PostgreSQL
 

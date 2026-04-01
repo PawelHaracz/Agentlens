@@ -24,9 +24,8 @@ This guide covers setting up a development environment, building, testing, and e
 
 ## Prerequisites
 
-- **Go** 1.23+ (with CGO enabled for SQLite)
-- **Node.js** 20+
-- **npm** (bundled with Node.js)
+- **Go** 1.26.1 (with CGO enabled for SQLite)
+- **Bun** 1.3+ (install via [bun.sh](https://bun.sh))
 - **golangci-lint** (install via `make tools`)
 - **Docker** (for container builds and scanning)
 - **Helm** 3+ (for chart development)
@@ -118,7 +117,7 @@ Run `make help` to see all available targets:
 | `make clean` | Remove build artifacts |
 | `make deps` | Download and tidy Go dependencies |
 | `make tools` | Install golangci-lint |
-| `make web-install` | Install frontend npm dependencies |
+| `make web-install` | Install frontend dependencies (bun) |
 | `make web-build` | Build the frontend |
 | `make web-lint` | TypeScript type check |
 | `make docker-build` | Build the Docker image locally |
@@ -140,7 +139,7 @@ This compiles the binary to `bin/agentlens` with `CGO_ENABLED=1` (required for t
 ### Frontend
 
 ```bash
-make web-install   # Install npm dependencies
+make web-install   # Install bun dependencies
 make web-build     # Build production bundle
 ```
 
@@ -327,7 +326,7 @@ The plugin manager will log a warning and skip the plugin — it will not be sta
 
 ```bash
 cd web
-npm run dev
+bun run dev
 ```
 
 This starts the Vite dev server with hot module replacement. The frontend proxies API requests to `http://localhost:8080`.

@@ -1,7 +1,9 @@
 web/node_modules/
+web/dist/
 data/
 *.db
 .env
+agentlens.yaml
 bin/
 coverage.out
 coverage.html

@@ -266,6 +266,23 @@ All permissions follow the `resource:action` format (e.g., `catalog:read`, `user
 
 ---
 
+## Documentation
+
+| Document | Description |
+| -------- | ----------- |
+| [API Reference](docs/api.md) | Full REST API documentation — endpoints, request/response schemas, error codes |
+| [Architecture](docs/architecture.md) | Microkernel design, plugin system, data flow diagrams |
+| [Authentication](docs/auth.md) | JWT auth, RBAC, roles & permissions, account lockout |
+| [Database](docs/database.md) | SQLite & PostgreSQL setup, migrations, dialect differences |
+| [Settings](docs/settings.md) | Application settings, categories, configuration store |
+| [Developer Guide](docs/developer-guide.md) | Build, test, lint, write plugins, frontend development |
+| [DevOps Guide](docs/devops-guide.md) | Docker, Helm, CI/CD, release pipeline, versioning, troubleshooting |
+| [End-User Guide](docs/end-user-guide.md) | UI walkthrough with screenshots — catalog, agents, filtering |
+| [User Guide](docs/user-guide.md) | Configuration, deployment modes, Kubernetes annotations |
+| [Contributing](CONTRIBUTING.md) | How to contribute, project structure, code style |
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
