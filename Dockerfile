@@ -1,10 +1,10 @@
 # Stage 1: Build frontend
-FROM node:20-alpine AS frontend
+FROM oven/bun:1.3.11-alpine AS frontend
 WORKDIR /web
-COPY web/package*.json ./
-RUN npm ci
+COPY web/package.json web/bun.lock ./
+RUN bun install --frozen-lockfile
 COPY web/ ./
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Build Go binary
 FROM golang:1.26.1-alpine AS builder
