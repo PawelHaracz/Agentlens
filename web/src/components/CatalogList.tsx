@@ -6,6 +6,7 @@ import StatusBadge from './StatusBadge'
 import ProtocolBadge from './ProtocolBadge'
 import StatsBar from './StatsBar'
 import SearchBar from './SearchBar'
+import RegisterAgentDialog from './RegisterAgentDialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
@@ -76,6 +77,7 @@ export default function CatalogList() {
             <SelectItem value="unknown">Unknown</SelectItem>
           </SelectContent>
         </Select>
+        <RegisterAgentDialog onRegistered={load} />
       </div>
 
       {error && (

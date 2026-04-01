@@ -95,6 +95,20 @@ export async function deleteCatalogEntry(
   expect(res.ok(), `deleteCatalogEntry failed: ${res.status()}`).toBeTruthy();
 }
 
+/** Validate an agent card via the API. Returns the validation result. */
+export async function validateAgentCard(
+  request: APIRequestContext,
+  token: string,
+  cardJson: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> {
+  const res = await request.post(`${BASE}/api/v1/catalog/validate`, {
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+    data: cardJson,
+  });
+  return { status: res.status(), body: await res.json() };
+}
+
 // ───────────────────── Browser helpers ─────────────────────
 
 /** Login through the web UI and wait for the dashboard to load. */

@@ -1,0 +1,46 @@
+{
+  "name": "Weather Agent v0.3",
+  "description": "Provides weather forecasts",
+  "url": "https://weather.example.com/a2a",
+  "version": "2.1.0",
+  "supportsExtendedAgentCard": true,
+  "provider": {
+    "organization": "WeatherCorp",
+    "url": "https://weathercorp.example.com"
+  },
+  "supportedInterfaces": [
+    {"url": "https://weather.example.com/a2a", "binding": "jsonrpc"},
+    {"url": "https://weather.example.com/http", "binding": "http"}
+  ],
+  "capabilities": {
+    "extensions": [
+      {"uri": "urn:weather:realtime", "required": true},
+      {"uri": "urn:weather:historical", "required": false}
+    ]
+  },
+  "securitySchemes": [
+    {"type": "bearer", "method": "header", "name": "Authorization"},
+    {"type": "apiKey", "method": "query", "name": "api_key"}
+  ],
+  "signatures": [
+    {"algorithm": "RS256", "keyId": "weather-key-1"}
+  ],
+  "skills": [
+    {
+      "id": "get-forecast",
+      "name": "Get Forecast",
+      "description": "Returns weather forecast for a location",
+      "tags": ["weather", "forecast"],
+      "inputModes": ["text"],
+      "outputModes": ["text", "json"]
+    },
+    {
+      "id": "get-alerts",
+      "name": "Get Alerts",
+      "description": "Returns active weather alerts",
+      "tags": ["weather", "alerts"],
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    }
+  ]
+}

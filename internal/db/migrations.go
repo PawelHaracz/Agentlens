@@ -18,6 +18,7 @@ func AllMigrations() []Migration {
 		migration002UsersAndRoles(),
 		migration003DefaultRoles(),
 		migration004Settings(),
+		migration005TypedMetadata(),
 	}
 }
 
@@ -171,6 +172,19 @@ func migration003DefaultRoles() Migration {
 				}
 			}
 			return nil
+		},
+	}
+}
+
+func migration005TypedMetadata() Migration {
+	return Migration{
+		Version:     5,
+		Description: "add spec_version and typed_meta columns to catalog_entries",
+		Up: func(tx *gorm.DB) error {
+			if err := tx.Exec("ALTER TABLE catalog_entries ADD COLUMN spec_version TEXT NOT NULL DEFAULT ''").Error; err != nil {
+				return err
+			}
+			return tx.Exec("ALTER TABLE catalog_entries ADD COLUMN typed_meta TEXT NOT NULL DEFAULT '[]'").Error
 		},
 	}
 }

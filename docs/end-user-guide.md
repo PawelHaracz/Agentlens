@@ -203,7 +203,79 @@ Use the back button or breadcrumb to return to the catalog list.
 
 ## Registering an Agent
 
-You can register agents in three ways:
+You can register agents in three ways. Before push-registering an A2A agent card, validate it to ensure the card format is correct.
+
+### Validating A2A Agent Cards
+
+Use the validation endpoint to check your A2A agent card before registering it:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/validate \
+  -H "Content-Type: application/json" \
+  -d @agent-card.json
+```
+
+**Important:** The validation endpoint requires authentication with `catalog:write` permission and returns detailed error messages to help you fix any issues.
+
+The response includes:
+- **valid** — boolean indicating whether the card passed validation
+- **spec_version** — detected A2A version (0.3 or 1.0)
+- **errors** — array of validation errors (if any)
+- **warnings** — array of non-critical warnings
+- **preview** — summary of agent details (if valid)
+
+Example error response:
+
+```json
+{
+  "valid": false,
+  "spec_version": "",
+  "errors": [
+    {
+      "field": "url",
+      "message": "url or supportedInterfaces is required"
+    }
+  ],
+  "warnings": [],
+  "preview": null
+}
+```
+
+Common validation errors:
+- **Missing `name` field** — Required: agent display name
+- **Missing `url` or `supportedInterfaces`** — Required: at least one endpoint URL
+- **Invalid JSON syntax** — Check for trailing commas, missing quotes
+- **Invalid `version` format** — Must follow semantic versioning (e.g., 1.0.0)
+
+**Web UI Registration Flow:**
+
+The web dashboard provides a 4-step registration modal for A2A agent cards:
+
+**Step 1 — Open the dialog.** Click the **+ Register Agent** button in the catalog toolbar.
+
+![Register Agent Button](images/register-agent-button.png)
+
+**Step 2 — Paste or upload your card.** The dialog opens with two tabs: **Paste JSON** (type or paste the card directly) and **Upload File** (drag-and-drop or browse for a `.json` file). Click **Validate** when ready.
+
+![Register Dialog — Input](images/register-dialog-input.png)
+
+**Step 3a — Fix validation errors (if any).** If the card has missing or invalid fields, the dialog shows each error with the field name and message in red. Click **Back to Edit** to correct the card and re-validate.
+
+![Register Dialog — Validation Errors](images/register-validation-errors.png)
+
+**Step 3b — Review the preview.** If validation passes, the dialog shows a green "Card validated successfully" banner followed by a preview of the agent: name, description, protocol badge (A2A), detected spec version (v0.3 or v1.0), skill count, and security schemes.
+
+![Register Dialog — Card Preview](images/register-card-preview.png)
+
+**Step 4 — Register.** Click **Register Agent** to persist the entry. The modal closes and the new agent appears immediately in the catalog table.
+
+![Catalog — Registered Agent](images/register-success-catalog.png)
+
+Click the agent name to open the detail view, which includes the full agent information, skills, spec version badge, and the raw card JSON.
+
+![Agent Detail View](images/register-agent-detail.png)
+
+After successful validation, clicking **Register Agent** in the modal sends the card to `POST /api/v1/catalog/register`, which parses the raw agent card via the A2A parser (converting it into a CatalogEntry following the Product Archetype pattern) and stores it in the catalog.
 
 ### 1. Push Registration (API)
 
@@ -463,6 +535,7 @@ curl http://localhost:8080/api/v1/catalog \
 | `PUT` | `/api/v1/auth/password` | Any | Change password |
 | `GET` | `/api/v1/catalog` | `catalog:read` | List all entries (supports filters) |
 | `POST` | `/api/v1/catalog` | `catalog:write` | Register a new entry |
+| `POST` | `/api/v1/catalog/register` | `catalog:write` | Register from raw A2A agent card |
 | `GET` | `/api/v1/catalog/{id}` | `catalog:read` | Get entry by ID |
 | `DELETE` | `/api/v1/catalog/{id}` | `catalog:delete` | Delete an entry |
 | `GET` | `/api/v1/catalog/{id}/card` | `catalog:read` | Get raw protocol card |

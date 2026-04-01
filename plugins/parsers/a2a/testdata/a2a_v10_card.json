@@ -1,0 +1,45 @@
+{
+  "name": "Translation Agent v1.0",
+  "description": "Multi-language translation service",
+  "version": "3.0.0",
+  "provider": {
+    "organization": "LangTech",
+    "url": "https://langtech.example.com"
+  },
+  "supportedInterfaces": [
+    {"url": "https://translate.example.com/a2a", "binding": "jsonrpc"}
+  ],
+  "capabilities": {
+    "extensions": [
+      {"uri": "urn:translate:glossary", "required": true},
+      {"uri": "urn:translate:memory", "required": false},
+      {"uri": "urn:translate:context", "required": false}
+    ],
+    "supportsExtendedAgentCard": true
+  },
+  "securitySchemes": [
+    {"type": "oauth2", "method": "header", "name": "Authorization"},
+    {"type": "mtls"}
+  ],
+  "signatures": [
+    {"algorithm": "ES256", "keyId": "lang-key-1"}
+  ],
+  "skills": [
+    {
+      "id": "translate-text",
+      "name": "Translate Text",
+      "description": "Translates text between languages",
+      "tags": ["translation", "text"],
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "detect-language",
+      "name": "Detect Language",
+      "description": "Detects the language of input text",
+      "tags": ["detection"],
+      "inputModes": ["text"],
+      "outputModes": ["json"]
+    }
+  ]
+}

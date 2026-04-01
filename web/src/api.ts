@@ -1,4 +1,4 @@
-import type { CatalogEntry, ListFilter, Stats } from './types'
+import type { CatalogEntry, ListFilter, Stats, ValidationResult } from './types'
 
 const BASE = '/api/v1'
 
@@ -46,6 +46,15 @@ export function getToken() { return authToken }
 
 /* ─── Base request helper ─── */
 
+/** Handles 401 responses consistently: clears the token and redirects to /login. */
+function handleUnauthorized(): never {
+  authToken = null
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login'
+  }
+  throw new Error('Session expired')
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     ...((init?.headers as Record<string, string>) || {}),
@@ -58,11 +67,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   const res = await fetch(BASE + path, { ...init, headers })
   if (res.status === 401 && authToken) {
-    authToken = null
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login'
-    }
-    throw new Error('Session expired')
+    handleUnauthorized()
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }))
@@ -96,6 +101,35 @@ export function deleteEntry(id: string): Promise<void> {
 
 export function getStats(): Promise<Stats> {
   return request<Stats>('/stats')
+}
+
+export async function validateAgentCard(cardJson: string): Promise<ValidationResult> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`
+  }
+  const res = await fetch(BASE + '/catalog/validate', {
+    method: 'POST',
+    headers,
+    body: cardJson,
+  })
+  // Mirror the 401 handling from the shared request() helper.
+  if (res.status === 401 && authToken) {
+    handleUnauthorized()
+  }
+  // Validation endpoint returns 200 (valid) or 422 (invalid) — both are valid responses.
+  if (res.status === 200 || res.status === 422) {
+    return res.json() as Promise<ValidationResult>
+  }
+  const body = await res.json().catch(() => ({ error: res.statusText }))
+  throw new Error(body.error ?? res.statusText)
+}
+
+export function createAgentFromCard(cardJson: string): Promise<CatalogEntry> {
+  return request<CatalogEntry>('/catalog/register', {
+    method: 'POST',
+    body: cardJson,
+  })
 }
 
 /* ─── Auth API ─── */

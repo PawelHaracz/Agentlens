@@ -98,6 +98,9 @@ export default function EntryDetail() {
             {entry.version && (
               <Badge variant="secondary">v{entry.version}</Badge>
             )}
+            {entry.spec_version && (
+              <Badge variant="outline">Spec v{entry.spec_version}</Badge>
+            )}
           </div>
         </CardHeader>
 
@@ -154,6 +157,43 @@ export default function EntryDetail() {
                         </div>
                       </CardContent>
                     </Card>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {entry.typed_meta && entry.typed_meta.filter(m => m.kind === 'a2a.extension').length > 0 && (
+            <>
+              <Separator className="my-4" />
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  Extensions ({entry.typed_meta.filter(m => m.kind === 'a2a.extension').length})
+                </p>
+                <div className="space-y-1">
+                  {entry.typed_meta.filter(m => m.kind === 'a2a.extension').map((ext, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="font-mono break-all">{(ext as unknown as { uri: string }).uri}</span>
+                      <Badge variant={(ext as unknown as { required: boolean }).required ? 'destructive' : 'secondary'} className="text-xs">
+                        {(ext as unknown as { required: boolean }).required ? 'Required' : 'Optional'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {entry.typed_meta && entry.typed_meta.filter(m => m.kind === 'a2a.security_scheme').length > 0 && (
+            <>
+              <Separator className="my-4" />
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Security</p>
+                <div className="flex flex-wrap gap-1">
+                  {entry.typed_meta.filter(m => m.kind === 'a2a.security_scheme').map((scheme, i) => (
+                    <Badge key={i} variant="outline">
+                      {(scheme as unknown as { type: string }).type}
+                    </Badge>
                   ))}
                 </div>
               </div>
