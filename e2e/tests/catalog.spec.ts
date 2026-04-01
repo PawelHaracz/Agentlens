@@ -212,7 +212,7 @@ test.describe('Catalog Management', () => {
 
     const fields = body.errors.map((e: { field: string }) => e.field);
     expect(fields).toContain('name');
-    expect(fields).toContain('supportedInterfaces');
+    expect(fields).toContain('url');
   });
 
   test('register agent via UI modal', async ({ page }) => {

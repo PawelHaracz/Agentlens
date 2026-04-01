@@ -119,8 +119,8 @@ Example response for a valid card:
   "preview": {
     "display_name": "Example Chat Agent",
     "description": "A sample agent demonstrating A2A v1.0 features",
-    "protocol": "A2A",
-    "spec_version": "v1.0",
+    "protocol": "a2a",
+    "spec_version": "1.0",
     "skills_count": 0,
     "extensions_count": 1,
     "security_schemes": ["oauth2"],

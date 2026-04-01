@@ -100,8 +100,8 @@ Content-Type: application/json
   "preview": {
     "display_name": "Example Chat Agent",
     "description": "A sample agent demonstrating A2A v1.0 features",
-    "protocol": "A2A",
-    "spec_version": "v1.0",
+    "protocol": "a2a",
+    "spec_version": "1.0",
     "skills_count": 0,
     "extensions_count": 1,
     "security_schemes": ["oauth2"],
@@ -170,12 +170,23 @@ Content-Type: application/json
   "version": "1.0.0",
   "status": "unknown",
   "source": "push",
-  "spec_version": "v1.0",
-  "typed_meta": {
-    "extensions_count": 1,
-    "security_schemes": ["oauth2"],
-    "interfaces": ["https://api.example.com/v1"]
-  },
+  "spec_version": "1.0",
+  "typed_meta": [
+    {
+      "kind": "a2a.extension",
+      "uri": "urn:example:ext",
+      "required": true
+    },
+    {
+      "kind": "a2a.security_scheme",
+      "type": "oauth2"
+    },
+    {
+      "kind": "a2a.interface",
+      "url": "https://api.example.com/v1",
+      "binding": "jsonrpc"
+    }
+  ],
   "provider": {
     "organization": "Example Corp"
   },

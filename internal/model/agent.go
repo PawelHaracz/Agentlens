@@ -101,6 +101,16 @@ func (CatalogEntry) TableName() string { return "catalog_entries" }
 // MarshalJSON converts the entry to JSON, syncing GORM fields to public fields first.
 func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 	e.SyncFromDB()
+
+	// Serialize TypedMeta using MarshalTypedMetaJSON so each item carries a "kind" discriminator.
+	var typedMetaJSON json.RawMessage
+	if len(e.TypedMeta) > 0 {
+		b, err := MarshalTypedMetaJSON(e.TypedMeta)
+		if err == nil {
+			typedMetaJSON = b
+		}
+	}
+
 	type Alias CatalogEntry
 	return json.Marshal(struct {
 		Alias
@@ -111,7 +121,7 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 		RawCard     json.RawMessage   `json:"raw_card,omitempty"`
 		Metadata    map[string]string `json:"metadata,omitempty"`
 		SpecVersion string            `json:"spec_version,omitempty"`
-		TypedMeta   []TypedMetadata   `json:"typed_meta,omitempty"`
+		TypedMeta   json.RawMessage   `json:"typed_meta,omitempty"`
 	}{
 		Alias:       Alias(e),
 		Provider:    e.Provider,
@@ -121,7 +131,7 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 		RawCard:     e.RawCard,
 		Metadata:    e.Metadata,
 		SpecVersion: e.SpecVersion,
-		TypedMeta:   e.TypedMeta,
+		TypedMeta:   typedMetaJSON,
 	})
 }
 
@@ -171,7 +181,11 @@ func (e *CatalogEntry) SyncFromDB() {
 		e.RawCard = json.RawMessage(*e.RawCardStr)
 	}
 	if e.TypedMetaJSON != "" {
-		e.TypedMeta, _ = UnmarshalTypedMetaJSON([]byte(e.TypedMetaJSON))
+		if meta, err := UnmarshalTypedMetaJSON([]byte(e.TypedMetaJSON)); err == nil {
+			e.TypedMeta = meta
+		} else {
+			e.TypedMeta = []TypedMetadata{}
+		}
 	}
 	e.Validity = Validity{
 		From:     e.ValidFrom,
