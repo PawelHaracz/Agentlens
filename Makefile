@@ -14,7 +14,7 @@ GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
 
 .PHONY: all build test lint format run clean help \
         test-coverage test-race vet \
-        web-install web-build web-lint \
+        web-install web-build web-lint web-test \
         e2e-install e2e-test \
         helm-lint docker-build docker-scan \
         deps tools
@@ -99,6 +99,10 @@ web-build:
 ## web-lint: Lint frontend (TypeScript check)
 web-lint:
 	cd web && bunx tsc --noEmit
+
+## web-test: Run frontend unit tests (Vitest)
+web-test:
+	cd web && bun run test -- --run
 
 # ---------------------------------------------------------------------------
 # E2E test targets
