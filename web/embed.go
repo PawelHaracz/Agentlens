@@ -5,7 +5,7 @@ import (
 	"io/fs"
 )
 
-//go:embed all:dist
+//go:embed dist
 var distFS embed.FS
 
 // FS returns the embedded dist filesystem.
