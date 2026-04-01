@@ -7,18 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       app_version:
-        description: "App version to release (e.g. 1.2.3). Leave empty for auto-bump."
+        description: "App version override (e.g. 1.0.0). Leave empty for auto-bump."
         required: false
         type: string
       helm_version:
-        description: "Helm chart version to release (e.g. 1.2.3). Leave empty for auto-bump."
+        description: "Helm chart version override (e.g. 1.0.0). Leave empty for auto-bump."
         required: false
         type: string
-      force_helm_release:
-        description: "Force Helm chart release even if no helm/ changes are detected."
-        required: false
-        type: boolean
-        default: false
 
 # Only one release may run at a time per branch to avoid tag conflicts.
 concurrency:
@@ -43,6 +38,7 @@ jobs:
     outputs:
       app_version: ${{ steps.calc.outputs.app_version }}
       helm_version: ${{ steps.calc.outputs.helm_version }}
+      release_app: ${{ steps.calc.outputs.release_app }}
       release_helm: ${{ steps.calc.outputs.release_helm }}
     steps:
       - uses: actions/checkout@v4
@@ -52,59 +48,9 @@ jobs:
       - name: Calculate release versions
         id: calc
         run: |
-          HELM_CHART_PATH="${{ env.HELM_CHART_PATH }}"
-
-          # ── App version ──────────────────────────────────────────────────
-          LATEST_APP_TAG=$(git tag --list \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
-
-          if [ -n "${{ inputs.app_version }}" ]; then
-            APP_VERSION="${{ inputs.app_version }}"
-          elif [ -z "$LATEST_APP_TAG" ]; then
-            APP_VERSION="0.1.0"
-          else
-            IFS='.' read -r major minor patch <<< "${LATEST_APP_TAG#v}"
-            APP_VERSION="${major}.${minor}.$((patch + 1))"
-          fi
-
-          # ── Helm version ─────────────────────────────────────────────────
-          LATEST_HELM_TAG=$(git tag --list \
-            | grep -E '^helm/v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
-
-          if [ -n "${{ inputs.helm_version }}" ]; then
-            HELM_VERSION="${{ inputs.helm_version }}"
-            RELEASE_HELM=true
-          elif [ "${{ inputs.force_helm_release }}" = "true" ]; then
-            if [ -z "$LATEST_HELM_TAG" ]; then
-              HELM_VERSION="0.1.0"
-            else
-              IFS='.' read -r major minor patch <<< "${LATEST_HELM_TAG#helm/v}"
-              HELM_VERSION="${major}.${minor}.$((patch + 1))"
-            fi
-            RELEASE_HELM=true
-          elif [ -z "$LATEST_HELM_TAG" ]; then
-            # No helm release yet – always release on first run
-            HELM_VERSION="0.1.0"
-            RELEASE_HELM=true
-          else
-            # Detect changes in deploy/helm/ since last helm release
-            CHANGED=$(git diff --name-only "${LATEST_HELM_TAG}..HEAD" -- "${HELM_CHART_PATH}" | wc -l)
-            if [ "$CHANGED" -gt 0 ]; then
-              IFS='.' read -r major minor patch <<< "${LATEST_HELM_TAG#helm/v}"
-              HELM_VERSION="${major}.${minor}.$((patch + 1))"
-              RELEASE_HELM=true
-            else
-              HELM_VERSION="${LATEST_HELM_TAG#helm/v}"
-              RELEASE_HELM=false
-            fi
-          fi
-
-          echo "app_version=${APP_VERSION}"   >> "$GITHUB_OUTPUT"
-          echo "helm_version=${HELM_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "release_helm=${RELEASE_HELM}" >> "$GITHUB_OUTPUT"
-
-          echo "::notice::App version  : ${APP_VERSION}"
-          echo "::notice::Helm version : ${HELM_VERSION}  (release_helm=${RELEASE_HELM})"
+          ./scripts/calculate-versions.sh \
+            ${{ inputs.app_version && format('--app-override {0}', inputs.app_version) || '' }} \
+            ${{ inputs.helm_version && format('--helm-override {0}', inputs.helm_version) || '' }}
 
   # ──────────────────────────────────────────────────────────────────────────
   # Release Docker image
@@ -112,6 +58,7 @@ jobs:
   release-docker:
     name: Release Docker Image
     needs: prepare
+    if: needs.prepare.outputs.release_app == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
