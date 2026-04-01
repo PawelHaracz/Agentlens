@@ -117,7 +117,7 @@ export async function validateAgentCard(cardJson: string): Promise<ValidationRes
 }
 
 export function createAgentFromCard(cardJson: string): Promise<CatalogEntry> {
-  return request<CatalogEntry>('/catalog', {
+  return request<CatalogEntry>('/catalog/register', {
     method: 'POST',
     body: cardJson,
   })

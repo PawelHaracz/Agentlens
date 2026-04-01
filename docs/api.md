@@ -79,7 +79,7 @@ List all catalog entries with optional filtering.
 
 ### `POST /api/v1/catalog/validate`
 
-Validate an A2A agent card without registering it. This endpoint auto-detects the A2A specification version (v0.3 vs v1.0) and returns structured validation results with a preview of the agent details.
+Validate an A2A agent card without registering it (dry-run only — does not persist anything). This endpoint auto-detects the A2A specification version (v0.3 vs v1.0) and returns structured validation results with a preview of the agent details.
 
 **Authentication:** Required. Requires `catalog:write` permission.
 
@@ -143,6 +143,77 @@ The endpoint automatically detects the A2A spec version based on the card struct
 - **v0.3** — if `supportsExtendedAgentCard` is at root level
 - **v1.0** — if `supportsExtendedAgentCard` is nested inside `capabilities` object
 - **empty** — if neither structure is present
+
+---
+
+### `POST /api/v1/catalog/register`
+
+Register an A2A agent from a raw agent card JSON. The endpoint validates the card, parses it via the A2A parser (Product Archetype: raw card to CatalogEntry), and persists the entry.
+
+**Authentication:** Required. Requires `catalog:write` permission.
+
+**Request Body:** Raw A2A agent card JSON.
+
+**Request Headers:**
+```
+Content-Type: application/json
+```
+
+**Response 201 (Created):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "display_name": "Example Chat Agent",
+  "description": "A sample agent demonstrating A2A v1.0 features",
+  "protocol": "a2a",
+  "endpoint": "https://api.example.com/v1",
+  "version": "1.0.0",
+  "status": "unknown",
+  "source": "push",
+  "spec_version": "v1.0",
+  "typed_meta": {
+    "extensions_count": 1,
+    "security_schemes": ["oauth2"],
+    "interfaces": ["https://api.example.com/v1"]
+  },
+  "provider": {
+    "organization": "Example Corp"
+  },
+  "categories": [],
+  "skills": [],
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
+**Response 400 (Bad Request):**
+```json
+{"error": "request body is empty"}
+```
+
+**Response 409 (Conflict):**
+```json
+{"error": "catalog entry with this endpoint already exists"}
+```
+
+**Response 422 (Unprocessable Entity):**
+
+Returns the same `ValidationResult` structure as `/catalog/validate` when the card fails validation:
+
+```json
+{
+  "valid": false,
+  "spec_version": "",
+  "errors": [
+    {
+      "field": "name",
+      "message": "name is required"
+    }
+  ],
+  "warnings": [],
+  "preview": null
+}
+```
 
 ---
 

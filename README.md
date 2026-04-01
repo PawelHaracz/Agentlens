@@ -157,7 +157,8 @@ curl -X POST http://localhost:8080/api/v1/catalog \
 |---|---|---|
 | `GET` | `/healthz` | Health check |
 | `GET` | `/api/v1/catalog` | List catalog entries (`?protocol=`, `?status=`, `?q=`, `?team=`, `?categories=`, `?limit=`, `?offset=`) |
-| `POST` | `/api/v1/catalog/validate` | Validate A2A agent card (no auth required) |
+| `POST` | `/api/v1/catalog/validate` | Validate A2A agent card (dry-run, does not persist) |
+| `POST` | `/api/v1/catalog/register` | Register an A2A agent from a raw agent card JSON |
 | `POST` | `/api/v1/catalog` | Push-register a catalog entry |
 | `GET` | `/api/v1/catalog/{id}` | Get entry by ID |
 | `DELETE` | `/api/v1/catalog/{id}` | Delete entry |
