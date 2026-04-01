@@ -77,6 +77,75 @@ List all catalog entries with optional filtering.
 
 ---
 
+### `POST /api/v1/catalog/validate`
+
+Validate an A2A agent card without registering it. This endpoint auto-detects the A2A specification version (v0.3 vs v1.0) and returns structured validation results with a preview of the agent details.
+
+**Authentication:** Required. Requires `catalog:write` permission.
+
+**Request Body:** Raw A2A agent card JSON (any valid JSON is accepted).
+
+**Request Headers:**
+```
+Content-Type: application/json
+```
+
+**Response 200 (Valid card):**
+```json
+{
+  "valid": true,
+  "spec_version": "1.0",
+  "errors": [],
+  "warnings": [],
+  "preview": {
+    "display_name": "Example Chat Agent",
+    "description": "A sample agent demonstrating A2A v1.0 features",
+    "protocol": "A2A",
+    "spec_version": "v1.0",
+    "skills_count": 0,
+    "extensions_count": 1,
+    "security_schemes": ["oauth2"],
+    "interfaces": ["https://api.example.com/v1"]
+  }
+}
+```
+
+**Response 422 (Invalid card):**
+```json
+{
+  "valid": false,
+  "spec_version": "",
+  "errors": [
+    {
+      "field": "url",
+      "message": "url or supportedInterfaces is required"
+    }
+  ],
+  "warnings": [],
+  "preview": null
+}
+```
+
+**Error Field Descriptions:**
+
+| Field | Meaning |
+|-------|---------|
+| `name` | Agent display name is required |
+| `url` | Either `url` or `supportedInterfaces[].url` is required |
+| `version` | Invalid semantic version format |
+| `securitySchemes` | Invalid security scheme structure |
+| `extensions` | Invalid extension structure |
+
+**A2A Specification Version Detection:**
+
+The endpoint automatically detects the A2A spec version based on the card structure:
+
+- **v0.3** — if `supportsExtendedAgentCard` is at root level
+- **v1.0** — if `supportsExtendedAgentCard` is nested inside `capabilities` object
+- **empty** — if neither structure is present
+
+---
+
 ### `POST /api/v1/catalog`
 
 Register a catalog entry via push.

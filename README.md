@@ -92,6 +92,45 @@ agentlens --config agentlens.yaml
 
 ---
 
+## Agent Card Validation
+
+Before registering an A2A agent card, validate it using the validation endpoint:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/validate \
+  -H "Content-Type: application/json" \
+  -d @agent-card.json
+```
+
+The validation endpoint:
+- **Auto-detects** A2A specification version (v0.3 vs v1.0)
+- **Returns** structured errors and warnings if validation fails
+- **Returns** a preview of the agent details if valid
+- **Requires authentication** — `catalog:write` permission needed
+
+Example response for a valid card:
+
+```json
+{
+  "valid": true,
+  "spec_version": "1.0",
+  "errors": [],
+  "warnings": [],
+  "preview": {
+    "display_name": "Example Chat Agent",
+    "description": "A sample agent demonstrating A2A v1.0 features",
+    "protocol": "A2A",
+    "spec_version": "v1.0",
+    "skills_count": 0,
+    "extensions_count": 1,
+    "security_schemes": ["oauth2"],
+    "interfaces": ["https://api.example.com/v1"]
+  }
+}
+```
+
+---
+
 ## Push Registration
 
 Register a catalog entry via HTTP POST:
@@ -118,6 +157,7 @@ curl -X POST http://localhost:8080/api/v1/catalog \
 |---|---|---|
 | `GET` | `/healthz` | Health check |
 | `GET` | `/api/v1/catalog` | List catalog entries (`?protocol=`, `?status=`, `?q=`, `?team=`, `?categories=`, `?limit=`, `?offset=`) |
+| `POST` | `/api/v1/catalog/validate` | Validate A2A agent card (no auth required) |
 | `POST` | `/api/v1/catalog` | Push-register a catalog entry |
 | `GET` | `/api/v1/catalog/{id}` | Get entry by ID |
 | `DELETE` | `/api/v1/catalog/{id}` | Delete entry |

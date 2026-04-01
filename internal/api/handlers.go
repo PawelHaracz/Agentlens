@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	"github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 )
 
 // Handler holds dependencies for all API handlers.
@@ -94,14 +96,35 @@ func (h *Handler) GetEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateEntry handles POST /api/v1/catalog.
+// It accepts either a CatalogEntry JSON or a raw A2A agent card JSON.
+// Raw agent cards are detected automatically and parsed via the A2A parser.
 func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
-	var entry model.CatalogEntry
-	if err := json.NewDecoder(r.Body).Decode(&entry); err != nil {
-		ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+	raw, err := io.ReadAll(r.Body)
+	if err != nil {
+		ErrorResponse(w, http.StatusBadRequest, "failed to read request body")
 		return
 	}
+	defer r.Body.Close()
 
-	// Validate required fields
+	var entry *model.CatalogEntry
+
+	if isAgentCard(raw) {
+		parser := a2a.New()
+		parsed, parseErr := parser.Parse(raw, model.SourcePush)
+		if parseErr != nil {
+			ErrorResponse(w, http.StatusBadRequest, parseErr.Error())
+			return
+		}
+		entry = parsed
+	} else {
+		entry = &model.CatalogEntry{}
+		if jsonErr := json.Unmarshal(raw, entry); jsonErr != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+	}
+
+	// Validate required fields.
 	if strings.TrimSpace(entry.DisplayName) == "" {
 		ErrorResponse(w, http.StatusBadRequest, "display_name is required")
 		return
@@ -126,7 +149,7 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 	entry.UpdatedAt = now
 	entry.Validity.LastSeen = now
 
-	if err := h.store.Create(r.Context(), &entry); err != nil {
+	if err := h.store.Create(r.Context(), entry); err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			ErrorResponse(w, http.StatusConflict, "an entry with this endpoint already exists")
 			return
@@ -135,6 +158,42 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	JSONResponse(w, http.StatusCreated, entry)
+}
+
+// isAgentCard checks whether raw JSON is a raw A2A agent card rather than a CatalogEntry.
+// A2A cards use "name"/"url"; CatalogEntries use "display_name"/"endpoint".
+func isAgentCard(raw []byte) bool {
+	var probe struct {
+		// CatalogEntry-specific fields (snake_case).
+		DisplayName string `json:"display_name"`
+		Endpoint    string `json:"endpoint"`
+		// A2A card fields.
+		Name                      string          `json:"name"`
+		URL                       string          `json:"url"`
+		SupportsExtendedAgentCard *bool           `json:"supportsExtendedAgentCard"`
+		Capabilities              json.RawMessage `json:"capabilities"`
+		SupportedInterfaces       json.RawMessage `json:"supportedInterfaces"`
+		SecuritySchemes           json.RawMessage `json:"securitySchemes"`
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return false
+	}
+	// If it has CatalogEntry-specific fields, treat as CatalogEntry.
+	if probe.DisplayName != "" || probe.Endpoint != "" {
+		return false
+	}
+	// If it has A2A-specific fields, treat as agent card.
+	if probe.SupportsExtendedAgentCard != nil ||
+		len(probe.Capabilities) > 0 ||
+		len(probe.SupportedInterfaces) > 0 ||
+		len(probe.SecuritySchemes) > 0 {
+		return true
+	}
+	// If it has "name" + "url" (A2A card fields) but no "display_name"/"endpoint", treat as card.
+	if probe.Name != "" && probe.URL != "" {
+		return true
+	}
+	return false
 }
 
 // DeleteEntry handles DELETE /api/v1/catalog/{id}.

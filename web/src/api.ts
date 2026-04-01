@@ -98,11 +98,22 @@ export function getStats(): Promise<Stats> {
   return request<Stats>('/stats')
 }
 
-export function validateAgentCard(cardJson: string): Promise<ValidationResult> {
-  return request<ValidationResult>('/catalog/validate', {
+export async function validateAgentCard(cardJson: string): Promise<ValidationResult> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`
+  }
+  const res = await fetch(BASE + '/catalog/validate', {
     method: 'POST',
+    headers,
     body: cardJson,
   })
+  // Validation endpoint returns 200 (valid) or 422 (invalid) — both are valid responses.
+  if (res.status === 200 || res.status === 422) {
+    return res.json() as Promise<ValidationResult>
+  }
+  const body = await res.json().catch(() => ({ error: res.statusText }))
+  throw new Error(body.error ?? res.statusText)
 }
 
 export function createAgentFromCard(cardJson: string): Promise<CatalogEntry> {

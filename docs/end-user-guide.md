@@ -203,7 +203,56 @@ Use the back button or breadcrumb to return to the catalog list.
 
 ## Registering an Agent
 
-You can register agents in three ways:
+You can register agents in three ways. Before push-registering an A2A agent card, validate it to ensure the card format is correct.
+
+### Validating A2A Agent Cards
+
+Use the validation endpoint to check your A2A agent card before registering it:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/validate \
+  -H "Content-Type: application/json" \
+  -d @agent-card.json
+```
+
+**Important:** The validation endpoint requires authentication with `catalog:write` permission and returns detailed error messages to help you fix any issues.
+
+The response includes:
+- **valid** — boolean indicating whether the card passed validation
+- **spec_version** — detected A2A version (0.3 or 1.0)
+- **errors** — array of validation errors (if any)
+- **warnings** — array of non-critical warnings
+- **preview** — summary of agent details (if valid)
+
+Example error response:
+
+```json
+{
+  "valid": false,
+  "spec_version": "",
+  "errors": [
+    {
+      "field": "url",
+      "message": "url or supportedInterfaces is required"
+    }
+  ],
+  "warnings": [],
+  "preview": null
+}
+```
+
+Common validation errors:
+- **Missing `name` field** — Required: agent display name
+- **Missing `url` or `supportedInterfaces`** — Required: at least one endpoint URL
+- **Invalid JSON syntax** — Check for trailing commas, missing quotes
+- **Invalid `version` format** — Must follow semantic versioning (e.g., 1.0.0)
+
+**Web UI Validation:**
+
+In the AgentLens web dashboard, click **Register Agent** to open the registration modal. Paste or upload your A2A card JSON, then click **Validate**. The modal will show:
+- Validation errors in red (with field names and error messages)
+- Validation warnings in yellow (non-critical issues)
+- A preview of the agent details if valid
 
 ### 1. Push Registration (API)
 

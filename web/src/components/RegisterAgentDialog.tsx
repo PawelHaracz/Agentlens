@@ -68,7 +68,7 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
     try {
       const result = await validateAgentCard(cardJson)
       setValidationResult(result)
-      if (result.valid && result.errors.length === 0 && result.warnings.length === 0) {
+      if (result.valid && (result.errors ?? []).length === 0 && (result.warnings ?? []).length === 0) {
         setStep('preview')
       } else {
         setStep('validation')
@@ -160,28 +160,28 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
 
         {step === 'validation' && validationResult && (
           <div className="space-y-4">
-            {validationResult.errors.length > 0 && (
+            {(validationResult.errors ?? []).length > 0 && (
               <Card className="border-destructive bg-destructive/10 p-4">
                 <p className="font-medium text-destructive flex items-center gap-1 mb-2">
                   <AlertCircle className="h-4 w-4" />
                   Validation Errors
                 </p>
                 <ul className="text-sm text-destructive space-y-1">
-                  {validationResult.errors.map((err, i) => (
+                  {(validationResult.errors ?? []).map((err, i) => (
                     <li key={i}><code className="font-mono">{err.field}</code>: {err.message}</li>
                   ))}
                 </ul>
               </Card>
             )}
 
-            {validationResult.warnings.length > 0 && (
+            {(validationResult.warnings ?? []).length > 0 && (
               <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10 p-4">
                 <p className="font-medium text-yellow-700 dark:text-yellow-400 flex items-center gap-1 mb-2">
                   <AlertTriangle className="h-4 w-4" />
                   Warnings
                 </p>
                 <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
-                  {validationResult.warnings.map((w, i) => (
+                  {(validationResult.warnings ?? []).map((w, i) => (
                     <li key={i}>{w}</li>
                   ))}
                 </ul>
