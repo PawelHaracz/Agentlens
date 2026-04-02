@@ -12,17 +12,19 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
+	"github.com/PawelHaracz/agentlens/internal/service"
 	"github.com/PawelHaracz/agentlens/internal/store"
 )
 
 // Handler holds dependencies for all API handlers.
 type Handler struct {
-	store store.Store
+	store       store.Store
+	cardFetcher service.Fetcher
 }
 
 // NewHandler creates a new Handler with the given store.
 func NewHandler(s store.Store) *Handler {
-	return &Handler{store: s}
+	return &Handler{store: s, cardFetcher: service.NewCardFetcher()}
 }
 
 // Healthz handles GET /healthz.

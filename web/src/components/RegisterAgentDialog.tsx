@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react'
-import { validateAgentCard, createAgentFromCard } from '../api'
+import { validateAgentCard, createAgentFromCard, importCardFromURL } from '../api'
 import type { ValidationResult } from '../types'
 import CardPreview from './CardPreview'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { Plus, Upload, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react'
@@ -24,6 +26,12 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
 
+  // Import from URL state
+  const [importURL, setImportURL] = useState('')
+  const [importProtocol, setImportProtocol] = useState('auto')
+  const [isImporting, setIsImporting] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+
   const reset = useCallback(() => {
     setStep('input')
     setCardJson('')
@@ -32,6 +40,10 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
     setValidating(false)
     setRegistering(false)
     setRegisterError(null)
+    setImportURL('')
+    setImportProtocol('auto')
+    setIsImporting(false)
+    setImportError(null)
   }, [])
 
   const handleOpenChange = (v: boolean) => {
@@ -101,6 +113,34 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
     }
   }
 
+  const handleImport = async () => {
+    setIsImporting(true)
+    setImportError(null)
+    try {
+      const req: { url: string; protocol?: 'a2a' | 'mcp' | 'a2ui' } = { url: importURL }
+      if (importProtocol !== 'auto') {
+        req.protocol = importProtocol as 'a2a' | 'mcp' | 'a2ui'
+      }
+      await importCardFromURL(req)
+      setOpen(false)
+      reset()
+      onRegistered()
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Import failed'
+      if (msg.includes('endpoint already exists')) {
+        setImportError('An agent with this endpoint already exists.')
+      } else if (msg.includes('could not fetch') || msg.includes('Bad Gateway')) {
+        setImportError('Could not reach the URL. Check that it is accessible.')
+      } else if (msg.includes('not a valid') || msg.includes('invalid') || msg.includes('Unprocessable')) {
+        setImportError('The URL did not return a valid agent card.')
+      } else {
+        setImportError(msg)
+      }
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
@@ -120,6 +160,7 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
               <TabsList>
                 <TabsTrigger value="paste">Paste JSON</TabsTrigger>
                 <TabsTrigger value="upload">Upload File</TabsTrigger>
+                <TabsTrigger value="import">Import from URL</TabsTrigger>
               </TabsList>
               <TabsContent value="paste">
                 <textarea
@@ -139,6 +180,45 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
                     onChange={handleFileUpload}
                     className="text-sm"
                   />
+                </div>
+              </TabsContent>
+              <TabsContent value="import">
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Agent Card URL</label>
+                    <Input
+                      type="url"
+                      placeholder="https://example.com/.well-known/agent.json"
+                      value={importURL}
+                      onChange={e => { setImportURL(e.target.value); setImportError(null) }}
+                      disabled={isImporting}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Protocol</label>
+                    <Select value={importProtocol} onValueChange={setImportProtocol} disabled={isImporting}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Auto-detect" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto-detect</SelectItem>
+                        <SelectItem value="a2a">A2A</SelectItem>
+                        <SelectItem value="mcp">MCP</SelectItem>
+                        <SelectItem value="a2ui">A2UI</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {importError && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {importError}
+                    </p>
+                  )}
+                  <div className="flex justify-end">
+                    <Button onClick={handleImport} disabled={isImporting || !importURL.trim()}>
+                      {isImporting ? 'Fetching card...' : 'Fetch & Import'}
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>

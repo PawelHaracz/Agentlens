@@ -132,6 +132,18 @@ export function createAgentFromCard(cardJson: string): Promise<CatalogEntry> {
   })
 }
 
+export interface ImportCardRequest {
+  url: string
+  protocol?: 'a2a' | 'mcp' | 'a2ui'
+}
+
+export function importCardFromURL(req: ImportCardRequest): Promise<CatalogEntry> {
+  return request<CatalogEntry>('/catalog/import', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
 /* ─── Auth API ─── */
 
 export function login(username: string, password: string): Promise<LoginResponse> {

@@ -9,6 +9,7 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 
 	"github.com/PawelHaracz/agentlens/internal/auth"
+	"github.com/PawelHaracz/agentlens/internal/service"
 	"github.com/PawelHaracz/agentlens/internal/store"
 	"github.com/PawelHaracz/agentlens/web"
 )
@@ -20,11 +21,16 @@ type RouterDeps struct {
 	RoleStore     *store.RoleStore
 	SettingsStore *store.SettingsStore
 	JWTService    *auth.JWTService
+	// CardFetcher is optional. When nil, a default CardFetcher with SSRF protection is used.
+	CardFetcher service.Fetcher
 }
 
 // NewRouter creates and returns a configured chi router with all routes.
 func NewRouter(deps RouterDeps) *chi.Mux {
 	h := NewHandler(deps.Store)
+	if deps.CardFetcher != nil {
+		h.cardFetcher = deps.CardFetcher
+	}
 	r := chi.NewRouter()
 
 	r.Use(RecoveryMiddleware)
@@ -59,6 +65,7 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog", h.CreateEntry)
 				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/validate", h.ValidateAgentCard)
 				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/register", h.RegisterAgentCard)
+				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/import", h.ImportCatalogEntry)
 				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}", h.GetEntry)
 				r.With(RequirePermission(auth.PermCatalogDelete)).Delete("/catalog/{id}", h.DeleteEntry)
 				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}/card", h.GetEntryCard)
@@ -111,6 +118,7 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 			r.Post("/catalog", h.CreateEntry)
 			r.Post("/catalog/validate", h.ValidateAgentCard)
 			r.Post("/catalog/register", h.RegisterAgentCard)
+			r.Post("/catalog/import", h.ImportCatalogEntry)
 			r.Get("/catalog/{id}", h.GetEntry)
 			r.Delete("/catalog/{id}", h.DeleteEntry)
 			r.Get("/catalog/{id}/card", h.GetEntryCard)
