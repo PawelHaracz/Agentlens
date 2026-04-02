@@ -27,7 +27,6 @@ func (h *Handler) ImportCatalogEntry(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	defer func() { _ = r.Body.Close() }()
 
 	// Validate URL before attempting any network access.
 	if err := h.cardFetcher.ValidateURL(req.URL); err != nil {

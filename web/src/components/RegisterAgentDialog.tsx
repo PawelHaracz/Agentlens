@@ -216,7 +216,7 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
                   )}
                   <div className="flex justify-end">
                     <Button onClick={handleImport} disabled={isImporting || !importURL.trim()}>
-                      {isImporting ? 'Fetching card...' : 'Fetch & Import'}
+                      {isImporting ? 'Importing...' : 'Fetch & Import'}
                     </Button>
                   </div>
                 </div>
