@@ -164,6 +164,9 @@ Built with [Chi router](https://github.com/go-chi/chi). All routes under `/api/v
 | -------- | ------ | ---------- | ----------- |
 | `/api/v1/catalog` | GET | `catalog:read` | List entries (with filters) |
 | `/api/v1/catalog` | POST | `catalog:write` | Push-register an entry |
+| `/api/v1/catalog/validate` | POST | `catalog:write` | Validate an A2A agent card (dry-run) |
+| `/api/v1/catalog/register` | POST | `catalog:write` | Register an A2A agent from a raw card JSON |
+| `/api/v1/catalog/import` | POST | `catalog:write` | Fetch and import an agent card from a URL |
 | `/api/v1/catalog/{id}` | GET | `catalog:read` | Get entry by ID |
 | `/api/v1/catalog/{id}` | DELETE | `catalog:delete` | Delete entry |
 | `/api/v1/catalog/{id}/card` | GET | `catalog:read` | Get raw protocol card JSON |
@@ -320,6 +323,8 @@ React + Vite + TypeScript frontend using [shadcn/ui](https://ui.shadcn.com/) com
 - **Layout** — sticky navbar with user avatar dropdown, mobile hamburger
 - **CatalogList** — paginated table with protocol/status badges and filters
 - **EntryDetail** — full entry view with skills, metadata, categories, and raw card JSON
+- **RegisterAgentDialog** — multi-tab registration modal: Paste JSON, Upload File, Import from URL
+- **CardPreview** — renders a validated agent card preview before registration
 - **SettingsPage** — 4-tab management UI (General, Users, Roles, My Account)
 - **ProtectedRoute** — auth guard that redirects unauthenticated users to `/login`
 
@@ -378,6 +383,7 @@ agentlens/
 │   ├── kernel/             # Microkernel core + plugin manager
 │   ├── model/              # Domain model (CatalogEntry, User, Role, Setting)
 │   ├── server/             # HTTP server lifecycle
+│   ├── service/            # Shared services (CardFetcher for URL import)
 │   └── store/              # GORM-backed stores (catalog, user, role, settings)
 ├── plugins/
 │   ├── enterprise/         # License-gated enterprise plugins
@@ -396,7 +402,7 @@ agentlens/
 │   └── src/
 │       ├── contexts/       # AuthContext, ThemeContext
 │       ├── pages/          # LoginPage, SettingsPage
-│       └── components/     # Layout, CatalogList, EntryDetail, etc.
+│       └── components/     # Layout, CatalogList, EntryDetail, RegisterAgentDialog, etc.
 ├── deploy/
 │   └── helm/agentlens/     # Helm chart
 ├── examples/

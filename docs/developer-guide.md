@@ -70,6 +70,7 @@ agentlens/
 │   ├── kernel/             # Microkernel core, plugin interfaces, plugin manager
 │   ├── model/              # Domain model types (CatalogEntry, Skill, etc.)
 │   ├── server/             # HTTP server lifecycle management
+│   ├── service/            # Shared services (CardFetcher for URL import)
 │   └── store/              # SQLite store, migrations, query builders
 ├── plugins/                # Plugin implementations
 │   ├── enterprise/         # License-gated plugins (SSO, RBAC, audit, PostgreSQL)
@@ -82,7 +83,7 @@ agentlens/
 │       └── static/         # Static config source
 ├── web/                    # React + Vite + shadcn/ui frontend
 │   └── src/
-│       ├── components/     # UI components (CatalogList, EntryDetail, etc.)
+│       ├── components/     # UI components (CatalogList, EntryDetail, RegisterAgentDialog, etc.)
 │       │   └── ui/         # shadcn/ui base components
 │       ├── api.ts          # API client functions
 │       ├── types.ts        # TypeScript type definitions
@@ -184,10 +185,18 @@ make test-race
 Tests live alongside the code they test (Go convention):
 
 - `internal/api/handlers_test.go`
+- `internal/api/validate_handler_test.go`
+- `internal/api/register_handler_test.go`
+- `internal/api/import_handler_test.go`
+- `internal/api/auth_handlers_test.go`
+- `internal/api/user_handlers_test.go`
+- `internal/api/role_handlers_test.go`
+- `internal/api/settings_handlers_test.go`
 - `internal/config/config_test.go`
 - `internal/discovery/a2a_test.go`, `mcp_test.go`, `k8s_test.go`, `manager_test.go`
 - `internal/health/checker_test.go`
-- `internal/store/sqlite_test.go`
+- `internal/store/sqlite_test.go`, `user_store_test.go`, `role_store_test.go`, `settings_store_test.go`
+- `plugins/parsers/a2a/validation_test.go`
 
 ---
 
