@@ -228,6 +228,101 @@ Returns the same `ValidationResult` structure as `/catalog/validate` when the ca
 
 ---
 
+### `POST /api/v1/catalog/import`
+
+Import an agent card by fetching it from a URL. The server fetches the card from the provided URL, auto-detects (or uses the specified) protocol, parses the card, and registers the entry.
+
+**Authentication:** Required. Requires `catalog:write` permission.
+
+**Request Body:**
+```json
+{
+  "url": "https://my-agent.example.com/.well-known/agent.json",
+  "protocol": "a2a"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | ✅ | HTTPS or HTTP URL to fetch the agent card from |
+| `protocol` | string | ❌ | Force a protocol: `a2a`, `mcp`, or `a2ui`. Omit for auto-detection |
+
+**Auto-detection rules (when `protocol` is omitted):**
+
+| Signal | Detected protocol |
+|--------|-------------------|
+| URL contains `/.well-known/agent` | `a2a` |
+| URL contains `/mcp` | `mcp` |
+| Card JSON has `"skills"` array | `a2a` |
+| Card JSON has `"tools"` array | `mcp` |
+| None of the above | Error — must specify `protocol` |
+
+**Safety restrictions:**
+
+- URL scheme must be `http` or `https` (no `file://`, `ftp://`, etc.)
+- URLs that resolve to private/internal networks are rejected: `127.x`, `10.x`, `172.16–31.x`, `192.168.x`, `169.254.x`, `::1`, `fc00::/7`, `fe80::/10`, and `localhost`
+- Response body is capped at 1 MB
+- HTTP timeout: 10 seconds
+- Maximum 3 redirects followed
+
+**Response 201 (Created):** Same as `POST /api/v1/catalog/register` — the created `CatalogEntry` object.
+
+**Response 400 (Bad Request):**
+```json
+{"error": "url scheme must be http or https"}
+```
+```json
+{"error": "url resolves to a private or reserved address"}
+```
+```json
+{"error": "could not detect protocol; specify 'protocol' in the request body"}
+```
+
+**Response 409 (Conflict):**
+```json
+{"error": "an entry with this endpoint already exists"}
+```
+
+**Response 422 (Unprocessable Entity):**
+
+Returned when the fetched JSON is not a valid agent card:
+```json
+{
+  "valid": false,
+  "spec_version": "",
+  "errors": [
+    {"field": "name", "message": "name is required"}
+  ],
+  "warnings": [],
+  "preview": null
+}
+```
+
+**Response 502 (Bad Gateway):**
+```json
+{"error": "could not fetch card from url: fetching url: connection refused"}
+```
+
+Returned when the remote URL is unreachable, returns a non-2xx HTTP status, or returns non-JSON content.
+
+**Example — import an A2A agent card:**
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://my-agent.example.com/.well-known/agent.json"}'
+```
+
+**Example — import an MCP server card with explicit protocol:**
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://my-mcp-server.example.com/card", "protocol": "mcp"}'
+```
+
+---
+
 ### `POST /api/v1/catalog`
 
 Register a catalog entry via push.
@@ -355,8 +450,10 @@ All errors return JSON with an `error` field:
 | `403` | Forbidden — insufficient permissions |
 | `404` | Resource not found |
 | `409` | Conflict — resource already exists |
+| `422` | Unprocessable Entity — validation failed |
 | `423` | Locked — account locked due to failed login attempts |
 | `500` | Internal server error |
+| `502` | Bad Gateway — remote URL unreachable or returned non-JSON (import only) |
 
 ---
 

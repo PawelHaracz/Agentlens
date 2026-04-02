@@ -13,6 +13,8 @@ Welcome to AgentLens — a real-time AI agent catalog for discovering, tracking,
 - [Searching and Filtering](#searching-and-filtering)
 - [Viewing Agent Details](#viewing-agent-details)
 - [Registering an Agent](#registering-an-agent)
+  - [Importing from a URL](#importing-from-a-url)
+  - [Pasting or Uploading a JSON Card](#pasting-or-uploading-a-json-card)
 - [Understanding Status Indicators](#understanding-status-indicators)
 - [Protocol Types](#protocol-types)
 - [Settings](#settings)
@@ -203,9 +205,75 @@ Use the back button or breadcrumb to return to the catalog list.
 
 ## Registering an Agent
 
-You can register agents in three ways. Before push-registering an A2A agent card, validate it to ensure the card format is correct.
+You can register agents in several ways. Click the **+ Register Agent** button in the catalog toolbar to open the registration modal.
 
-### Validating A2A Agent Cards
+![Register Agent Button](images/register-agent-button.png)
+
+The modal has **three tabs** at the top:
+
+| Tab | Description |
+|-----|-------------|
+| **Paste JSON** | Type or paste an A2A/MCP card directly |
+| **Upload File** | Drag-and-drop or browse for a `.json` file |
+| **Import from URL** | Provide a URL — the server fetches and imports the card automatically |
+
+---
+
+### Importing from a URL
+
+The **Import from URL** tab is the fastest way to register an agent whose card is already publicly accessible (e.g., at `/.well-known/agent.json`).
+
+![Register Dialog — Import from URL tab](images/register-import-url-tab.png)
+
+**Step 1 — Open the Import from URL tab.** Click the **+ Register Agent** button, then select the **Import from URL** tab.
+
+**Step 2 — Enter the URL.** Paste the full URL of the agent card into the **Agent Card URL** field. For A2A agents the card is typically served at:
+```
+https://your-agent.example.com/.well-known/agent.json
+```
+For MCP servers, the card is typically at:
+```
+https://your-server.example.com/.well-known/mcp/server.json
+```
+
+**Step 3 — (Optional) Select a protocol.** The **Protocol** dropdown defaults to **Auto-detect**. AgentLens will determine the protocol from the URL path and the card content:
+
+| Signal | Detected protocol |
+|--------|-------------------|
+| URL contains `/.well-known/agent` | A2A |
+| URL contains `/mcp` | MCP |
+| Card JSON contains a `"skills"` array | A2A |
+| Card JSON contains a `"tools"` array | MCP |
+
+If detection fails, select the correct protocol manually from the dropdown: **A2A**, **MCP**, or **A2UI**.
+
+**Step 4 — Click "Fetch & Import".** The button shows **Importing...** while the server fetches and parses the card. The URL field and protocol selector are disabled during this time.
+
+![Register Dialog — Import loading state](images/register-import-url-loading.png)
+
+**Step 5 — Result:**
+
+- **Success** — the modal closes automatically and the new agent appears in the catalog table.
+- **Error** — an inline error message appears below the URL field. Common errors:
+
+| Error message | Cause |
+|---------------|-------|
+| *Could not reach the URL. Check that it is accessible.* | The URL is unreachable, timed out, or returned a non-2xx HTTP status. |
+| *The URL did not return a valid agent card.* | The URL returned non-JSON, or the JSON does not meet the card schema requirements. |
+| *An agent with this endpoint already exists.* | An entry with the same declared endpoint is already in the catalog. |
+| *url resolves to a private or reserved address* | Private/internal network addresses are blocked for security reasons. |
+
+![Register Dialog — Import error state](images/register-import-url-error.png)
+
+**Security note:** The import feature only allows `http://` and `https://` URLs. Requests to private IP ranges (`10.x`, `192.168.x`, `172.16–31.x`), loopback (`127.x`, `localhost`), and link-local addresses (`169.254.x`) are rejected to prevent server-side request forgery (SSRF). Response bodies larger than 1 MB are also rejected.
+
+---
+
+### Pasting or Uploading a JSON Card
+
+Before registering an A2A agent card by pasting JSON, validate it to ensure the format is correct.
+
+#### Validating A2A Agent Cards
 
 Use the validation endpoint to check your A2A agent card before registering it:
 
@@ -253,9 +321,7 @@ The web dashboard provides a 4-step registration modal for A2A agent cards:
 
 **Step 1 — Open the dialog.** Click the **+ Register Agent** button in the catalog toolbar.
 
-![Register Agent Button](images/register-agent-button.png)
-
-**Step 2 — Paste or upload your card.** The dialog opens with two tabs: **Paste JSON** (type or paste the card directly) and **Upload File** (drag-and-drop or browse for a `.json` file). Click **Validate** when ready.
+**Step 2 — Paste or upload your card.** Select the **Paste JSON** or **Upload File** tab. Type or paste the card directly, or drag-and-drop a `.json` file. Click **Validate** when ready.
 
 ![Register Dialog — Input](images/register-dialog-input.png)
 
@@ -536,6 +602,7 @@ curl http://localhost:8080/api/v1/catalog \
 | `GET` | `/api/v1/catalog` | `catalog:read` | List all entries (supports filters) |
 | `POST` | `/api/v1/catalog` | `catalog:write` | Register a new entry |
 | `POST` | `/api/v1/catalog/register` | `catalog:write` | Register from raw A2A agent card |
+| `POST` | `/api/v1/catalog/import` | `catalog:write` | Import agent card from a URL |
 | `GET` | `/api/v1/catalog/{id}` | `catalog:read` | Get entry by ID |
 | `DELETE` | `/api/v1/catalog/{id}` | `catalog:delete` | Delete an entry |
 | `GET` | `/api/v1/catalog/{id}/card` | `catalog:read` | Get raw protocol card |
@@ -617,7 +684,7 @@ The API returns `409 Conflict`. Endpoints are unique identifiers in the catalog.
 
 ### Can AgentLens discover agents outside Kubernetes?
 
-Yes — use the static configuration (`sources:` in `agentlens.yaml`) or push registration (`POST /api/v1/catalog`) for agents running anywhere.
+Yes — use the static configuration (`sources:` in `agentlens.yaml`) or push registration (`POST /api/v1/catalog`) for agents running anywhere. You can also use the **Import from URL** feature in the dashboard to register a single agent card by URL.
 
 ### How do I enable Kubernetes discovery?
 
@@ -637,3 +704,7 @@ curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{"username":"alice","password":"SecurePass1!","role_id":"role-editor"}'
 ```
+
+### Why can't I import from a private/internal URL?
+
+AgentLens blocks requests to private IP ranges (`10.x`, `192.168.x`, `172.16–31.x`), loopback (`127.x`, `localhost`), and link-local addresses (`169.254.x`) to prevent server-side request forgery (SSRF) attacks. If you need to register an agent running on a private network, use **Paste JSON** / **Upload File** or the `POST /api/v1/catalog/register` API instead.
