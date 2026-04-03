@@ -140,7 +140,12 @@ func isPrivateIP(ip net.IP) bool {
 
 // Fetch retrieves and validates the agent card from the given URL.
 // It returns the raw JSON and an auto-detected protocol hint.
+// ValidateURL is called as a defense-in-depth guard even when the caller
+// has already validated the URL — this prevents SSRF if Fetch is called directly.
 func (f *CardFetcher) Fetch(ctx context.Context, rawURL string) (*FetchResult, error) {
+	if err := ValidateURL(rawURL); err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)

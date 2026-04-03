@@ -284,13 +284,17 @@ router := api.NewRouter(api.RouterDeps{
 
 ### Creating a Parser Plugin
 
-A parser plugin converts protocol-specific card JSON into a `CatalogEntry`. The `ParserPlugin` interface requires both `Parse` and `Validate` methods.
+A parser plugin converts protocol-specific card JSON into an `AgentType` (Product Archetype pattern). The `ParserPlugin` interface requires both `Parse` and `Validate` methods.
+
+`Parse` returns `*model.AgentType` populated with the protocol, endpoint, version, provider, capabilities, and raw definition. The handler is responsible for wrapping the `AgentType` in a `CatalogEntry` (display name, status, source, validity) before persisting.
 
 ```go
 package myplugin
 
 import (
     "context"
+    "encoding/json"
+    "fmt"
     "github.com/PawelHaracz/agentlens/internal/kernel"
     "github.com/PawelHaracz/agentlens/internal/model"
 )
@@ -324,18 +328,31 @@ func (p *MyParser) Validate(raw []byte) kernel.ValidationResult {
         SpecVersion: "1.0",
         Errors:      nil,
         Warnings:    nil,
-        Preview:     map[string]any{"name": "My Agent"},
+        Preview:     map[string]any{"display_name": "My Agent"},
     }
 }
 
-func (p *MyParser) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
-    // Parse raw JSON into CatalogEntry
-    // ...
-    return &model.CatalogEntry{
-        DisplayName: "My Agent",
-        Protocol:    "my-protocol",
-        Source:      source,
-        // ... fill fields from parsed JSON
+// Parse converts a raw card JSON blob into an AgentType.
+// The returned AgentType has Provider and Capabilities populated.
+// Source (push, k8s, config) is a catalog concern — the handler adds it.
+func (p *MyParser) Parse(raw []byte) (*model.AgentType, error) {
+    var card struct {
+        Name     string `json:"name"`
+        Endpoint string `json:"endpoint"`
+        Version  string `json:"version"`
+    }
+    if err := json.Unmarshal(raw, &card); err != nil {
+        return nil, fmt.Errorf("parsing my-protocol card: %w", err)
+    }
+    if card.Name == "" {
+        return nil, fmt.Errorf("my-protocol card missing required field: name")
+    }
+    return &model.AgentType{
+        Protocol:      "my-protocol",
+        Endpoint:      card.Endpoint,
+        Version:       card.Version,
+        RawDefinition: raw,
+        AgentKey:      model.ComputeAgentKey("my-protocol", card.Endpoint),
     }, nil
 }
 ```
@@ -348,7 +365,7 @@ pm.Register(myplugin.New())
 
 ### Creating a Source Plugin
 
-A source plugin discovers catalog entries from a specific location.
+A source plugin discovers agents from a specific location and returns `AgentType` values. The discovery manager wraps each into a `CatalogEntry`.
 
 ```go
 package mysource
@@ -377,10 +394,10 @@ func (s *MySource) Init(k kernel.Kernel) error {
 func (s *MySource) Start(ctx context.Context) error { return nil }
 func (s *MySource) Stop(ctx context.Context) error  { return nil }
 
-func (s *MySource) Discover(ctx context.Context) ([]*model.CatalogEntry, error) {
-    // Discover agents from your source
-    // Use s.kernel.Parser(protocol) to parse card JSON
-    return entries, nil
+func (s *MySource) Discover(ctx context.Context) ([]*model.AgentType, error) {
+    // Discover agents from your source.
+    // Use s.kernel.Parser(protocol).Parse(raw) to convert card JSON into AgentType.
+    return agentTypes, nil
 }
 ```
 
@@ -433,13 +450,15 @@ Components are in `web/src/components/`. The shadcn/ui base components are in `w
 
 ### TypeScript Types
 
-All API types are defined in `web/src/types.ts`. These mirror the Go model types:
+All API types are defined in `web/src/types.ts`. These mirror the flat JSON response shape produced by `CatalogEntry.MarshalJSON()`:
 
-- `CatalogEntry` — main catalog entry type
-- `Skill` — agent capability
+- `CatalogEntry` — flat catalog entry type (merges AgentType + CatalogEntry fields)
+- `Capability` — polymorphic agent capability with `kind`, `name`, `description`, `properties`
 - `Protocol`, `Status`, `SourceType` — enum types
 - `Provider`, `Validity` — nested types
 - `Stats`, `ListFilter` — API-specific types
+
+The `capabilities` field on `CatalogEntry` replaces the old `skills` field. Each capability has a `kind` discriminator (e.g. `a2a.skill`, `mcp.tool`) and a `properties` object with protocol-specific fields.
 
 ---
 

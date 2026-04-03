@@ -137,6 +137,17 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Reject duplicate endpoints before attempting to insert.
+	existing, err := h.store.FindByEndpoint(r.Context(), req.Endpoint)
+	if err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "failed to check for existing entry")
+		return
+	}
+	if existing != nil {
+		ErrorResponse(w, http.StatusConflict, "an entry with this endpoint already exists")
+		return
+	}
+
 	now := time.Now().UTC()
 
 	agentType := &model.AgentType{

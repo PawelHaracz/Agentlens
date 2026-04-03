@@ -44,7 +44,7 @@ Microkernel: core kernel → parser plugins (A2A, MCP) → source plugins (k8s, 
 
 Plugin lifecycle: `Register → InitAll → StartAll → [running] → StopAll`. Plugins returning `ErrLicenseRequired` during init are silently skipped.
 
-Domain model: `CatalogEntry` wraps a `Protocol` (a2a, mcp, a2ui) and contains `Provider`, `Skill[]`, `Validity`, `Categories`, metadata, and raw card JSON.
+Domain model (Product Archetype): `AgentType` represents what the agent IS (protocol, endpoint, version, `AgentKey` = SHA256(protocol+endpoint), `Capability[]`, `Provider`, raw definition). `CatalogEntry` is the catalog wrapper (display name, status, source, validity, categories, metadata) with a 1:1 FK to `AgentType`. `Capability` is polymorphic, discriminated by `kind` (`a2a.skill`, `a2a.interface`, `a2a.security_scheme`, `a2a.extension`, `a2a.signature`, `mcp.tool`, `mcp.resource`, `mcp.prompt`). REST responses are backward-compatible flat JSON (via `CatalogEntry.MarshalJSON()`).
 
 All architecture diagrams must be written in **Mermaid** (not PlantUML, not ASCII art).
 

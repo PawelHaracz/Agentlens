@@ -43,11 +43,13 @@ List all catalog entries with optional filtering.
 [
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
+    "agent_type_id": "66b8c3a2-1111-4b92-b000-000000000001",
     "display_name": "my-agent",
     "description": "Handles customer support",
     "protocol": "a2a",
     "endpoint": "http://my-agent.default.svc:8080",
     "version": "1.0.0",
+    "spec_version": "1.0",
     "status": "healthy",
     "source": "k8s",
     "provider": {
@@ -55,12 +57,18 @@ List all catalog entries with optional filtering.
       "team": "platform"
     },
     "categories": ["nlp", "support"],
-    "skills": [
+    "capabilities": [
       {
+        "kind": "a2a.skill",
         "name": "answer_question",
         "description": "Answers user questions",
-        "input_modes": ["text"],
-        "output_modes": ["text"]
+        "properties": {"input_modes": ["text"], "output_modes": ["text"]}
+      },
+      {
+        "kind": "a2a.security_scheme",
+        "name": "bearer",
+        "description": "",
+        "properties": {"type": "bearer", "method": "header"}
       }
     ],
     "validity": {
@@ -69,6 +77,7 @@ List all catalog entries with optional filtering.
     "metadata": {
       "kubernetes.namespace": "default"
     },
+    "raw_definition": {"name": "my-agent", "...": "..."},
     "created_at": "2024-01-01T00:00:00Z",
     "updated_at": "2024-01-15T10:30:00Z"
   }
@@ -170,35 +179,46 @@ Content-Type: application/json
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
+  "agent_type_id": "66b8c3a2-1111-4b92-b000-000000000001",
   "display_name": "Example Chat Agent",
   "description": "A sample agent demonstrating A2A v1.0 features",
   "protocol": "a2a",
   "endpoint": "https://api.example.com/v1",
   "version": "1.0.0",
+  "spec_version": "1.0",
   "status": "unknown",
   "source": "push",
-  "spec_version": "1.0",
-  "typed_meta": [
+  "capabilities": [
+    {
+      "kind": "a2a.skill",
+      "name": "chat",
+      "description": "Chat with the agent",
+      "properties": {"input_modes": ["text"], "output_modes": ["text"]}
+    },
     {
       "kind": "a2a.extension",
-      "uri": "urn:example:ext",
-      "required": true
+      "name": "urn:example:ext",
+      "description": "",
+      "properties": {"uri": "urn:example:ext", "required": true}
     },
     {
       "kind": "a2a.security_scheme",
-      "type": "oauth2"
+      "name": "oauth2",
+      "description": "",
+      "properties": {"type": "oauth2"}
     },
     {
       "kind": "a2a.interface",
-      "url": "https://api.example.com/v1",
-      "binding": "jsonrpc"
+      "name": "https://api.example.com/v1",
+      "description": "",
+      "properties": {"url": "https://api.example.com/v1", "binding": "jsonrpc"}
     }
   ],
   "provider": {
     "organization": "Example Corp"
   },
   "categories": [],
-  "skills": [],
+  "raw_definition": {"name": "Example Chat Agent", "...": "..."},
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T10:30:00Z"
 }
@@ -341,22 +361,19 @@ Register a catalog entry via push.
   "description": "Does amazing things",
   "protocol": "a2a",
   "endpoint": "http://my-agent.internal:8080",
-  "version": "1.2.3",
-  "provider": {
-    "organization": "Acme Corp",
-    "team": "platform"
-  },
-  "categories": ["nlp"],
-  "skills": [
-    {
-      "name": "chat",
-      "description": "Chat with the agent",
-      "input_modes": ["text"],
-      "output_modes": ["text"]
-    }
-  ]
+  "version": "1.2.3"
 }
 ```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `display_name` | string | ✅ | Human-readable name for the entry |
+| `description` | string | ❌ | Optional description |
+| `protocol` | string | ✅ | One of: `a2a`, `mcp`, `a2ui` |
+| `endpoint` | string | ✅ | Agent endpoint URL (must be unique) |
+| `version` | string | ❌ | Agent version string |
+
+This endpoint creates a minimal catalog entry (no capabilities). To register with a full agent card including capabilities, use `POST /api/v1/catalog/register` instead.
 
 **Response 201:** Returns the created catalog entry with generated `id`.
 
@@ -412,7 +429,7 @@ Search catalog entries by skill name.
 |---|---|---|
 | `q` | string | Skill name search query |
 
-**Response 200:** Array of CatalogEntry objects that have matching skills.
+**Response 200:** Array of CatalogEntry objects whose capabilities match the query.
 
 ---
 

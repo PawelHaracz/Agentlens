@@ -2,7 +2,7 @@
 
 **Real-time AI agent catalog for Kubernetes — discover, track, and inspect A2A, MCP, and A2UI agents across your cluster.**
 
-AgentLens automatically discovers AI agents running in Kubernetes (via Service annotations), polls static endpoints, and accepts push registrations. It exposes a REST API and a web dashboard for browsing the catalog, filtering by protocol/status, and inspecting agent cards and skills.
+AgentLens automatically discovers AI agents running in Kubernetes (via Service annotations), polls static endpoints, and accepts push registrations. It exposes a REST API and a web dashboard for browsing the catalog, filtering by protocol/status, and inspecting agent cards and capabilities.
 
 ---
 
@@ -174,11 +174,11 @@ curl -X POST http://localhost:8080/api/v1/catalog \
     "description": "Does amazing things",
     "protocol": "a2a",
     "endpoint": "http://my-agent.internal:8080",
-    "version": "1.2.3",
-    "provider": {"organization": "Acme Corp", "team": "platform"},
-    "categories": ["nlp", "demo"]
+    "version": "1.2.3"
   }'
 ```
+
+To register with full agent capabilities (skills, interfaces, security schemes), use `POST /api/v1/catalog/register` with a raw A2A or MCP agent card JSON instead.
 
 ---
 

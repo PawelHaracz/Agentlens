@@ -120,6 +120,38 @@ func TestDeleteEntry(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, w.Code)
 }
 
+func TestCreateEntry_DuplicateEndpoint(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	body := map[string]interface{}{
+		"display_name": "First Agent",
+		"protocol":     "a2a",
+		"endpoint":     "http://dup.example.com",
+		"version":      "1.0.0",
+	}
+	bodyBytes, _ := json.Marshal(body)
+
+	// First creation succeeds.
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/catalog", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	// Same endpoint, different version → must still return 409.
+	body2 := map[string]interface{}{
+		"display_name": "Duplicate Agent",
+		"protocol":     "a2a",
+		"endpoint":     "http://dup.example.com",
+	}
+	bodyBytes2, _ := json.Marshal(body2)
+	req2 := httptest.NewRequest(http.MethodPost, "/api/v1/catalog", bytes.NewReader(bodyBytes2))
+	req2.Header.Set("Content-Type", "application/json")
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req2)
+	assert.Equal(t, http.StatusConflict, w2.Code)
+}
+
 func TestGetStats(t *testing.T) {
 	router, _ := newTestRouter(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/stats", nil)
