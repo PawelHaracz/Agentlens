@@ -49,21 +49,20 @@ func (p *Plugin) Start(ctx context.Context) error { return nil }
 func (p *Plugin) Stop(ctx context.Context) error { return nil }
 
 // Discover fetches and parses all configured agent cards.
-func (p *Plugin) Discover(ctx context.Context) ([]*model.CatalogEntry, error) {
-	var entries []*model.CatalogEntry
+func (p *Plugin) Discover(ctx context.Context) ([]*model.AgentType, error) {
+	var agentTypes []*model.AgentType
 	for _, src := range p.sources {
-		entry, err := p.fetchOne(ctx, src)
+		at, err := p.fetchOne(ctx, src)
 		if err != nil {
 			p.log.Warn("failed to discover entry", "name", src.Name, "url", src.URL, "err", err)
 			continue
 		}
-		entry.DisplayName = src.Name
-		entries = append(entries, entry)
+		agentTypes = append(agentTypes, at)
 	}
-	return entries, nil
+	return agentTypes, nil
 }
 
-func (p *Plugin) fetchOne(ctx context.Context, src config.SourceConfig) (*model.CatalogEntry, error) {
+func (p *Plugin) fetchOne(ctx context.Context, src config.SourceConfig) (*model.AgentType, error) {
 	raw, err := p.crawler.FetchCard(ctx, src.URL)
 	if err != nil {
 		return nil, fmt.Errorf("fetching card: %w", err)
@@ -74,5 +73,10 @@ func (p *Plugin) fetchOne(ctx context.Context, src config.SourceConfig) (*model.
 	if !ok {
 		return nil, fmt.Errorf("no parser for protocol %s", src.Type)
 	}
-	return parser.Parse(raw, model.SourceConfig)
+	at, err := parser.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("parsing card: %w", err)
+	}
+	at.Endpoint = src.URL
+	return at, nil
 }

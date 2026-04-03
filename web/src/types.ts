@@ -1,9 +1,8 @@
-export interface Skill {
+export interface Capability {
+  kind: string
   name: string
-  description: string
-  tags?: string[]
-  input_modes?: string[]
-  output_modes?: string[]
+  description?: string
+  [key: string]: unknown  // protocol-specific properties
 }
 
 export type Protocol = 'a2a' | 'mcp' | 'a2ui'
@@ -31,13 +30,13 @@ export interface CatalogEntry {
   version: string
   status: Status
   source: SourceType
+  agent_type_id: string
   provider?: Provider
   categories?: string[]
-  skills?: Skill[]
+  capabilities?: Capability[]
   validity: Validity
-  raw_card?: unknown
+  raw_definition?: unknown
   spec_version?: string
-  typed_meta?: TypedMeta[]
   metadata?: Record<string, string>
   created_at: string
   updated_at: string
@@ -60,30 +59,6 @@ export interface ListFilter {
   offset?: number
 }
 
-export interface TypedMeta {
-  kind: string
-  [key: string]: unknown
-}
-
-export interface A2AExtensionMeta extends TypedMeta {
-  kind: 'a2a.extension'
-  uri: string
-  required: boolean
-}
-
-export interface A2ASecuritySchemeMeta extends TypedMeta {
-  kind: 'a2a.security_scheme'
-  type: string
-  method?: string
-  name?: string
-}
-
-export interface A2AInterfaceMeta extends TypedMeta {
-  kind: 'a2a.interface'
-  url: string
-  binding?: string
-}
-
 export interface ValidationError {
   field: string
   message: string
@@ -93,11 +68,8 @@ export interface ValidationPreview {
   display_name: string
   description: string
   protocol: string
-  spec_version: string
-  skills_count: number
-  extensions_count: number
-  security_schemes: string[]
-  interfaces: string[]
+  spec_version?: string
+  [key: string]: unknown  // protocol-specific preview fields
 }
 
 export interface ValidationResult {

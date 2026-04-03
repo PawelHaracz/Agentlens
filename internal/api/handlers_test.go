@@ -93,11 +93,24 @@ func TestDeleteEntry(t *testing.T) {
 	router, s := newTestRouter(t)
 
 	now := time.Now().UTC()
+	agentType := &model.AgentType{
+		ID:            "at-del-1",
+		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, "http://del.example.com"),
+		Protocol:      model.ProtocolA2A,
+		Endpoint:      "http://del.example.com",
+		RawDefinition: []byte("{}"),
+		CreatedOn:     now,
+	}
 	e := &model.CatalogEntry{
-		ID: "del-1", DisplayName: "Del Entry", Protocol: model.ProtocolA2A,
-		Endpoint: "http://del.example.com", Status: model.StatusUnknown,
-		Source: model.SourcePush, Validity: model.Validity{LastSeen: now},
-		CreatedAt: now, UpdatedAt: now,
+		ID:          "del-1",
+		AgentTypeID: agentType.ID,
+		AgentType:   agentType,
+		DisplayName: "Del Entry",
+		Status:      model.StatusUnknown,
+		Source:      model.SourcePush,
+		Validity:    model.Validity{LastSeen: now},
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	require.NoError(t, s.Create(context.Background(), e))
 

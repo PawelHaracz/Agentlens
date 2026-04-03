@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
@@ -51,8 +50,8 @@ func (p *Plugin) Start(ctx context.Context) error { return nil }
 // Stop stops the plugin (no-op for parser).
 func (p *Plugin) Stop(ctx context.Context) error { return nil }
 
-// Parse parses an A2A agent card JSON blob into a CatalogEntry.
-func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
+// Parse parses an A2A agent card JSON blob into an AgentType.
+func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 	var card fullCard
 	if err := json.Unmarshal(raw, &card); err != nil {
 		return nil, fmt.Errorf("parsing a2a card: %w", err)
@@ -66,28 +65,21 @@ func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry
 		return nil, err
 	}
 
-	skills := buildSkills(&card)
+	capabilities := buildSkills(&card)
+	capabilities = append(capabilities, buildA2AMetaCaps(&card)...)
 	provider := buildProvider(&card)
 	specVersion := detectSpecVersion(&card)
-	typedMeta := buildTypedMeta(&card)
+	agentKey := model.ComputeAgentKey(model.ProtocolA2A, endpoint)
 
-	now := time.Now().UTC()
-	return &model.CatalogEntry{
-		DisplayName: card.Name,
-		Description: card.Description,
-		Protocol:    model.ProtocolA2A,
-		Endpoint:    endpoint,
-		Version:     card.Version,
-		Status:      model.StatusUnknown,
-		Source:      source,
-		Provider:    provider,
-		Skills:      skills,
-		SpecVersion: specVersion,
-		TypedMeta:   typedMeta,
-		Validity:    model.Validity{LastSeen: now},
-		RawCard:     json.RawMessage(raw),
-		CreatedAt:   now,
-		UpdatedAt:   now,
+	return &model.AgentType{
+		AgentKey:      agentKey,
+		Protocol:      model.ProtocolA2A,
+		Endpoint:      endpoint,
+		Version:       card.Version,
+		SpecVersion:   specVersion,
+		Provider:      &provider,
+		Capabilities:  capabilities,
+		RawDefinition: raw,
 	}, nil
 }
 
@@ -104,11 +96,11 @@ func resolveEndpoint(card *fullCard) (string, error) {
 	return endpoint, nil
 }
 
-// buildSkills converts raw card skills into model.Skill values.
-func buildSkills(card *fullCard) []model.Skill {
-	skills := make([]model.Skill, 0, len(card.Skills))
+// buildSkills converts raw card skills into []model.Capability with *model.A2ASkill entries.
+func buildSkills(card *fullCard) []model.Capability {
+	caps := make([]model.Capability, 0, len(card.Skills))
 	for _, s := range card.Skills {
-		skills = append(skills, model.Skill{
+		caps = append(caps, &model.A2ASkill{
 			Name:        s.Name,
 			Description: s.Description,
 			Tags:        s.Tags,
@@ -116,7 +108,7 @@ func buildSkills(card *fullCard) []model.Skill {
 			OutputModes: s.OutputModes,
 		})
 	}
-	return skills
+	return caps
 }
 
 // buildProvider constructs a model.Provider from the card's provider field.
@@ -130,14 +122,14 @@ func buildProvider(card *fullCard) model.Provider {
 	return provider
 }
 
-// buildTypedMeta assembles typed metadata from extensions, security schemes,
+// buildA2AMetaCaps assembles typed capabilities from extensions, security schemes,
 // interfaces, and signatures declared in the card.
-func buildTypedMeta(card *fullCard) []model.TypedMetadata {
-	var typedMeta []model.TypedMetadata
+func buildA2AMetaCaps(card *fullCard) []model.Capability {
+	var caps []model.Capability
 
 	if card.Capabilities != nil {
 		for _, ext := range card.Capabilities.Extensions {
-			typedMeta = append(typedMeta, &model.A2AExtension{
+			caps = append(caps, &model.A2AExtension{
 				URI:      ext.URI,
 				Required: ext.Required,
 			})
@@ -145,7 +137,7 @@ func buildTypedMeta(card *fullCard) []model.TypedMetadata {
 	}
 
 	for _, sec := range card.SecuritySchemes {
-		typedMeta = append(typedMeta, &model.A2ASecurityScheme{
+		caps = append(caps, &model.A2ASecurityScheme{
 			Type:   sec.Type,
 			Method: sec.Method,
 			Name:   sec.Name,
@@ -153,18 +145,18 @@ func buildTypedMeta(card *fullCard) []model.TypedMetadata {
 	}
 
 	for _, iface := range card.SupportedInterfaces {
-		typedMeta = append(typedMeta, &model.A2AInterface{
+		caps = append(caps, &model.A2AInterface{
 			URL:     iface.URL,
 			Binding: iface.Binding,
 		})
 	}
 
 	for _, sig := range card.Signatures {
-		typedMeta = append(typedMeta, &model.A2ASignature{
+		caps = append(caps, &model.A2ASignature{
 			Algorithm: sig.Algorithm,
 			KeyID:     sig.KeyID,
 		})
 	}
 
-	return typedMeta
+	return caps
 }

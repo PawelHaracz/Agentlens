@@ -53,10 +53,10 @@ func TestRegisterAgentCard_ValidCard(t *testing.T) {
 	assert.NotEmpty(t, entry.CreatedAt)
 	assert.NotEmpty(t, entry.UpdatedAt)
 
-	// Verify typed_meta is present and non-empty.
-	typedMeta, ok := resp["typed_meta"]
-	assert.True(t, ok, "response should include typed_meta")
-	assert.NotEqual(t, "[]", string(typedMeta), "typed_meta should not be empty")
+	// Verify capabilities is present and non-empty.
+	capabilities, ok := resp["capabilities"]
+	assert.True(t, ok, "response should include capabilities")
+	assert.NotEqual(t, "[]", string(capabilities), "capabilities should not be empty")
 }
 
 func TestRegisterAgentCard_InvalidCard(t *testing.T) {

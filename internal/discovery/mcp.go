@@ -5,8 +5,8 @@ import (
 	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
-// ParseMCPCard parses an MCP server card JSON blob into a CatalogEntry.
-func ParseMCPCard(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
+// ParseMCPCard parses an MCP server card JSON blob into an AgentType.
+func ParseMCPCard(raw []byte) (*model.AgentType, error) {
 	p := mcpplugin.New()
-	return p.Parse(raw, source)
+	return p.Parse(raw)
 }

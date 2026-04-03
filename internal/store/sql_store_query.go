@@ -10,29 +10,36 @@ import (
 
 // List returns catalog entries matching the given filter.
 func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.CatalogEntry, error) {
-	query := s.gdb.WithContext(ctx).Model(&model.CatalogEntry{})
+	query := s.gdb.WithContext(ctx).
+		Model(&model.CatalogEntry{}).
+		Preload("AgentType").
+		Preload("AgentType.Provider").
+		Joins("JOIN agent_types ON agent_types.id = catalog_entries.agent_type_id")
 
 	if filter.Protocol != nil {
-		query = query.Where("protocol = ?", string(*filter.Protocol))
+		query = query.Where("agent_types.protocol = ?", string(*filter.Protocol))
 	}
 	if filter.Status != nil {
-		query = query.Where("status = ?", string(*filter.Status))
+		query = query.Where("catalog_entries.status = ?", string(*filter.Status))
 	}
 	if filter.Source != nil {
-		query = query.Where("source = ?", string(*filter.Source))
+		query = query.Where("catalog_entries.source = ?", string(*filter.Source))
 	}
 	if filter.Team != "" {
-		query = query.Where("provider LIKE ?", "%"+filter.Team+"%")
+		// Join providers to filter by team name.
+		query = query.
+			Joins("LEFT JOIN providers ON providers.id = agent_types.provider_id").
+			Where("providers.team LIKE ?", "%"+filter.Team+"%")
 	}
 	if filter.Query != "" {
 		q := "%" + filter.Query + "%"
-		query = query.Where("display_name LIKE ? OR description LIKE ?", q, q)
+		query = query.Where("catalog_entries.display_name LIKE ? OR catalog_entries.description LIKE ?", q, q)
 	}
 	for _, cat := range filter.Categories {
-		query = query.Where("categories LIKE ?", "%"+cat+"%")
+		query = query.Where("catalog_entries.categories LIKE ?", "%"+cat+"%")
 	}
 
-	query = query.Order("display_name")
+	query = query.Order("catalog_entries.display_name")
 
 	if filter.Limit > 0 {
 		query = query.Limit(filter.Limit)
@@ -46,19 +53,35 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 		return nil, fmt.Errorf("listing catalog entries: %w", err)
 	}
 	for i := range entries {
+		if err := s.loadCapabilities(ctx, entries[i].AgentType); err != nil {
+			return nil, err
+		}
 		entries[i].SyncFromDB()
 	}
 	return entries, nil
 }
 
-// SearchSkills returns catalog entries whose skills match the query string.
-func (s *SQLStore) SearchSkills(ctx context.Context, query string) ([]model.CatalogEntry, error) {
+// SearchCapabilities returns catalog entries whose capabilities match the query string.
+func (s *SQLStore) SearchCapabilities(ctx context.Context, query string) ([]model.CatalogEntry, error) {
+	like := "%" + query + "%"
+
 	var entries []model.CatalogEntry
-	result := s.gdb.WithContext(ctx).Where("skills LIKE ?", "%"+query+"%").Find(&entries)
-	if result.Error != nil {
-		return nil, fmt.Errorf("searching skills: %w", result.Error)
+	err := s.gdb.WithContext(ctx).
+		Model(&model.CatalogEntry{}).
+		Preload("AgentType").
+		Preload("AgentType.Provider").
+		Joins("JOIN agent_types ON agent_types.id = catalog_entries.agent_type_id").
+		Joins("JOIN capabilities ON capabilities.agent_type_id = agent_types.id").
+		Where("capabilities.name LIKE ? OR capabilities.description LIKE ?", like, like).
+		Distinct("catalog_entries.*").
+		Find(&entries).Error
+	if err != nil {
+		return nil, fmt.Errorf("searching capabilities: %w", err)
 	}
 	for i := range entries {
+		if err := s.loadCapabilities(ctx, entries[i].AgentType); err != nil {
+			return nil, err
+		}
 		entries[i].SyncFromDB()
 	}
 	return entries, nil

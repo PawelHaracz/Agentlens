@@ -2,12 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
-	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
 )
@@ -62,29 +59,23 @@ func (h *Handler) ImportCatalogEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the card into a CatalogEntry.
-	entry, err := parser.Parse(result.RawJSON, model.SourcePush)
+	// Parse the card into an AgentType.
+	agentType, err := parser.Parse(result.RawJSON)
 	if err != nil {
 		ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// Assign server-managed fields.
-	now := time.Now().UTC()
-	entry.ID = uuid.NewString()
-	entry.Source = model.SourcePush
-	entry.Status = model.StatusUnknown
-	entry.CreatedAt = now
-	entry.UpdatedAt = now
-	entry.Validity.LastSeen = now
-
-	if err := h.store.Create(r.Context(), entry); err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") ||
-			strings.Contains(err.Error(), "duplicate key") {
-			ErrorResponse(w, http.StatusConflict, "an entry with this endpoint already exists")
-			return
+	entry, err := h.registerAgentType(r.Context(), agentType, result.RawJSON, model.SourcePush)
+	if err != nil {
+		switch {
+		case errors.Is(err, errDuplicateEndpoint):
+			ErrorResponse(w, http.StatusConflict, err.Error())
+		case errors.Is(err, errUpsertProvider):
+			ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		default:
+			ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		}
-		ErrorResponse(w, http.StatusInternalServerError, "failed to create catalog entry")
 		return
 	}
 

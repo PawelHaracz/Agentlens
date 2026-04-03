@@ -90,7 +90,7 @@ func registerCatalogRoutes(r chi.Router, h *Handler, jwtSvc *auth.JWTService) {
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}", h.GetEntry)
 		r.With(RequirePermission(auth.PermCatalogDelete)).Delete("/catalog/{id}", h.DeleteEntry)
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}/card", h.GetEntryCard)
-		r.With(RequirePermission(auth.PermCatalogRead)).Get("/skills", h.SearchSkills)
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/skills", h.SearchCapabilities)
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/stats", h.GetStats)
 	})
 }
@@ -151,7 +151,7 @@ func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler) {
 	r.Get("/catalog/{id}", h.GetEntry)
 	r.Delete("/catalog/{id}", h.DeleteEntry)
 	r.Get("/catalog/{id}/card", h.GetEntryCard)
-	r.Get("/skills", h.SearchSkills)
+	r.Get("/skills", h.SearchCapabilities)
 	r.Get("/stats", h.GetStats)
 }
 

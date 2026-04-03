@@ -25,10 +25,6 @@ describe('validateAgentCard', () => {
         description: 'A test agent',
         protocol: 'a2a',
         spec_version: '0.2.1',
-        skills_count: 2,
-        extensions_count: 0,
-        security_schemes: [],
-        interfaces: [],
       },
     }
 
@@ -116,6 +112,7 @@ describe('createAgentFromCard', () => {
       version: '1.0.0',
       status: 'healthy',
       source: 'push',
+      agent_type_id: 'a2a-agent',
       validity: { last_seen: '2026-04-01T00:00:00Z' },
       created_at: '2026-04-01T00:00:00Z',
       updated_at: '2026-04-01T00:00:00Z',

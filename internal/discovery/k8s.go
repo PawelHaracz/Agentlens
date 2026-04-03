@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,40 +44,40 @@ func NewK8sSource(client kubernetes.Interface, namespaces []string) *K8sSource {
 func (k *K8sSource) Name() string { return "k8s" }
 
 // Discover lists Kubernetes Services and fetches agent cards for annotated ones.
-func (k *K8sSource) Discover(ctx context.Context) ([]*model.CatalogEntry, error) {
-	var entries []*model.CatalogEntry
+func (k *K8sSource) Discover(ctx context.Context) ([]*model.AgentType, error) {
+	var agentTypes []*model.AgentType
 	for _, ns := range k.namespaces {
 		svcs, err := k.client.CoreV1().Services(ns).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("listing services in namespace %s: %w", ns, err)
 		}
 		for _, svc := range svcs.Items {
-			entry, err := k.processService(ctx, svc)
+			at, err := k.processService(ctx, svc)
 			if err != nil {
 				k.log.Warn("failed to process service", "name", svc.Name, "namespace", svc.Namespace, "err", err)
 				continue
 			}
-			if entry != nil {
-				entries = append(entries, entry)
+			if at != nil {
+				agentTypes = append(agentTypes, at)
 			}
 		}
 	}
-	return entries, nil
+	return agentTypes, nil
 }
 
-func (k *K8sSource) processService(ctx context.Context, svc corev1.Service) (*model.CatalogEntry, error) {
+func (k *K8sSource) processService(ctx context.Context, svc corev1.Service) (*model.AgentType, error) {
 	ann := svc.Annotations
 	if ann == nil {
 		return nil, nil
 	}
-	agentType, ok := ann[annotationAgentType]
+	agentTypeAnnotation, ok := ann[annotationAgentType]
 	if !ok {
 		return nil, nil
 	}
 
 	cardPath := ann[annotationCardPath]
 	if cardPath == "" {
-		switch agentType {
+		switch agentTypeAnnotation {
 		case "mcp":
 			cardPath = defaultMCPCardPath
 		default:
@@ -95,29 +94,25 @@ func (k *K8sSource) processService(ctx context.Context, svc corev1.Service) (*mo
 		return nil, fmt.Errorf("fetching card from %s: %w", url, err)
 	}
 
-	var entry *model.CatalogEntry
-	switch agentType {
+	var at *model.AgentType
+	switch agentTypeAnnotation {
 	case "mcp":
-		entry, err = ParseMCPCard(raw, model.SourceK8s)
+		at, err = ParseMCPCard(raw)
 	default:
-		entry, err = ParseA2ACard(raw, model.SourceK8s)
+		at, err = ParseA2ACard(raw)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("parsing card: %w", err)
 	}
 
-	if entry.Metadata == nil {
-		entry.Metadata = make(map[string]string)
+	if at.Provider == nil {
+		at.Provider = &model.Provider{}
 	}
-	entry.Metadata["kubernetes.namespace"] = svc.Namespace
 	if team := ann[annotationTeam]; team != "" {
-		entry.Provider.Team = team
-	}
-	if tags := ann[annotationTags]; tags != "" {
-		entry.Categories = strings.Split(tags, ",")
+		at.Provider.Team = team
 	}
 
-	return entry, nil
+	return at, nil
 }
 
 func (k *K8sSource) firstPort(svc corev1.Service) int32 {

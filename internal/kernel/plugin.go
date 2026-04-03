@@ -50,7 +50,7 @@ type ValidationResult struct {
 type ParserPlugin interface {
 	Plugin
 	Protocol() model.Protocol
-	Parse(raw []byte, source model.SourceType) (*model.CatalogEntry, error)
+	Parse(raw []byte) (*model.AgentType, error)
 	Validate(raw []byte) ValidationResult
 	CardPath() string
 }
@@ -58,7 +58,7 @@ type ParserPlugin interface {
 // SourcePlugin discovers catalog entries from a specific source.
 type SourcePlugin interface {
 	Plugin
-	Discover(ctx context.Context) ([]*model.CatalogEntry, error)
+	Discover(ctx context.Context) ([]*model.AgentType, error)
 }
 
 // Kernel is what the core exposes to plugins.
