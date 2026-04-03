@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
-	"github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 )
 
 func TestRegisterAgentCard_ValidCard(t *testing.T) {
@@ -71,7 +71,7 @@ func TestRegisterAgentCard_InvalidCard(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
-	var result a2a.ValidationResult
+	var result kernel.ValidationResult
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
 	assert.False(t, result.Valid)
 	assert.NotEmpty(t, result.Errors)
@@ -87,7 +87,7 @@ func TestRegisterAgentCard_InvalidJSON(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
-	var result a2a.ValidationResult
+	var result kernel.ValidationResult
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &result))
 	assert.False(t, result.Valid)
 }

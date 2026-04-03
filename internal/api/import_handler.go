@@ -10,8 +10,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
-	"github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
-	"github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
 type importRequest struct {
@@ -50,30 +48,24 @@ func (h *Handler) ImportCatalogEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the card with the appropriate parser.
-	var entry *model.CatalogEntry
-	switch model.Protocol(protocol) {
-	case model.ProtocolA2A:
-		vr := a2a.ValidateCard(result.RawJSON)
-		if !vr.Valid {
-			JSONResponse(w, http.StatusUnprocessableEntity, vr)
-			return
-		}
-		parser := a2a.New()
-		entry, err = parser.Parse(result.RawJSON, model.SourcePush)
-		if err != nil {
-			ErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-	case model.ProtocolMCP:
-		parser := mcp.New()
-		entry, err = parser.Parse(result.RawJSON, model.SourcePush)
-		if err != nil {
-			ErrorResponse(w, http.StatusUnprocessableEntity, "invalid mcp card: "+err.Error())
-			return
-		}
-	default:
-		ErrorResponse(w, http.StatusBadRequest, "protocol must be one of: a2a, mcp, a2ui")
+	// Look up parser via kernel (microkernel pattern).
+	parser, ok := h.parsers.Parser(model.Protocol(protocol))
+	if !ok {
+		ErrorResponse(w, http.StatusBadRequest, "unsupported protocol: "+protocol)
+		return
+	}
+
+	// Validate the card using the parser's own validation.
+	vr := parser.Validate(result.RawJSON)
+	if !vr.Valid {
+		JSONResponse(w, http.StatusUnprocessableEntity, vr)
+		return
+	}
+
+	// Parse the card into a CatalogEntry.
+	entry, err := parser.Parse(result.RawJSON, model.SourcePush)
+	if err != nil {
+		ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

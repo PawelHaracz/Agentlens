@@ -245,7 +245,7 @@ https://your-server.example.com/.well-known/mcp/server.json
 | Card JSON contains a `"skills"` array | A2A |
 | Card JSON contains a `"tools"` array | MCP |
 
-If detection fails, select the correct protocol manually from the dropdown: **A2A**, **MCP**, or **A2UI**.
+If detection fails, select the correct protocol manually from the dropdown: **A2A** or **MCP**.
 
 **Step 4 — Click "Fetch & Import".** The button shows **Importing...** while the server fetches and parses the card. The URL field and protocol selector are disabled during this time.
 

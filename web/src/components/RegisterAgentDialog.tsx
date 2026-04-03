@@ -204,7 +204,6 @@ export default function RegisterAgentDialog({ onRegistered }: RegisterAgentDialo
                         <SelectItem value="auto">Auto-detect</SelectItem>
                         <SelectItem value="a2a">A2A</SelectItem>
                         <SelectItem value="mcp">MCP</SelectItem>
-                        <SelectItem value="a2ui">A2UI</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

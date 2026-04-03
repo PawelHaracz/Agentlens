@@ -79,11 +79,11 @@ List all catalog entries with optional filtering.
 
 ### `POST /api/v1/catalog/validate`
 
-Validate an A2A agent card without registering it (dry-run only — does not persist anything). This endpoint auto-detects the A2A specification version (v0.3 vs v1.0) and returns structured validation results with a preview of the agent details.
+Validate an agent card without registering it (dry-run only — does not persist anything). This endpoint auto-detects the A2A specification version (v0.3 vs v1.0) and returns structured validation results (`kernel.ValidationResult`) with a preview of the agent details.
 
 **Authentication:** Required. Requires `catalog:write` permission.
 
-**Request Body:** Raw A2A agent card JSON (any valid JSON is accepted).
+**Request Body:** Raw agent card JSON (any valid JSON is accepted).
 
 **Request Headers:**
 ```
@@ -102,13 +102,20 @@ Content-Type: application/json
     "description": "A sample agent demonstrating A2A v1.0 features",
     "protocol": "a2a",
     "spec_version": "1.0",
-    "skills_count": 0,
+    "skills_count": 2,
     "extensions_count": 1,
     "security_schemes": ["oauth2"],
-    "interfaces": ["https://api.example.com/v1"]
+    "interfaces": ["jsonrpc"]
   }
 }
 ```
+
+The `preview` field is a generic key-value map (`map[string]any`) whose contents vary by protocol:
+
+| Protocol | Preview fields |
+|----------|---------------|
+| `a2a` | `display_name`, `description`, `protocol`, `spec_version`, `skills_count`, `extensions_count`, `security_schemes`, `interfaces` |
+| `mcp` | `display_name`, `description`, `protocol`, `tools_count` |
 
 **Response 422 (Invalid card):**
 ```json
@@ -148,7 +155,7 @@ The endpoint automatically detects the A2A spec version based on the card struct
 
 ### `POST /api/v1/catalog/register`
 
-Register an A2A agent from a raw agent card JSON. The endpoint validates the card, parses it via the A2A parser (Product Archetype: raw card to CatalogEntry), and persists the entry.
+Register an A2A agent from a raw agent card JSON. The endpoint validates the card, parses it via the A2A parser (raw card to CatalogEntry), and persists the entry.
 
 **Authentication:** Required. Requires `catalog:write` permission.
 
@@ -209,7 +216,7 @@ Content-Type: application/json
 
 **Response 422 (Unprocessable Entity):**
 
-Returns the same `ValidationResult` structure as `/catalog/validate` when the card fails validation:
+Returns the same `kernel.ValidationResult` structure as `/catalog/validate` when the card fails validation:
 
 ```json
 {
@@ -245,7 +252,7 @@ Import an agent card by fetching it from a URL. The server fetches the card from
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `url` | string | ✅ | HTTPS or HTTP URL to fetch the agent card from |
-| `protocol` | string | ❌ | Force a protocol: `a2a`, `mcp`, or `a2ui`. Omit for auto-detection |
+| `protocol` | string | ❌ | Force a protocol: `a2a` or `mcp`. Omit for auto-detection. (`a2ui` is not supported for import — use `POST /api/v1/catalog` for direct creation) |
 
 **Auto-detection rules (when `protocol` is omitted):**
 

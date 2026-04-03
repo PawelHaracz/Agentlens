@@ -9,6 +9,7 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 
 	"github.com/PawelHaracz/agentlens/internal/auth"
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/service"
 	"github.com/PawelHaracz/agentlens/internal/store"
 	"github.com/PawelHaracz/agentlens/web"
@@ -16,7 +17,7 @@ import (
 
 // RouterDeps holds all dependencies for the router.
 type RouterDeps struct {
-	Store         store.Store
+	Kernel        kernel.Kernel
 	UserStore     *store.UserStore
 	RoleStore     *store.RoleStore
 	SettingsStore *store.SettingsStore
@@ -27,7 +28,7 @@ type RouterDeps struct {
 
 // NewRouter creates and returns a configured chi router with all routes.
 func NewRouter(deps RouterDeps) *chi.Mux {
-	h := NewHandler(deps.Store)
+	h := NewHandler(deps.Kernel)
 	if deps.CardFetcher != nil {
 		h.cardFetcher = deps.CardFetcher
 	}

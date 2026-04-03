@@ -198,6 +198,34 @@ Tests live alongside the code they test (Go convention):
 - `internal/store/sqlite_test.go`, `user_store_test.go`, `role_store_test.go`, `settings_store_test.go`
 - `plugins/parsers/a2a/validation_test.go`
 
+### API Handler Test Pattern
+
+API handler tests use a shared `testRouter` helper (in `internal/api/test_helpers_test.go`) that wires a full in-memory stack. The helper creates a real `kernel.Core`, registers A2A and MCP parsers, and passes the kernel to `api.RouterDeps`:
+
+```go
+database, _ := db.OpenMemory()
+// ... run migrations ...
+catalogStore := store.NewSQLStore(database)
+
+core := kernel.NewCore(catalogStore, nil, slog.Default(), kernel.LicenseInfo{})
+a2aParser := a2aplugin.New()
+_ = a2aParser.Init(core)
+core.RegisterParser(a2aParser)
+mcpParser := mcpplugin.New()
+_ = mcpParser.Init(core)
+core.RegisterParser(mcpParser)
+
+router := api.NewRouter(api.RouterDeps{
+    Kernel:        core,
+    UserStore:     userStore,
+    RoleStore:     roleStore,
+    SettingsStore: settingsStore,
+    JWTService:    jwtService,
+})
+```
+
+Tests that exercise the import endpoint (`POST /api/v1/catalog/import`) inject a stub `service.Fetcher` via `RouterDeps.CardFetcher` to avoid real outbound HTTP.
+
 ---
 
 ## Linting
@@ -222,9 +250,41 @@ make web-lint   # tsc --noEmit
 
 AgentLens is designed to be extended through plugins. All plugins implement the `kernel.Plugin` interface.
 
+### API Handler and Router Wiring
+
+The API layer depends on `kernel.Kernel`, not on the store directly. `NewHandler(k kernel.Kernel)` obtains the catalog store via `k.Store()` and looks up parsers via `k.Parser(protocol)`. The `RouterDeps` struct follows the same pattern — it carries a `Kernel` field rather than a raw store:
+
+```go
+// RouterDeps holds all dependencies for the router.
+type RouterDeps struct {
+    Kernel        kernel.Kernel   // required; provides store + parser lookup
+    UserStore     *store.UserStore
+    RoleStore     *store.RoleStore
+    SettingsStore *store.SettingsStore
+    JWTService    *auth.JWTService
+    // CardFetcher is optional. When nil, a default CardFetcher with SSRF
+    // protection is used (for POST /api/v1/catalog/import).
+    CardFetcher   service.Fetcher
+}
+```
+
+In `main.go` the `core` kernel is wired after all plugins have been initialised:
+
+```go
+core := kernel.NewCore(catalogStore, cfg, logger, lic)
+// ... register and init plugins ...
+router := api.NewRouter(api.RouterDeps{
+    Kernel:        core,
+    UserStore:     userStore,
+    RoleStore:     roleStore,
+    SettingsStore: settingsStore,
+    JWTService:    jwtService,
+})
+```
+
 ### Creating a Parser Plugin
 
-A parser plugin converts protocol-specific card JSON into a `CatalogEntry`.
+A parser plugin converts protocol-specific card JSON into a `CatalogEntry`. The `ParserPlugin` interface requires both `Parse` and `Validate` methods.
 
 ```go
 package myplugin
@@ -254,6 +314,19 @@ func (p *MyParser) Init(k kernel.Kernel) error {
 
 func (p *MyParser) Start(ctx context.Context) error { return nil }
 func (p *MyParser) Stop(ctx context.Context) error  { return nil }
+
+// Validate checks the raw card JSON for spec compliance without persisting anything.
+// Called by the validate endpoint and the import endpoint before Parse.
+func (p *MyParser) Validate(raw []byte) kernel.ValidationResult {
+    // Inspect the raw JSON and return structured diagnostics.
+    return kernel.ValidationResult{
+        Valid:       true,
+        SpecVersion: "1.0",
+        Errors:      nil,
+        Warnings:    nil,
+        Preview:     map[string]any{"name": "My Agent"},
+    }
+}
 
 func (p *MyParser) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
     // Parse raw JSON into CatalogEntry

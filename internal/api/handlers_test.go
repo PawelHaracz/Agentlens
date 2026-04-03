@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,8 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
+	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
 func newTestRouter(t *testing.T) (http.Handler, store.Store) {
@@ -22,7 +26,16 @@ func newTestRouter(t *testing.T) (http.Handler, store.Store) {
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = s.Close() })
-	return api.NewRouter(api.RouterDeps{Store: s}), s
+
+	core := kernel.NewCore(s, nil, slog.Default(), kernel.LicenseInfo{})
+	a2aParser := a2aplugin.New()
+	_ = a2aParser.Init(core)
+	core.RegisterParser(a2aParser)
+	mcpParser := mcpplugin.New()
+	_ = mcpParser.Init(core)
+	core.RegisterParser(mcpParser)
+
+	return api.NewRouter(api.RouterDeps{Kernel: core}), s
 }
 
 func TestHealthz(t *testing.T) {

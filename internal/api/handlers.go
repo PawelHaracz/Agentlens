@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/service"
 	"github.com/PawelHaracz/agentlens/internal/store"
@@ -19,12 +20,17 @@ import (
 // Handler holds dependencies for all API handlers.
 type Handler struct {
 	store       store.Store
+	parsers     kernel.Kernel
 	cardFetcher service.Fetcher
 }
 
-// NewHandler creates a new Handler with the given store.
-func NewHandler(s store.Store) *Handler {
-	return &Handler{store: s, cardFetcher: service.NewCardFetcher()}
+// NewHandler creates a new Handler with the given kernel.
+func NewHandler(k kernel.Kernel) *Handler {
+	return &Handler{
+		store:       k.Store(),
+		parsers:     k,
+		cardFetcher: service.NewCardFetcher(),
+	}
 }
 
 // Healthz handles GET /healthz.
@@ -129,7 +135,8 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 	entry.Validity.LastSeen = now
 
 	if err := h.store.Create(r.Context(), &entry); err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") ||
+			strings.Contains(err.Error(), "duplicate key") {
 			ErrorResponse(w, http.StatusConflict, "an entry with this endpoint already exists")
 			return
 		}

@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
-	"github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 )
 
 // RegisterAgentCard handles POST /api/v1/catalog/register.
@@ -29,15 +28,21 @@ func (h *Handler) RegisterAgentCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Look up the A2A parser via kernel (microkernel pattern).
+	parser, ok := h.parsers.Parser(model.ProtocolA2A)
+	if !ok {
+		ErrorResponse(w, http.StatusInternalServerError, "a2a parser not available")
+		return
+	}
+
 	// Phase 1: Validate the card structure.
-	result := a2a.ValidateCard(raw)
+	result := parser.Validate(raw)
 	if !result.Valid {
 		JSONResponse(w, http.StatusUnprocessableEntity, result)
 		return
 	}
 
 	// Phase 2: Parse the validated card into a CatalogEntry via the parser plugin.
-	parser := a2a.New()
 	entry, err := parser.Parse(raw, model.SourcePush)
 	if err != nil {
 		ErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -54,7 +59,8 @@ func (h *Handler) RegisterAgentCard(w http.ResponseWriter, r *http.Request) {
 	entry.Validity.LastSeen = now
 
 	if err := h.store.Create(r.Context(), entry); err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") ||
+			strings.Contains(err.Error(), "duplicate key") {
 			ErrorResponse(w, http.StatusConflict, "an entry with this endpoint already exists")
 			return
 		}

@@ -95,8 +95,25 @@ type Plugin interface {
 
 Specialized interfaces extend `Plugin`:
 
-- **`ParserPlugin`** — parses protocol-specific cards into `CatalogEntry`. Registered per-protocol. Methods: `Protocol()`, `Parse(raw, source)`, `CardPath()`.
+- **`ParserPlugin`** — parses and validates protocol-specific cards into `CatalogEntry`. Registered per-protocol. Methods: `Protocol()`, `Parse(raw, source)`, `Validate(raw)`, `CardPath()`.
 - **`SourcePlugin`** — discovers catalog entries from a specific source. Method: `Discover(ctx)`.
+
+The `Validate` method returns a `kernel.ValidationResult`:
+
+```go
+type ValidationResult struct {
+    Valid       bool              `json:"valid"`
+    SpecVersion string            `json:"spec_version"`
+    Errors      []ValidationError `json:"errors"`
+    Warnings    []string          `json:"warnings"`
+    Preview     map[string]any    `json:"preview,omitempty"`
+}
+
+type ValidationError struct {
+    Field   string `json:"field"`
+    Message string `json:"message"`
+}
+```
 
 ### Plugin Types
 
@@ -142,6 +159,58 @@ The kernel exposes these services to plugins:
 ### REST API
 
 Built with [Chi router](https://github.com/go-chi/chi). All routes under `/api/v1/` are protected by the `RequireAuth` JWT middleware. The `RequirePermission` middleware enforces per-route permission checks.
+
+**Handler wiring:**
+
+`RouterDeps` requires a `kernel.Kernel` instance. The `Handler` struct holds the kernel (via a `parsers` field) and derives `store.Store` from `kernel.Store()`. API handlers that need to parse or validate a protocol card look up the appropriate `ParserPlugin` dynamically via `kernel.Parser(protocol)` — no parser is directly instantiated in handler code. `import_handler.go` performs auto-detection (tries each registered parser), while `register_handler.go` and `validate_handler.go` look up the A2A parser by protocol name.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant H as API Handler
+    participant K as Kernel
+    participant P as ParserPlugin
+    participant ST as Store
+
+    C->>H: POST /api/v1/catalog/register (raw JSON)
+    H->>K: Parser("a2a")
+    K-->>H: ParserPlugin
+    H->>P: Validate(raw)
+    P-->>H: ValidationResult
+    H->>P: Parse(raw, "push")
+    P-->>H: CatalogEntry
+    H->>ST: FindByEndpoint / Create / Update
+    ST-->>H: ok
+    H-->>C: 201 Created
+```
+
+The `POST /api/v1/catalog/import` endpoint follows a similar pattern but fetches the card from a URL first and auto-detects the protocol:
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant H as import_handler
+    participant CF as CardFetcher
+    participant K as Kernel
+    participant P as ParserPlugin
+    participant ST as Store
+
+    C->>H: POST /api/v1/catalog/import {"url": "..."}
+    H->>CF: Fetch(url)
+    CF-->>H: raw []byte
+    loop For each registered parser
+        H->>K: Parser(protocol)
+        K-->>H: ParserPlugin
+        H->>P: Validate(raw)
+        P-->>H: ValidationResult
+    end
+    Note over H: Use first parser where Valid=true
+    H->>P: Parse(raw, "push")
+    P-->>H: CatalogEntry
+    H->>ST: FindByEndpoint / Create / Update
+    ST-->>H: ok
+    H-->>C: 201 Created
+```
 
 **Auth routes (public):**
 

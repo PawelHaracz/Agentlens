@@ -31,11 +31,27 @@ type Plugin interface {
 	Stop(ctx context.Context) error
 }
 
+// ValidationError represents a single field-level validation error.
+type ValidationError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+// ValidationResult is the structured output of ParserPlugin.Validate.
+type ValidationResult struct {
+	Valid       bool              `json:"valid"`
+	SpecVersion string            `json:"spec_version"`
+	Errors      []ValidationError `json:"errors"`
+	Warnings    []string          `json:"warnings"`
+	Preview     map[string]any    `json:"preview,omitempty"`
+}
+
 // ParserPlugin parses protocol-specific cards into CatalogEntry.
 type ParserPlugin interface {
 	Plugin
 	Protocol() model.Protocol
 	Parse(raw []byte, source model.SourceType) (*model.CatalogEntry, error)
+	Validate(raw []byte) ValidationResult
 	CardPath() string
 }
 

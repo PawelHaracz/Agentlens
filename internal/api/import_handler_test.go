@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,9 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/service"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
+	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
 // mockFetcher implements service.Fetcher for tests.
@@ -42,7 +46,16 @@ func routerWithMockFetcher(t *testing.T, f service.Fetcher) (http.Handler, store
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = s.Close() })
-	return api.NewRouter(api.RouterDeps{Store: s, CardFetcher: f}), s
+
+	core := kernel.NewCore(s, nil, slog.Default(), kernel.LicenseInfo{})
+	a2aParser := a2aplugin.New()
+	_ = a2aParser.Init(core)
+	core.RegisterParser(a2aParser)
+	mcpParser := mcpplugin.New()
+	_ = mcpParser.Init(core)
+	core.RegisterParser(mcpParser)
+
+	return api.NewRouter(api.RouterDeps{Kernel: core, CardFetcher: f}), s
 }
 
 // validA2ACard is a minimal valid A2A v1.0 agent card for import tests.
