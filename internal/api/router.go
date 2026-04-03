@@ -42,89 +42,18 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 	r.Get("/healthz", h.Healthz)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Public auth routes.
 		if deps.JWTService != nil {
 			if deps.UserStore == nil || deps.RoleStore == nil {
 				panic("JWTService requires UserStore and RoleStore to be provided")
 			}
 			authHandler := NewAuthHandler(deps.UserStore, deps.RoleStore, deps.JWTService)
-			r.Post("/auth/login", authHandler.Login)
-			r.Post("/auth/logout", authHandler.Logout)
-
-			// Protected auth routes.
-			r.Group(func(r chi.Router) {
-				r.Use(RequireAuth(deps.JWTService))
-				r.Post("/auth/refresh", authHandler.Refresh)
-				r.Get("/auth/me", authHandler.Me)
-				r.Put("/auth/password", authHandler.ChangePassword)
-			})
-
-			// Protected catalog routes.
-			r.Group(func(r chi.Router) {
-				r.Use(RequireAuth(deps.JWTService))
-				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog", h.ListCatalog)
-				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog", h.CreateEntry)
-				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/validate", h.ValidateAgentCard)
-				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/register", h.RegisterAgentCard)
-				r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/import", h.ImportCatalogEntry)
-				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}", h.GetEntry)
-				r.With(RequirePermission(auth.PermCatalogDelete)).Delete("/catalog/{id}", h.DeleteEntry)
-				r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}/card", h.GetEntryCard)
-				r.With(RequirePermission(auth.PermCatalogRead)).Get("/skills", h.SearchSkills)
-				r.With(RequirePermission(auth.PermCatalogRead)).Get("/stats", h.GetStats)
-			})
-
-			// Protected user management routes.
-			if deps.UserStore != nil && deps.RoleStore != nil {
-				userHandler := NewUserHandler(deps.UserStore, deps.RoleStore)
-				roleHandler := NewRoleHandler(deps.RoleStore)
-
-				r.Group(func(r chi.Router) {
-					r.Use(RequireAuth(deps.JWTService))
-
-					r.Route("/users", func(r chi.Router) {
-						r.With(RequirePermission(auth.PermUsersRead)).Get("/", userHandler.List)
-						r.With(RequirePermission(auth.PermUsersWrite)).Post("/", userHandler.Create)
-						r.With(RequirePermission(auth.PermUsersRead)).Get("/{id}", userHandler.Get)
-						r.With(RequirePermission(auth.PermUsersWrite)).Put("/{id}", userHandler.Update)
-						r.With(RequirePermission(auth.PermUsersDelete)).Delete("/{id}", userHandler.Delete)
-					})
-
-					r.Route("/roles", func(r chi.Router) {
-						r.With(RequirePermission(auth.PermRolesRead)).Get("/", roleHandler.List)
-						r.With(RequirePermission(auth.PermRolesWrite)).Post("/", roleHandler.Create)
-						r.With(RequirePermission(auth.PermRolesWrite)).Put("/{id}", roleHandler.Update)
-						r.With(RequirePermission(auth.PermRolesWrite)).Delete("/{id}", roleHandler.Delete)
-					})
-				})
-			}
-
-			// Protected settings routes.
-			if deps.SettingsStore != nil {
-				settingsHandler := NewSettingsHandler(deps.SettingsStore)
-
-				r.Group(func(r chi.Router) {
-					r.Use(RequireAuth(deps.JWTService))
-
-					r.Route("/settings", func(r chi.Router) {
-						r.With(RequirePermission(auth.PermSettingsRead)).Get("/", settingsHandler.GetAll)
-						r.With(RequirePermission(auth.PermSettingsRead)).Get("/{category}", settingsHandler.GetByCategory)
-						r.With(RequirePermission(auth.PermSettingsWrite)).Put("/", settingsHandler.Update)
-					})
-				})
-			}
+			registerAuthRoutes(r, deps, authHandler)
+			registerCatalogRoutes(r, h, deps.JWTService)
+			registerUserRoutes(r, deps)
+			registerSettingsRoutes(r, deps)
 		} else {
 			// No auth configured — register catalog routes without protection.
-			r.Get("/catalog", h.ListCatalog)
-			r.Post("/catalog", h.CreateEntry)
-			r.Post("/catalog/validate", h.ValidateAgentCard)
-			r.Post("/catalog/register", h.RegisterAgentCard)
-			r.Post("/catalog/import", h.ImportCatalogEntry)
-			r.Get("/catalog/{id}", h.GetEntry)
-			r.Delete("/catalog/{id}", h.DeleteEntry)
-			r.Get("/catalog/{id}/card", h.GetEntryCard)
-			r.Get("/skills", h.SearchSkills)
-			r.Get("/stats", h.GetStats)
+			registerUnauthenticatedCatalogRoutes(r, h)
 		}
 	})
 
@@ -134,6 +63,96 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 	}
 
 	return r
+}
+
+// registerAuthRoutes mounts public and protected auth endpoints.
+func registerAuthRoutes(r chi.Router, deps RouterDeps, authHandler *AuthHandler) {
+	r.Post("/auth/login", authHandler.Login)
+	r.Post("/auth/logout", authHandler.Logout)
+
+	r.Group(func(r chi.Router) {
+		r.Use(RequireAuth(deps.JWTService))
+		r.Post("/auth/refresh", authHandler.Refresh)
+		r.Get("/auth/me", authHandler.Me)
+		r.Put("/auth/password", authHandler.ChangePassword)
+	})
+}
+
+// registerCatalogRoutes mounts catalog endpoints behind auth middleware.
+func registerCatalogRoutes(r chi.Router, h *Handler, jwtSvc *auth.JWTService) {
+	r.Group(func(r chi.Router) {
+		r.Use(RequireAuth(jwtSvc))
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog", h.ListCatalog)
+		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog", h.CreateEntry)
+		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/validate", h.ValidateAgentCard)
+		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/register", h.RegisterAgentCard)
+		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/import", h.ImportCatalogEntry)
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}", h.GetEntry)
+		r.With(RequirePermission(auth.PermCatalogDelete)).Delete("/catalog/{id}", h.DeleteEntry)
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}/card", h.GetEntryCard)
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/skills", h.SearchSkills)
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/stats", h.GetStats)
+	})
+}
+
+// registerUserRoutes mounts user and role management endpoints behind auth middleware.
+func registerUserRoutes(r chi.Router, deps RouterDeps) {
+	if deps.UserStore == nil || deps.RoleStore == nil {
+		return
+	}
+	userHandler := NewUserHandler(deps.UserStore, deps.RoleStore)
+	roleHandler := NewRoleHandler(deps.RoleStore)
+
+	r.Group(func(r chi.Router) {
+		r.Use(RequireAuth(deps.JWTService))
+
+		r.Route("/users", func(r chi.Router) {
+			r.With(RequirePermission(auth.PermUsersRead)).Get("/", userHandler.List)
+			r.With(RequirePermission(auth.PermUsersWrite)).Post("/", userHandler.Create)
+			r.With(RequirePermission(auth.PermUsersRead)).Get("/{id}", userHandler.Get)
+			r.With(RequirePermission(auth.PermUsersWrite)).Put("/{id}", userHandler.Update)
+			r.With(RequirePermission(auth.PermUsersDelete)).Delete("/{id}", userHandler.Delete)
+		})
+
+		r.Route("/roles", func(r chi.Router) {
+			r.With(RequirePermission(auth.PermRolesRead)).Get("/", roleHandler.List)
+			r.With(RequirePermission(auth.PermRolesWrite)).Post("/", roleHandler.Create)
+			r.With(RequirePermission(auth.PermRolesWrite)).Put("/{id}", roleHandler.Update)
+			r.With(RequirePermission(auth.PermRolesWrite)).Delete("/{id}", roleHandler.Delete)
+		})
+	})
+}
+
+// registerSettingsRoutes mounts settings endpoints behind auth middleware.
+func registerSettingsRoutes(r chi.Router, deps RouterDeps) {
+	if deps.SettingsStore == nil {
+		return
+	}
+	settingsHandler := NewSettingsHandler(deps.SettingsStore)
+
+	r.Group(func(r chi.Router) {
+		r.Use(RequireAuth(deps.JWTService))
+
+		r.Route("/settings", func(r chi.Router) {
+			r.With(RequirePermission(auth.PermSettingsRead)).Get("/", settingsHandler.GetAll)
+			r.With(RequirePermission(auth.PermSettingsRead)).Get("/{category}", settingsHandler.GetByCategory)
+			r.With(RequirePermission(auth.PermSettingsWrite)).Put("/", settingsHandler.Update)
+		})
+	})
+}
+
+// registerUnauthenticatedCatalogRoutes mounts catalog endpoints without authentication.
+func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler) {
+	r.Get("/catalog", h.ListCatalog)
+	r.Post("/catalog", h.CreateEntry)
+	r.Post("/catalog/validate", h.ValidateAgentCard)
+	r.Post("/catalog/register", h.RegisterAgentCard)
+	r.Post("/catalog/import", h.ImportCatalogEntry)
+	r.Get("/catalog/{id}", h.GetEntry)
+	r.Delete("/catalog/{id}", h.DeleteEntry)
+	r.Get("/catalog/{id}/card", h.GetEntryCard)
+	r.Get("/skills", h.SearchSkills)
+	r.Get("/stats", h.GetStats)
 }
 
 // spaHandler serves static files and falls back to index.html for client-side routing.

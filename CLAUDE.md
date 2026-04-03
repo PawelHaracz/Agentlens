@@ -18,7 +18,8 @@ make build          # Compile Go binary (CGO_ENABLED=1 required for SQLite)
 make test           # Run Go tests (in-memory SQLite, no external DB needed)
 make lint           # golangci-lint
 make format         # gofmt + go fmt
-make all            # format → lint → test → build
+make arch-test      # Run arch-go architecture rules validation
+make all            # format → lint → test → arch-test → build
 
 # Single test
 go test ./internal/auth/... -run TestFunctionName -v
@@ -84,6 +85,36 @@ These rules are non-negotiable — violations must be fixed before merge:
 - Prefer table-driven tests with subtests (`t.Run`), use real in-memory SQLite (`store.NewSQLiteStore(":memory:")`)
 - Unexported types/functions unless they need to cross package boundaries
 - Use `slog` for structured logging; always pass `context.Context` to logger when available
+
+## Architecture Rules (arch-go)
+
+The project uses [arch-go](https://github.com/arch-go/arch-go) to enforce microkernel layer boundaries at CI time. Rules are defined in `arch-go.yml` at the repo root.
+
+### Layer boundaries enforced
+
+- **Foundation** (`model`, `config`, `service`) — no internal dependencies
+- **Infrastructure** (`store`, `auth`) — depends on foundation only
+- **Core** (`kernel`, `discovery`) — depends on foundation + infrastructure
+- **API** (`api`) — depends on core + infrastructure, never plugins or cmd
+- **Plugins** (`plugins/**`) — depend on kernel + foundation, never api/auth/server/cmd
+- **Entrypoint** (`cmd/**`) — composition root, may import anything
+
+### Code quality rules
+
+- Max 5 function parameters, 3 return values, 80 lines per function, 10 public functions per file
+- `config` package must not contain interfaces
+- Plugin structs implementing `Plugin` interface must end with `Plugin`
+
+### Naming rules expansion policy
+
+When a new naming convention emerges in the codebase (e.g. all stores end with `Store`, all handlers end with `Handler`), add a corresponding `namingRules` entry to `arch-go.yml` to enforce it. Keep naming rules minimal and only add them when a pattern is established across at least 3 instances.
+
+### Running
+
+```bash
+make arch-test      # Run architecture validation
+arch-go --html      # Generate HTML report in .arch-go/
+```
 
 ## Feature Development Checklist
 
