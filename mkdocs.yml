@@ -32,6 +32,11 @@ markdown_extensions:
   - admonition
   - toc:
       permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
   - Home: index.md
@@ -44,3 +49,12 @@ nav:
   - Authentication: auth.md
   - Database: database.md
   - Settings: settings.md
+
+plugins:
+  - search
+  - awesome-pages
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+  - minify:
+      minify_html: true 
