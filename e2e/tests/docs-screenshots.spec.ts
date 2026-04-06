@@ -14,6 +14,7 @@
 
 import { test } from '@playwright/test';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   loginViaUI,
   loginViaAPI,
@@ -25,6 +26,9 @@ import {
   adminPassword,
   ADMIN_USER,
 } from './helpers';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const DOCS_IMAGES = path.resolve(__dirname, '../../docs/images');
 

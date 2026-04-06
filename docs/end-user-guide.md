@@ -275,7 +275,10 @@ Click **Register Agent** to open the registration dialog. Three methods are avai
 *Preview step — review the parsed card before saving.*
 
 5. Review the preview and click **Register Agent** to save. The dialog closes and the catalog
-   refreshes.
+   refreshes with the new entry.
+
+![Catalog updated after a successful agent registration](images/register-success-toast.png)
+*After registration the dialog closes and the catalog table shows the new entry.*
 
 ### Upload a JSON File
 
