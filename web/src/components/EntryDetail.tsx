@@ -132,29 +132,24 @@ export default function EntryDetail() {
             </>
           )}
 
-          {entry.skills && entry.skills.length > 0 && (
+          {entry.capabilities && entry.capabilities.length > 0 && (
             <>
               <Separator className="my-4" />
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
-                  Skills ({entry.skills.length})
+                  Capabilities ({entry.capabilities.length})
                 </p>
                 <div className="space-y-2">
-                  {entry.skills.map((skill, i) => (
+                  {entry.capabilities.map((cap, i) => (
                     <Card key={i} className="bg-muted/50">
                       <CardContent className="p-3">
-                        <p className="font-medium text-sm">{skill.name}</p>
-                        {skill.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{skill.description}</p>
-                        )}
-                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                          {skill.input_modes && skill.input_modes.length > 0 && (
-                            <span>In: {skill.input_modes.join(', ')}</span>
-                          )}
-                          {skill.output_modes && skill.output_modes.length > 0 && (
-                            <span>Out: {skill.output_modes.join(', ')}</span>
-                          )}
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="font-medium text-sm">{cap.name}</p>
+                          <Badge variant="outline" className="text-xs">{cap.kind}</Badge>
                         </div>
+                        {cap.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{String(cap.description)}</p>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -163,51 +158,14 @@ export default function EntryDetail() {
             </>
           )}
 
-          {entry.typed_meta && entry.typed_meta.filter(m => m.kind === 'a2a.extension').length > 0 && (
+          {entry.raw_definition != null && (
             <>
               <Separator className="my-4" />
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                  Extensions ({entry.typed_meta.filter(m => m.kind === 'a2a.extension').length})
-                </p>
-                <div className="space-y-1">
-                  {entry.typed_meta.filter(m => m.kind === 'a2a.extension').map((ext, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="font-mono break-all">{(ext as unknown as { uri: string }).uri}</span>
-                      <Badge variant={(ext as unknown as { required: boolean }).required ? 'destructive' : 'secondary'} className="text-xs">
-                        {(ext as unknown as { required: boolean }).required ? 'Required' : 'Optional'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {entry.typed_meta && entry.typed_meta.filter(m => m.kind === 'a2a.security_scheme').length > 0 && (
-            <>
-              <Separator className="my-4" />
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Security</p>
-                <div className="flex flex-wrap gap-1">
-                  {entry.typed_meta.filter(m => m.kind === 'a2a.security_scheme').map((scheme, i) => (
-                    <Badge key={i} variant="outline">
-                      {(scheme as unknown as { type: string }).type}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {entry.raw_card != null && (
-            <>
-              <Separator className="my-4" />
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Raw Card</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Raw Definition</p>
                 <ScrollArea className="h-64 rounded-md border">
                   <pre className="p-4 text-xs font-mono">
-                    {JSON.stringify(entry.raw_card, null, 2)}
+                    {JSON.stringify(entry.raw_definition, null, 2)}
                   </pre>
                 </ScrollArea>
               </div>

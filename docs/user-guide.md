@@ -171,6 +171,7 @@ Open `http://localhost:8080` in your browser to access the dashboard.
 - **Filters** — filter by protocol, status, source type, or team
 - **Detail view** — click an entry to see skills, metadata, provider info, and the raw protocol card JSON
 - **Stats bar** — aggregate counts by status and discovery source
+- **Register Agent** — multi-tab dialog to register agents by pasting JSON, uploading a file, or importing from a URL
 
 ---
 
@@ -221,9 +222,33 @@ spec:
 | `agentlens.io/team` | No | Owning team label |
 | `agentlens.io/tags` | No | Comma-separated categories |
 
+### Import from URL (API or UI)
+
+Register an agent by pointing AgentLens at the URL of its card — the server fetches, validates, and imports it automatically:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://my-agent.example.com/.well-known/agent.json"}'
+```
+
+The optional `"protocol"` field overrides auto-detection:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://mcp.example.com/card", "protocol": "mcp"}'
+```
+
+You can also use the **Import from URL** tab in the Register Agent dialog in the web dashboard — see [docs/end-user-guide.md](end-user-guide.md) for a step-by-step walkthrough.
+
+> **Security:** Requests to private/internal IP ranges (`10.x`, `192.168.x`, `172.16–31.x`, `127.x`, `localhost`) are rejected to prevent SSRF attacks.
+
 ### Push Registration (HTTP API)
 
-Register an agent directly via POST:
+Register an agent directly via POST with a structured body:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/catalog \
@@ -342,6 +367,24 @@ curl http://localhost:8080/api/v1/catalog/{id}/card
 
 ```bash
 curl http://localhost:8080/api/v1/stats
+```
+
+### Validate an A2A Agent Card (dry-run)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/validate \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d @agent-card.json
+```
+
+### Import an Agent Card from a URL
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://my-agent.example.com/.well-known/agent.json"}'
 ```
 
 ### Delete an Entry

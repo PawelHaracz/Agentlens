@@ -73,7 +73,10 @@ func (c *Checker) checkAll(ctx context.Context) {
 }
 
 func (c *Checker) checkOne(ctx context.Context, entry *model.CatalogEntry) {
-	if entry.Endpoint == "" {
+	if entry.AgentType == nil {
+		return
+	}
+	if entry.AgentType.Endpoint == "" {
 		return
 	}
 
@@ -81,7 +84,7 @@ func (c *Checker) checkOne(ctx context.Context, entry *model.CatalogEntry) {
 	defer cancel()
 
 	client := &http.Client{Timeout: c.timeout}
-	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, entry.Endpoint, nil)
+	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, entry.AgentType.Endpoint, nil)
 	if err != nil {
 		c.updateStatus(ctx, entry, model.StatusDown)
 		return

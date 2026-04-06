@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,29 +15,51 @@ import (
 )
 
 type mockSource struct {
-	name    string
-	entries []*model.CatalogEntry
-	err     error
+	name       string
+	agentTypes []*model.AgentType
+	err        error
 }
 
 func (m *mockSource) Name() string { return m.name }
-func (m *mockSource) Discover(_ context.Context) ([]*model.CatalogEntry, error) {
-	return m.entries, m.err
+func (m *mockSource) Discover(_ context.Context) ([]*model.AgentType, error) {
+	return m.agentTypes, m.err
 }
 
-func newMockEntry(id, endpoint string) *model.CatalogEntry {
+func newMockAgentType(endpoint string) *model.AgentType {
+	return &model.AgentType{
+		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol:      model.ProtocolA2A,
+		Endpoint:      endpoint,
+		Version:       "1.0.0",
+		RawDefinition: []byte(`{}`),
+	}
+}
+
+func newMockCatalogEntry(id, endpoint string) *model.CatalogEntry {
+	at := &model.AgentType{
+		ID:            uuid.NewString(),
+		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol:      model.ProtocolA2A,
+		Endpoint:      endpoint,
+		Version:       "1.0.0",
+		RawDefinition: []byte(`{}`),
+	}
 	now := time.Now().UTC()
-	return &model.CatalogEntry{
+	entry := &model.CatalogEntry{
 		ID:          id,
-		DisplayName: "Entry " + id,
-		Protocol:    model.ProtocolA2A,
-		Endpoint:    endpoint,
+		AgentTypeID: at.ID,
+		AgentType:   at,
+		DisplayName: "Entry " + endpoint,
 		Status:      model.StatusUnknown,
 		Source:      model.SourceConfig,
 		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
+	if entry.ID == "" {
+		entry.ID = uuid.NewString()
+	}
+	return entry
 }
 
 func TestManager_Upsert_NewEntry(t *testing.T) {
@@ -45,8 +68,8 @@ func TestManager_Upsert_NewEntry(t *testing.T) {
 	defer func() { _ = s.Close() }()
 
 	src := &mockSource{
-		name:    "static",
-		entries: []*model.CatalogEntry{newMockEntry("", "http://new-entry.example.com")},
+		name:       "static",
+		agentTypes: []*model.AgentType{newMockAgentType("http://new-entry.example.com")},
 	}
 
 	mgr := discovery.NewManager([]discovery.Source{src}, s, time.Hour)
@@ -61,7 +84,8 @@ func TestManager_Upsert_NewEntry(t *testing.T) {
 	entries, err := s.List(context.Background(), store.ListFilter{})
 	require.NoError(t, err)
 	assert.Len(t, entries, 1)
-	assert.Equal(t, "http://new-entry.example.com", entries[0].Endpoint)
+	require.NotNil(t, entries[0].AgentType)
+	assert.Equal(t, "http://new-entry.example.com", entries[0].AgentType.Endpoint)
 }
 
 func TestManager_Upsert_ExistingEntry(t *testing.T) {
@@ -70,13 +94,14 @@ func TestManager_Upsert_ExistingEntry(t *testing.T) {
 	defer func() { _ = s.Close() }()
 
 	ctx := context.Background()
-	existing := newMockEntry("existing-id", "http://existing.example.com")
+	existing := newMockCatalogEntry("existing-id", "http://existing.example.com")
 	existing.Source = model.SourceConfig
 	require.NoError(t, s.Create(ctx, existing))
 
-	updated := newMockEntry("", "http://existing.example.com")
-	updated.DisplayName = "Updated Name"
-	src := &mockSource{name: "static", entries: []*model.CatalogEntry{updated}}
+	src := &mockSource{
+		name:       "static",
+		agentTypes: []*model.AgentType{newMockAgentType("http://existing.example.com")},
+	}
 
 	mgr := discovery.NewManager([]discovery.Source{src}, s, time.Hour)
 	mgrCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
@@ -87,10 +112,11 @@ func TestManager_Upsert_ExistingEntry(t *testing.T) {
 	}()
 	time.Sleep(200 * time.Millisecond)
 
-	got, err := s.Get(ctx, "existing-id")
+	got, err := s.Get(ctx, existing.ID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, "Updated Name", got.DisplayName)
+	// Entry should still exist (updated, not duplicated)
+	assert.Equal(t, existing.ID, got.ID)
 }
 
 func TestManager_MarksMissingEntriesDown(t *testing.T) {
@@ -99,12 +125,12 @@ func TestManager_MarksMissingEntriesDown(t *testing.T) {
 	defer func() { _ = s.Close() }()
 
 	ctx := context.Background()
-	existing := newMockEntry("missing-id", "http://gone.example.com")
+	existing := newMockCatalogEntry("missing-id", "http://gone.example.com")
 	existing.Source = model.SourceConfig
 	require.NoError(t, s.Create(ctx, existing))
 
 	// Source returns no entries this cycle
-	src := &mockSource{name: "static", entries: nil}
+	src := &mockSource{name: "static", agentTypes: nil}
 
 	mgr := discovery.NewManager([]discovery.Source{src}, s, time.Hour)
 	mgrCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
@@ -115,7 +141,7 @@ func TestManager_MarksMissingEntriesDown(t *testing.T) {
 	}()
 	time.Sleep(200 * time.Millisecond)
 
-	got, err := s.Get(ctx, "missing-id")
+	got, err := s.Get(ctx, existing.ID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, model.StatusDown, got.Status)

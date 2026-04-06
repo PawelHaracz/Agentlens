@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,8 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
+	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
 func newTestRouter(t *testing.T) (http.Handler, store.Store) {
@@ -22,7 +26,16 @@ func newTestRouter(t *testing.T) (http.Handler, store.Store) {
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = s.Close() })
-	return api.NewRouter(api.RouterDeps{Store: s}), s
+
+	core := kernel.NewCore(s, nil, slog.Default(), kernel.LicenseInfo{})
+	a2aParser := a2aplugin.New()
+	_ = a2aParser.Init(core)
+	core.RegisterParser(a2aParser)
+	mcpParser := mcpplugin.New()
+	_ = mcpParser.Init(core)
+	core.RegisterParser(mcpParser)
+
+	return api.NewRouter(api.RouterDeps{Kernel: core}), s
 }
 
 func TestHealthz(t *testing.T) {
@@ -80,11 +93,24 @@ func TestDeleteEntry(t *testing.T) {
 	router, s := newTestRouter(t)
 
 	now := time.Now().UTC()
+	agentType := &model.AgentType{
+		ID:            "at-del-1",
+		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, "http://del.example.com"),
+		Protocol:      model.ProtocolA2A,
+		Endpoint:      "http://del.example.com",
+		RawDefinition: []byte("{}"),
+		CreatedOn:     now,
+	}
 	e := &model.CatalogEntry{
-		ID: "del-1", DisplayName: "Del Entry", Protocol: model.ProtocolA2A,
-		Endpoint: "http://del.example.com", Status: model.StatusUnknown,
-		Source: model.SourcePush, Validity: model.Validity{LastSeen: now},
-		CreatedAt: now, UpdatedAt: now,
+		ID:          "del-1",
+		AgentTypeID: agentType.ID,
+		AgentType:   agentType,
+		DisplayName: "Del Entry",
+		Status:      model.StatusUnknown,
+		Source:      model.SourcePush,
+		Validity:    model.Validity{LastSeen: now},
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	require.NoError(t, s.Create(context.Background(), e))
 
@@ -92,6 +118,38 @@ func TestDeleteEntry(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
+func TestCreateEntry_DuplicateEndpoint(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	body := map[string]interface{}{
+		"display_name": "First Agent",
+		"protocol":     "a2a",
+		"endpoint":     "http://dup.example.com",
+		"version":      "1.0.0",
+	}
+	bodyBytes, _ := json.Marshal(body)
+
+	// First creation succeeds.
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/catalog", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	// Same endpoint, different version → must still return 409.
+	body2 := map[string]interface{}{
+		"display_name": "Duplicate Agent",
+		"protocol":     "a2a",
+		"endpoint":     "http://dup.example.com",
+	}
+	bodyBytes2, _ := json.Marshal(body2)
+	req2 := httptest.NewRequest(http.MethodPost, "/api/v1/catalog", bytes.NewReader(bodyBytes2))
+	req2.Header.Set("Content-Type", "application/json")
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req2)
+	assert.Equal(t, http.StatusConflict, w2.Code)
 }
 
 func TestGetStats(t *testing.T) {

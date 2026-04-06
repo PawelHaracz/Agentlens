@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,8 +13,11 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/api"
 	"github.com/PawelHaracz/agentlens/internal/auth"
 	"github.com/PawelHaracz/agentlens/internal/db"
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
+	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
 // testRouter creates a chi router for testing with a full in-memory DB.
@@ -31,6 +35,14 @@ func testRouter(t *testing.T) (http.Handler, *db.DB, *auth.JWTService) {
 	roleStore := store.NewRoleStore(database)
 	settingsStore := store.NewSettingsStore(database)
 
+	core := kernel.NewCore(catalogStore, nil, slog.Default(), kernel.LicenseInfo{})
+	a2aParser := a2aplugin.New()
+	_ = a2aParser.Init(core)
+	core.RegisterParser(a2aParser)
+	mcpParser := mcpplugin.New()
+	_ = mcpParser.Init(core)
+	core.RegisterParser(mcpParser)
+
 	jwtService := auth.NewJWTService(auth.JWTConfig{
 		Secret:        "test-secret",
 		Expiration:    time.Hour,
@@ -38,7 +50,7 @@ func testRouter(t *testing.T) (http.Handler, *db.DB, *auth.JWTService) {
 	})
 
 	router := api.NewRouter(api.RouterDeps{
-		Store:         catalogStore,
+		Kernel:        core,
 		UserStore:     userStore,
 		RoleStore:     roleStore,
 		SettingsStore: settingsStore,

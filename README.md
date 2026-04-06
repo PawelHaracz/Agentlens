@@ -2,7 +2,7 @@
 
 **Real-time AI agent catalog for Kubernetes — discover, track, and inspect A2A, MCP, and A2UI agents across your cluster.**
 
-AgentLens automatically discovers AI agents running in Kubernetes (via Service annotations), polls static endpoints, and accepts push registrations. It exposes a REST API and a web dashboard for browsing the catalog, filtering by protocol/status, and inspecting agent cards and skills.
+AgentLens automatically discovers AI agents running in Kubernetes (via Service annotations), polls static endpoints, and accepts push registrations. It exposes a REST API and a web dashboard for browsing the catalog, filtering by protocol/status, and inspecting agent cards and capabilities.
 
 ---
 
@@ -131,6 +131,37 @@ Example response for a valid card:
 
 ---
 
+## Import from URL
+
+Register an agent by providing the URL of its card — AgentLens fetches, validates, and imports it automatically:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://my-agent.example.com/.well-known/agent.json"}'
+```
+
+The import endpoint:
+- **Fetches** the card from the provided URL (10 s timeout, 1 MB cap)
+- **Auto-detects** the protocol from the URL path and card content
+- **Validates** the card and returns structured errors if validation fails
+- **Rejects** requests to private/internal network addresses (SSRF protection)
+- **Requires authentication** — `catalog:write` permission needed
+
+Optional `"protocol"` field to override auto-detection:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://mcp.example.com/card", "protocol": "mcp"}'
+```
+
+The web dashboard also exposes this feature via the **Import from URL** tab in the Register Agent dialog — see [docs/end-user-guide.md](docs/end-user-guide.md) for a step-by-step walkthrough.
+
+---
+
 ## Push Registration
 
 Register a catalog entry via HTTP POST:
@@ -143,11 +174,11 @@ curl -X POST http://localhost:8080/api/v1/catalog \
     "description": "Does amazing things",
     "protocol": "a2a",
     "endpoint": "http://my-agent.internal:8080",
-    "version": "1.2.3",
-    "provider": {"organization": "Acme Corp", "team": "platform"},
-    "categories": ["nlp", "demo"]
+    "version": "1.2.3"
   }'
 ```
+
+To register with full agent capabilities (skills, interfaces, security schemes), use `POST /api/v1/catalog/register` with a raw A2A or MCP agent card JSON instead.
 
 ---
 
@@ -159,6 +190,7 @@ curl -X POST http://localhost:8080/api/v1/catalog \
 | `GET` | `/api/v1/catalog` | List catalog entries (`?protocol=`, `?status=`, `?q=`, `?team=`, `?categories=`, `?limit=`, `?offset=`) |
 | `POST` | `/api/v1/catalog/validate` | Validate A2A agent card (dry-run, does not persist) |
 | `POST` | `/api/v1/catalog/register` | Register an A2A agent from a raw agent card JSON |
+| `POST` | `/api/v1/catalog/import` | Fetch and import an agent card from a URL |
 | `POST` | `/api/v1/catalog` | Push-register a catalog entry |
 | `GET` | `/api/v1/catalog/{id}` | Get entry by ID |
 | `DELETE` | `/api/v1/catalog/{id}` | Delete entry |

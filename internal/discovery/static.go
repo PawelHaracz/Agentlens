@@ -29,21 +29,20 @@ func NewStaticSource(sources []config.SourceConfig) *StaticSource {
 func (s *StaticSource) Name() string { return "static" }
 
 // Discover fetches and parses all configured agent cards.
-func (s *StaticSource) Discover(ctx context.Context) ([]*model.CatalogEntry, error) {
-	var entries []*model.CatalogEntry
+func (s *StaticSource) Discover(ctx context.Context) ([]*model.AgentType, error) {
+	var agentTypes []*model.AgentType
 	for _, src := range s.sources {
-		entry, err := s.fetchOne(ctx, src)
+		at, err := s.fetchOne(ctx, src)
 		if err != nil {
 			s.log.Warn("failed to discover entry", "name", src.Name, "url", src.URL, "err", err)
 			continue
 		}
-		entry.DisplayName = src.Name
-		entries = append(entries, entry)
+		agentTypes = append(agentTypes, at)
 	}
-	return entries, nil
+	return agentTypes, nil
 }
 
-func (s *StaticSource) fetchOne(ctx context.Context, src config.SourceConfig) (*model.CatalogEntry, error) {
+func (s *StaticSource) fetchOne(ctx context.Context, src config.SourceConfig) (*model.AgentType, error) {
 	raw, err := s.crawler.FetchCard(ctx, src.URL)
 	if err != nil {
 		return nil, fmt.Errorf("fetching card: %w", err)
@@ -51,9 +50,9 @@ func (s *StaticSource) fetchOne(ctx context.Context, src config.SourceConfig) (*
 
 	switch src.Type {
 	case "a2a":
-		return ParseA2ACard(raw, model.SourceConfig)
+		return ParseA2ACard(raw)
 	case "mcp":
-		return ParseMCPCard(raw, model.SourceConfig)
+		return ParseMCPCard(raw)
 	default:
 		return nil, fmt.Errorf("unsupported source type: %q (must be \"a2a\" or \"mcp\")", src.Type)
 	}

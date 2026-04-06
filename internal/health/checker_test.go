@@ -26,11 +26,19 @@ func newTestStore(t *testing.T) store.Store {
 func insertEntry(t *testing.T, s store.Store, id, endpoint string) *model.CatalogEntry {
 	t.Helper()
 	now := time.Now().UTC()
+	agentType := &model.AgentType{
+		ID:            "at-" + id,
+		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol:      model.ProtocolA2A,
+		Endpoint:      endpoint,
+		RawDefinition: []byte("{}"),
+		CreatedOn:     now,
+	}
 	e := &model.CatalogEntry{
 		ID:          id,
+		AgentTypeID: agentType.ID,
+		AgentType:   agentType,
 		DisplayName: "Test Entry",
-		Protocol:    model.ProtocolA2A,
-		Endpoint:    endpoint,
 		Status:      model.StatusUnknown,
 		Source:      model.SourcePush,
 		Validity:    model.Validity{LastSeen: now},

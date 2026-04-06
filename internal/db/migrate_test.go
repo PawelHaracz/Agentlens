@@ -28,9 +28,12 @@ func TestMigrate_Fresh(t *testing.T) {
 
 	ver, err := m.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 5, ver)
+	assert.Equal(t, 4, ver)
 
 	// Verify tables exist by querying them.
+	assert.True(t, d.Migrator().HasTable("providers"))
+	assert.True(t, d.Migrator().HasTable("agent_types"))
+	assert.True(t, d.Migrator().HasTable("capabilities"))
 	assert.True(t, d.Migrator().HasTable("catalog_entries"))
 	assert.True(t, d.Migrator().HasTable("roles"))
 	assert.True(t, d.Migrator().HasTable("users"))
@@ -47,7 +50,7 @@ func TestMigrate_Idempotent(t *testing.T) {
 
 	ver, err := m.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 5, ver)
+	assert.Equal(t, 4, ver)
 }
 
 func TestMigrate_CurrentVersion(t *testing.T) {
@@ -72,5 +75,5 @@ func TestMigrate_CurrentVersion(t *testing.T) {
 	require.NoError(t, m.Migrate(ctx))
 	ver, err = m.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 5, ver)
+	assert.Equal(t, 4, ver)
 }

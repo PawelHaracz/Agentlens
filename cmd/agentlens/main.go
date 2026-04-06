@@ -212,7 +212,7 @@ func main() {
 
 	// 8. Create router with full RouterDeps & 11. HTTP server with graceful shutdown
 	router := api.NewRouter(api.RouterDeps{
-		Store:         catalogStore,
+		Kernel:        core,
 		UserStore:     userStore,
 		RoleStore:     roleStore,
 		SettingsStore: settingsStore,

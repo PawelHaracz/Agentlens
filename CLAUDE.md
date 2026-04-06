@@ -18,7 +18,8 @@ make build          # Compile Go binary (CGO_ENABLED=1 required for SQLite)
 make test           # Run Go tests (in-memory SQLite, no external DB needed)
 make lint           # golangci-lint
 make format         # gofmt + go fmt
-make all            # format → lint → test → build
+make arch-test      # Run arch-go architecture rules validation
+make all            # format → lint → test → arch-test → build
 
 # Single test
 go test ./internal/auth/... -run TestFunctionName -v
@@ -43,7 +44,7 @@ Microkernel: core kernel → parser plugins (A2A, MCP) → source plugins (k8s, 
 
 Plugin lifecycle: `Register → InitAll → StartAll → [running] → StopAll`. Plugins returning `ErrLicenseRequired` during init are silently skipped.
 
-Domain model: `CatalogEntry` wraps a `Protocol` (a2a, mcp, a2ui) and contains `Provider`, `Skill[]`, `Validity`, `Categories`, metadata, and raw card JSON.
+Domain model (Product Archetype): `AgentType` represents what the agent IS (protocol, endpoint, version, `AgentKey` = SHA256(protocol+endpoint), `Capability[]`, `Provider`, raw definition). `CatalogEntry` is the catalog wrapper (display name, status, source, validity, categories, metadata) with a 1:1 FK to `AgentType`. `Capability` is polymorphic, discriminated by `kind` (`a2a.skill`, `a2a.interface`, `a2a.security_scheme`, `a2a.extension`, `a2a.signature`, `mcp.tool`, `mcp.resource`, `mcp.prompt`). REST responses are backward-compatible flat JSON (via `CatalogEntry.MarshalJSON()`).
 
 All architecture diagrams must be written in **Mermaid** (not PlantUML, not ASCII art).
 
@@ -84,6 +85,36 @@ These rules are non-negotiable — violations must be fixed before merge:
 - Prefer table-driven tests with subtests (`t.Run`), use real in-memory SQLite (`store.NewSQLiteStore(":memory:")`)
 - Unexported types/functions unless they need to cross package boundaries
 - Use `slog` for structured logging; always pass `context.Context` to logger when available
+
+## Architecture Rules (arch-go)
+
+The project uses [arch-go](https://github.com/arch-go/arch-go) to enforce microkernel layer boundaries at CI time. Rules are defined in `arch-go.yml` at the repo root.
+
+### Layer boundaries enforced
+
+- **Foundation** (`model`, `config`, `service`) — no internal dependencies
+- **Infrastructure** (`store`, `auth`) — depends on foundation only
+- **Core** (`kernel`, `discovery`) — depends on foundation + infrastructure
+- **API** (`api`) — depends on core + infrastructure, never plugins or cmd
+- **Plugins** (`plugins/**`) — depend on kernel + foundation, never api/auth/server/cmd
+- **Entrypoint** (`cmd/**`) — composition root, may import anything
+
+### Code quality rules
+
+- Max 5 function parameters, 3 return values, 80 lines per function, 10 public functions per file
+- `config` package must not contain interfaces
+- Plugin structs implementing `Plugin` interface must end with `Plugin`
+
+### Naming rules expansion policy
+
+When a new naming convention emerges in the codebase (e.g. all stores end with `Store`, all handlers end with `Handler`), add a corresponding `namingRules` entry to `arch-go.yml` to enforce it. Keep naming rules minimal and only add them when a pattern is established across at least 3 instances.
+
+### Running
+
+```bash
+make arch-test      # Run architecture validation
+arch-go --html      # Generate HTML report in .arch-go/
+```
 
 ## Feature Development Checklist
 
@@ -161,3 +192,147 @@ Every feature or bugfix must complete all of the following before it is consider
 - Commit messages: `feat(component): description`
 - Run `make test` before committing
 - Open PRs against `main`; CI must be green (lint + test + build)
+
+<!-- rtk-instructions v2 -->
+# RTK (Rust Token Killer) - Token-Optimized Commands
+
+## Golden Rule
+
+**Always prefix commands with `rtk`**. If RTK has a dedicated filter, it uses it. If not, it passes through unchanged. This means RTK is always safe to use.
+
+**Important**: Even in command chains with `&&`, use `rtk`:
+```bash
+# ❌ Wrong
+git add . && git commit -m "msg" && git push
+
+# ✅ Correct
+rtk git add . && rtk git commit -m "msg" && rtk git push
+```
+
+## RTK Commands by Workflow
+
+### Build & Compile (80-90% savings)
+```bash
+rtk cargo build         # Cargo build output
+rtk cargo check         # Cargo check output
+rtk cargo clippy        # Clippy warnings grouped by file (80%)
+rtk tsc                 # TypeScript errors grouped by file/code (83%)
+rtk lint                # ESLint/Biome violations grouped (84%)
+rtk prettier --check    # Files needing format only (70%)
+rtk next build          # Next.js build with route metrics (87%)
+```
+
+### Test (90-99% savings)
+```bash
+rtk cargo test          # Cargo test failures only (90%)
+rtk vitest run          # Vitest failures only (99.5%)
+rtk playwright test     # Playwright failures only (94%)
+rtk test <cmd>          # Generic test wrapper - failures only
+```
+
+### Git (59-80% savings)
+```bash
+rtk git status          # Compact status
+rtk git log             # Compact log (works with all git flags)
+rtk git diff            # Compact diff (80%)
+rtk git show            # Compact show (80%)
+rtk git add             # Ultra-compact confirmations (59%)
+rtk git commit          # Ultra-compact confirmations (59%)
+rtk git push            # Ultra-compact confirmations
+rtk git pull            # Ultra-compact confirmations
+rtk git branch          # Compact branch list
+rtk git fetch           # Compact fetch
+rtk git stash           # Compact stash
+rtk git worktree        # Compact worktree
+```
+
+Note: Git passthrough works for ALL subcommands, even those not explicitly listed.
+
+### Go (70-90% savings)
+```bash
+rtk go build            # Compact build output (80%)
+rtk go test             # Compact test output (90%)
+rtk go vet              # Compact vet output (70%)
+rtk go fmt              # Compact formatting output
+rtk go mod tidy         # Compact module tidy output (85%)
+rtk go run <file>       # Compact run output
+```
+
+### GitHub (26-87% savings)
+```bash
+rtk gh pr view <num>    # Compact PR view (87%)
+rtk gh pr checks        # Compact PR checks (79%)
+rtk gh run list         # Compact workflow runs (82%)
+rtk gh issue list       # Compact issue list (80%)
+rtk gh api              # Compact API responses (26%)
+```
+
+### JavaScript/TypeScript Tooling (70-90% savings)
+```bash
+rtk pnpm list           # Compact dependency tree (70%)
+rtk pnpm outdated       # Compact outdated packages (80%)
+rtk pnpm install        # Compact install output (90%)
+rtk npm run <script>    # Compact npm script output
+rtk npx <cmd>           # Compact npx command output
+rtk prisma              # Prisma without ASCII art (88%)
+```
+
+### Files & Search (60-75% savings)
+```bash
+rtk ls <path>           # Tree format, compact (65%)
+rtk read <file>         # Code reading with filtering (60%)
+rtk grep <pattern>      # Search grouped by file (75%)
+rtk find <pattern>      # Find grouped by directory (70%)
+```
+
+### Analysis & Debug (70-90% savings)
+```bash
+rtk err <cmd>           # Filter errors only from any command
+rtk log <file>          # Deduplicated logs with counts
+rtk json <file>         # JSON structure without values
+rtk deps                # Dependency overview
+rtk env                 # Environment variables compact
+rtk summary <cmd>       # Smart summary of command output
+rtk diff                # Ultra-compact diffs
+```
+
+### Infrastructure (85% savings)
+```bash
+rtk docker ps           # Compact container list
+rtk docker images       # Compact image list
+rtk docker logs <c>     # Deduplicated logs
+rtk kubectl get         # Compact resource list
+rtk kubectl logs        # Deduplicated pod logs
+```
+
+### Network (65-70% savings)
+```bash
+rtk curl <url>          # Compact HTTP responses (70%)
+rtk wget <url>          # Compact download output (65%)
+```
+
+### Meta Commands
+```bash
+rtk gain                # View token savings statistics
+rtk gain --history      # View command history with savings
+rtk discover            # Analyze Claude Code sessions for missed RTK usage
+rtk proxy <cmd>         # Run command without filtering (for debugging)
+rtk init                # Add RTK instructions to CLAUDE.md
+rtk init --global       # Add RTK to ~/.claude/CLAUDE.md
+```
+
+## Token Savings Overview
+
+| Category | Commands | Typical Savings |
+|----------|----------|-----------------|
+| Tests | vitest, playwright, cargo test | 90-99% |
+| Build | next, tsc, lint, prettier | 70-87% |
+| Git | status, log, diff, add, commit | 59-80% |
+| GitHub | gh pr, gh run, gh issue | 26-87% |
+| Package Managers | pnpm, npm, npx | 70-90% |
+| Files | ls, read, grep, find | 60-75% |
+| Infrastructure | docker, kubectl | 85% |
+| Network | curl, wget | 65-70% |
+
+Overall average: **60-90% token reduction** on common development operations.
+<!-- /rtk-instructions -->

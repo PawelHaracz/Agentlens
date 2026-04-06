@@ -35,13 +35,6 @@ const (
 	SourceUpstream SourceType = "upstream"
 )
 
-// Provider represents the organization offering the catalog entry.
-type Provider struct {
-	Organization string `json:"organization"`
-	Team         string `json:"team,omitempty"`
-	URL          string `json:"url,omitempty"`
-}
-
 // Validity represents a time-bounded availability period.
 type Validity struct {
 	From     *time.Time `json:"from,omitempty"`
@@ -60,136 +53,134 @@ func (v Validity) IsActiveAt(t time.Time) bool {
 	return true
 }
 
-// CatalogEntry represents a discovered agent/server in the catalog.
-// This follows the Product archetype pattern where CatalogEntry
-// is the commercial offering wrapping a ProductType.
+// CatalogEntry is the catalog wrapper (Product archetype) around an AgentType.
+// It represents a discoverable listing of an agent in the catalog.
 type CatalogEntry struct {
-	ID          string            `json:"id" gorm:"primaryKey;type:text"`
-	DisplayName string            `json:"display_name" gorm:"not null;type:text"`
-	Description string            `json:"description" gorm:"type:text;default:''"`
-	Protocol    Protocol          `json:"protocol" gorm:"not null;type:text;index"`
-	Endpoint    string            `json:"endpoint" gorm:"uniqueIndex;type:text"`
-	Version     string            `json:"version" gorm:"type:text;default:''"`
-	Status      Status            `json:"status" gorm:"not null;type:text;default:'unknown';index"`
-	Source      SourceType        `json:"source" gorm:"not null;type:text;index"`
-	Provider    Provider          `json:"provider,omitempty" gorm:"-"`
-	Categories  []string          `json:"categories,omitempty" gorm:"-"`
-	Skills      []Skill           `json:"skills,omitempty" gorm:"-"`
-	Validity    Validity          `json:"validity" gorm:"-"`
-	RawCard     json.RawMessage   `json:"raw_card,omitempty" gorm:"-"`
-	Metadata    map[string]string `json:"metadata,omitempty" gorm:"-"`
-	SpecVersion string            `json:"spec_version,omitempty" gorm:"type:text;not null;default:''"`
-	TypedMeta   []TypedMetadata   `json:"typed_meta,omitempty" gorm:"-"`
+	ID          string            `json:"id"           gorm:"primaryKey;type:text"`
+	AgentTypeID string            `json:"agent_type_id" gorm:"not null;type:text;index"`
+	AgentType   *AgentType        `json:"-"            gorm:"foreignKey:AgentTypeID"`
+	DisplayName string            `json:"display_name"  gorm:"not null;type:text"`
+	Description string            `json:"description"   gorm:"type:text;default:''"`
+	Status      Status            `json:"status"        gorm:"not null;type:text;default:'unknown';index"`
+	Source      SourceType        `json:"source"        gorm:"not null;type:text;index"`
 	CreatedAt   time.Time         `json:"created_at"`
 	UpdatedAt   time.Time         `json:"updated_at"`
+	Categories  []string          `json:"-" gorm:"-"`
+	Metadata    map[string]string `json:"-" gorm:"-"`
+	Validity    Validity          `json:"-" gorm:"-"`
 
 	// Database-serialized JSON fields (used by GORM, hidden from JSON API).
-	ProviderJSON   string     `json:"-" gorm:"column:provider;type:text;not null;default:'{}';index"`
 	CategoriesJSON string     `json:"-" gorm:"column:categories;type:text;not null;default:'[]'"`
-	SkillsJSON     string     `json:"-" gorm:"column:skills;type:text;not null;default:'[]'"`
 	MetadataJSON   string     `json:"-" gorm:"column:metadata;type:text;not null;default:'{}'"`
-	RawCardStr     *string    `json:"-" gorm:"column:raw_card;type:text"`
 	ValidFrom      *time.Time `json:"-" gorm:"column:validity_from"`
 	ValidTo        *time.Time `json:"-" gorm:"column:validity_to"`
 	LastSeen       time.Time  `json:"-" gorm:"column:validity_last_seen;not null"`
-	TypedMetaJSON  string     `json:"-" gorm:"column:typed_meta;type:text;not null;default:'[]'"`
 }
 
 // TableName overrides the GORM table name.
 func (CatalogEntry) TableName() string { return "catalog_entries" }
 
-// MarshalJSON converts the entry to JSON, syncing GORM fields to public fields first.
-func (e CatalogEntry) MarshalJSON() ([]byte, error) {
-	e.SyncFromDB()
-
-	// Serialize TypedMeta using MarshalTypedMetaJSON so each item carries a "kind" discriminator.
-	var typedMetaJSON json.RawMessage
-	if len(e.TypedMeta) > 0 {
-		b, err := MarshalTypedMetaJSON(e.TypedMeta)
-		if err == nil {
-			typedMetaJSON = b
-		}
-	}
-
-	type Alias CatalogEntry
-	return json.Marshal(struct {
-		Alias
-		Provider    Provider          `json:"provider,omitempty"`
-		Categories  []string          `json:"categories,omitempty"`
-		Skills      []Skill           `json:"skills,omitempty"`
-		Validity    Validity          `json:"validity"`
-		RawCard     json.RawMessage   `json:"raw_card,omitempty"`
-		Metadata    map[string]string `json:"metadata,omitempty"`
-		SpecVersion string            `json:"spec_version,omitempty"`
-		TypedMeta   json.RawMessage   `json:"typed_meta,omitempty"`
-	}{
-		Alias:       Alias(e),
-		Provider:    e.Provider,
-		Categories:  e.Categories,
-		Skills:      e.Skills,
-		Validity:    e.Validity,
-		RawCard:     e.RawCard,
-		Metadata:    e.Metadata,
-		SpecVersion: e.SpecVersion,
-		TypedMeta:   typedMetaJSON,
-	})
-}
-
 // SyncToDB serializes public fields into GORM database columns.
 func (e *CatalogEntry) SyncToDB() {
-	if b, err := json.Marshal(e.Provider); err == nil {
-		e.ProviderJSON = string(b)
-	}
 	if b, err := json.Marshal(e.Categories); err == nil {
 		e.CategoriesJSON = string(b)
-	}
-	if b, err := json.Marshal(e.Skills); err == nil {
-		e.SkillsJSON = string(b)
 	}
 	if b, err := json.Marshal(e.Metadata); err == nil {
 		e.MetadataJSON = string(b)
 	}
-	if len(e.RawCard) > 0 {
-		s := string(e.RawCard)
-		e.RawCardStr = &s
-	} else {
-		e.RawCardStr = nil
-	}
 	e.ValidFrom = e.Validity.From
 	e.ValidTo = e.Validity.To
 	e.LastSeen = e.Validity.LastSeen
-	if b, err := MarshalTypedMetaJSON(e.TypedMeta); err == nil {
-		e.TypedMetaJSON = string(b)
-	}
 }
 
 // SyncFromDB deserializes GORM database columns into public fields.
+// If AgentType is loaded, it also calls AgentType.SyncRawDefForJSON().
 func (e *CatalogEntry) SyncFromDB() {
-	if e.ProviderJSON != "" {
-		_ = json.Unmarshal([]byte(e.ProviderJSON), &e.Provider)
-	}
 	if e.CategoriesJSON != "" {
 		_ = json.Unmarshal([]byte(e.CategoriesJSON), &e.Categories)
 	}
-	if e.SkillsJSON != "" {
-		_ = json.Unmarshal([]byte(e.SkillsJSON), &e.Skills)
-	}
 	if e.MetadataJSON != "" {
 		_ = json.Unmarshal([]byte(e.MetadataJSON), &e.Metadata)
-	}
-	if e.RawCardStr != nil {
-		e.RawCard = json.RawMessage(*e.RawCardStr)
-	}
-	if e.TypedMetaJSON != "" {
-		if meta, err := UnmarshalTypedMetaJSON([]byte(e.TypedMetaJSON)); err == nil {
-			e.TypedMeta = meta
-		} else {
-			e.TypedMeta = []TypedMetadata{}
-		}
 	}
 	e.Validity = Validity{
 		From:     e.ValidFrom,
 		To:       e.ValidTo,
 		LastSeen: e.LastSeen,
 	}
+	if e.AgentType != nil {
+		e.AgentType.SyncRawDefForJSON()
+	}
+}
+
+// MarshalJSON produces a flat, backward-compatible JSON representation that
+// merges AgentType fields into the CatalogEntry output.
+func (e CatalogEntry) MarshalJSON() ([]byte, error) {
+	e.SyncFromDB()
+
+	// Pull fields from AgentType when available.
+	var (
+		protocol     Protocol
+		endpoint     string
+		version      string
+		specVersion  string
+		provider     *Provider
+		capabilities []Capability
+		rawDef       json.RawMessage
+	)
+	if e.AgentType != nil {
+		protocol = e.AgentType.Protocol
+		endpoint = e.AgentType.Endpoint
+		version = e.AgentType.Version
+		specVersion = e.AgentType.SpecVersion
+		provider = e.AgentType.Provider
+		capabilities = e.AgentType.Capabilities
+		rawDef = e.AgentType.RawDefJSON
+	}
+
+	var capJSON json.RawMessage
+	if len(capabilities) > 0 {
+		if b, err := MarshalCapabilitiesJSON(capabilities); err == nil {
+			capJSON = b
+		}
+	}
+
+	return json.Marshal(struct {
+		ID           string            `json:"id"`
+		AgentTypeID  string            `json:"agent_type_id"`
+		DisplayName  string            `json:"display_name"`
+		Description  string            `json:"description"`
+		Protocol     Protocol          `json:"protocol,omitempty"`
+		Endpoint     string            `json:"endpoint,omitempty"`
+		Version      string            `json:"version,omitempty"`
+		SpecVersion  string            `json:"spec_version,omitempty"`
+		Status       Status            `json:"status"`
+		Source       SourceType        `json:"source"`
+		Provider     *Provider         `json:"provider,omitempty"`
+		Categories   []string          `json:"categories,omitempty"`
+		Capabilities json.RawMessage   `json:"capabilities,omitempty"`
+		Validity     Validity          `json:"validity"`
+		Metadata     map[string]string `json:"metadata,omitempty"`
+		RawDef       json.RawMessage   `json:"raw_definition,omitempty"`
+		CreatedAt    time.Time         `json:"created_at"`
+		UpdatedAt    time.Time         `json:"updated_at"`
+	}{
+		ID:           e.ID,
+		AgentTypeID:  e.AgentTypeID,
+		DisplayName:  e.DisplayName,
+		Description:  e.Description,
+		Protocol:     protocol,
+		Endpoint:     endpoint,
+		Version:      version,
+		SpecVersion:  specVersion,
+		Status:       e.Status,
+		Source:       e.Source,
+		Provider:     provider,
+		Categories:   e.Categories,
+		Capabilities: capJSON,
+		Validity:     e.Validity,
+		Metadata:     e.Metadata,
+		RawDef:       rawDef,
+		CreatedAt:    e.CreatedAt,
+		UpdatedAt:    e.UpdatedAt,
+	})
 }

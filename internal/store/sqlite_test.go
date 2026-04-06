@@ -22,23 +22,28 @@ func newTestStore(t *testing.T) store.Store {
 
 func sampleEntry(id string) *model.CatalogEntry {
 	now := time.Now().UTC().Truncate(time.Second)
+	endpoint := "http://example.com/" + id
+	agentType := &model.AgentType{
+		ID:            "at-" + id,
+		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol:      model.ProtocolA2A,
+		Endpoint:      endpoint,
+		Version:       "1.0.0",
+		RawDefinition: []byte("{}"),
+		CreatedOn:     now,
+	}
 	return &model.CatalogEntry{
 		ID:          id,
+		AgentTypeID: agentType.ID,
+		AgentType:   agentType,
 		DisplayName: "Test Entry " + id,
 		Description: "A test entry",
-		Protocol:    model.ProtocolA2A,
-		Endpoint:    "http://example.com/" + id,
-		Version:     "1.0.0",
 		Status:      model.StatusUnknown,
 		Source:      model.SourcePush,
-		Provider:    model.Provider{Team: "team-a"},
 		Categories:  []string{"cat1", "cat2"},
-		Skills: []model.Skill{
-			{Name: "skill1", Description: "does stuff", InputModes: []string{"text"}, OutputModes: []string{"text"}},
-		},
-		Validity:  model.Validity{LastSeen: now},
-		CreatedAt: now,
-		UpdatedAt: now,
+		Validity:    model.Validity{LastSeen: now},
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 }
 
@@ -47,16 +52,20 @@ func TestCreate_Get(t *testing.T) {
 	ctx := context.Background()
 
 	a := sampleEntry("entry-1")
+	// Add a skill capability
+	a.AgentType.Capabilities = []model.Capability{
+		&model.A2ASkill{Name: "skill1", Description: "does stuff", InputModes: []string{"text"}, OutputModes: []string{"text"}},
+	}
 	require.NoError(t, s.Create(ctx, a))
 
 	got, err := s.Get(ctx, "entry-1")
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, a.DisplayName, got.DisplayName)
-	assert.Equal(t, a.Protocol, got.Protocol)
+	assert.Equal(t, model.ProtocolA2A, got.AgentType.Protocol)
 	assert.Equal(t, a.Categories, got.Categories)
-	assert.Len(t, got.Skills, 1)
-	assert.Equal(t, "skill1", got.Skills[0].Name)
+	assert.Len(t, got.AgentType.Capabilities, 1)
+	assert.Equal(t, "skill1", got.AgentType.Capabilities[0].(*model.A2ASkill).Name)
 }
 
 func TestGet_NotFound(t *testing.T) {
@@ -108,10 +117,10 @@ func TestList(t *testing.T) {
 		sampleEntry("a2"),
 		sampleEntry("a3"),
 	}
-	entries[1].Protocol = model.ProtocolMCP
-	entries[1].Endpoint = "http://example.com/a2"
+	// Override protocol for a2 (endpoint is already unique per sampleEntry)
+	entries[1].AgentType.Protocol = model.ProtocolMCP
+	entries[1].AgentType.AgentKey = model.ComputeAgentKey(model.ProtocolMCP, entries[1].AgentType.Endpoint)
 	entries[2].Status = model.StatusHealthy
-	entries[2].Endpoint = "http://example.com/a3"
 
 	for _, e := range entries {
 		require.NoError(t, s.Create(ctx, e))
@@ -151,7 +160,7 @@ func TestFindByEndpoint(t *testing.T) {
 	a := sampleEntry("entry-ep")
 	require.NoError(t, s.Create(ctx, a))
 
-	got, err := s.FindByEndpoint(ctx, a.Endpoint)
+	got, err := s.FindByEndpoint(ctx, a.AgentType.Endpoint)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, a.ID, got.ID)
@@ -161,21 +170,21 @@ func TestFindByEndpoint(t *testing.T) {
 	assert.Nil(t, notFound)
 }
 
-func TestSearchSkills(t *testing.T) {
+func TestSearchCapabilities(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
 	a := sampleEntry("entry-skills")
-	a.Skills = []model.Skill{
-		{Name: "translate", Description: "language translation"},
+	a.AgentType.Capabilities = []model.Capability{
+		&model.A2ASkill{Name: "translate", Description: "language translation"},
 	}
 	require.NoError(t, s.Create(ctx, a))
 
-	results, err := s.SearchSkills(ctx, "translate")
+	results, err := s.SearchCapabilities(ctx, "translate")
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
 
-	empty, err := s.SearchSkills(ctx, "nonexistent")
+	empty, err := s.SearchCapabilities(ctx, "nonexistent")
 	require.NoError(t, err)
 	assert.Len(t, empty, 0)
 }
@@ -188,11 +197,9 @@ func TestStats(t *testing.T) {
 	a1.Status = model.StatusHealthy
 	a2 := sampleEntry("s2")
 	a2.Status = model.StatusDown
-	a2.Endpoint = "http://example.com/s2"
 	a3 := sampleEntry("s3")
 	a3.Status = model.StatusHealthy
 	a3.Source = model.SourceK8s
-	a3.Endpoint = "http://example.com/s3"
 
 	for _, e := range []*model.CatalogEntry{a1, a2, a3} {
 		require.NoError(t, s.Create(ctx, e))

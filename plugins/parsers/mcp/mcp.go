@@ -12,11 +12,13 @@ import (
 )
 
 type mcpCard struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Version     string      `json:"version"`
-	Remotes     []mcpRemote `json:"remotes,omitempty"`
-	Tools       []mcpTool   `json:"tools,omitempty"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Version     string        `json:"version"`
+	Remotes     []mcpRemote   `json:"remotes,omitempty"`
+	Tools       []mcpTool     `json:"tools,omitempty"`
+	Resources   []mcpResource `json:"resources,omitempty"`
+	Prompts     []mcpPrompt   `json:"prompts,omitempty"`
 }
 
 type mcpRemote struct {
@@ -26,6 +28,19 @@ type mcpRemote struct {
 type mcpTool struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	InputSchema any    `json:"inputSchema,omitempty"`
+}
+
+type mcpResource struct {
+	Name        string `json:"name"`
+	URI         string `json:"uri"`
+	Description string `json:"description,omitempty"`
+}
+
+type mcpPrompt struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Arguments   []any  `json:"arguments,omitempty"`
 }
 
 // Plugin implements the MCP parser plugin.
@@ -63,8 +78,8 @@ func (p *Plugin) Start(ctx context.Context) error { return nil }
 // Stop stops the plugin (no-op for parser).
 func (p *Plugin) Stop(ctx context.Context) error { return nil }
 
-// Parse parses an MCP server card JSON blob into a CatalogEntry.
-func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry, error) {
+// Parse parses an MCP server card JSON blob into an AgentType.
+func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 	var card mcpCard
 	if err := json.Unmarshal(raw, &card); err != nil {
 		return nil, fmt.Errorf("parsing mcp card: %w", err)
@@ -76,29 +91,36 @@ func (p *Plugin) Parse(raw []byte, source model.SourceType) (*model.CatalogEntry
 		return nil, fmt.Errorf("mcp card missing required field: remotes[0].url")
 	}
 
-	endpoint := card.Remotes[0].URL
-
-	skills := make([]model.Skill, 0, len(card.Tools))
+	var caps []model.Capability
 	for _, t := range card.Tools {
-		skills = append(skills, model.Skill{
+		caps = append(caps, &model.MCPTool{
 			Name:        t.Name,
 			Description: t.Description,
+			InputSchema: t.InputSchema,
+		})
+	}
+	for _, r := range card.Resources {
+		caps = append(caps, &model.MCPResource{
+			Name:        r.Name,
+			URI:         r.URI,
+			Description: r.Description,
+		})
+	}
+	for _, pr := range card.Prompts {
+		caps = append(caps, &model.MCPPrompt{
+			Name:        pr.Name,
+			Description: pr.Description,
+			Arguments:   pr.Arguments,
 		})
 	}
 
-	now := time.Now().UTC()
-	return &model.CatalogEntry{
-		DisplayName: card.Name,
-		Description: card.Description,
-		Protocol:    model.ProtocolMCP,
-		Endpoint:    endpoint,
-		Version:     card.Version,
-		Status:      model.StatusUnknown,
-		Source:      source,
-		Skills:      skills,
-		Validity:    model.Validity{LastSeen: now},
-		RawCard:     json.RawMessage(raw),
-		CreatedAt:   now,
-		UpdatedAt:   now,
+	return &model.AgentType{
+		Protocol:      model.ProtocolMCP,
+		Endpoint:      card.Remotes[0].URL,
+		Version:       card.Version,
+		Capabilities:  caps,
+		RawDefinition: raw,
+		AgentKey:      model.ComputeAgentKey(model.ProtocolMCP, card.Remotes[0].URL),
+		CreatedOn:     time.Now().UTC(),
 	}, nil
 }

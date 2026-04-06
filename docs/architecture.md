@@ -37,17 +37,18 @@ graph TD
 
 ## Domain Model: Product Archetype Pattern
 
-AgentLens models each discovered agent or server as a **CatalogEntry**, following the Product Archetype pattern. This pattern treats each protocol as a *ProductType* and each discovered instance as a *CatalogEntry* that wraps it.
+AgentLens models each discovered agent or server using the **Product Archetype** pattern. `AgentType` represents *what the agent IS* (its protocol, endpoint, capabilities, and raw definition), while `CatalogEntry` represents *how it is cataloged* (display name, status, source, validity, metadata). The two are linked 1:1 via a foreign key.
 
 ### Core Types
 
 | Type | Description |
 | ---- | ----------- |
-| `CatalogEntry` | A discovered agent/server in the catalog. Contains identity, display name, description, protocol, endpoint, version, status, source, provider, categories, skills, validity, metadata, and raw card JSON. |
+| `AgentType` | The protocol-level identity of an agent: endpoint, protocol, version, `AgentKey` (SHA256 of protocol+endpoint), capabilities, raw definition, and provider. Maps to the `agent_types` table. |
+| `CatalogEntry` | The catalog wrapper around an `AgentType`: display name, description, status, source, validity, categories, and metadata. Maps to the `catalog_entries` table. |
+| `Capability` | Polymorphic agent feature (replaces `Skill`). Discriminated by `kind`: `a2a.skill`, `a2a.interface`, `a2a.security_scheme`, `a2a.extension`, `a2a.signature`, `mcp.tool`, `mcp.resource`, `mcp.prompt`. Stored in the `capabilities` table. |
+| `Provider` | Organization and team that owns the agent. Reusable across agents; stored in the `providers` table. |
 | `Protocol` | The agent communication protocol: `a2a` (Agent-to-Agent), `mcp` (Model Context Protocol), `a2ui` (Agent-to-UI). |
-| `Provider` | Organization and team that owns the agent. |
 | `Validity` | Time-bounded availability with `from`, `to`, and `last_seen` timestamps. |
-| `Skill` | A capability exposed by a catalog entry, with name, description, tags, and input/output modes. |
 | `Status` | Health status: `healthy`, `degraded`, `down`, `unknown`. |
 | `SourceType` | How the entry was discovered: `k8s`, `config`, `push`, `upstream`. |
 
@@ -59,18 +60,65 @@ AgentLens models each discovered agent or server as a **CatalogEntry**, followin
 | `Role` | A named set of permissions. Three built-in system roles: `admin`, `editor`, `viewer`. |
 | `Setting` | A key-value configuration entry scoped to a category (e.g., `ui.theme`, `app.name`). |
 
-### CatalogEntry Relationships
+### Entity Relationships
 
 ```mermaid
-graph TD
-    CE[CatalogEntry] --> P[Protocol<br/>ProductType]
-    CE --> PR[Provider<br/>organization + team]
-    CE --> V[Validity<br/>time-bounded]
-    CE --> S[Skills&#91;&#93;<br/>ProductFeatureType]
-    CE --> C[Categories&#91;&#93;<br/>search/navigation]
-    CE --> M[Metadata<br/>flexible key-value]
-    CE --> RC[RawCard<br/>original protocol card JSON]
+erDiagram
+    providers ||--o{ agent_types : "owns"
+    agent_types ||--o{ capabilities : "has"
+    agent_types ||--|| catalog_entries : "cataloged as"
+
+    providers {
+        UUID id PK
+        TEXT organization
+        TEXT team
+        TEXT url
+        DATETIME created_on
+    }
+    agent_types {
+        UUID id PK
+        TEXT agent_key "SHA256(protocol+endpoint)"
+        TEXT protocol
+        TEXT endpoint
+        TEXT version
+        TEXT spec_version
+        UUID provider_id FK
+        BLOB raw_definition
+        DATETIME created_on
+    }
+    capabilities {
+        UUID id PK
+        UUID agent_type_id FK
+        TEXT kind
+        TEXT name
+        TEXT description
+        TEXT properties "JSON"
+    }
+    catalog_entries {
+        UUID id PK
+        UUID agent_type_id FK
+        TEXT display_name
+        TEXT description
+        TEXT status
+        TEXT source
+        DATETIME validity_last_seen
+        DATETIME created_at
+        DATETIME updated_at
+    }
 ```
+
+### Capability Kinds
+
+| Kind | Protocol | Properties (JSON) |
+|------|----------|-------------------|
+| `a2a.skill` | A2A | `tags`, `input_modes`, `output_modes` |
+| `a2a.interface` | A2A | `url`, `binding` |
+| `a2a.security_scheme` | A2A | `type`, `method` |
+| `a2a.extension` | A2A | `uri`, `required` |
+| `a2a.signature` | A2A | `algorithm`, `key_id` |
+| `mcp.tool` | MCP | `input_schema` |
+| `mcp.resource` | MCP | `uri` |
+| `mcp.prompt` | MCP | `arguments` |
 
 ---
 
@@ -95,8 +143,25 @@ type Plugin interface {
 
 Specialized interfaces extend `Plugin`:
 
-- **`ParserPlugin`** — parses protocol-specific cards into `CatalogEntry`. Registered per-protocol. Methods: `Protocol()`, `Parse(raw, source)`, `CardPath()`.
+- **`ParserPlugin`** — parses and validates protocol-specific cards into `AgentType`. Registered per-protocol. Methods: `Protocol()`, `Parse(raw)`, `Validate(raw)`, `CardPath()`.
 - **`SourcePlugin`** — discovers catalog entries from a specific source. Method: `Discover(ctx)`.
+
+The `Validate` method returns a `kernel.ValidationResult`:
+
+```go
+type ValidationResult struct {
+    Valid       bool              `json:"valid"`
+    SpecVersion string            `json:"spec_version"`
+    Errors      []ValidationError `json:"errors"`
+    Warnings    []string          `json:"warnings"`
+    Preview     map[string]any    `json:"preview,omitempty"`
+}
+
+type ValidationError struct {
+    Field   string `json:"field"`
+    Message string `json:"message"`
+}
+```
 
 ### Plugin Types
 
@@ -143,6 +208,62 @@ The kernel exposes these services to plugins:
 
 Built with [Chi router](https://github.com/go-chi/chi). All routes under `/api/v1/` are protected by the `RequireAuth` JWT middleware. The `RequirePermission` middleware enforces per-route permission checks.
 
+**Handler wiring:**
+
+`RouterDeps` requires a `kernel.Kernel` instance. The `Handler` struct holds the kernel (via a `parsers` field) and derives `store.Store` from `kernel.Store()`. API handlers that need to parse or validate a protocol card look up the appropriate `ParserPlugin` dynamically via `kernel.Parser(protocol)` — no parser is directly instantiated in handler code. `import_handler.go` performs auto-detection (tries each registered parser), while `register_handler.go` and `validate_handler.go` look up the A2A parser by protocol name.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant H as API Handler
+    participant K as Kernel
+    participant P as ParserPlugin
+    participant ST as Store
+
+    C->>H: POST /api/v1/catalog/register (raw JSON)
+    H->>K: Parser("a2a")
+    K-->>H: ParserPlugin
+    H->>P: Validate(raw)
+    P-->>H: ValidationResult
+    H->>P: Parse(raw)
+    P-->>H: AgentType (with Provider + Capabilities)
+    H->>ST: UpsertProvider
+    ST-->>H: providerID
+    H->>ST: Create(agentType)
+    ST-->>H: ok (cascades to capabilities)
+    H->>ST: Create(catalogEntry wrapping agentType)
+    ST-->>H: ok
+    H-->>C: 201 Created (flat JSON via MarshalJSON)
+```
+
+The `POST /api/v1/catalog/import` endpoint follows a similar pattern but fetches the card from a URL first and auto-detects the protocol:
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant H as import_handler
+    participant CF as CardFetcher
+    participant K as Kernel
+    participant P as ParserPlugin
+    participant ST as Store
+
+    C->>H: POST /api/v1/catalog/import {"url": "..."}
+    H->>CF: Fetch(url)
+    CF-->>H: raw []byte
+    loop For each registered parser
+        H->>K: Parser(protocol)
+        K-->>H: ParserPlugin
+        H->>P: Validate(raw)
+        P-->>H: ValidationResult
+    end
+    Note over H: Use first parser where Valid=true
+    H->>P: Parse(raw)
+    P-->>H: AgentType (with Provider + Capabilities)
+    H->>ST: UpsertProvider / Create(agentType) / Create(catalogEntry)
+    ST-->>H: ok
+    H-->>C: 201 Created (flat JSON via MarshalJSON)
+```
+
 **Auth routes (public):**
 
 | Endpoint | Method | Description |
@@ -164,6 +285,9 @@ Built with [Chi router](https://github.com/go-chi/chi). All routes under `/api/v
 | -------- | ------ | ---------- | ----------- |
 | `/api/v1/catalog` | GET | `catalog:read` | List entries (with filters) |
 | `/api/v1/catalog` | POST | `catalog:write` | Push-register an entry |
+| `/api/v1/catalog/validate` | POST | `catalog:write` | Validate an A2A agent card (dry-run) |
+| `/api/v1/catalog/register` | POST | `catalog:write` | Register an A2A agent from a raw card JSON |
+| `/api/v1/catalog/import` | POST | `catalog:write` | Fetch and import an agent card from a URL |
 | `/api/v1/catalog/{id}` | GET | `catalog:read` | Get entry by ID |
 | `/api/v1/catalog/{id}` | DELETE | `catalog:delete` | Delete entry |
 | `/api/v1/catalog/{id}/card` | GET | `catalog:read` | Get raw protocol card JSON |
@@ -252,7 +376,7 @@ Migrations are versioned and tracked in the `schema_migrations` table. They run 
 
 | Version | Description |
 | ------- | ----------- |
-| 1 | Create `catalog_entries` table |
+| 1 | Create `providers`, `agent_types`, `capabilities`, and `catalog_entries` tables with FK constraints and unique indexes |
 | 2 | Create `roles` and `users` tables |
 | 3 | Seed default roles (admin, editor, viewer) |
 | 4 | Create `settings` table with defaults |
@@ -267,8 +391,10 @@ type Store interface {
     Update(ctx, entry) error
     Delete(ctx, id) error
     FindByEndpoint(ctx, endpoint) (*CatalogEntry, error)
-    SearchSkills(ctx, query) ([]*CatalogEntry, error)
+    SearchCapabilities(ctx, query) ([]*CatalogEntry, error)
     Stats(ctx) (*Stats, error)
+    UpsertProvider(ctx, provider) (string, error)
+    CreateAgentType(ctx, agentType) error
 }
 ```
 
@@ -290,14 +416,14 @@ sequenceDiagram
 
     loop Every poll_interval
         DM->>SP: Discover(ctx)
-        SP-->>DM: []CatalogEntry
+        SP-->>DM: []AgentType
 
-        loop For each entry
+        loop For each agentType
             DM->>ST: FindByEndpoint(endpoint)
             alt Entry exists
-                DM->>ST: Update(entry)
+                DM->>ST: Update(catalogEntry)
             else New entry
-                DM->>ST: Create(entry)
+                DM->>ST: UpsertProvider / CreateAgentType / Create(catalogEntry)
             end
         end
 
@@ -319,7 +445,9 @@ React + Vite + TypeScript frontend using [shadcn/ui](https://ui.shadcn.com/) com
 - **LoginPage** — authentication form
 - **Layout** — sticky navbar with user avatar dropdown, mobile hamburger
 - **CatalogList** — paginated table with protocol/status badges and filters
-- **EntryDetail** — full entry view with skills, metadata, categories, and raw card JSON
+- **EntryDetail** — full entry view with capabilities, metadata, categories, and raw protocol definition
+- **RegisterAgentDialog** — multi-tab registration modal: Paste JSON, Upload File, Import from URL
+- **CardPreview** — renders a validated agent card preview before registration
 - **SettingsPage** — 4-tab management UI (General, Users, Roles, My Account)
 - **ProtectedRoute** — auth guard that redirects unauthenticated users to `/login`
 
@@ -378,6 +506,7 @@ agentlens/
 │   ├── kernel/             # Microkernel core + plugin manager
 │   ├── model/              # Domain model (CatalogEntry, User, Role, Setting)
 │   ├── server/             # HTTP server lifecycle
+│   ├── service/            # Shared services (CardFetcher for URL import)
 │   └── store/              # GORM-backed stores (catalog, user, role, settings)
 ├── plugins/
 │   ├── enterprise/         # License-gated enterprise plugins
@@ -396,7 +525,7 @@ agentlens/
 │   └── src/
 │       ├── contexts/       # AuthContext, ThemeContext
 │       ├── pages/          # LoginPage, SettingsPage
-│       └── components/     # Layout, CatalogList, EntryDetail, etc.
+│       └── components/     # Layout, CatalogList, EntryDetail, RegisterAgentDialog, etc.
 ├── deploy/
 │   └── helm/agentlens/     # Helm chart
 ├── examples/

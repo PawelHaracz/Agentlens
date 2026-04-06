@@ -1,20 +1,16 @@
 package api
 
 import (
+	"errors"
 	"io"
 	"net/http"
-	"strings"
-	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
-	"github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 )
 
 // RegisterAgentCard handles POST /api/v1/catalog/register.
 // It accepts a raw A2A agent card JSON, validates and parses it via the
-// protocol parser (Product Archetype: raw card → CatalogEntry), and persists
+// protocol parser (Product Archetype: raw card → AgentType → CatalogEntry), and persists
 // the resulting CatalogEntry.
 func (h *Handler) RegisterAgentCard(w http.ResponseWriter, r *http.Request) {
 	raw, err := io.ReadAll(r.Body)
@@ -29,36 +25,37 @@ func (h *Handler) RegisterAgentCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Look up the A2A parser via kernel (microkernel pattern).
+	parser, ok := h.parsers.Parser(model.ProtocolA2A)
+	if !ok {
+		ErrorResponse(w, http.StatusInternalServerError, "a2a parser not available")
+		return
+	}
+
 	// Phase 1: Validate the card structure.
-	result := a2a.ValidateCard(raw)
+	result := parser.Validate(raw)
 	if !result.Valid {
 		JSONResponse(w, http.StatusUnprocessableEntity, result)
 		return
 	}
 
-	// Phase 2: Parse the validated card into a CatalogEntry via the parser plugin.
-	parser := a2a.New()
-	entry, err := parser.Parse(raw, model.SourcePush)
+	// Phase 2: Parse the validated card into an AgentType via the parser plugin.
+	agentType, err := parser.Parse(raw)
 	if err != nil {
 		ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// Assign server-managed fields.
-	now := time.Now().UTC()
-	entry.ID = uuid.NewString()
-	entry.Source = model.SourcePush
-	entry.Status = model.StatusUnknown
-	entry.CreatedAt = now
-	entry.UpdatedAt = now
-	entry.Validity.LastSeen = now
-
-	if err := h.store.Create(r.Context(), entry); err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			ErrorResponse(w, http.StatusConflict, "an entry with this endpoint already exists")
-			return
+	entry, err := h.registerAgentType(r.Context(), agentType, raw, model.SourcePush)
+	if err != nil {
+		switch {
+		case errors.Is(err, errDuplicateEndpoint):
+			ErrorResponse(w, http.StatusConflict, err.Error())
+		case errors.Is(err, errUpsertProvider):
+			ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		default:
+			ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		}
-		ErrorResponse(w, http.StatusInternalServerError, "failed to create catalog entry")
 		return
 	}
 

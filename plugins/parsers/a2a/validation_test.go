@@ -124,24 +124,24 @@ func TestParse_V10Card(t *testing.T) {
 	raw := loadFixture(t, "a2a_v10_card.json")
 	p := a2a.New()
 
-	entry, err := p.Parse(raw, model.SourceConfig)
+	agent, err := p.Parse(raw)
 	require.NoError(t, err)
 
-	assert.Equal(t, "Translation Agent v1.0", entry.DisplayName)
-	assert.Equal(t, model.ProtocolA2A, entry.Protocol)
-	assert.Equal(t, "1.0", entry.SpecVersion)
+	assert.Equal(t, model.ProtocolA2A, agent.Protocol)
+	assert.Equal(t, "1.0", agent.SpecVersion)
 	// Endpoint from supportedInterfaces[0].
-	assert.Equal(t, "https://translate.example.com/a2a", entry.Endpoint)
-	assert.Equal(t, model.SourceConfig, entry.Source)
+	assert.Equal(t, "https://translate.example.com/a2a", agent.Endpoint)
+	assert.NotEmpty(t, agent.AgentKey)
 
-	// TypedMeta: 3 extensions + 2 security + 1 interface + 1 signature = 7
-	assert.Len(t, entry.TypedMeta, 7)
+	// Capabilities: 2 skills + 3 extensions + 2 security + 1 interface + 1 signature = 9
+	assert.Len(t, agent.Capabilities, 9)
 
 	// Count by kind.
 	kinds := map[string]int{}
-	for _, m := range entry.TypedMeta {
-		kinds[m.Kind()]++
+	for _, c := range agent.Capabilities {
+		kinds[c.Kind()]++
 	}
+	assert.Equal(t, 2, kinds["a2a.skill"])
 	assert.Equal(t, 3, kinds["a2a.extension"])
 	assert.Equal(t, 2, kinds["a2a.security_scheme"])
 	assert.Equal(t, 1, kinds["a2a.interface"])
@@ -152,29 +152,48 @@ func TestParse_V03Card(t *testing.T) {
 	raw := loadFixture(t, "a2a_v03_card.json")
 	p := a2a.New()
 
-	entry, err := p.Parse(raw, model.SourcePush)
+	agent, err := p.Parse(raw)
 	require.NoError(t, err)
 
-	assert.Equal(t, "0.3", entry.SpecVersion)
-	assert.Equal(t, model.SourcePush, entry.Source)
-	assert.Equal(t, "https://weather.example.com/a2a", entry.Endpoint)
-	assert.Len(t, entry.Skills, 2)
+	assert.Equal(t, "0.3", agent.SpecVersion)
+	assert.Equal(t, "https://weather.example.com/a2a", agent.Endpoint)
+	assert.NotEmpty(t, agent.AgentKey)
 
-	// TypedMeta: 2 ext + 2 security + 2 iface + 1 sig = 7
-	assert.Len(t, entry.TypedMeta, 7)
+	// Count skill capabilities.
+	skillCount := 0
+	for _, c := range agent.Capabilities {
+		if c.Kind() == "a2a.skill" {
+			skillCount++
+		}
+	}
+	assert.Equal(t, 2, skillCount)
+
+	// Non-skill capabilities: 2 ext + 2 security + 2 iface + 1 sig = 7
+	nonSkillCount := len(agent.Capabilities) - skillCount
+	assert.Equal(t, 7, nonSkillCount)
 }
 
 func TestParse_LegacyCard(t *testing.T) {
 	raw := loadFixture(t, "a2a_legacy_card.json")
 	p := a2a.New()
 
-	entry, err := p.Parse(raw, model.SourceK8s)
+	agent, err := p.Parse(raw)
 	require.NoError(t, err)
 
-	assert.Equal(t, "", entry.SpecVersion)
+	assert.Equal(t, "", agent.SpecVersion)
 	// Endpoint from url (no supportedInterfaces).
-	assert.Equal(t, "https://legacy.example.com/agent", entry.Endpoint)
-	assert.Len(t, entry.Skills, 1)
-	// No typed metadata for legacy cards.
-	assert.Empty(t, entry.TypedMeta)
+	assert.Equal(t, "https://legacy.example.com/agent", agent.Endpoint)
+
+	// Count skill capabilities.
+	skillCount := 0
+	for _, c := range agent.Capabilities {
+		if c.Kind() == "a2a.skill" {
+			skillCount++
+		}
+	}
+	assert.Equal(t, 1, skillCount)
+
+	// No meta capabilities for legacy cards (no extensions, security, interfaces, signatures).
+	nonSkillCount := len(agent.Capabilities) - skillCount
+	assert.Equal(t, 0, nonSkillCount)
 }

@@ -14,45 +14,53 @@ import (
 // AllMigrations returns all registered migrations in order.
 func AllMigrations() []Migration {
 	return []Migration{
-		migration001CatalogEntries(),
+		migration001CreateTables(),
 		migration002UsersAndRoles(),
 		migration003DefaultRoles(),
 		migration004Settings(),
-		migration005TypedMetadata(),
 	}
 }
 
-// catalogEntry is the GORM model for migration 001.
-// It mirrors the CatalogEntry schema used by the store.
-type catalogEntry struct {
-	ID          string     `gorm:"primaryKey;type:text;column:id"`
-	DisplayName string     `gorm:"not null;type:text;column:display_name"`
-	Description string     `gorm:"type:text;default:'';column:description"`
-	Protocol    string     `gorm:"not null;type:text;column:protocol;index"`
-	Endpoint    string     `gorm:"uniqueIndex;type:text;column:endpoint"`
-	Version     string     `gorm:"type:text;default:'';column:version"`
-	Status      string     `gorm:"not null;type:text;default:'unknown';column:status;index"`
-	Source      string     `gorm:"not null;type:text;column:source;index"`
-	Provider    string     `gorm:"not null;type:text;default:'{}';column:provider;index"`
-	Categories  string     `gorm:"not null;type:text;default:'[]';column:categories"`
-	Skills      string     `gorm:"not null;type:text;default:'[]';column:skills"`
-	ValidFrom   *time.Time `gorm:"column:validity_from"`
-	ValidTo     *time.Time `gorm:"column:validity_to"`
-	LastSeen    time.Time  `gorm:"not null;column:validity_last_seen"`
-	RawCard     *string    `gorm:"type:text;column:raw_card"`
-	Metadata    string     `gorm:"not null;type:text;default:'{}';column:metadata"`
-	CreatedAt   time.Time  `gorm:"not null;column:created_at"`
-	UpdatedAt   time.Time  `gorm:"not null;column:updated_at"`
-}
-
-func (catalogEntry) TableName() string { return "catalog_entries" }
-
-func migration001CatalogEntries() Migration {
+func migration001CreateTables() Migration {
 	return Migration{
 		Version:     1,
-		Description: "create catalog_entries table",
+		Description: "create providers, agent_types, capabilities, and catalog_entries tables",
 		Up: func(tx *gorm.DB) error {
-			return tx.AutoMigrate(&catalogEntry{})
+			// capabilityRow is a concrete struct for GORM (interface can't be automigrated).
+			type capabilityRow struct {
+				ID          string `gorm:"primaryKey;type:text"`
+				AgentTypeID string `gorm:"not null;type:text;index"`
+				Kind        string `gorm:"not null;type:text;index"`
+				Name        string `gorm:"not null;type:text"`
+				Description string `gorm:"type:text;default:''"`
+				Properties  string `gorm:"type:text;not null;default:'{}'"`
+			}
+
+			// Order matters for FK constraints.
+			if err := tx.AutoMigrate(&model.Provider{}); err != nil {
+				return err
+			}
+			if err := tx.AutoMigrate(&model.AgentType{}); err != nil {
+				return err
+			}
+			if err := tx.Table("capabilities").AutoMigrate(&capabilityRow{}); err != nil {
+				return err
+			}
+			if err := tx.AutoMigrate(&model.CatalogEntry{}); err != nil {
+				return err
+			}
+
+			// Unique constraints.
+			if err := tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_types_key_version ON agent_types(agent_key, version)").Error; err != nil {
+				return err
+			}
+			if err := tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_capabilities_type_kind_name ON capabilities(agent_type_id, kind, name)").Error; err != nil {
+				return err
+			}
+			if err := tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_providers_org_team ON providers(organization, team)").Error; err != nil {
+				return err
+			}
+			return nil
 		},
 	}
 }
@@ -172,19 +180,6 @@ func migration003DefaultRoles() Migration {
 				}
 			}
 			return nil
-		},
-	}
-}
-
-func migration005TypedMetadata() Migration {
-	return Migration{
-		Version:     5,
-		Description: "add spec_version and typed_meta columns to catalog_entries",
-		Up: func(tx *gorm.DB) error {
-			if err := tx.Exec("ALTER TABLE catalog_entries ADD COLUMN spec_version TEXT NOT NULL DEFAULT ''").Error; err != nil {
-				return err
-			}
-			return tx.Exec("ALTER TABLE catalog_entries ADD COLUMN typed_meta TEXT NOT NULL DEFAULT '[]'").Error
 		},
 	}
 }

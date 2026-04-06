@@ -1,0 +1,119 @@
+version: 1
+
+threshold:
+  compliance: 100
+  coverage: 80
+
+dependenciesRules:
+  # Foundation layer — no internal dependencies allowed
+  - package: "**.internal.model"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.auth"
+        - "**.internal.config"
+        - "**.internal.db"
+        - "**.internal.discovery"
+        - "**.internal.health"
+        - "**.internal.kernel"
+        - "**.internal.server"
+        - "**.internal.service"
+        - "**.internal.store"
+        - "**.plugins.**"
+        - "**.cmd.**"
+
+  - package: "**.internal.config"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.auth"
+        - "**.internal.db"
+        - "**.internal.discovery"
+        - "**.internal.health"
+        - "**.internal.kernel"
+        - "**.internal.model"
+        - "**.internal.server"
+        - "**.internal.service"
+        - "**.internal.store"
+        - "**.plugins.**"
+        - "**.cmd.**"
+
+  - package: "**.internal.service"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.auth"
+        - "**.internal.config"
+        - "**.internal.db"
+        - "**.internal.discovery"
+        - "**.internal.health"
+        - "**.internal.kernel"
+        - "**.internal.model"
+        - "**.internal.server"
+        - "**.internal.store"
+        - "**.plugins.**"
+        - "**.cmd.**"
+
+  # Core layer — kernel must not depend on api, auth, server, or plugins
+  - package: "**.internal.kernel"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.auth"
+        - "**.internal.server"
+        - "**.internal.service"
+        - "**.plugins.**"
+        - "**.cmd.**"
+
+  # Infrastructure — store must not depend on upper layers
+  - package: "**.internal.store"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.auth"
+        - "**.internal.kernel"
+        - "**.internal.server"
+        - "**.internal.service"
+        - "**.plugins.**"
+        - "**.cmd.**"
+
+  # Plugins — may only depend on kernel + foundation, never on api/auth/server/cmd
+  - package: "**.plugins.**"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.auth"
+        - "**.internal.server"
+        - "**.internal.service"
+        - "**.cmd.**"
+
+  # API layer — must not import plugins or cmd directly
+  - package: "**.internal.api"
+    shouldNotDependsOn:
+      internal:
+        - "**.cmd.**"
+        - "**.plugins.**"
+
+contentsRules:
+  # config is pure config structs — no interfaces
+  - package: "**.internal.config"
+    shouldNotContainInterfaces: true
+
+functionsRules:
+  - package: "**.internal.**"
+    maxParameters: 5
+    maxReturnValues: 3
+    maxLines: 80
+    maxPublicFunctionPerFile: 10
+
+  - package: "**.plugins.**"
+    maxParameters: 5
+    maxReturnValues: 3
+    maxLines: 80
+    maxPublicFunctionPerFile: 10
+
+namingRules:
+  - package: "**.plugins.**"
+    interfaceImplementationNamingRule:
+      structsThatImplement: "*Plugin"
+      shouldHaveSimpleNameEndingWith: "Plugin"

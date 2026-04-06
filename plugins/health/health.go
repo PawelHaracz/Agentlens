@@ -96,7 +96,10 @@ func (p *Plugin) checkAll(ctx context.Context) {
 }
 
 func (p *Plugin) checkOne(ctx context.Context, entry *model.CatalogEntry) {
-	if entry.Endpoint == "" {
+	if entry.AgentType == nil {
+		return
+	}
+	if entry.AgentType.Endpoint == "" {
 		return
 	}
 
@@ -104,7 +107,7 @@ func (p *Plugin) checkOne(ctx context.Context, entry *model.CatalogEntry) {
 	defer cancel()
 
 	client := &http.Client{Timeout: p.timeout}
-	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, entry.Endpoint, nil)
+	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, entry.AgentType.Endpoint, nil)
 	if err != nil {
 		p.updateStatus(ctx, entry, model.StatusDown)
 		return

@@ -17,7 +17,7 @@ GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
         web-install web-build web-lint web-test \
         e2e-install e2e-test \
         helm-lint docker-build docker-scan \
-        deps tools
+        deps tools arch-test
 
 ## help: Show this help message
 help:
@@ -25,8 +25,8 @@ help:
 	@echo ""
 	@sed -n 's/^## //p' $(MAKEFILE_LIST) | column -t -s ':' | sed 's/^/  /'
 
-## all: Run format, lint, test, and build
-all: format lint test build
+## all: Run format, lint, test, arch-test, and build
+all: format lint test arch-test build
 
 ## check: Run all static analysis — format, vet, lint (Go + frontend)
 check: format vet lint web-lint
@@ -83,9 +83,14 @@ deps:
 	$(GO) mod download
 	$(GO) mod tidy
 
-## tools: Install development tools (golangci-lint)
+## tools: Install development tools (golangci-lint, arch-go)
 tools:
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+	go install -v github.com/arch-go/arch-go/v2@latest
+
+## arch-test: Run architecture rules validation (arch-go)
+arch-test:
+	$(shell go env GOPATH)/bin/arch-go
 
 # ---------------------------------------------------------------------------
 # Frontend targets

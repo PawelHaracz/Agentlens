@@ -105,11 +105,35 @@ func ValidateCard(raw []byte) ValidationResult {
 	}
 
 	specVersion := detectSpecVersion(&card)
+	errs := validateRequiredFields(&card)
+	errs = append(errs, validateSkills(&card)...)
+	warnings := collectWarnings(&card, specVersion)
 
+	if len(errs) > 0 {
+		return ValidationResult{
+			Valid:       false,
+			SpecVersion: specVersion,
+			Errors:      errs,
+			Warnings:    warnings,
+		}
+	}
+
+	preview := buildPreview(&card, specVersion)
+
+	return ValidationResult{
+		Valid:       true,
+		SpecVersion: specVersion,
+		Errors:      []ValidationError{},
+		Warnings:    warnings,
+		Preview:     preview,
+	}
+}
+
+// validateRequiredFields checks that all mandatory top-level card fields are
+// present and returns any field-level errors found.
+func validateRequiredFields(card *fullCard) []ValidationError {
 	var errs []ValidationError
-	var warnings []string
 
-	// Required fields
 	if card.Name == "" {
 		errs = append(errs, ValidationError{Field: "name", Message: "name is required"})
 	}
@@ -119,13 +143,28 @@ func ValidateCard(raw []byte) ValidationResult {
 	if card.Version == "" {
 		errs = append(errs, ValidationError{Field: "version", Message: "version is required"})
 	}
-
-	// Must have at least one endpoint: supportedInterfaces OR url
 	if len(card.SupportedInterfaces) == 0 && card.URL == "" {
 		errs = append(errs, ValidationError{Field: "url", Message: "url or supportedInterfaces is required"})
 	}
 
-	// Validate skills
+	// Validate extensions (inside capabilities).
+	if card.Capabilities != nil {
+		for i, ext := range card.Capabilities.Extensions {
+			prefix := "capabilities.extensions[" + itoa(i) + "]"
+			if ext.URI == "" {
+				errs = append(errs, ValidationError{Field: prefix + ".uri", Message: "extension uri is required"})
+			}
+		}
+	}
+
+	return errs
+}
+
+// validateSkills checks each skill entry for required fields and returns any
+// field-level errors found.
+func validateSkills(card *fullCard) []ValidationError {
+	var errs []ValidationError
+
 	for i, s := range card.Skills {
 		prefix := "skills[" + itoa(i) + "]"
 		if s.ID == "" {
@@ -139,35 +178,27 @@ func ValidateCard(raw []byte) ValidationResult {
 		}
 	}
 
-	// Validate extensions (inside capabilities)
-	if card.Capabilities != nil {
-		for i, ext := range card.Capabilities.Extensions {
-			prefix := "capabilities.extensions[" + itoa(i) + "]"
-			if ext.URI == "" {
-				errs = append(errs, ValidationError{Field: prefix + ".uri", Message: "extension uri is required"})
-			}
-		}
-	}
+	return errs
+}
 
-	// Deprecation warnings
+// collectWarnings returns deprecation and informational warnings for the card.
+func collectWarnings(card *fullCard, specVersion string) []string {
+	var warnings []string
+
 	if card.StateTransitionHistory != nil && (specVersion == "1.0" || specVersion == "") {
 		warnings = append(warnings, "stateTransitionHistory is deprecated in v1.0")
 	}
 
-	if len(errs) > 0 {
-		return ValidationResult{
-			Valid:       false,
-			SpecVersion: specVersion,
-			Errors:      errs,
-			Warnings:    warnings,
-		}
-	}
+	return warnings
+}
 
-	// Build preview
+// buildPreview constructs a ValidationPreview summary from a valid card.
+func buildPreview(card *fullCard, specVersion string) *ValidationPreview {
 	schemeNames := make([]string, 0, len(card.SecuritySchemes))
 	for _, s := range card.SecuritySchemes {
 		schemeNames = append(schemeNames, s.Type)
 	}
+
 	ifaceBindings := make([]string, 0, len(card.SupportedInterfaces))
 	for _, iface := range card.SupportedInterfaces {
 		if iface.Binding != "" {
@@ -176,12 +207,13 @@ func ValidateCard(raw []byte) ValidationResult {
 			ifaceBindings = append(ifaceBindings, iface.URL)
 		}
 	}
+
 	extCount := 0
 	if card.Capabilities != nil {
 		extCount = len(card.Capabilities.Extensions)
 	}
 
-	preview := &ValidationPreview{
+	return &ValidationPreview{
 		DisplayName:     card.Name,
 		Description:     card.Description,
 		Protocol:        "a2a",
@@ -190,14 +222,6 @@ func ValidateCard(raw []byte) ValidationResult {
 		ExtensionsCount: extCount,
 		SecuritySchemes: schemeNames,
 		Interfaces:      ifaceBindings,
-	}
-
-	return ValidationResult{
-		Valid:       true,
-		SpecVersion: specVersion,
-		Errors:      []ValidationError{},
-		Warnings:    warnings,
-		Preview:     preview,
 	}
 }
 

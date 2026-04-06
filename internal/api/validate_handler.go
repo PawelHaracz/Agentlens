@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
+	"github.com/PawelHaracz/agentlens/internal/model"
 )
 
 // ValidateAgentCard handles POST /api/v1/catalog/validate.
@@ -16,8 +16,13 @@ func (h *Handler) ValidateAgentCard(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() { _ = r.Body.Close() }()
 
-	result := a2a.ValidateCard(raw)
+	parser, ok := h.parsers.Parser(model.ProtocolA2A)
+	if !ok {
+		ErrorResponse(w, http.StatusInternalServerError, "a2a parser not available")
+		return
+	}
 
+	result := parser.Validate(raw)
 	if result.Valid {
 		JSONResponse(w, http.StatusOK, result)
 	} else {

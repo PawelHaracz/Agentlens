@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,41 +63,41 @@ func (p *Plugin) Start(ctx context.Context) error { return nil }
 func (p *Plugin) Stop(ctx context.Context) error { return nil }
 
 // Discover lists Kubernetes Services and fetches agent cards for annotated ones.
-func (p *Plugin) Discover(ctx context.Context) ([]*model.CatalogEntry, error) {
-	var entries []*model.CatalogEntry
+func (p *Plugin) Discover(ctx context.Context) ([]*model.AgentType, error) {
+	var agentTypes []*model.AgentType
 	for _, ns := range p.namespaces {
 		svcs, err := p.client.CoreV1().Services(ns).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("listing services in namespace %s: %w", ns, err)
 		}
 		for _, svc := range svcs.Items {
-			entry, err := p.processService(ctx, svc)
+			at, err := p.processService(ctx, svc)
 			if err != nil {
 				p.log.Warn("failed to process service", "name", svc.Name, "namespace", svc.Namespace, "err", err)
 				continue
 			}
-			if entry != nil {
-				entries = append(entries, entry)
+			if at != nil {
+				agentTypes = append(agentTypes, at)
 			}
 		}
 	}
-	return entries, nil
+	return agentTypes, nil
 }
 
-func (p *Plugin) processService(ctx context.Context, svc corev1.Service) (*model.CatalogEntry, error) {
+func (p *Plugin) processService(ctx context.Context, svc corev1.Service) (*model.AgentType, error) {
 	ann := svc.Annotations
 	if ann == nil {
 		return nil, nil
 	}
-	agentType, ok := ann[annotationAgentType]
+	agentTypeAnnotation, ok := ann[annotationAgentType]
 	if !ok {
 		return nil, nil
 	}
 
-	protocol := model.Protocol(agentType)
+	protocol := model.Protocol(agentTypeAnnotation)
 	parser, ok := p.kern.Parser(protocol)
 	if !ok {
-		return nil, fmt.Errorf("no parser for protocol %s", agentType)
+		return nil, fmt.Errorf("no parser for protocol %s", agentTypeAnnotation)
 	}
 
 	cardPath := ann[annotationCardPath]
@@ -115,24 +114,21 @@ func (p *Plugin) processService(ctx context.Context, svc corev1.Service) (*model
 		return nil, fmt.Errorf("fetching card from %s: %w", url, err)
 	}
 
-	entry, err := parser.Parse(raw, model.SourceK8s)
+	at, err := parser.Parse(raw)
 	if err != nil {
 		return nil, fmt.Errorf("parsing card: %w", err)
 	}
 
-	if entry.Metadata == nil {
-		entry.Metadata = make(map[string]string)
-	}
-	entry.Metadata["kubernetes.namespace"] = svc.Namespace
+	at.Endpoint = url
 
+	if at.Provider == nil {
+		at.Provider = &model.Provider{}
+	}
 	if team := ann[annotationTeam]; team != "" {
-		entry.Provider.Team = team
-	}
-	if tags := ann[annotationTags]; tags != "" {
-		entry.Categories = strings.Split(tags, ",")
+		at.Provider.Team = team
 	}
 
-	return entry, nil
+	return at, nil
 }
 
 func (p *Plugin) firstPort(svc corev1.Service) int32 {

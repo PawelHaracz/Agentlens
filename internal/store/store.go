@@ -9,14 +9,19 @@ import (
 
 // Store defines the interface for catalog entry persistence.
 type Store interface {
+	// Provider
+	UpsertProvider(ctx context.Context, provider *model.Provider) (*model.Provider, error)
+
+	// CatalogEntry (always loaded with AgentType, Provider, Capabilities)
 	Create(ctx context.Context, entry *model.CatalogEntry) error
 	Get(ctx context.Context, id string) (*model.CatalogEntry, error)
 	Update(ctx context.Context, entry *model.CatalogEntry) error
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, filter ListFilter) ([]model.CatalogEntry, error)
 	FindByEndpoint(ctx context.Context, endpoint string) (*model.CatalogEntry, error)
-	SearchSkills(ctx context.Context, query string) ([]model.CatalogEntry, error)
+	SearchCapabilities(ctx context.Context, query string) ([]model.CatalogEntry, error)
 	Stats(ctx context.Context) (*StoreStats, error)
+
 	Close() error
 }
 

@@ -43,11 +43,13 @@ List all catalog entries with optional filtering.
 [
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
+    "agent_type_id": "66b8c3a2-1111-4b92-b000-000000000001",
     "display_name": "my-agent",
     "description": "Handles customer support",
     "protocol": "a2a",
     "endpoint": "http://my-agent.default.svc:8080",
     "version": "1.0.0",
+    "spec_version": "1.0",
     "status": "healthy",
     "source": "k8s",
     "provider": {
@@ -55,12 +57,18 @@ List all catalog entries with optional filtering.
       "team": "platform"
     },
     "categories": ["nlp", "support"],
-    "skills": [
+    "capabilities": [
       {
+        "kind": "a2a.skill",
         "name": "answer_question",
         "description": "Answers user questions",
-        "input_modes": ["text"],
-        "output_modes": ["text"]
+        "properties": {"input_modes": ["text"], "output_modes": ["text"]}
+      },
+      {
+        "kind": "a2a.security_scheme",
+        "name": "bearer",
+        "description": "",
+        "properties": {"type": "bearer", "method": "header"}
       }
     ],
     "validity": {
@@ -69,6 +77,7 @@ List all catalog entries with optional filtering.
     "metadata": {
       "kubernetes.namespace": "default"
     },
+    "raw_definition": {"name": "my-agent", "...": "..."},
     "created_at": "2024-01-01T00:00:00Z",
     "updated_at": "2024-01-15T10:30:00Z"
   }
@@ -79,11 +88,11 @@ List all catalog entries with optional filtering.
 
 ### `POST /api/v1/catalog/validate`
 
-Validate an A2A agent card without registering it (dry-run only — does not persist anything). This endpoint auto-detects the A2A specification version (v0.3 vs v1.0) and returns structured validation results with a preview of the agent details.
+Validate an agent card without registering it (dry-run only — does not persist anything). This endpoint auto-detects the A2A specification version (v0.3 vs v1.0) and returns structured validation results (`kernel.ValidationResult`) with a preview of the agent details.
 
 **Authentication:** Required. Requires `catalog:write` permission.
 
-**Request Body:** Raw A2A agent card JSON (any valid JSON is accepted).
+**Request Body:** Raw agent card JSON (any valid JSON is accepted).
 
 **Request Headers:**
 ```
@@ -102,13 +111,20 @@ Content-Type: application/json
     "description": "A sample agent demonstrating A2A v1.0 features",
     "protocol": "a2a",
     "spec_version": "1.0",
-    "skills_count": 0,
+    "skills_count": 2,
     "extensions_count": 1,
     "security_schemes": ["oauth2"],
-    "interfaces": ["https://api.example.com/v1"]
+    "interfaces": ["jsonrpc"]
   }
 }
 ```
+
+The `preview` field is a generic key-value map (`map[string]any`) whose contents vary by protocol:
+
+| Protocol | Preview fields |
+|----------|---------------|
+| `a2a` | `display_name`, `description`, `protocol`, `spec_version`, `skills_count`, `extensions_count`, `security_schemes`, `interfaces` |
+| `mcp` | `display_name`, `description`, `protocol`, `tools_count` |
 
 **Response 422 (Invalid card):**
 ```json
@@ -148,7 +164,7 @@ The endpoint automatically detects the A2A spec version based on the card struct
 
 ### `POST /api/v1/catalog/register`
 
-Register an A2A agent from a raw agent card JSON. The endpoint validates the card, parses it via the A2A parser (Product Archetype: raw card to CatalogEntry), and persists the entry.
+Register an A2A agent from a raw agent card JSON. The endpoint validates the card, parses it via the A2A parser (raw card to CatalogEntry), and persists the entry.
 
 **Authentication:** Required. Requires `catalog:write` permission.
 
@@ -163,35 +179,46 @@ Content-Type: application/json
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
+  "agent_type_id": "66b8c3a2-1111-4b92-b000-000000000001",
   "display_name": "Example Chat Agent",
   "description": "A sample agent demonstrating A2A v1.0 features",
   "protocol": "a2a",
   "endpoint": "https://api.example.com/v1",
   "version": "1.0.0",
+  "spec_version": "1.0",
   "status": "unknown",
   "source": "push",
-  "spec_version": "1.0",
-  "typed_meta": [
+  "capabilities": [
+    {
+      "kind": "a2a.skill",
+      "name": "chat",
+      "description": "Chat with the agent",
+      "properties": {"input_modes": ["text"], "output_modes": ["text"]}
+    },
     {
       "kind": "a2a.extension",
-      "uri": "urn:example:ext",
-      "required": true
+      "name": "urn:example:ext",
+      "description": "",
+      "properties": {"uri": "urn:example:ext", "required": true}
     },
     {
       "kind": "a2a.security_scheme",
-      "type": "oauth2"
+      "name": "oauth2",
+      "description": "",
+      "properties": {"type": "oauth2"}
     },
     {
       "kind": "a2a.interface",
-      "url": "https://api.example.com/v1",
-      "binding": "jsonrpc"
+      "name": "https://api.example.com/v1",
+      "description": "",
+      "properties": {"url": "https://api.example.com/v1", "binding": "jsonrpc"}
     }
   ],
   "provider": {
     "organization": "Example Corp"
   },
   "categories": [],
-  "skills": [],
+  "raw_definition": {"name": "Example Chat Agent", "...": "..."},
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T10:30:00Z"
 }
@@ -209,7 +236,7 @@ Content-Type: application/json
 
 **Response 422 (Unprocessable Entity):**
 
-Returns the same `ValidationResult` structure as `/catalog/validate` when the card fails validation:
+Returns the same `kernel.ValidationResult` structure as `/catalog/validate` when the card fails validation:
 
 ```json
 {
@@ -228,6 +255,101 @@ Returns the same `ValidationResult` structure as `/catalog/validate` when the ca
 
 ---
 
+### `POST /api/v1/catalog/import`
+
+Import an agent card by fetching it from a URL. The server fetches the card from the provided URL, auto-detects (or uses the specified) protocol, parses the card, and registers the entry.
+
+**Authentication:** Required. Requires `catalog:write` permission.
+
+**Request Body:**
+```json
+{
+  "url": "https://my-agent.example.com/.well-known/agent.json",
+  "protocol": "a2a"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | ✅ | HTTPS or HTTP URL to fetch the agent card from |
+| `protocol` | string | ❌ | Force a protocol: `a2a` or `mcp`. Omit for auto-detection. (`a2ui` is not supported for import — use `POST /api/v1/catalog` for direct creation) |
+
+**Auto-detection rules (when `protocol` is omitted):**
+
+| Signal | Detected protocol |
+|--------|-------------------|
+| URL contains `/.well-known/agent` | `a2a` |
+| URL contains `/mcp` | `mcp` |
+| Card JSON has `"skills"` array | `a2a` |
+| Card JSON has `"tools"` array | `mcp` |
+| None of the above | Error — must specify `protocol` |
+
+**Safety restrictions:**
+
+- URL scheme must be `http` or `https` (no `file://`, `ftp://`, etc.)
+- URLs that resolve to private/internal networks are rejected: `127.x`, `10.x`, `172.16–31.x`, `192.168.x`, `169.254.x`, `::1`, `fc00::/7`, `fe80::/10`, and `localhost`
+- Response body is capped at 1 MB
+- HTTP timeout: 10 seconds
+- Maximum 3 redirects followed
+
+**Response 201 (Created):** Same as `POST /api/v1/catalog/register` — the created `CatalogEntry` object.
+
+**Response 400 (Bad Request):**
+```json
+{"error": "url scheme must be http or https"}
+```
+```json
+{"error": "url resolves to a private or reserved address"}
+```
+```json
+{"error": "could not detect protocol; specify 'protocol' in the request body"}
+```
+
+**Response 409 (Conflict):**
+```json
+{"error": "an entry with this endpoint already exists"}
+```
+
+**Response 422 (Unprocessable Entity):**
+
+Returned when the fetched JSON is not a valid agent card:
+```json
+{
+  "valid": false,
+  "spec_version": "",
+  "errors": [
+    {"field": "name", "message": "name is required"}
+  ],
+  "warnings": [],
+  "preview": null
+}
+```
+
+**Response 502 (Bad Gateway):**
+```json
+{"error": "could not fetch card from url: fetching url: connection refused"}
+```
+
+Returned when the remote URL is unreachable, returns a non-2xx HTTP status, or returns non-JSON content.
+
+**Example — import an A2A agent card:**
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://my-agent.example.com/.well-known/agent.json"}'
+```
+
+**Example — import an MCP server card with explicit protocol:**
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/import \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://my-mcp-server.example.com/card", "protocol": "mcp"}'
+```
+
+---
+
 ### `POST /api/v1/catalog`
 
 Register a catalog entry via push.
@@ -239,22 +361,19 @@ Register a catalog entry via push.
   "description": "Does amazing things",
   "protocol": "a2a",
   "endpoint": "http://my-agent.internal:8080",
-  "version": "1.2.3",
-  "provider": {
-    "organization": "Acme Corp",
-    "team": "platform"
-  },
-  "categories": ["nlp"],
-  "skills": [
-    {
-      "name": "chat",
-      "description": "Chat with the agent",
-      "input_modes": ["text"],
-      "output_modes": ["text"]
-    }
-  ]
+  "version": "1.2.3"
 }
 ```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `display_name` | string | ✅ | Human-readable name for the entry |
+| `description` | string | ❌ | Optional description |
+| `protocol` | string | ✅ | One of: `a2a`, `mcp`, `a2ui` |
+| `endpoint` | string | ✅ | Agent endpoint URL (must be unique) |
+| `version` | string | ❌ | Agent version string |
+
+This endpoint creates a minimal catalog entry (no capabilities). To register with a full agent card including capabilities, use `POST /api/v1/catalog/register` instead.
 
 **Response 201:** Returns the created catalog entry with generated `id`.
 
@@ -310,7 +429,7 @@ Search catalog entries by skill name.
 |---|---|---|
 | `q` | string | Skill name search query |
 
-**Response 200:** Array of CatalogEntry objects that have matching skills.
+**Response 200:** Array of CatalogEntry objects whose capabilities match the query.
 
 ---
 
@@ -355,8 +474,10 @@ All errors return JSON with an `error` field:
 | `403` | Forbidden — insufficient permissions |
 | `404` | Resource not found |
 | `409` | Conflict — resource already exists |
+| `422` | Unprocessable Entity — validation failed |
 | `423` | Locked — account locked due to failed login attempts |
 | `500` | Internal server error |
+| `502` | Bad Gateway — remote URL unreachable or returned non-JSON (import only) |
 
 ---
 
