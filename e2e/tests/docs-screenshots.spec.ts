@@ -31,12 +31,20 @@ const DOCS_IMAGES = path.resolve(__dirname, '../../docs/images');
 const VIEWPORT = { width: 1440, height: 900 };
 
 /** Timeout for error/validation elements to become visible. */
-const ERROR_DISPLAY_TIMEOUT = 10_000;
+const ERROR_DISPLAY_TIMEOUT_MS = 10_000;
 
 /** Timeout for async operations (validation, import). */
-const ASYNC_OP_TIMEOUT = 15_000;
+const ASYNC_OP_TIMEOUT_MS = 15_000;
+
+/** The public URL used in the "filled" import screenshot. */
+const DEMO_IMPORT_URL = 'https://demo-translator.example.com/.well-known/agent.json';
 
 // ────────── seed data ──────────
+/** Suppress and log errors from best-effort cleanup operations. */
+function ignoreCleanupError(label: string) {
+  return (err: unknown) => console.warn(`[docs-screenshots] cleanup warning (${label}):`, err);
+}
+
 // A2A entry with skills
 const A2A_CARD = JSON.stringify({
   name: 'Demo Translator Agent',
@@ -115,15 +123,15 @@ test.describe('Documentation Screenshots', () => {
   test.afterAll(async ({ request }) => {
     // Clean up seeded entries
     if (a2aEntryId) {
-      await deleteCatalogEntry(request, token, a2aEntryId).catch(() => {});
+      await deleteCatalogEntry(request, token, a2aEntryId).catch(ignoreCleanupError('delete a2a entry'));
     }
     if (mcpEntryId) {
-      await deleteCatalogEntry(request, token, mcpEntryId).catch(() => {});
+      await deleteCatalogEntry(request, token, mcpEntryId).catch(ignoreCleanupError('delete mcp entry'));
     }
     if (viewerUserId) {
       await request.delete(`${BASE}/api/v1/users/${viewerUserId}`, {
         headers: authHeader(token),
-      }).catch(() => {});
+      }).catch(ignoreCleanupError('delete viewer user'));
     }
   });
 
@@ -145,7 +153,7 @@ test.describe('Documentation Screenshots', () => {
     await page.getByLabel('Password').fill('wrongpassword!!');
     await page.getByRole('button', { name: 'Sign in' }).click();
     // Wait for error message
-    await page.waitForSelector('.text-destructive', { timeout: ERROR_DISPLAY_TIMEOUT });
+    await page.waitForSelector('.text-destructive', { timeout: ERROR_DISPLAY_TIMEOUT_MS });
     await page.screenshot({ path: `${DOCS_IMAGES}/login-error.png`, fullPage: false });
   });
 
@@ -270,7 +278,7 @@ test.describe('Documentation Screenshots', () => {
     await page.getByRole('button', { name: 'Register Agent' }).click();
     await page.getByRole('tab', { name: /import from url/i }).click();
     // Fill in a public URL
-    await page.getByPlaceholder(/https:\/\/example\.com/i).fill('https://demo-translator.example.com/.well-known/agent.json');
+    await page.getByPlaceholder(/https:\/\/example\.com/i).fill(DEMO_IMPORT_URL);
     await page.screenshot({ path: `${DOCS_IMAGES}/register-import-url-filled.png`, fullPage: false });
   });
 
@@ -284,7 +292,7 @@ test.describe('Documentation Screenshots', () => {
     await page.getByPlaceholder(/https:\/\/example\.com/i).fill('http://127.0.0.1:9999/agent.json');
     await page.getByRole('button', { name: /fetch.*import/i }).click();
     // Wait for error to appear
-    await page.waitForSelector('.text-destructive', { timeout: ASYNC_OP_TIMEOUT });
+    await page.waitForSelector('.text-destructive', { timeout: ASYNC_OP_TIMEOUT_MS });
     await page.screenshot({ path: `${DOCS_IMAGES}/register-import-url-error-private.png`, fullPage: false });
   });
 
@@ -314,11 +322,11 @@ test.describe('Documentation Screenshots', () => {
     await loginViaUI(page);
     await page.getByRole('button', { name: 'Register Agent' }).click();
     // Paste invalid JSON to trigger syntax error, then submit
-    const invalidCard = JSON.stringify({ foo: 'bar' }, null, 2);
-    await page.locator('textarea').fill(invalidCard);
+    const schemaInvalidCard = JSON.stringify({ foo: 'bar' }, null, 2);
+    await page.locator('textarea').fill(schemaInvalidCard);
     await page.getByRole('button', { name: 'Validate' }).click();
     // Wait for validation result
-    await page.waitForSelector('.text-destructive, .border-destructive', { timeout: ASYNC_OP_TIMEOUT });
+    await page.waitForSelector('.text-destructive, .border-destructive', { timeout: ASYNC_OP_TIMEOUT_MS });
     await page.screenshot({ path: `${DOCS_IMAGES}/register-paste-json-validation.png`, fullPage: false });
   });
 
@@ -331,7 +339,7 @@ test.describe('Documentation Screenshots', () => {
     await page.locator('textarea').fill(A2A_CARD);
     await page.getByRole('button', { name: 'Validate' }).click();
     // Wait for preview step
-    await page.waitForSelector('button:has-text("Register Agent"):not([aria-label])', { timeout: ASYNC_OP_TIMEOUT });
+    await page.waitForSelector('button:has-text("Register Agent"):not([aria-label])', { timeout: ASYNC_OP_TIMEOUT_MS });
     await page.screenshot({ path: `${DOCS_IMAGES}/register-paste-json-preview.png`, fullPage: false });
   });
 
@@ -411,7 +419,7 @@ test.describe('Documentation Screenshots', () => {
       await request.put(`${BASE}/api/v1/users/${viewerUserId}`, {
         headers: authHeader(token),
         data: { is_active: true },
-      }).catch(() => {});
+      }).catch(ignoreCleanupError('unlock viewer user'));
     }
   });
 
@@ -456,7 +464,7 @@ test.describe('Documentation Screenshots', () => {
     // Clean up custom role
     await request.delete(`${BASE}/api/v1/roles/${customRole.id}`, {
       headers: authHeader(token),
-    }).catch(() => {});
+    }).catch(ignoreCleanupError('delete custom role'));
   });
 
   // ───────── User dropdown ─────────
