@@ -1,0 +1,1201 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://pawelharacz.github.io/Agentlens/superpowers/plans/2026-04-03-arch-go-rules/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>arch-go Architectural Rules Implementation Plan - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#arch-go-architectural-rules-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              arch-go Architectural Rules Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#task-1-install-arch-go-and-create-arch-goyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1: Install arch-go and create arch-go.yml
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-2-fix-any-arch-go-violations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2: Fix any arch-go violations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-3-add-make-arch-test-target-and-update-make-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3: Add make arch-test target and update make all
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-4-update-claudemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4: Update CLAUDE.md
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="arch-go-architectural-rules-implementation-plan">arch-go Architectural Rules Implementation Plan<a class="headerlink" href="#arch-go-architectural-rules-implementation-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Enforce microkernel layer boundaries and code quality via arch-go, integrated into the Makefile pipeline.</p>
+<p><strong>Architecture:</strong> Standalone <code>arch-go.yml</code> at repo root defines dependency, contents, functions, and naming rules. A new <code>make arch-test</code> target runs the CLI. Added to <code>make all</code>.</p>
+<p><strong>Tech Stack:</strong> arch-go v2 CLI, YAML config, Make</p>
+<hr />
+<h3 id="task-1-install-arch-go-and-create-arch-goyml">Task 1: Install arch-go and create <code>arch-go.yml</code><a class="headerlink" href="#task-1-install-arch-go-and-create-arch-goyml" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>arch-go.yml</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Install arch-go</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>go<span class="w"> </span>install<span class="w"> </span>-v<span class="w"> </span>github.com/arch-go/arch-go/v2@latest
+</code></pre></div></p>
+<p>Verify:
+<div class="highlight"><pre><span></span><code>arch-go<span class="w"> </span>--version
+</code></pre></div></p>
+<ul>
+<li>[ ] <strong>Step 2: Create <code>arch-go.yml</code> with all rules</strong></li>
+</ul>
+<p>Create file <code>arch-go.yml</code> at repo root with this exact content:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+
+<span class="nt">threshold</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">compliance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">coverage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+
+<span class="nt">dependenciesRules</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Foundation layer — no internal dependencies allowed</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.model&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotDependsOn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">internal</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.api&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.auth&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.config&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.db&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.discovery&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.health&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.kernel&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.server&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.service&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.store&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.cmd.**&quot;</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.config&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotDependsOn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">internal</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.api&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.auth&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.db&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.discovery&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.health&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.kernel&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.model&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.server&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.service&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.store&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.cmd.**&quot;</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.service&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotDependsOn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">internal</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.api&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.auth&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.config&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.db&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.discovery&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.health&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.kernel&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.model&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.server&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.store&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.cmd.**&quot;</span>
+
+<span class="w">  </span><span class="c1"># Core layer — kernel must not depend on api, auth, server, or plugins</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.kernel&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotDependsOn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">internal</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.api&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.auth&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.server&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.service&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.cmd.**&quot;</span>
+
+<span class="w">  </span><span class="c1"># Infrastructure — store must not depend on upper layers</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.store&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotDependsOn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">internal</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.api&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.auth&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.kernel&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.server&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.service&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.cmd.**&quot;</span>
+
+<span class="w">  </span><span class="c1"># Plugins — may only depend on kernel + foundation, never on api/auth/server/cmd</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotDependsOn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">internal</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.api&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.auth&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.server&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.internal.service&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.cmd.**&quot;</span>
+
+<span class="w">  </span><span class="c1"># API layer — must not import plugins or cmd directly</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.api&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotDependsOn</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">internal</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.cmd.**&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+
+<span class="nt">contentsRules</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># model is pure domain types — no interfaces</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.model&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotContainInterfaces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="w">  </span><span class="c1"># config is pure config structs — no interfaces</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.config&quot;</span>
+<span class="w">    </span><span class="nt">shouldNotContainInterfaces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="nt">functionsRules</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.internal.**&quot;</span>
+<span class="w">    </span><span class="nt">maxParameters</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">    </span><span class="nt">maxReturnValues</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">maxLines</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">maxPublicFunctionPerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">    </span><span class="nt">maxParameters</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">    </span><span class="nt">maxReturnValues</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">maxLines</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">maxPublicFunctionPerFile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+
+<span class="nt">namingRules</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;**.plugins.**&quot;</span>
+<span class="w">    </span><span class="nt">interfaceImplementationNamingRule</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">structsThatImplement</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">internal</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;*Plugin&quot;</span>
+<span class="w">      </span><span class="nt">shouldHaveSimpleNameEndingWith</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Plugin&quot;</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 3: Run arch-go to verify rules pass</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>arch-go
+</code></pre></div></p>
+<p>Expected: all rules pass (compliance 100%). If any functions rules fail (e.g. a function exceeds 80 lines), note the violations — they will be fixed in Task 2.</p>
+<ul>
+<li>[ ] <strong>Step 4: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>arch-go.yml
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add arch-go.yml with architectural rules&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="task-2-fix-any-arch-go-violations">Task 2: Fix any arch-go violations<a class="headerlink" href="#task-2-fix-any-arch-go-violations" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: whichever files arch-go reports as violations</p>
+<ul>
+<li>[ ] <strong>Step 1: Run arch-go and capture violations</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>arch-go<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>/tmp/arch-go-report.txt
+</code></pre></div></p>
+<p>Read the report. The most likely violations are functions exceeding <code>maxLines: 80</code>. Common candidates:
+- <code>plugins/parsers/a2a/a2a.go</code> — <code>Parse</code> method (~100 lines)
+- <code>plugins/parsers/a2a/validation.go</code> — <code>ValidateCard</code> function (~100 lines)
+- <code>internal/api/handlers.go</code> — <code>ListCatalog</code> with many query params</p>
+<ul>
+<li>[ ] <strong>Step 2: Refactor each violation</strong></li>
+</ul>
+<p>For each function exceeding 80 lines, extract helper functions. For example, if <code>Parse</code> in <code>a2a.go</code> is too long, extract <code>buildSkills(card)</code>, <code>buildProvider(card)</code>, <code>buildTypedMeta(card)</code> helpers.</p>
+<p>Rules for refactoring:
+- Extract private helper functions within the same file
+- Do NOT change public API signatures
+- Run <code>make test</code> after each refactor to ensure nothing breaks</p>
+<ul>
+<li>[ ] <strong>Step 3: Re-run arch-go to verify all rules pass</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>arch-go
+</code></pre></div></p>
+<p>Expected: <code>compliance: 100%</code>, all rules PASS.</p>
+<ul>
+<li>[ ] <strong>Step 4: Run full test suite</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span><span class="nb">test</span>
+</code></pre></div></p>
+<p>Expected: all tests pass.</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>-A
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;refactor: fix arch-go violations (function length)&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="task-3-add-make-arch-test-target-and-update-make-all">Task 3: Add <code>make arch-test</code> target and update <code>make all</code><a class="headerlink" href="#task-3-add-make-arch-test-target-and-update-make-all" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>Makefile</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Add <code>arch-test</code> target to Makefile</strong></li>
+</ul>
+<p>Add after the <code>tools</code> target (around line 88), before the Frontend targets section:</p>
+<div class="highlight"><pre><span></span><code><span class="c">## arch-test: Run architecture rules validation (arch-go)</span>
+<span class="nf">arch-test</span><span class="o">:</span>
+<span class="w">    </span>arch-go
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Add <code>arch-test</code> to <code>.PHONY</code></strong></li>
+</ul>
+<p>In the <code>.PHONY</code> declaration (line 15), add <code>arch-test</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nf">.PHONY</span><span class="o">:</span><span class="w"> </span><span class="n">all</span> <span class="n">check</span> <span class="n">build</span> <span class="n">test</span> <span class="n">lint</span> <span class="n">format</span> <span class="n">run</span> <span class="n">clean</span> <span class="n">help</span> \
+        <span class="n">test</span>-<span class="n">coverage</span> <span class="n">test</span>-<span class="n">race</span> <span class="n">vet</span> \
+        <span class="n">web</span>-<span class="n">install</span> <span class="n">web</span>-<span class="n">build</span> <span class="n">web</span>-<span class="n">lint</span> <span class="n">web</span>-<span class="n">test</span> \
+        <span class="n">e</span>2<span class="n">e</span>-<span class="n">install</span> <span class="n">e</span>2<span class="n">e</span>-<span class="n">test</span> \
+        <span class="n">helm</span>-<span class="n">lint</span> <span class="n">docker</span>-<span class="n">build</span> <span class="n">docker</span>-<span class="n">scan</span> \
+        <span class="n">deps</span> <span class="n">tools</span> <span class="n">arch</span>-<span class="n">test</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 3: Update <code>make all</code> to include <code>arch-test</code></strong></li>
+</ul>
+<p>Change line 29 from:
+<div class="highlight"><pre><span></span><code><span class="nf">all</span><span class="o">:</span><span class="w"> </span><span class="n">format</span> <span class="n">lint</span> <span class="n">test</span> <span class="n">build</span>
+</code></pre></div>
+to:
+<div class="highlight"><pre><span></span><code><span class="nf">all</span><span class="o">:</span><span class="w"> </span><span class="n">format</span> <span class="n">lint</span> <span class="n">test</span> <span class="n">arch</span>-<span class="n">test</span> <span class="n">build</span>
+</code></pre></div></p>
+<ul>
+<li>[ ] <strong>Step 4: Verify <code>make arch-test</code> works</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>arch-test
+</code></pre></div></p>
+<p>Expected: arch-go runs and passes.</p>
+<ul>
+<li>[ ] <strong>Step 5: Verify <code>make all</code> works</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>all
+</code></pre></div></p>
+<p>Expected: format → lint → test → arch-test → build all succeed.</p>
+<ul>
+<li>[ ] <strong>Step 6: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>Makefile
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;build: add make arch-test target and include in make all&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="task-4-update-claudemd">Task 4: Update CLAUDE.md<a class="headerlink" href="#task-4-update-claudemd" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>CLAUDE.md</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Update Commands section</strong></li>
+</ul>
+<p>In CLAUDE.md, find the Commands code block (around line 16-30). Add <code>make arch-test</code> and update <code>make all</code> description:</p>
+<p>Change:
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>all<span class="w">            </span><span class="c1"># format → lint → test → build</span>
+</code></pre></div>
+to:
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>arch-test<span class="w">      </span><span class="c1"># Run arch-go architecture rules validation</span>
+make<span class="w"> </span>all<span class="w">            </span><span class="c1"># format → lint → test → arch-test → build</span>
+</code></pre></div></p>
+<ul>
+<li>[ ] <strong>Step 2: Add Architecture Rules section</strong></li>
+</ul>
+<p>After the "Go Conventions" section, add a new section:</p>
+<p><div class="highlight"><pre><span></span><code><span class="gu">## Architecture Rules (arch-go)</span>
+
+The project uses [<span class="nt">arch-go</span>](<span class="na">https://github.com/arch-go/arch-go</span>) to enforce microkernel layer boundaries at CI time. Rules are defined in <span class="sb">`arch-go.yml`</span> at the repo root.
+
+<span class="gu">### Layer boundaries enforced</span>
+
+<span class="k">-</span><span class="w"> </span><span class="gs">**Foundation**</span> (<span class="sb">`model`</span>, <span class="sb">`config`</span>, <span class="sb">`service`</span>) — no internal dependencies
+<span class="k">-</span><span class="w"> </span><span class="gs">**Infrastructure**</span> (<span class="sb">`store`</span>, <span class="sb">`auth`</span>) — depends on foundation only
+<span class="k">-</span><span class="w"> </span><span class="gs">**Core**</span> (<span class="sb">`kernel`</span>, <span class="sb">`discovery`</span>) — depends on foundation + infrastructure
+<span class="k">-</span><span class="w"> </span><span class="gs">**API**</span> (<span class="sb">`api`</span>) — depends on core + infrastructure, never plugins or cmd
+<span class="k">-</span><span class="w"> </span><span class="gs">**Plugins**</span> (<span class="sb">`plugins/**`</span>) — depend on kernel + foundation, never api/auth/server/cmd
+<span class="k">-</span><span class="w"> </span><span class="gs">**Entrypoint**</span> (<span class="sb">`cmd/**`</span>) — composition root, may import anything
+
+<span class="gu">### Code quality rules</span>
+
+<span class="k">-</span><span class="w"> </span>Max 5 function parameters, 3 return values, 80 lines per function, 10 public functions per file
+<span class="k">-</span><span class="w"> </span><span class="sb">`model`</span> and <span class="sb">`config`</span> packages must not contain interfaces
+<span class="k">-</span><span class="w"> </span>Plugin structs implementing <span class="sb">`Plugin`</span> interface must end with <span class="sb">`Plugin`</span>
+
+<span class="gu">### Naming rules expansion policy</span>
+
+When a new naming convention emerges in the codebase (e.g. all stores end with <span class="sb">`Store`</span>, all handlers end with <span class="sb">`Handler`</span>), add a corresponding <span class="sb">`namingRules`</span> entry to <span class="sb">`arch-go.yml`</span> to enforce it. Keep naming rules minimal and only add them when a pattern is established across at least 3 instances.
+
+<span class="gu">### Running</span>
+
+```bash
+make arch-test      # Run architecture validation
+arch-go --html      # Generate HTML report in .arch-go/
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>- [ ] **Step 3: Add `.arch-go/` to `.gitignore`**
+
+Check if `.gitignore` exists and add `.arch-go/` (arch-go HTML/JSON report output directory):
+
+```bash
+echo &quot;&quot; &gt;&gt; .gitignore
+echo &quot;# arch-go reports&quot; &gt;&gt; .gitignore
+echo &quot;.arch-go/&quot; &gt;&gt; .gitignore
+</code></pre></div></p>
+<ul>
+<li>[ ] <strong>Step 4: Verify everything still works</strong></li>
+</ul>
+<p>Run:
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>all
+</code></pre></div></p>
+<p>Expected: all steps pass.</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>CLAUDE.md<span class="w"> </span>.gitignore
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;docs: document arch-go rules and naming expansion policy in CLAUDE.md&quot;</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2869 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://pawelharacz.github.io/Agentlens/end-user-guide/">
+      
+      
+        <link rel="prev" href="../user-guide/">
+      
+      
+        <link rel="next" href="../developer-guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>End User Guide - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#agentlens-end-user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              End User Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signing-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signing In
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signing In">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-run-admin-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-Run Admin Bootstrap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#password-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#account-lockout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account Lockout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation Bar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard-catalog-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard / Catalog Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dashboard / Catalog Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stats-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stats Bar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalog-table-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catalog Table Columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching-and-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching and Filtering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viewing-agent-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing Agent Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing Agent Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#header-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Header Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Definition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-an-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting an Entry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registering-an-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registering an Agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Registering an Agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paste-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paste JSON
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upload-a-json-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upload a JSON File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-from-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import from URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status Indicators
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protocol-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Users
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#my-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        My Account
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editing-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locking-and-unlocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locking and Unlocking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting a User
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Role Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editing-a-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-a-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting a Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-the-rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using the REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using the REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FAQ / Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FAQ / Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#my-account-is-locked-how-do-i-regain-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        My account is locked — how do I regain access?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-forgot-the-admin-password-i-am-locked-out-of-the-only-admin-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I forgot the admin password / I am locked out of the only admin account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-imported-from-a-url-and-got-url-points-to-a-private-or-reserved-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I imported from a URL and got "url points to a private or reserved address"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-catalog-shows-an-agent-as-unknown-why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The catalog shows an agent as "Unknown" — why?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-agent-shows-down-how-do-i-investigate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An agent shows "Down" — how do I investigate?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-push-an-agent-card-without-using-the-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I push an agent card without using the UI?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-discovered-agents-have-a-k8s-source-what-controls-that" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes-discovered agents have a k8s source — what controls that?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signing-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signing In
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signing In">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-run-admin-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-Run Admin Bootstrap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#password-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#account-lockout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account Lockout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation Bar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard-catalog-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard / Catalog Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dashboard / Catalog Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stats-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stats Bar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalog-table-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catalog Table Columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching-and-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching and Filtering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viewing-agent-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing Agent Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing Agent Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#header-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Header Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw-definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Definition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-an-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting an Entry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registering-an-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registering an Agent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Registering an Agent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paste-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paste JSON
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upload-a-json-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upload a JSON File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-from-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import from URL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status Indicators
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protocol-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Settings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Users
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#my-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        My Account
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editing-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locking-and-unlocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locking and Unlocking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting a User
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Role Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editing-a-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-a-role" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting a Role
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-the-rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using the REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using the REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FAQ / Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FAQ / Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#my-account-is-locked-how-do-i-regain-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        My account is locked — how do I regain access?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-forgot-the-admin-password-i-am-locked-out-of-the-only-admin-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I forgot the admin password / I am locked out of the only admin account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-imported-from-a-url-and-got-url-points-to-a-private-or-reserved-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I imported from a URL and got "url points to a private or reserved address"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-catalog-shows-an-agent-as-unknown-why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The catalog shows an agent as "Unknown" — why?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-agent-shows-down-how-do-i-investigate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An agent shows "Down" — how do I investigate?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-push-an-agent-card-without-using-the-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I push an agent card without using the UI?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-discovered-agents-have-a-k8s-source-what-controls-that" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes-discovered agents have a k8s source — what controls that?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="agentlens-end-user-guide">AgentLens End-User Guide<a class="headerlink" href="#agentlens-end-user-guide" title="Permanent link">&para;</a></h1>
+<p>AgentLens is a self-hosted service-discovery platform for AI agents. It discovers, tracks, and
+presents a real-time catalog of <strong>A2A</strong>, <strong>MCP</strong>, and <strong>A2UI</strong> agents running across your
+infrastructure — Kubernetes workloads, static configuration, push registrations, and remote
+upstream sources.</p>
+<p>This guide covers everyday use of the AgentLens web UI. For REST API reference see
+<a href="../api/">docs/api.md</a>. For deployment and configuration see <a href="../user-guide/">docs/user-guide.md</a>.
+For architectural details see <a href="../architecture/">docs/architecture.md</a>.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#signing-in">Signing In</a></li>
+<li><a href="#first-run-admin-bootstrap">First-Run Admin Bootstrap</a></li>
+<li><a href="#password-requirements">Password Requirements</a></li>
+<li><a href="#account-lockout">Account Lockout</a></li>
+<li><a href="#navigation-bar">Navigation Bar</a></li>
+<li><a href="#dashboard--catalog-overview">Dashboard / Catalog Overview</a></li>
+<li><a href="#stats-bar">Stats Bar</a></li>
+<li><a href="#catalog-table-columns">Catalog Table Columns</a></li>
+<li><a href="#searching-and-filtering">Searching and Filtering</a></li>
+<li><a href="#viewing-agent-details">Viewing Agent Details</a></li>
+<li><a href="#header-fields">Header Fields</a></li>
+<li><a href="#capabilities">Capabilities</a></li>
+<li><a href="#raw-definition">Raw Definition</a></li>
+<li><a href="#deleting-an-entry">Deleting an Entry</a></li>
+<li><a href="#registering-an-agent">Registering an Agent</a></li>
+<li><a href="#paste-json">Paste JSON</a></li>
+<li><a href="#upload-a-json-file">Upload a JSON File</a></li>
+<li><a href="#import-from-url">Import from URL</a></li>
+<li><a href="#status-indicators">Status Indicators</a></li>
+<li><a href="#protocol-types">Protocol Types</a></li>
+<li><a href="#settings">Settings</a></li>
+<li><a href="#general">General</a></li>
+<li><a href="#users">Users</a></li>
+<li><a href="#roles">Roles</a></li>
+<li><a href="#my-account">My Account</a></li>
+<li><a href="#user-management">User Management</a></li>
+<li><a href="#role-management">Role Management</a></li>
+<li><a href="#using-the-rest-api">Using the REST API</a></li>
+<li><a href="#faq--troubleshooting">FAQ / Troubleshooting</a></li>
+</ul>
+<hr />
+<h2 id="signing-in">Signing In<a class="headerlink" href="#signing-in" title="Permanent link">&para;</a></h2>
+<p><img alt="Empty login form" src="../images/login-page.png" />
+<em>Login page — enter your username and password, then click </em><em>Sign in</em><em>.</em></p>
+<p>Navigate to the AgentLens URL in your browser (default: <code>http://localhost:8080</code>). You are
+redirected automatically to <code>/login</code> when not authenticated.</p>
+<p>Enter your <strong>Username</strong> and <strong>Password</strong>, then click <strong>Sign in</strong>. On success you land on the
+catalog dashboard.</p>
+<p><img alt="Login form showing an error message" src="../images/login-error.png" />
+<em>The login form shows an error if credentials are wrong or the account is locked.</em></p>
+<h3 id="first-run-admin-bootstrap">First-Run Admin Bootstrap<a class="headerlink" href="#first-run-admin-bootstrap" title="Permanent link">&para;</a></h3>
+<p>On the very first startup AgentLens generates a random admin account and prints the credentials to
+the server's standard output:</p>
+<div class="highlight"><pre><span></span><code>============================================
+  INITIAL ADMIN CREDENTIALS
+  Username: admin
+  Password: &lt;generated&gt;
+  CHANGE THIS PASSWORD IMMEDIATELY
+============================================
+</code></pre></div>
+<p>Use these credentials to sign in for the first time. Change the password immediately via
+<strong>Settings → My Account → Change password</strong> (see <a href="#my-account">My Account</a>).</p>
+<p>If the server is running as a container or behind a process manager, check the container/service
+logs to retrieve the bootstrap password.</p>
+<h3 id="password-requirements">Password Requirements<a class="headerlink" href="#password-requirements" title="Permanent link">&para;</a></h3>
+<p>All passwords — including the one you set after first login — must satisfy:</p>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Minimum length</td>
+<td>10 characters</td>
+</tr>
+<tr>
+<td>Uppercase</td>
+<td>At least one uppercase letter (A–Z)</td>
+</tr>
+<tr>
+<td>Lowercase</td>
+<td>At least one lowercase letter (a–z)</td>
+</tr>
+<tr>
+<td>Digit</td>
+<td>At least one digit (0–9)</td>
+</tr>
+<tr>
+<td>Special character</td>
+<td>At least one punctuation or symbol character</td>
+</tr>
+</tbody>
+</table>
+<p>Example of a valid password: <code>Catalog$2025</code>.</p>
+<h3 id="account-lockout">Account Lockout<a class="headerlink" href="#account-lockout" title="Permanent link">&para;</a></h3>
+<p>After <strong>5 consecutive failed login attempts</strong> an account is automatically locked for <strong>15 minutes</strong>.
+During this window every login attempt returns an error regardless of the password. An administrator
+can unlock the account early via <strong>Settings → Users</strong> (see <a href="#users">Users</a>).</p>
+<hr />
+<h2 id="navigation-bar">Navigation Bar<a class="headerlink" href="#navigation-bar" title="Permanent link">&para;</a></h2>
+<p><img alt="User dropdown menu open in the top navigation bar" src="../images/user-dropdown.png" />
+<em>Top navigation bar with the user dropdown open.</em></p>
+<p>After signing in the top navigation bar is always visible:</p>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>AgentLens</strong> (logo)</td>
+<td>Click to return to the catalog from anywhere</td>
+</tr>
+<tr>
+<td><strong>Catalog</strong></td>
+<td>Direct link to the agent catalog</td>
+</tr>
+<tr>
+<td><strong>Settings</strong></td>
+<td>Link to the settings page; only visible to users with <code>settings:read</code></td>
+</tr>
+<tr>
+<td><strong>User avatar</strong></td>
+<td>Initials badge — click to open the user dropdown</td>
+</tr>
+</tbody>
+</table>
+<p>The user dropdown contains:</p>
+<ul>
+<li><strong>My Account</strong> — jump to the My Account settings tab</li>
+<li><strong>Settings</strong> — jump to the Settings page (if you have <code>settings:read</code>)</li>
+<li><strong>Logout</strong> — invalidate the session and return to the login page</li>
+</ul>
+<p>On narrow screens the nav links collapse behind a hamburger menu.</p>
+<hr />
+<h2 id="dashboard-catalog-overview">Dashboard / Catalog Overview<a class="headerlink" href="#dashboard-catalog-overview" title="Permanent link">&para;</a></h2>
+<p><img alt="Catalog dashboard populated with seeded entries" src="../images/dashboard-overview.png" />
+<em>The catalog dashboard showing the stats bar, filter controls, and the agent table.</em></p>
+<p>The catalog is the default view at <code>/</code>. It shows every registered agent entry visible to your
+account.</p>
+<h3 id="stats-bar">Stats Bar<a class="headerlink" href="#stats-bar" title="Permanent link">&para;</a></h3>
+<p>Four summary cards appear at the top:</p>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Total</strong></td>
+<td>Total number of catalog entries</td>
+</tr>
+<tr>
+<td><strong>Healthy</strong></td>
+<td>Entries whose last health check succeeded</td>
+</tr>
+<tr>
+<td><strong>Degraded</strong></td>
+<td>Entries returning partial or error responses</td>
+</tr>
+<tr>
+<td><strong>Down</strong></td>
+<td>Entries that are unreachable</td>
+</tr>
+</tbody>
+</table>
+<p>Counts update automatically as health checks run in the background.</p>
+<h3 id="catalog-table-columns">Catalog Table Columns<a class="headerlink" href="#catalog-table-columns" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Name</strong></td>
+<td>Display name (clickable link to the detail page); optional description underneath</td>
+</tr>
+<tr>
+<td><strong>Protocol</strong></td>
+<td>Protocol badge: <code>A2A</code>, <code>MCP</code>, or <code>A2UI</code></td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Health status badge: <code>Healthy</code>, <code>Degraded</code>, <code>Down</code>, or <code>Unknown</code></td>
+</tr>
+<tr>
+<td><strong>Source</strong></td>
+<td>Discovery source: <code>k8s</code>, <code>config</code>, <code>push</code>, or <code>upstream</code> (hidden on small screens)</td>
+</tr>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td>Base URL of the agent (hidden on medium and smaller screens)</td>
+</tr>
+</tbody>
+</table>
+<p>Rows are ordered by the API default (registration time, most recent first).</p>
+<p><strong>Empty state:</strong> when no entries match the current filters a "No catalog entries found." message is
+displayed.</p>
+<hr />
+<h2 id="searching-and-filtering">Searching and Filtering<a class="headerlink" href="#searching-and-filtering" title="Permanent link">&para;</a></h2>
+<p><img alt="Catalog with an active text search for &quot;Translator&quot;" src="../images/catalog-search.png" />
+<em>Free-text search narrows the catalog to matching entries.</em></p>
+<p>Three controls sit above the catalog table:</p>
+<ol>
+<li>
+<p><strong>Search box</strong> — type any keyword to filter entries by display name or description. Results
+   update as you type.</p>
+</li>
+<li>
+<p><strong>Protocol filter</strong> — dropdown with: <em>All protocols</em>, <code>A2A</code>, <code>MCP</code>, <code>A2UI</code>.</p>
+</li>
+<li>
+<p><strong>Status filter</strong> — dropdown with: <em>All statuses</em>, <code>Healthy</code>, <code>Degraded</code>, <code>Down</code>, <code>Unknown</code>.</p>
+</li>
+</ol>
+<p><img alt="Catalog filtered to show only A2A protocol entries" src="../images/catalog-filter-protocol.png" />
+<em>Protocol filter set to A2A — only A2A entries are shown.</em></p>
+<p><img alt="Catalog filtered by status" src="../images/catalog-filter-status.png" />
+<em>Status filter applied — only entries with the selected health status are shown.</em></p>
+<p>Filters are combined (AND logic). Selecting <code>A2A</code> and <code>Healthy</code> shows only A2A entries that are
+currently healthy.</p>
+<hr />
+<h2 id="viewing-agent-details">Viewing Agent Details<a class="headerlink" href="#viewing-agent-details" title="Permanent link">&para;</a></h2>
+<p>Click any agent name in the catalog table to open its detail page at <code>/catalog/:id</code>.</p>
+<p><img alt="Detail page for an A2A agent" src="../images/entry-detail-a2a.png" />
+<em>Agent detail page — header badges, metadata fields, and capabilities.</em></p>
+<h3 id="header-fields">Header Fields<a class="headerlink" href="#header-fields" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Badge / Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Protocol badge</td>
+<td>Protocol of the agent (<code>A2A</code>, <code>MCP</code>, <code>A2UI</code>)</td>
+</tr>
+<tr>
+<td>Status badge</td>
+<td>Current health status</td>
+</tr>
+<tr>
+<td>Source badge</td>
+<td>Discovery source</td>
+</tr>
+<tr>
+<td>Version badge</td>
+<td>Agent version declared in its card</td>
+</tr>
+<tr>
+<td>Spec version badge</td>
+<td>Agent Card spec version (e.g. <code>1.0</code>)</td>
+</tr>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td>Full URL of the agent</td>
+</tr>
+<tr>
+<td><strong>Namespace</strong></td>
+<td>Kubernetes namespace (shown when source is <code>k8s</code>)</td>
+</tr>
+<tr>
+<td><strong>Team</strong> / <strong>Organization</strong></td>
+<td>Provider fields from the agent card</td>
+</tr>
+<tr>
+<td><strong>Last Seen</strong></td>
+<td>Timestamp of the most recent health check</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>Timestamp when the entry was first registered</td>
+</tr>
+</tbody>
+</table>
+<p>Below the header, <strong>categories</strong> are shown as outline badges when present.</p>
+<h3 id="capabilities">Capabilities<a class="headerlink" href="#capabilities" title="Permanent link">&para;</a></h3>
+<p><img alt="Detail page showing the capabilities section for an A2A agent" src="../images/entry-detail-a2a-skills.png" />
+<em>Capabilities section — each capability shows its name, kind badge, and description.</em></p>
+<p>Each capability has a <code>kind</code> tag:</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Protocol</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a2a.skill</code></td>
+<td>A2A</td>
+<td>A discrete task the agent can perform</td>
+</tr>
+<tr>
+<td><code>a2a.interface</code></td>
+<td>A2A</td>
+<td>Supported interface (e.g. <code>push</code>, <code>request</code>)</td>
+</tr>
+<tr>
+<td><code>a2a.security_scheme</code></td>
+<td>A2A</td>
+<td>Authentication scheme advertised by the card</td>
+</tr>
+<tr>
+<td><code>a2a.extension</code></td>
+<td>A2A</td>
+<td>Custom extension declared in the card</td>
+</tr>
+<tr>
+<td><code>a2a.signature</code></td>
+<td>A2A</td>
+<td>Cryptographic signature entry</td>
+</tr>
+<tr>
+<td><code>mcp.tool</code></td>
+<td>MCP</td>
+<td>A callable tool exposed by the MCP server</td>
+</tr>
+<tr>
+<td><code>mcp.resource</code></td>
+<td>MCP</td>
+<td>A resource URI provided by the MCP server</td>
+</tr>
+<tr>
+<td><code>mcp.prompt</code></td>
+<td>MCP</td>
+<td>A prompt template offered by the MCP server</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Detail page for an MCP server entry" src="../images/entry-detail-mcp.png" />
+<em>MCP server detail — tools, resources, and prompts appear as capabilities.</em></p>
+<h3 id="raw-definition">Raw Definition<a class="headerlink" href="#raw-definition" title="Permanent link">&para;</a></h3>
+<p><img alt="Raw JSON definition view" src="../images/entry-detail-raw-json.png" />
+<em>Raw Definition section — the original agent card JSON as received during registration.</em></p>
+<p>At the bottom of the detail page the <strong>Raw Definition</strong> section shows the full JSON document as
+stored in the catalog. Use the scroll area to navigate large cards.</p>
+<h3 id="deleting-an-entry">Deleting an Entry<a class="headerlink" href="#deleting-an-entry" title="Permanent link">&para;</a></h3>
+<p>Click the red <strong>Delete</strong> button in the top-right of the detail card to remove the entry. A browser
+confirm dialog asks for confirmation. After deletion you are returned to the catalog.</p>
+<blockquote>
+<p><strong>Note:</strong> Deletion requires <code>catalog:delete</code> permission.</p>
+</blockquote>
+<hr />
+<h2 id="registering-an-agent">Registering an Agent<a class="headerlink" href="#registering-an-agent" title="Permanent link">&para;</a></h2>
+<p><img alt="The Register Agent button on the catalog page" src="../images/register-menu.png" />
+<em>The </em><em>Register Agent</em><em> button — located in the top-right of the filter bar.</em></p>
+<p>Click <strong>Register Agent</strong> to open the registration dialog. Three methods are available as tabs.</p>
+<h3 id="paste-json">Paste JSON<a class="headerlink" href="#paste-json" title="Permanent link">&para;</a></h3>
+<p><img alt="Register dialog with the Paste JSON tab empty" src="../images/register-paste-json-empty.png" />
+<em>Paste JSON tab — type or paste an A2A or MCP agent card JSON document.</em></p>
+<ol>
+<li>Select the <strong>Paste JSON</strong> tab (default).</li>
+<li>Paste a valid A2A or MCP agent card JSON into the text area.</li>
+<li>Click <strong>Validate</strong> — the server parses the card and returns errors or warnings.</li>
+</ol>
+<p><img alt="Paste JSON tab showing schema validation errors" src="../images/register-paste-json-validation.png" />
+<em>Validation errors are listed with the failing field and message.</em></p>
+<ol>
+<li>If validation passes, the dialog advances to the <strong>Preview</strong> step.</li>
+</ol>
+<p><img alt="Paste JSON tab showing the parsed card preview" src="../images/register-paste-json-preview.png" />
+<em>Preview step — review the parsed card before saving.</em></p>
+<ol>
+<li>Review the preview and click <strong>Register Agent</strong> to save. The dialog closes and the catalog
+   refreshes with the new entry.</li>
+</ol>
+<p><img alt="Catalog updated after a successful agent registration" src="../images/register-success-toast.png" />
+<em>After registration the dialog closes and the catalog table shows the new entry.</em></p>
+<h3 id="upload-a-json-file">Upload a JSON File<a class="headerlink" href="#upload-a-json-file" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Select the <strong>Upload File</strong> tab.</li>
+<li>Click <strong>Browse</strong> or drag a <code>.json</code> file onto the drop zone.</li>
+<li>The file contents are loaded into the validator — the flow then continues exactly as in
+   <a href="#paste-json">Paste JSON</a> above (Validate → Preview → Register).</li>
+</ol>
+<h3 id="import-from-url">Import from URL<a class="headerlink" href="#import-from-url" title="Permanent link">&para;</a></h3>
+<p><img alt="Import from URL tab — empty state" src="../images/register-import-url-empty.png" />
+<em>Import from URL tab — enter a publicly reachable agent card URL.</em></p>
+<ol>
+<li>Select the <strong>Import from URL</strong> tab.</li>
+<li>Enter the full URL of the agent card (e.g. <code>https://example.com/.well-known/agent.json</code>).</li>
+<li>Optionally choose the <strong>Protocol</strong>: <code>Auto-detect</code> (default), <code>A2A</code>, or <code>MCP</code>.</li>
+<li>Click <strong>Fetch &amp; Import</strong>.</li>
+</ol>
+<p><img alt="Import from URL tab with a URL filled in" src="../images/register-import-url-filled.png" />
+<em>Import from URL — URL entered, ready to fetch.</em></p>
+<p>AgentLens fetches the document server-side, parses it, and registers it directly. You land back on
+the catalog showing the new entry.</p>
+<p><img alt="Import from URL showing the SSRF guard error for a private address" src="../images/register-import-url-error-private.png" />
+<em>Private/loopback URLs are rejected by the SSRF guard — the error message is shown inline.</em></p>
+<blockquote>
+<p><strong>SSRF protection:</strong> URLs that resolve to private RFC-1918 ranges (<code>10.x</code>, <code>172.16.x</code>,
+<code>192.168.x</code>), loopback (<code>127.0.0.0/8</code>, <code>::1</code>), or link-local addresses are rejected by the
+server before any outbound connection is made. <code>localhost</code> is similarly blocked. This is a
+security measure and cannot be bypassed from the UI.</p>
+</blockquote>
+<p><img alt="Catalog showing entries after a successful registration" src="../images/register-import-url-success.png" />
+<em>After a successful registration the catalog refreshes to show the new entry.</em></p>
+<hr />
+<h2 id="status-indicators">Status Indicators<a class="headerlink" href="#status-indicators" title="Permanent link">&para;</a></h2>
+<p>Each catalog entry carries a <strong>status</strong> that reflects its last health check result:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Badge colour</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>healthy</code></td>
+<td>Green</td>
+<td>The agent responded successfully to the last health probe</td>
+</tr>
+<tr>
+<td><code>degraded</code></td>
+<td>Yellow/amber</td>
+<td>The agent responded but returned an error or partial data</td>
+</tr>
+<tr>
+<td><code>down</code></td>
+<td>Red</td>
+<td>The agent did not respond (connection refused, timeout, etc.)</td>
+</tr>
+<tr>
+<td><code>unknown</code></td>
+<td>Grey</td>
+<td>No health check has run yet, or health checking is disabled</td>
+</tr>
+</tbody>
+</table>
+<p>Health checks run on a configurable interval (<code>health.check_interval</code>, default 60 s). Newly
+registered agents start with status <code>unknown</code> until the first check completes.</p>
+<hr />
+<h2 id="protocol-types">Protocol Types<a class="headerlink" href="#protocol-types" title="Permanent link">&para;</a></h2>
+<p>AgentLens recognises three agent protocols:</p>
+<table>
+<thead>
+<tr>
+<th>Protocol</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A2A</strong></td>
+<td><code>a2a</code></td>
+<td>Agent-to-Agent protocol. Agents expose a card at <code>/.well-known/agent.json</code> describing their skills and supported interfaces.</td>
+</tr>
+<tr>
+<td><strong>MCP</strong></td>
+<td><code>mcp</code></td>
+<td>Model Context Protocol. Servers expose tools, resources, and prompt templates to AI assistants.</td>
+</tr>
+<tr>
+<td><strong>A2UI</strong></td>
+<td><code>a2ui</code></td>
+<td>Agent-to-UI protocol variant for browser-facing agents.</td>
+</tr>
+</tbody>
+</table>
+<p>The protocol is auto-detected when importing from a URL (unless you override it in the Protocol
+dropdown).</p>
+<hr />
+<h2 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h2>
+<p>Navigate to <strong>Settings</strong> via the top navigation bar or the user dropdown. The settings page is
+organised into tabs.</p>
+<blockquote>
+<p><strong>Permission required:</strong> <code>settings:read</code> to view the Settings page.</p>
+</blockquote>
+<h3 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h3>
+<p><img alt="Settings → General tab" src="../images/settings-general.png" />
+<em>General settings — appearance and display options.</em></p>
+<p>The <strong>General</strong> tab has two sections:</p>
+<p><strong>Appearance</strong></p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Theme</td>
+<td><code>Light</code>, <code>Dark</code>, or <code>System</code> (follows OS preference)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Display</strong></p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Key</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Items per page</td>
+<td><code>ui.items_per_page</code></td>
+<td>25</td>
+</tr>
+<tr>
+<td>Poll interval (seconds)</td>
+<td><code>ui.poll_interval</code></td>
+<td>30</td>
+</tr>
+<tr>
+<td>Health check interval (seconds)</td>
+<td><code>health.check_interval</code></td>
+<td>60</td>
+</tr>
+</tbody>
+</table>
+<p>Click <strong>Save settings</strong> to persist changes. A brief "Settings saved." confirmation appears.</p>
+<blockquote>
+<p><strong>Permission required:</strong> <code>settings:write</code> to save changes.</p>
+</blockquote>
+<h3 id="users">Users<a class="headerlink" href="#users" title="Permanent link">&para;</a></h3>
+<p><img alt="Settings → Users tab" src="../images/settings-users-list.png" />
+<em>Users tab — list of all user accounts with role and status columns.</em></p>
+<p>Manage user accounts. See <a href="#user-management">User Management</a> for full details.</p>
+<h3 id="roles">Roles<a class="headerlink" href="#roles" title="Permanent link">&para;</a></h3>
+<p><img alt="Settings → Roles tab" src="../images/settings-roles-list.png" />
+<em>Roles tab — system-defined and custom roles with their permission sets.</em></p>
+<p>Manage roles and their permissions. See <a href="#role-management">Role Management</a> for full details.</p>
+<h3 id="my-account">My Account<a class="headerlink" href="#my-account" title="Permanent link">&para;</a></h3>
+<p><img alt="Settings → My Account tab" src="../images/settings-account.png" />
+<em>My Account tab — change your display name, email, and password.</em></p>
+<p>The <strong>My Account</strong> tab lets you update your own profile:</p>
+<ul>
+<li><strong>Display name</strong> and <strong>Email</strong> — informational fields shown in the UI.</li>
+<li><strong>Change password</strong> — enter your current password, then a new password that meets the
+  <a href="#password-requirements">password requirements</a>. Click <strong>Save</strong>.</li>
+</ul>
+<blockquote>
+<p>You do not need any special permission to update your own account.</p>
+</blockquote>
+<hr />
+<h2 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Permissions required:</strong> <code>users:read</code> to view users; <code>users:write</code> to create/edit/lock;
+<code>users:delete</code> to delete.</p>
+</blockquote>
+<p>Navigate to <strong>Settings → Users</strong>.</p>
+<p><img alt="Users tab showing the Add User dialog" src="../images/settings-users-create.png" />
+<em>Add user dialog — fill in username, optional email and display name, password, and role.</em></p>
+<h3 id="creating-a-user">Creating a User<a class="headerlink" href="#creating-a-user" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click <strong>Add user</strong>.</li>
+<li>Fill in:</li>
+<li><strong>Username</strong> (required, unique)</li>
+<li><strong>Email</strong> (optional)</li>
+<li><strong>Display name</strong> (optional)</li>
+<li><strong>Password</strong> (required for new users; must meet <a href="#password-requirements">password requirements</a>)</li>
+<li><strong>Role</strong> (select from the dropdown)</li>
+<li>Click <strong>Save</strong>.</li>
+</ol>
+<h3 id="editing-a-user">Editing a User<a class="headerlink" href="#editing-a-user" title="Permanent link">&para;</a></h3>
+<p>Click the <strong>pencil</strong> icon on a user row to open the edit dialog. You can update the username,
+email, display name, and role. Leave the password field blank to keep the current password.</p>
+<h3 id="locking-and-unlocking">Locking and Unlocking<a class="headerlink" href="#locking-and-unlocking" title="Permanent link">&para;</a></h3>
+<p>Click the <strong>lock</strong> icon to toggle a user's active state:</p>
+<ul>
+<li>A locked (inactive) user cannot log in regardless of their password.</li>
+<li>An administrator can unlock a user locked by the automatic lockout policy this way.</li>
+</ul>
+<p><img alt="Users list with a locked user row visible" src="../images/settings-users-locked.png" />
+<em>A locked user shown with the "Locked" badge; the unlock icon is visible in the Actions column.</em></p>
+<h3 id="deleting-a-user">Deleting a User<a class="headerlink" href="#deleting-a-user" title="Permanent link">&para;</a></h3>
+<p>Click the <strong>trash</strong> icon to delete a user. A browser confirm dialog is shown. The last active admin
+user cannot be deleted (the API returns an error).</p>
+<hr />
+<h2 id="role-management">Role Management<a class="headerlink" href="#role-management" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Permissions required:</strong> <code>roles:read</code> to view roles; <code>roles:write</code> to create/edit custom roles.</p>
+</blockquote>
+<p>Navigate to <strong>Settings → Roles</strong>.</p>
+<p>Roles bundle a set of permissions that are assigned to users. Every role is either a <strong>system role</strong>
+or a <strong>custom role</strong>.</p>
+<p><strong>System roles</strong> (<code>IsSystem = true</code>) are seeded by AgentLens and cannot be edited or deleted:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Typical permissions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin</code></td>
+<td>All permissions</td>
+</tr>
+<tr>
+<td><code>editor</code></td>
+<td><code>catalog:read</code>, <code>catalog:write</code>, <code>catalog:delete</code>, <code>users:read</code>, <code>roles:read</code>, <code>settings:read</code></td>
+</tr>
+<tr>
+<td><code>viewer</code></td>
+<td><code>catalog:read</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Custom roles</strong> can be created, edited, and deleted freely.</p>
+<h3 id="creating-a-role">Creating a Role<a class="headerlink" href="#creating-a-role" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click <strong>Add role</strong>.</li>
+<li>Enter a <strong>Name</strong> and optional <strong>Description</strong>.</li>
+<li>Check the permissions this role should grant.</li>
+<li>Click <strong>Save</strong>.</li>
+</ol>
+<p>Available permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>What it grants</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>catalog:read</code></td>
+<td>View catalog entries and stats</td>
+</tr>
+<tr>
+<td><code>catalog:write</code></td>
+<td>Register new entries, import from URL</td>
+</tr>
+<tr>
+<td><code>catalog:delete</code></td>
+<td>Delete catalog entries</td>
+</tr>
+<tr>
+<td><code>users:read</code></td>
+<td>View user list</td>
+</tr>
+<tr>
+<td><code>users:write</code></td>
+<td>Create and edit users</td>
+</tr>
+<tr>
+<td><code>users:delete</code></td>
+<td>Delete users</td>
+</tr>
+<tr>
+<td><code>roles:read</code></td>
+<td>View roles</td>
+</tr>
+<tr>
+<td><code>roles:write</code></td>
+<td>Create, edit, and delete custom roles</td>
+</tr>
+<tr>
+<td><code>settings:read</code></td>
+<td>View Settings page and read settings</td>
+</tr>
+<tr>
+<td><code>settings:write</code></td>
+<td>Update settings</td>
+</tr>
+</tbody>
+</table>
+<h3 id="editing-a-role">Editing a Role<a class="headerlink" href="#editing-a-role" title="Permanent link">&para;</a></h3>
+<p>Click the <strong>pencil</strong> icon on a custom role row. System roles show the icon as disabled.</p>
+<p><img alt="Editing a non-system role — permissions checkboxes visible" src="../images/settings-roles-edit.png" />
+<em>Role edit dialog — toggle individual permissions for the selected role.</em></p>
+<h3 id="deleting-a-role">Deleting a Role<a class="headerlink" href="#deleting-a-role" title="Permanent link">&para;</a></h3>
+<p>Click the <strong>trash</strong> icon on a custom role row. System roles cannot be deleted.</p>
+<hr />
+<h2 id="using-the-rest-api">Using the REST API<a class="headerlink" href="#using-the-rest-api" title="Permanent link">&para;</a></h2>
+<p>AgentLens exposes a REST API at <code>/api/v1/</code>. Full reference: <a href="../api/">docs/api.md</a>.</p>
+<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
+<p>Obtain a token:</p>
+<div class="highlight"><pre><span></span><code><span class="err">POST /api/v1/auth/login</span>
+<span class="err">Content-Type: application/json</span>
+
+<span class="err">{&quot;username&quot;: &quot;admin&quot;, &quot;password&quot;: &quot;YourPassword1!&quot;}</span>
+</code></pre></div>
+<p>Response:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;jwt&gt;&quot;</span><span class="p">}</span>
+</code></pre></div>
+<p>Use the token in subsequent requests:</p>
+<div class="highlight"><pre><span></span><code><span class="err">GET /api/v1/catalog</span>
+<span class="err">Authorization: Bearer &lt;jwt&gt;</span>
+</code></pre></div>
+<h3 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Permission</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/catalog</code></td>
+<td><code>catalog:read</code></td>
+<td>List entries (filter via query params)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/catalog</code></td>
+<td><code>catalog:write</code></td>
+<td>Create an entry</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/catalog/:id</code></td>
+<td><code>catalog:read</code></td>
+<td>Get a single entry</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/v1/catalog/:id</code></td>
+<td><code>catalog:delete</code></td>
+<td>Delete an entry</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/catalog/validate</code></td>
+<td><code>catalog:write</code></td>
+<td>Validate a card JSON</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/catalog/import</code></td>
+<td><code>catalog:write</code></td>
+<td>Import from URL</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/stats</code></td>
+<td><code>catalog:read</code></td>
+<td>Aggregate statistics</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/users</code></td>
+<td><code>users:read</code></td>
+<td>List users</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/users</code></td>
+<td><code>users:write</code></td>
+<td>Create user</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/v1/users/:id</code></td>
+<td><code>users:write</code></td>
+<td>Update user</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/v1/users/:id</code></td>
+<td><code>users:delete</code></td>
+<td>Delete user</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/roles</code></td>
+<td><code>roles:read</code></td>
+<td>List roles</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/roles</code></td>
+<td><code>roles:write</code></td>
+<td>Create role</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/v1/roles/:id</code></td>
+<td><code>roles:write</code></td>
+<td>Update role</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/v1/roles/:id</code></td>
+<td><code>roles:write</code></td>
+<td>Delete role</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../api/">docs/api.md</a> for the full request/response schemas.</p>
+<hr />
+<h2 id="faq-troubleshooting">FAQ / Troubleshooting<a class="headerlink" href="#faq-troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="my-account-is-locked-how-do-i-regain-access">My account is locked — how do I regain access?<a class="headerlink" href="#my-account-is-locked-how-do-i-regain-access" title="Permanent link">&para;</a></h3>
+<p>Ask an administrator to navigate to <strong>Settings → Users</strong>, find your account, and click the
+<strong>unlock</strong> (padlock) icon.</p>
+<p>If you are the only admin and your account is locked, see below.</p>
+<h3 id="i-forgot-the-admin-password-i-am-locked-out-of-the-only-admin-account">I forgot the admin password / I am locked out of the only admin account<a class="headerlink" href="#i-forgot-the-admin-password-i-am-locked-out-of-the-only-admin-account" title="Permanent link">&para;</a></h3>
+<p>If you still have server access:</p>
+<ol>
+<li>Stop the AgentLens server.</li>
+<li>Delete (or rename) the SQLite database file specified by <code>AGENTLENS_DB_SQLITE_PATH</code> (default
+   <code>agentlens.db</code> in the data directory).</li>
+<li>Restart the server. With no existing users the bootstrap procedure runs again and prints fresh
+   admin credentials to stdout.</li>
+</ol>
+<blockquote>
+<p><strong>Warning:</strong> deleting the database removes all catalog entries, users, and roles. Export any data
+you need first via the REST API.</p>
+</blockquote>
+<h3 id="i-imported-from-a-url-and-got-url-points-to-a-private-or-reserved-address">I imported from a URL and got "url points to a private or reserved address"<a class="headerlink" href="#i-imported-from-a-url-and-got-url-points-to-a-private-or-reserved-address" title="Permanent link">&para;</a></h3>
+<p>AgentLens's SSRF guard blocks outbound connections to private/loopback addresses. This is
+intentional. The agent card must be hosted on a publicly reachable HTTPS URL. The following ranges
+are blocked: <code>10.x</code>, <code>172.16–31.x</code>, <code>192.168.x</code>, <code>127.x</code>, <code>::1</code>, <code>169.254.x</code>, and the <code>localhost</code>
+hostname.</p>
+<h3 id="the-catalog-shows-an-agent-as-unknown-why">The catalog shows an agent as "Unknown" — why?<a class="headerlink" href="#the-catalog-shows-an-agent-as-unknown-why" title="Permanent link">&para;</a></h3>
+<p><code>Unknown</code> means no health check has been recorded yet. Possible reasons:</p>
+<ul>
+<li>The agent was just registered and the health checker has not run its first cycle.</li>
+<li>Health checking is disabled (<code>AGENTLENS_HEALTH_CHECK_ENABLED=false</code> or
+  <code>health.check_interval</code> is very large).</li>
+<li>The agent's endpoint is unreachable so the checker recorded an error — but in that case the
+  status would be <code>Down</code>, not <code>Unknown</code>.</li>
+</ul>
+<h3 id="an-agent-shows-down-how-do-i-investigate">An agent shows "Down" — how do I investigate?<a class="headerlink" href="#an-agent-shows-down-how-do-i-investigate" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Check that the agent process is running at the registered endpoint.</li>
+<li>Verify network connectivity between the AgentLens server and the agent endpoint.</li>
+<li>The Raw Definition section of the detail page shows the card URL and protocol — confirm the
+   agent is serving that path.</li>
+</ol>
+<h3 id="how-do-i-push-an-agent-card-without-using-the-ui">How do I push an agent card without using the UI?<a class="headerlink" href="#how-do-i-push-an-agent-card-without-using-the-ui" title="Permanent link">&para;</a></h3>
+<p>Use the REST API directly:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://agentlens.example.com/api/v1/catalog/import<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;url&quot;: &quot;https://my-agent.example.com/.well-known/agent.json&quot;}&#39;</span>
+</code></pre></div>
+<p>Or register a card directly:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://agentlens.example.com/api/v1/catalog<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;display_name&quot;:&quot;My Agent&quot;,&quot;endpoint&quot;:&quot;https://my-agent.example.com&quot;,&quot;protocol&quot;:&quot;a2a&quot;,&quot;version&quot;:&quot;1.0.0&quot;}&#39;</span>
+</code></pre></div>
+<h3 id="kubernetes-discovered-agents-have-a-k8s-source-what-controls-that">Kubernetes-discovered agents have a <code>k8s</code> source — what controls that?<a class="headerlink" href="#kubernetes-discovered-agents-have-a-k8s-source-what-controls-that" title="Permanent link">&para;</a></h3>
+<p>Agents running in Kubernetes are discovered when their <code>Pod</code> or <code>Service</code> carries the annotation
+<code>agentlens.io/enabled: "true"</code>. See <a href="../user-guide/">docs/user-guide.md</a> and
+<a href="../architecture/">docs/architecture.md</a> for the full annotation schema.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

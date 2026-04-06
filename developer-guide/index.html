@@ -1,0 +1,2395 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://pawelharacz.github.io/Agentlens/developer-guide/">
+      
+      
+        <link rel="prev" href="../end-user-guide/">
+      
+      
+        <link rel="next" href="../devops-guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Developer Guide - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#developer-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Developer Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#makefile-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Makefile Targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#go-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Go Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-all-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run All Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-race-detector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Race Detector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-handler-test-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Handler Test Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Linting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-typescript" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend (TypeScript)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing Plugins
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writing Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-handler-and-router-wiring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Handler and Router Wiring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-parser-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a Parser Plugin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-source-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a Source Plugin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enterprise-plugins-license-gated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enterprise Plugins (License-Gated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#development-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Library
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-ui-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding UI Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescript-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeScript Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-for-vulnerabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scan for Vulnerabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#helm-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Helm Chart
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Helm Chart">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lint-the-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lint the Chart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI/CD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-workflow-githubworkflowsciyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI Workflow (.github/workflows/ci.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-scanning-githubworkflowscode-scanningyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Scanning (.github/workflows/code-scanning.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Style
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#makefile-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Makefile Targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#go-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Go Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-all-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run All Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-race-detector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Race Detector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-handler-test-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Handler Test Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Linting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-typescript" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend (TypeScript)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing Plugins
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writing Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-handler-and-router-wiring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Handler and Router Wiring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-parser-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a Parser Plugin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-source-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a Source Plugin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enterprise-plugins-license-gated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enterprise Plugins (License-Gated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#development-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-library" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Library
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-ui-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding UI Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescript-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeScript Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scan-for-vulnerabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scan for Vulnerabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#helm-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Helm Chart
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Helm Chart">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lint-the-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lint the Chart
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-preview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Preview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI/CD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-workflow-githubworkflowsciyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI Workflow (.github/workflows/ci.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-scanning-githubworkflowscode-scanningyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Scanning (.github/workflows/code-scanning.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Style
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="developer-guide">Developer Guide<a class="headerlink" href="#developer-guide" title="Permanent link">&para;</a></h1>
+<p>This guide covers setting up a development environment, building, testing, and extending AgentLens.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#getting-started">Getting Started</a></li>
+<li><a href="#project-structure">Project Structure</a></li>
+<li><a href="#makefile-targets">Makefile Targets</a></li>
+<li><a href="#building">Building</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#linting">Linting</a></li>
+<li><a href="#writing-plugins">Writing Plugins</a></li>
+<li><a href="#frontend-development">Frontend Development</a></li>
+<li><a href="#docker">Docker</a></li>
+<li><a href="#helm-chart">Helm Chart</a></li>
+<li><a href="#cicd">CI/CD</a></li>
+<li><a href="#code-style">Code Style</a></li>
+</ul>
+<hr />
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Go</strong> 1.26.1 (with CGO enabled for SQLite)</li>
+<li><strong>Bun</strong> 1.3+ (install via <a href="https://bun.sh">bun.sh</a>)</li>
+<li><strong>golangci-lint</strong> (install via <code>make tools</code>)</li>
+<li><strong>Docker</strong> (for container builds and scanning)</li>
+<li><strong>Helm</strong> 3+ (for chart development)</li>
+</ul>
+<hr />
+<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Clone the repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/PawelHaracz/agentlens
+<span class="nb">cd</span><span class="w"> </span>agentlens
+
+<span class="c1"># Install Go dependencies</span>
+make<span class="w"> </span>deps
+
+<span class="c1"># Install frontend dependencies</span>
+make<span class="w"> </span>web-install
+
+<span class="c1"># Build everything</span>
+make<span class="w"> </span>web-build
+make<span class="w"> </span>build
+
+<span class="c1"># Run the server</span>
+make<span class="w"> </span>run
+</code></pre></div>
+<p>The server starts on <code>http://localhost:8080</code>.</p>
+<hr />
+<h2 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>agentlens/
+├── cmd/agentlens/          # Application entrypoint (main.go)
+├── internal/               # Private application packages
+│   ├── api/                # REST API handlers and router
+│   ├── config/             # Configuration loading and env overrides
+│   ├── discovery/          # Discovery manager and source orchestration
+│   ├── health/             # Health checker logic
+│   ├── kernel/             # Microkernel core, plugin interfaces, plugin manager
+│   ├── model/              # Domain model types (CatalogEntry, Skill, etc.)
+│   ├── server/             # HTTP server lifecycle management
+│   ├── service/            # Shared services (CardFetcher for URL import)
+│   └── store/              # SQLite store, migrations, query builders
+├── plugins/                # Plugin implementations
+│   ├── enterprise/         # License-gated plugins (SSO, RBAC, audit, PostgreSQL)
+│   ├── health/             # Health checker plugin
+│   ├── parsers/            # Protocol card parsers (A2A, MCP)
+│   │   ├── a2a/
+│   │   └── mcp/
+│   └── sources/            # Discovery source plugins
+│       ├── k8s/            # Kubernetes service discovery
+│       └── static/         # Static config source
+├── web/                    # React + Vite + shadcn/ui frontend
+│   └── src/
+│       ├── components/     # UI components (CatalogList, EntryDetail, RegisterAgentDialog, etc.)
+│       │   └── ui/         # shadcn/ui base components
+│       ├── api.ts          # API client functions
+│       ├── types.ts        # TypeScript type definitions
+│       └── App.tsx         # Root application component
+├── deploy/helm/agentlens/  # Helm chart
+├── examples/               # Docker Compose + mock agents
+├── docs/                   # Documentation
+├── .github/workflows/      # CI and code scanning workflows
+├── Dockerfile              # Multi-stage Docker build
+├── Makefile                # Build automation
+└── go.mod                  # Go module definition
+</code></pre></div>
+<hr />
+<h2 id="makefile-targets">Makefile Targets<a class="headerlink" href="#makefile-targets" title="Permanent link">&para;</a></h2>
+<p>Run <code>make help</code> to see all available targets:</p>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>make all</code></td>
+<td>Format, lint, test, and build</td>
+</tr>
+<tr>
+<td><code>make build</code></td>
+<td>Build the Go binary (CGO enabled for SQLite)</td>
+</tr>
+<tr>
+<td><code>make test</code></td>
+<td>Run all Go tests</td>
+</tr>
+<tr>
+<td><code>make test-coverage</code></td>
+<td>Run tests with coverage report</td>
+</tr>
+<tr>
+<td><code>make test-coverage-html</code></td>
+<td>Generate HTML coverage report</td>
+</tr>
+<tr>
+<td><code>make test-race</code></td>
+<td>Run tests with Go race detector</td>
+</tr>
+<tr>
+<td><code>make lint</code></td>
+<td>Run golangci-lint</td>
+</tr>
+<tr>
+<td><code>make vet</code></td>
+<td>Run go vet</td>
+</tr>
+<tr>
+<td><code>make format</code></td>
+<td>Format Go source files</td>
+</tr>
+<tr>
+<td><code>make run</code></td>
+<td>Build and run the server</td>
+</tr>
+<tr>
+<td><code>make clean</code></td>
+<td>Remove build artifacts</td>
+</tr>
+<tr>
+<td><code>make deps</code></td>
+<td>Download and tidy Go dependencies</td>
+</tr>
+<tr>
+<td><code>make tools</code></td>
+<td>Install golangci-lint</td>
+</tr>
+<tr>
+<td><code>make web-install</code></td>
+<td>Install frontend dependencies (bun)</td>
+</tr>
+<tr>
+<td><code>make web-build</code></td>
+<td>Build the frontend</td>
+</tr>
+<tr>
+<td><code>make web-lint</code></td>
+<td>TypeScript type check</td>
+</tr>
+<tr>
+<td><code>make docker-build</code></td>
+<td>Build the Docker image locally</td>
+</tr>
+<tr>
+<td><code>make docker-scan</code></td>
+<td>Scan Docker image with Trivy</td>
+</tr>
+<tr>
+<td><code>make helm-lint</code></td>
+<td>Lint and validate the Helm chart</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="building">Building<a class="headerlink" href="#building" title="Permanent link">&para;</a></h2>
+<h3 id="go-backend">Go Backend<a class="headerlink" href="#go-backend" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>build
+</code></pre></div>
+<p>This compiles the binary to <code>bin/agentlens</code> with <code>CGO_ENABLED=1</code> (required for the SQLite driver).</p>
+<h3 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>web-install<span class="w">   </span><span class="c1"># Install bun dependencies</span>
+make<span class="w"> </span>web-build<span class="w">     </span><span class="c1"># Build production bundle</span>
+</code></pre></div>
+<p>The frontend builds to <code>web/dist/</code> and is embedded into the Go binary via <code>embed.FS</code>.</p>
+<h3 id="docker-image">Docker Image<a class="headerlink" href="#docker-image" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>docker-build
+</code></pre></div>
+<p>This runs a multi-stage Docker build:
+1. <strong>Stage 1</strong> (Node.js) — builds the frontend
+2. <strong>Stage 2</strong> (Go) — builds the backend binary
+3. <strong>Stage 3</strong> (Alpine) — minimal runtime image</p>
+<hr />
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<h3 id="run-all-tests">Run All Tests<a class="headerlink" href="#run-all-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span><span class="nb">test</span>
+</code></pre></div>
+<h3 id="with-coverage">With Coverage<a class="headerlink" href="#with-coverage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>test-coverage<span class="w">        </span><span class="c1"># Print coverage to terminal</span>
+make<span class="w"> </span>test-coverage-html<span class="w">   </span><span class="c1"># Open coverage.html in browser</span>
+</code></pre></div>
+<h3 id="with-race-detector">With Race Detector<a class="headerlink" href="#with-race-detector" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>test-race
+</code></pre></div>
+<h3 id="test-files">Test Files<a class="headerlink" href="#test-files" title="Permanent link">&para;</a></h3>
+<p>Tests live alongside the code they test (Go convention):</p>
+<ul>
+<li><code>internal/api/handlers_test.go</code></li>
+<li><code>internal/api/validate_handler_test.go</code></li>
+<li><code>internal/api/register_handler_test.go</code></li>
+<li><code>internal/api/import_handler_test.go</code></li>
+<li><code>internal/api/auth_handlers_test.go</code></li>
+<li><code>internal/api/user_handlers_test.go</code></li>
+<li><code>internal/api/role_handlers_test.go</code></li>
+<li><code>internal/api/settings_handlers_test.go</code></li>
+<li><code>internal/config/config_test.go</code></li>
+<li><code>internal/discovery/a2a_test.go</code>, <code>mcp_test.go</code>, <code>k8s_test.go</code>, <code>manager_test.go</code></li>
+<li><code>internal/health/checker_test.go</code></li>
+<li><code>internal/store/sqlite_test.go</code>, <code>user_store_test.go</code>, <code>role_store_test.go</code>, <code>settings_store_test.go</code></li>
+<li><code>plugins/parsers/a2a/validation_test.go</code></li>
+</ul>
+<h3 id="api-handler-test-pattern">API Handler Test Pattern<a class="headerlink" href="#api-handler-test-pattern" title="Permanent link">&para;</a></h3>
+<p>API handler tests use a shared <code>testRouter</code> helper (in <code>internal/api/test_helpers_test.go</code>) that wires a full in-memory stack. The helper creates a real <code>kernel.Core</code>, registers A2A and MCP parsers, and passes the kernel to <code>api.RouterDeps</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">database</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">db</span><span class="p">.</span><span class="nx">OpenMemory</span><span class="p">()</span>
+<span class="c1">// ... run migrations ...</span>
+<span class="nx">catalogStore</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">NewSQLStore</span><span class="p">(</span><span class="nx">database</span><span class="p">)</span>
+
+<span class="nx">core</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">NewCore</span><span class="p">(</span><span class="nx">catalogStore</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">slog</span><span class="p">.</span><span class="nx">Default</span><span class="p">(),</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">LicenseInfo</span><span class="p">{})</span>
+<span class="nx">a2aParser</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">a2aplugin</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
+<span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">a2aParser</span><span class="p">.</span><span class="nx">Init</span><span class="p">(</span><span class="nx">core</span><span class="p">)</span>
+<span class="nx">core</span><span class="p">.</span><span class="nx">RegisterParser</span><span class="p">(</span><span class="nx">a2aParser</span><span class="p">)</span>
+<span class="nx">mcpParser</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">mcpplugin</span><span class="p">.</span><span class="nx">New</span><span class="p">()</span>
+<span class="nx">_</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">mcpParser</span><span class="p">.</span><span class="nx">Init</span><span class="p">(</span><span class="nx">core</span><span class="p">)</span>
+<span class="nx">core</span><span class="p">.</span><span class="nx">RegisterParser</span><span class="p">(</span><span class="nx">mcpParser</span><span class="p">)</span>
+
+<span class="nx">router</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">api</span><span class="p">.</span><span class="nx">NewRouter</span><span class="p">(</span><span class="nx">api</span><span class="p">.</span><span class="nx">RouterDeps</span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kernel</span><span class="p">:</span><span class="w">        </span><span class="nx">core</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">UserStore</span><span class="p">:</span><span class="w">     </span><span class="nx">userStore</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">RoleStore</span><span class="p">:</span><span class="w">     </span><span class="nx">roleStore</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">SettingsStore</span><span class="p">:</span><span class="w"> </span><span class="nx">settingsStore</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">JWTService</span><span class="p">:</span><span class="w">    </span><span class="nx">jwtService</span><span class="p">,</span>
+<span class="p">})</span>
+</code></pre></div>
+<p>Tests that exercise the import endpoint (<code>POST /api/v1/catalog/import</code>) inject a stub <code>service.Fetcher</code> via <code>RouterDeps.CardFetcher</code> to avoid real outbound HTTP.</p>
+<hr />
+<h2 id="linting">Linting<a class="headerlink" href="#linting" title="Permanent link">&para;</a></h2>
+<h3 id="go">Go<a class="headerlink" href="#go" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>lint<span class="w">       </span><span class="c1"># golangci-lint</span>
+make<span class="w"> </span>vet<span class="w">        </span><span class="c1"># go vet</span>
+make<span class="w"> </span>format<span class="w">     </span><span class="c1"># gofmt</span>
+</code></pre></div>
+<h3 id="frontend-typescript">Frontend (TypeScript)<a class="headerlink" href="#frontend-typescript" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>web-lint<span class="w">   </span><span class="c1"># tsc --noEmit</span>
+</code></pre></div>
+<hr />
+<h2 id="writing-plugins">Writing Plugins<a class="headerlink" href="#writing-plugins" title="Permanent link">&para;</a></h2>
+<p>AgentLens is designed to be extended through plugins. All plugins implement the <code>kernel.Plugin</code> interface.</p>
+<h3 id="api-handler-and-router-wiring">API Handler and Router Wiring<a class="headerlink" href="#api-handler-and-router-wiring" title="Permanent link">&para;</a></h3>
+<p>The API layer depends on <code>kernel.Kernel</code>, not on the store directly. <code>NewHandler(k kernel.Kernel)</code> obtains the catalog store via <code>k.Store()</code> and looks up parsers via <code>k.Parser(protocol)</code>. The <code>RouterDeps</code> struct follows the same pattern — it carries a <code>Kernel</code> field rather than a raw store:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// RouterDeps holds all dependencies for the router.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">RouterDeps</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kernel</span><span class="w">        </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">Kernel</span><span class="w">   </span><span class="c1">// required; provides store + parser lookup</span>
+<span class="w">    </span><span class="nx">UserStore</span><span class="w">     </span><span class="o">*</span><span class="nx">store</span><span class="p">.</span><span class="nx">UserStore</span>
+<span class="w">    </span><span class="nx">RoleStore</span><span class="w">     </span><span class="o">*</span><span class="nx">store</span><span class="p">.</span><span class="nx">RoleStore</span>
+<span class="w">    </span><span class="nx">SettingsStore</span><span class="w"> </span><span class="o">*</span><span class="nx">store</span><span class="p">.</span><span class="nx">SettingsStore</span>
+<span class="w">    </span><span class="nx">JWTService</span><span class="w">    </span><span class="o">*</span><span class="nx">auth</span><span class="p">.</span><span class="nx">JWTService</span>
+<span class="w">    </span><span class="c1">// CardFetcher is optional. When nil, a default CardFetcher with SSRF</span>
+<span class="w">    </span><span class="c1">// protection is used (for POST /api/v1/catalog/import).</span>
+<span class="w">    </span><span class="nx">CardFetcher</span><span class="w">   </span><span class="nx">service</span><span class="p">.</span><span class="nx">Fetcher</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>In <code>main.go</code> the <code>core</code> kernel is wired after all plugins have been initialised:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">core</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">NewCore</span><span class="p">(</span><span class="nx">catalogStore</span><span class="p">,</span><span class="w"> </span><span class="nx">cfg</span><span class="p">,</span><span class="w"> </span><span class="nx">logger</span><span class="p">,</span><span class="w"> </span><span class="nx">lic</span><span class="p">)</span>
+<span class="c1">// ... register and init plugins ...</span>
+<span class="nx">router</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">api</span><span class="p">.</span><span class="nx">NewRouter</span><span class="p">(</span><span class="nx">api</span><span class="p">.</span><span class="nx">RouterDeps</span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kernel</span><span class="p">:</span><span class="w">        </span><span class="nx">core</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">UserStore</span><span class="p">:</span><span class="w">     </span><span class="nx">userStore</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">RoleStore</span><span class="p">:</span><span class="w">     </span><span class="nx">roleStore</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">SettingsStore</span><span class="p">:</span><span class="w"> </span><span class="nx">settingsStore</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">JWTService</span><span class="p">:</span><span class="w">    </span><span class="nx">jwtService</span><span class="p">,</span>
+<span class="p">})</span>
+</code></pre></div>
+<h3 id="creating-a-parser-plugin">Creating a Parser Plugin<a class="headerlink" href="#creating-a-parser-plugin" title="Permanent link">&para;</a></h3>
+<p>A parser plugin converts protocol-specific card JSON into an <code>AgentType</code> (Product Archetype pattern). The <code>ParserPlugin</code> interface requires both <code>Parse</code> and <code>Validate</code> methods.</p>
+<p><code>Parse</code> returns <code>*model.AgentType</code> populated with the protocol, endpoint, version, provider, capabilities, and raw definition. The handler is responsible for wrapping the <code>AgentType</code> in a <code>CatalogEntry</code> (display name, status, source, validity) before persisting.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nx">myplugin</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;context&quot;</span>
+<span class="w">    </span><span class="s">&quot;encoding/json&quot;</span>
+<span class="w">    </span><span class="s">&quot;fmt&quot;</span>
+<span class="w">    </span><span class="s">&quot;github.com/PawelHaracz/agentlens/internal/kernel&quot;</span>
+<span class="w">    </span><span class="s">&quot;github.com/PawelHaracz/agentlens/internal/model&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">MyParser</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">log</span><span class="w"> </span><span class="o">*</span><span class="nx">slog</span><span class="p">.</span><span class="nx">Logger</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">New</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">MyParser</span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Name</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">              </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;my-protocol-parser&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Version</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">           </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;0.1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Type</span><span class="p">()</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">PluginType</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">PluginTypeParser</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Protocol</span><span class="p">()</span><span class="w"> </span><span class="nx">model</span><span class="p">.</span><span class="nx">Protocol</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;my-protocol&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">CardPath</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">          </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;/.well-known/my-card.json&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Init</span><span class="p">(</span><span class="nx">k</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">Kernel</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">p</span><span class="p">.</span><span class="nx">log</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">k</span><span class="p">.</span><span class="nx">Logger</span><span class="p">().</span><span class="nx">With</span><span class="p">(</span><span class="s">&quot;plugin&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">Name</span><span class="p">())</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Stop</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">}</span>
+
+<span class="c1">// Validate checks the raw card JSON for spec compliance without persisting anything.</span>
+<span class="c1">// Called by the validate endpoint and the import endpoint before Parse.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Validate</span><span class="p">(</span><span class="nx">raw</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">)</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">ValidationResult</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Inspect the raw JSON and return structured diagnostics.</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">ValidationResult</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Valid</span><span class="p">:</span><span class="w">       </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">SpecVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Errors</span><span class="p">:</span><span class="w">      </span><span class="kc">nil</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Warnings</span><span class="p">:</span><span class="w">    </span><span class="kc">nil</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Preview</span><span class="p">:</span><span class="w">     </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="p">{</span><span class="s">&quot;display_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;My Agent&quot;</span><span class="p">},</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Parse converts a raw card JSON blob into an AgentType.</span>
+<span class="c1">// The returned AgentType has Provider and Capabilities populated.</span>
+<span class="c1">// Source (push, k8s, config) is a catalog concern — the handler adds it.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyParser</span><span class="p">)</span><span class="w"> </span><span class="nx">Parse</span><span class="p">(</span><span class="nx">raw</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">AgentType</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">card</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Name</span><span class="w">     </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;name&quot;`</span>
+<span class="w">        </span><span class="nx">Endpoint</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;endpoint&quot;`</span>
+<span class="w">        </span><span class="nx">Version</span><span class="w">  </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;version&quot;`</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">json</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">(</span><span class="nx">raw</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">card</span><span class="p">);</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;parsing my-protocol card: %w&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">card</span><span class="p">.</span><span class="nx">Name</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="p">,</span><span class="w"> </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;my-protocol card missing required field: name&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">model</span><span class="p">.</span><span class="nx">AgentType</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Protocol</span><span class="p">:</span><span class="w">      </span><span class="s">&quot;my-protocol&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Endpoint</span><span class="p">:</span><span class="w">      </span><span class="nx">card</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Version</span><span class="p">:</span><span class="w">       </span><span class="nx">card</span><span class="p">.</span><span class="nx">Version</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">RawDefinition</span><span class="p">:</span><span class="w"> </span><span class="nx">raw</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">AgentKey</span><span class="p">:</span><span class="w">      </span><span class="nx">model</span><span class="p">.</span><span class="nx">ComputeAgentKey</span><span class="p">(</span><span class="s">&quot;my-protocol&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">card</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">),</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Register in <code>cmd/agentlens/main.go</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">pm</span><span class="p">.</span><span class="nx">Register</span><span class="p">(</span><span class="nx">myplugin</span><span class="p">.</span><span class="nx">New</span><span class="p">())</span>
+</code></pre></div>
+<h3 id="creating-a-source-plugin">Creating a Source Plugin<a class="headerlink" href="#creating-a-source-plugin" title="Permanent link">&para;</a></h3>
+<p>A source plugin discovers agents from a specific location and returns <code>AgentType</code> values. The discovery manager wraps each into a <code>CatalogEntry</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nx">mysource</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;context&quot;</span>
+<span class="w">    </span><span class="s">&quot;github.com/PawelHaracz/agentlens/internal/kernel&quot;</span>
+<span class="w">    </span><span class="s">&quot;github.com/PawelHaracz/agentlens/internal/model&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">MySource</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">kernel</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">Kernel</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">New</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">MySource</span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="p">)</span><span class="w"> </span><span class="nx">Name</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">            </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;my-source&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="p">)</span><span class="w"> </span><span class="nx">Version</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">         </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;0.1.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="p">)</span><span class="w"> </span><span class="nx">Type</span><span class="p">()</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">PluginType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">PluginTypeSource</span><span class="w"> </span><span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="p">)</span><span class="w"> </span><span class="nx">Init</span><span class="p">(</span><span class="nx">k</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">Kernel</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">s</span><span class="p">.</span><span class="nx">kernel</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">k</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="p">)</span><span class="w"> </span><span class="nx">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="p">)</span><span class="w"> </span><span class="nx">Stop</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">MySource</span><span class="p">)</span><span class="w"> </span><span class="nx">Discover</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">AgentType</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Discover agents from your source.</span>
+<span class="w">    </span><span class="c1">// Use s.kernel.Parser(protocol).Parse(raw) to convert card JSON into AgentType.</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">agentTypes</span><span class="p">,</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="enterprise-plugins-license-gated">Enterprise Plugins (License-Gated)<a class="headerlink" href="#enterprise-plugins-license-gated" title="Permanent link">&para;</a></h3>
+<p>Return <code>kernel.ErrLicenseRequired</code> from <code>Init()</code> to gate a plugin behind an enterprise license:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">MyPlugin</span><span class="p">)</span><span class="w"> </span><span class="nx">Init</span><span class="p">(</span><span class="nx">k</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">Kernel</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">!</span><span class="nx">k</span><span class="p">.</span><span class="nx">License</span><span class="p">().</span><span class="nx">IsEnterprise</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">ErrLicenseRequired</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// Initialize plugin</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The plugin manager will log a warning and skip the plugin — it will not be started or stopped.</p>
+<hr />
+<h2 id="frontend-development">Frontend Development<a class="headerlink" href="#frontend-development" title="Permanent link">&para;</a></h2>
+<h3 id="development-server">Development Server<a class="headerlink" href="#development-server" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>web
+bun<span class="w"> </span>run<span class="w"> </span>dev
+</code></pre></div>
+<p>This starts the Vite dev server with hot module replacement. The frontend proxies API requests to <code>http://localhost:8080</code>.</p>
+<h3 id="component-library">Component Library<a class="headerlink" href="#component-library" title="Permanent link">&para;</a></h3>
+<p>The UI uses <a href="https://ui.shadcn.com/">shadcn/ui</a> components built on Radix UI + Tailwind CSS:</p>
+<ul>
+<li><code>Badge</code> — protocol and status badges</li>
+<li><code>Button</code> — action buttons</li>
+<li><code>Card</code> — entry detail cards</li>
+<li><code>Table</code> — catalog list table</li>
+<li><code>Input</code> — search input</li>
+<li><code>Select</code> — filter dropdowns</li>
+<li><code>ScrollArea</code> — scrollable containers</li>
+<li><code>Separator</code> — visual dividers</li>
+<li><code>Skeleton</code> — loading placeholders</li>
+</ul>
+<h3 id="adding-ui-components">Adding UI Components<a class="headerlink" href="#adding-ui-components" title="Permanent link">&para;</a></h3>
+<p>Components are in <code>web/src/components/</code>. The shadcn/ui base components are in <code>web/src/components/ui/</code>.</p>
+<h3 id="typescript-types">TypeScript Types<a class="headerlink" href="#typescript-types" title="Permanent link">&para;</a></h3>
+<p>All API types are defined in <code>web/src/types.ts</code>. These mirror the flat JSON response shape produced by <code>CatalogEntry.MarshalJSON()</code>:</p>
+<ul>
+<li><code>CatalogEntry</code> — flat catalog entry type (merges AgentType + CatalogEntry fields)</li>
+<li><code>Capability</code> — polymorphic agent capability with <code>kind</code>, <code>name</code>, <code>description</code>, <code>properties</code></li>
+<li><code>Protocol</code>, <code>Status</code>, <code>SourceType</code> — enum types</li>
+<li><code>Provider</code>, <code>Validity</code> — nested types</li>
+<li><code>Stats</code>, <code>ListFilter</code> — API-specific types</li>
+</ul>
+<p>The <code>capabilities</code> field on <code>CatalogEntry</code> replaces the old <code>skills</code> field. Each capability has a <code>kind</code> discriminator (e.g. <code>a2a.skill</code>, <code>mcp.tool</code>) and a <code>properties</code> object with protocol-specific fields.</p>
+<hr />
+<h2 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h2>
+<h3 id="build-image">Build Image<a class="headerlink" href="#build-image" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>docker-build
+</code></pre></div>
+<h3 id="scan-for-vulnerabilities">Scan for Vulnerabilities<a class="headerlink" href="#scan-for-vulnerabilities" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>docker-scan
+</code></pre></div>
+<p>Requires <a href="https://trivy.dev/">Trivy</a> installed locally. In CI, scanning runs automatically via the code-scanning workflow.</p>
+<hr />
+<h2 id="helm-chart">Helm Chart<a class="headerlink" href="#helm-chart" title="Permanent link">&para;</a></h2>
+<p>The Helm chart is in <code>deploy/helm/agentlens/</code>.</p>
+<h3 id="lint-the-chart">Lint the Chart<a class="headerlink" href="#lint-the-chart" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>helm-lint
+</code></pre></div>
+<h3 id="template-preview">Template Preview<a class="headerlink" href="#template-preview" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>helm<span class="w"> </span>template<span class="w"> </span>agentlens<span class="w"> </span>deploy/helm/agentlens<span class="w"> </span>--debug
+</code></pre></div>
+<h3 id="key-values">Key Values<a class="headerlink" href="#key-values" title="Permanent link">&para;</a></h3>
+<p>See <code>deploy/helm/agentlens/values.yaml</code> for all configurable values. Key settings:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>replicaCount</code></td>
+<td><code>1</code></td>
+<td>Number of replicas</td>
+</tr>
+<tr>
+<td><code>image.repository</code></td>
+<td><code>ghcr.io/pawelharacz/agentlens</code></td>
+<td>Container image</td>
+</tr>
+<tr>
+<td><code>service.port</code></td>
+<td><code>80</code></td>
+<td>Service port</td>
+</tr>
+<tr>
+<td><code>env.AGENTLENS_KUBERNETES_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Enable K8s discovery</td>
+</tr>
+<tr>
+<td><code>persistence.enabled</code></td>
+<td><code>true</code></td>
+<td>Enable persistent storage</td>
+</tr>
+<tr>
+<td><code>persistence.size</code></td>
+<td><code>1Gi</code></td>
+<td>Storage size</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="cicd">CI/CD<a class="headerlink" href="#cicd" title="Permanent link">&para;</a></h2>
+<h3 id="ci-workflow-githubworkflowsciyml">CI Workflow (<code>.github/workflows/ci.yml</code>)<a class="headerlink" href="#ci-workflow-githubworkflowsciyml" title="Permanent link">&para;</a></h3>
+<p>Triggered on PRs to <code>main</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Lint</strong></td>
+<td><code>go vet</code> + <code>golangci-lint</code> + TypeScript type check</td>
+</tr>
+<tr>
+<td><strong>Test</strong></td>
+<td>Go tests with coverage, uploads <code>coverage.out</code> artifact</td>
+</tr>
+<tr>
+<td><strong>Build</strong></td>
+<td>Full frontend + backend build (gates on lint + test)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="code-scanning-githubworkflowscode-scanningyml">Code Scanning (<code>.github/workflows/code-scanning.yml</code>)<a class="headerlink" href="#code-scanning-githubworkflowscode-scanningyml" title="Permanent link">&para;</a></h3>
+<p>Triggered on PRs, push to <code>main</code>, and weekly schedule:</p>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CodeQL</strong></td>
+<td>Static analysis for Go and JavaScript/TypeScript</td>
+</tr>
+<tr>
+<td><strong>govulncheck</strong></td>
+<td>Go dependency vulnerability scanning</td>
+</tr>
+<tr>
+<td><strong>Docker Scan</strong></td>
+<td>Trivy vulnerability scan of the Docker image</td>
+</tr>
+<tr>
+<td><strong>Helm Lint</strong></td>
+<td>Helm chart linting and template validation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="code-style">Code Style<a class="headerlink" href="#code-style" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Go</strong>: Follow standard Go conventions. Run <code>make format</code> before committing.</li>
+<li><strong>Frontend</strong>: TypeScript with strict mode. Use shadcn/ui patterns for UI components.</li>
+<li><strong>Commits</strong>: Use <a href="https://www.conventionalcommits.org/">Conventional Commits</a> format: <code>feat:</code>, <code>fix:</code>, <code>refactor:</code>, <code>docs:</code>, <code>test:</code>, <code>ci:</code>.</li>
+<li><strong>Testing</strong>: Place tests alongside source files (<code>_test.go</code>). Use <code>testify</code> for assertions.</li>
+<li><strong>Logging</strong>: Use <code>slog</code> structured logging. Include <code>component</code> and <code>plugin</code> fields.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

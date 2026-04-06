@@ -1,0 +1,1204 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://pawelharacz.github.io/Agentlens/superpowers/specs/2026-04-06-codeql-ssrf-sanitizer-model/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Task: Teach CodeQL that service.ValidateURL is an SSRF sanitizer - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#task-teach-codeql-that-servicevalidateurl-is-an-ssrf-sanitizer" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Task: Teach CodeQL that service.ValidateURL is an SSRF sanitizer
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authoritative-sources-of-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authoritative sources of truth
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#required-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-custom-codeql-config-sanitizer-query-pack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Custom CodeQL config + sanitizer query pack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Custom CodeQL config + sanitizer query pack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#githubcodeqlcodeql-configyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .github/codeql/codeql-config.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#githubcodeqlqlpackyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .github/codeql/qlpack.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#githubcodeqlsanitizersagentlenssanitizersqll" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .github/codeql/sanitizers/AgentLensSanitizers.qll
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#githubcodeqlsanitizersrequestforgerysanitizerql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .github/codeql/sanitizers/RequestForgerySanitizer.ql
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-wire-the-config-into-the-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Wire the config into the workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-inline-annotation-as-safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Inline annotation as safety net
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pull request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-not-to-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Things NOT to do
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="task-teach-codeql-that-servicevalidateurl-is-an-ssrf-sanitizer">Task: Teach CodeQL that <code>service.ValidateURL</code> is an SSRF sanitizer<a class="headerlink" href="#task-teach-codeql-that-servicevalidateurl-is-an-ssrf-sanitizer" title="Permanent link">&para;</a></h1>
+<h2 id="background">Background<a class="headerlink" href="#background" title="Permanent link">&para;</a></h2>
+<p><code>internal/service/card_fetcher.go:194</code> (<code>f.client.Do(req)</code>) is <strong>still</strong> flagged by GitHub Advanced Security under <code>go/request-forgery</code> ("Uncontrolled data used in network request"), even though the code has four layers of SSRF defense:</p>
+<ol>
+<li><code>ValidateURL</code> — scheme allowlist (<code>http</code>/<code>https</code> only) and private/loopback/link-local hostname &amp; IP rejection.</li>
+<li>URL reconstruction — the outbound <code>safeURL</code> is rebuilt from validated <code>Scheme</code>/<code>Host</code>/<code>Path</code>/<code>RawQuery</code> components, dropping <code>Fragment</code> and <code>Userinfo</code>.</li>
+<li><code>CheckRedirect</code> — re-runs <code>ValidateURL</code> on every redirect target, blocking public→internal bounces.</li>
+<li><code>net.Dialer.Control</code> — rejects connections to private IPs at socket level, closing the DNS-rebinding TOCTOU window.</li>
+</ol>
+<p>These protections are covered by 49 unit tests in <code>internal/service/card_fetcher_test.go</code> (red-green verified) and the alert was manually dismissed once. CodeQL re-raises it because its built-in <code>go/request-forgery</code> query does not recognize <code>service.ValidateURL</code> as a sanitizer in the taint-tracking dataflow — the user-controlled URL string flows uninterrupted from the request body all the way to <code>client.Do</code>, regardless of the runtime checks we perform on it.</p>
+<p>We have three options. We're picking option <strong>C</strong> and shipping it:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Why not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A. Domain allowlist</td>
+<td>Breaks the core feature: users legitimately import agent cards from arbitrary public URLs.</td>
+</tr>
+<tr>
+<td>B. Permanent dismissal in the Security UI</td>
+<td>Drifts: every new push that touches the file re-raises it; dismissals don't survive code motion; new contributors don't know it's intentional.</td>
+</tr>
+<tr>
+<td><strong>C. Custom CodeQL model</strong></td>
+<td><strong>Picked.</strong> Teaches CodeQL the truth: <code>ValidateURL</code> is a sanitizer. Travels with the code, applies to every PR automatically, and is the GitHub-recommended path for this exact situation. Falls back to inline <code>// lgtm[...]</code> annotation as a safety net if the model fails to load.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="authoritative-sources-of-truth">Authoritative sources of truth<a class="headerlink" href="#authoritative-sources-of-truth" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>internal/service/card_fetcher.go</code> — the function under scrutiny. Read it end-to-end before writing the model.</li>
+<li><code>internal/service/card_fetcher_test.go</code> — the test suite that proves the runtime guard works. Do not weaken it.</li>
+<li><code>.github/workflows/code-scanning.yml</code> — current CodeQL workflow (lines 16-42). You will extend it with a custom config.</li>
+<li>CodeQL Go standard library: <code>Sanitizer</code> and <code>BarrierGuard</code> patterns in the <code>RequestForgery::RequestForgery</code> taint-tracking module.</li>
+<li>GitHub docs on <a href="https://docs.github.com/en/code-security/codeql-cli/using-the-advanced-functionality-of-the-codeql-cli/creating-and-working-with-codeql-packs">model packs</a> and <a href="https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning#using-a-custom-configuration-file">config files</a>.</li>
+</ol>
+<h2 id="required-changes">Required changes<a class="headerlink" href="#required-changes" title="Permanent link">&para;</a></h2>
+<h3 id="1-custom-codeql-config-sanitizer-query-pack">1. Custom CodeQL config + sanitizer query pack<a class="headerlink" href="#1-custom-codeql-config-sanitizer-query-pack" title="Permanent link">&para;</a></h3>
+<p>Create the following directory tree at the repo root:</p>
+<div class="highlight"><pre><span></span><code>.github/
+  codeql/
+    codeql-config.yml
+    qlpack.yml
+    sanitizers/
+      AgentLensSanitizers.qll
+      RequestForgerySanitizer.ql
+</code></pre></div>
+<h4 id="githubcodeqlcodeql-configyml"><code>.github/codeql/codeql-config.yml</code><a class="headerlink" href="#githubcodeqlcodeql-configyml" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AgentLens</span><span class="nv"> </span><span class="s">CodeQL</span><span class="nv"> </span><span class="s">Config&quot;</span>
+
+<span class="c1"># Use the standard security-and-quality suite plus our custom sanitizer pack.</span>
+<span class="nt">queries</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">security-and-quality</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./sanitizers</span>
+
+<span class="c1"># We don&#39;t want to scan generated files or vendored deps.</span>
+<span class="nt">paths-ignore</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;web/dist/**&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;web/node_modules/**&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**/*_gen.go&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**/zz_generated_*.go&quot;</span>
+</code></pre></div>
+<h4 id="githubcodeqlqlpackyml"><code>.github/codeql/qlpack.yml</code><a class="headerlink" href="#githubcodeqlqlpackyml" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agentlens/custom-sanitizers</span>
+<span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0.1</span>
+<span class="nt">library</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">extractor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">go</span>
+<span class="nt">dependencies</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">codeql/go-all</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;*&quot;</span>
+</code></pre></div>
+<h4 id="githubcodeqlsanitizersagentlenssanitizersqll"><code>.github/codeql/sanitizers/AgentLensSanitizers.qll</code><a class="headerlink" href="#githubcodeqlsanitizersagentlenssanitizersqll" title="Permanent link">&para;</a></h4>
+<p>A barrier-guard module that marks any value passing through <code>service.ValidateURL</code> (or its method receiver <code>(*service.CardFetcher).ValidateURL</code>) as sanitized for the request-forgery flow.</p>
+<div class="highlight"><pre><span></span><code><span class="k k-Builtin">import</span><span class="w"> </span><span class="nv">go</span>
+<span class="k k-Builtin">import</span><span class="w"> </span><span class="nv">semmle</span><span class="p">.</span><span class="nv">go</span><span class="p">.</span><span class="nv">security</span><span class="p">.</span><span class="nc">RequestForgeryCustomizations</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * A call to `internal/service.ValidateURL` (or the method form on</span>
+<span class="cm"> * `*service.CardFetcher`). When this call returns nil error, the URL</span>
+<span class="cm"> * argument has been verified to be:</span>
+<span class="cm"> *   - non-empty</span>
+<span class="cm"> *   - http or https scheme only</span>
+<span class="cm"> *   - not pointing to a private/loopback/link-local hostname or IP</span>
+<span class="cm"> *</span>
+<span class="cm"> * The runtime guarantee is reinforced by:</span>
+<span class="cm"> *   - URL reconstruction (Fragment/Userinfo stripped before Do)</span>
+<span class="cm"> *   - CheckRedirect re-validating every redirect hop</span>
+<span class="cm"> *   - net.Dialer.Control rejecting private IPs at connect time</span>
+<span class="cm"> *</span>
+<span class="cm"> * See internal/service/card_fetcher.go and its accompanying test suite.</span>
+<span class="cm"> */</span>
+<span class="k k-Builtin">class</span><span class="w"> </span><span class="nc">AgentLensValidateURLBarrier</span><span class="w"> </span><span class="k k-Builtin">extends</span><span class="w"> </span><span class="nc">RequestForgery</span><span class="p">::</span><span class="nc">Sanitizer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nc">AgentLensValidateURLBarrier</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k k-Builtin">exists</span><span class="p">(</span><span class="nc">DataFlow</span><span class="p">::</span><span class="nc">CallNode</span><span class="w"> </span><span class="nv">call</span><span class="w"> </span><span class="err">|</span>
+<span class="w">      </span><span class="nv">call</span><span class="p">.</span><span class="nv">getTarget</span><span class="p">().</span><span class="nv">hasQualifiedName</span><span class="p">(</span><span class="s">&quot;github.com/PawelHaracz/agentlens/internal/service&quot;</span><span class="p">,</span>
+<span class="w">                                        </span><span class="s">&quot;ValidateURL&quot;</span><span class="p">)</span>
+<span class="w">      </span><span class="k k-Builtin">or</span>
+<span class="w">      </span><span class="nv">call</span><span class="p">.</span><span class="nv">getTarget</span><span class="p">().(</span><span class="nc">Method</span><span class="p">).</span><span class="nv">hasQualifiedName</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;github.com/PawelHaracz/agentlens/internal/service&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s">&quot;CardFetcher&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;ValidateURL&quot;</span>
+<span class="w">      </span><span class="p">)</span>
+<span class="w">    </span><span class="err">|</span>
+<span class="w">      </span><span class="nv">this</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">call</span><span class="p">.</span><span class="nv">getArgument</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<blockquote>
+<p>Note for the agent: the exact API for <code>RequestForgery::Sanitizer</code> may differ slightly between CodeQL library versions. If <code>RequestForgery::Sanitizer</code> is not the correct extension point in the version pinned by GitHub, use <code>RequestForgery::SanitizerGuard</code> or model it as a <code>TaintTracking::DefaultTaintSanitizer</code> member instead. Verify by reading the file at <code>codeql/go/ql/lib/semmle/go/security/RequestForgeryCustomizations.qll</code> from the CodeQL distribution and pick the extension point that the upstream <code>go/request-forgery</code> query actually consults. Document which variant you used and why in the PR description.</p>
+</blockquote>
+<h4 id="githubcodeqlsanitizersrequestforgerysanitizerql"><code>.github/codeql/sanitizers/RequestForgerySanitizer.ql</code><a class="headerlink" href="#githubcodeqlsanitizersrequestforgerysanitizerql" title="Permanent link">&para;</a></h4>
+<p>A trivial query file that just imports the customizations so CodeQL loads them. CodeQL only honors <code>.qll</code> files when they are reachable from a <code>.ql</code> query in the same pack.</p>
+<div class="highlight"><pre><span></span><code><span class="cm">/**</span>
+<span class="cm"> * @name AgentLens custom sanitizers loader</span>
+<span class="cm"> * @description Imports project-specific sanitizer extensions so they are</span>
+<span class="cm"> *              applied to standard security queries.</span>
+<span class="cm"> * @kind problem</span>
+<span class="cm"> * @id go/agentlens/custom-sanitizer-loader</span>
+<span class="cm"> * @tags security</span>
+<span class="cm"> */</span>
+<span class="k k-Builtin">import</span><span class="w"> </span><span class="nv">go</span>
+<span class="k k-Builtin">import</span><span class="w"> </span><span class="nc">AgentLensSanitizers</span>
+
+<span class="k k-Builtin">from</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nv">never</span>
+<span class="k k-Builtin">where</span><span class="w"> </span><span class="nv">never</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="w"> </span><span class="k k-Builtin">and</span><span class="w"> </span><span class="nv">never</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="k k-Builtin">select</span><span class="w"> </span><span class="nv">never</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;unreachable&quot;</span>
+</code></pre></div>
+<p>This query produces zero results by construction; its only purpose is to anchor the customization module so the CodeQL engine compiles and loads it.</p>
+<h3 id="2-wire-the-config-into-the-workflow">2. Wire the config into the workflow<a class="headerlink" href="#2-wire-the-config-into-the-workflow" title="Permanent link">&para;</a></h3>
+<p>Edit <code>.github/workflows/code-scanning.yml</code>, the <code>codeql</code> job (lines 16-42). Add <code>config-file</code> to the <code>Initialize CodeQL</code> step:</p>
+<div class="highlight"><pre><span></span><code><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Initialize CodeQL</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">github/codeql-action/init@v3</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">languages</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ matrix.language }}</span>
+<span class="w">          </span><span class="nt">config-file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./.github/codeql/codeql-config.yml</span>
+</code></pre></div>
+<p>Do not change anything else in <code>code-scanning.yml</code>. The <code>javascript-typescript</code> matrix entry will simply ignore the Go-only sanitizer pack.</p>
+<h3 id="3-inline-annotation-as-safety-net">3. Inline annotation as safety net<a class="headerlink" href="#3-inline-annotation-as-safety-net" title="Permanent link">&para;</a></h3>
+<p>Even with the model in place, add a single CodeQL suppression comment immediately above the <code>f.client.Do(req)</code> call in <code>internal/service/card_fetcher.go</code>. This is belt-and-braces: if the custom pack ever fails to load (e.g. CodeQL library version bump changes the API), the alert still won't reappear, and reviewers see the explicit reasoning right at the call site.</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="c1">// codeql[go/request-forgery]: URL is sanitized by service.ValidateURL above</span>
+<span class="w">    </span><span class="c1">// (scheme allowlist + private-IP rejection), reconstructed from validated</span>
+<span class="w">    </span><span class="c1">// components, redirects re-validated by CheckRedirect, and connections to</span>
+<span class="w">    </span><span class="c1">// private IPs are rejected at socket level by net.Dialer.Control.</span>
+<span class="w">    </span><span class="c1">// See internal/service/card_fetcher_test.go for the regression suite.</span>
+<span class="w">    </span><span class="nx">resp</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">f</span><span class="p">.</span><span class="nx">client</span><span class="p">.</span><span class="nx">Do</span><span class="p">(</span><span class="nx">req</span><span class="p">)</span>
+</code></pre></div>
+<p>Use the exact <code>// codeql[query-id]</code> form CodeQL recognizes. Do <strong>not</strong> use <code>// nolint</code>, <code>// lgtm</code>, or any other linter pragma — only the CodeQL one.</p>
+<h3 id="4-documentation">4. Documentation<a class="headerlink" href="#4-documentation" title="Permanent link">&para;</a></h3>
+<p>Add a short subsection to <code>docs/architecture.md</code> under the existing security/SSRF discussion (or create one if missing) explaining:
+- The four layers of SSRF defense in <code>card_fetcher.go</code>.
+- Why we ship a custom CodeQL sanitizer instead of dismissing alerts.
+- A pointer to <code>.github/codeql/sanitizers/AgentLensSanitizers.qll</code>.</p>
+<p>Keep it to ~10 lines. Use Mermaid only if a diagram clarifies the data flow; otherwise plain text.</p>
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Local CodeQL run</strong> (recommended; the agent should attempt this if the runner has the CLI):</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Install CodeQL CLI per https://github.com/github/codeql-cli-binaries</span>
+codeql<span class="w"> </span>database<span class="w"> </span>create<span class="w"> </span>--language<span class="o">=</span>go<span class="w"> </span>--source-root<span class="w"> </span>.<span class="w"> </span>agentlens-db
+codeql<span class="w"> </span>database<span class="w"> </span>analyze<span class="w"> </span>agentlens-db<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="o">=</span>sarif-latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="o">=</span>results.sarif<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.github/codeql/codeql-config.yml
+</code></pre></div>
+<p>Inspect <code>results.sarif</code> and confirm there is <strong>no</strong> <code>go/request-forgery</code> finding pointing at <code>internal/service/card_fetcher.go:194</code>. If the CLI isn't available in the runner, skip this step and rely on PR-time CI.</p>
+<ol>
+<li><strong>CI run</strong> — push to a branch, open the PR, and check the "Code Scanning" workflow:</li>
+<li>The <code>codeql</code> job (Go matrix entry) must complete successfully.</li>
+<li>The Security tab must not report <code>go/request-forgery</code> for <code>card_fetcher.go</code>.</li>
+<li>
+<p>No new alerts may be introduced for any other file.</p>
+</li>
+<li>
+<p><strong>Regression</strong> — <code>make test</code> and the existing <code>internal/service/card_fetcher_test.go</code> suite must still pass unchanged. This PR must not weaken any runtime check.</p>
+</li>
+<li>
+<p><strong>Lint</strong> — <code>make lint</code> must pass; the new comment block must not violate any golangci-lint rule.</p>
+</li>
+<li>
+<p><strong>Build</strong> — <code>make build</code> must succeed.</p>
+</li>
+</ol>
+<h2 id="pull-request">Pull request<a class="headerlink" href="#pull-request" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Title: <code>security(scanning): teach CodeQL about ValidateURL SSRF sanitizer</code></li>
+<li>Body must include:</li>
+<li>A summary of why the existing runtime guards are sufficient (link to <code>card_fetcher.go</code> and the test file).</li>
+<li>The CodeQL extension point you chose (<code>Sanitizer</code>, <code>SanitizerGuard</code>, or <code>TaintTracking::DefaultTaintSanitizer</code>) and why.</li>
+<li>The link to the dismissed alert this PR closes for good.</li>
+<li>Confirmation that no production code was changed beyond the single suppression comment block.</li>
+<li>Output of <code>make test</code> and <code>make lint</code>.</li>
+</ul>
+<h2 id="things-not-to-do">Things NOT to do<a class="headerlink" href="#things-not-to-do" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Do not weaken or remove any runtime SSRF check.</strong> The model is additive — the runtime guards are still the actual security boundary.</li>
+<li><strong>Do not add a domain allowlist.</strong> Importing arbitrary public agent cards is the entire point of the feature.</li>
+<li><strong>Do not dismiss the alert in the Security UI.</strong> Dismissals don't survive refactors, don't appear in code review, and don't help new contributors. The whole point of this PR is to make the suppression an artifact in the repo.</li>
+<li><strong>Do not blanket-disable <code>go/request-forgery</code></strong> anywhere — neither in <code>codeql-config.yml</code> (<code>query-filters</code>) nor anywhere else. We want it active for every other file.</li>
+<li><strong>Do not modify <code>internal/service/card_fetcher.go</code> beyond adding the codeql annotation comment.</strong> No refactoring, no signature changes, no new helpers.</li>
+<li><strong>Do not touch the existing test file</strong> other than (optionally) adding a one-line comment pointing to this spec near the top.</li>
+<li><strong>Do not introduce a new top-level directory.</strong> Everything lives under <code>.github/codeql/</code> and (one comment) <code>internal/service/card_fetcher.go</code>.</li>
+<li><strong>Do not bump CodeQL action versions</strong> (<code>github/codeql-action/init@v3</code>, <code>analyze@v3</code>) — that is a separate concern.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
