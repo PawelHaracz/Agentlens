@@ -37,9 +37,20 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
 
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - API Reference: api.md
+  - User Guide: user-guide.md
+  - End User Guide: end-user-guide.md
+  - Developer Guide: developer-guide.md
+  - DevOps Guide: devops-guide.md
+  - Authentication: auth.md
+  - Database: database.md
+  - Settings: settings.md
+
 plugins:
   - search
-  - awesome-pages
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
