@@ -115,6 +115,5 @@ functionsRules:
 namingRules:
   - package: "**.plugins.**"
     interfaceImplementationNamingRule:
-      structsThatImplement:
-        internal: "*Plugin"
+      structsThatImplement: "*Plugin"
       shouldHaveSimpleNameEndingWith: "Plugin"

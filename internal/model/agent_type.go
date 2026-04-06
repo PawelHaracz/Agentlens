@@ -9,16 +9,16 @@ import (
 
 // AgentType represents a ProductType — "what the agent IS".
 type AgentType struct {
-	ID            string          `json:"id"             gorm:"primaryKey;type:text"`
-	AgentKey      string          `json:"agent_key"      gorm:"not null;type:text;index"`
-	Protocol      Protocol        `json:"protocol"       gorm:"not null;type:text"`
-	Endpoint      string          `json:"endpoint"       gorm:"not null;type:text"`
-	Version       string          `json:"version"        gorm:"not null;type:text;default:''"`
-	SpecVersion   string          `json:"spec_version"   gorm:"type:text;default:''"`
-	ProviderID    *string         `json:"provider_id,omitempty" gorm:"type:text;index"`
-	Provider      *Provider       `json:"provider,omitempty"    gorm:"foreignKey:ProviderID"`
-	RawDefinition []byte          `json:"-"              gorm:"not null;type:blob"`
-	CreatedOn     time.Time       `json:"created_on"`
+	ID            string    `json:"id"             gorm:"primaryKey;type:text"`
+	AgentKey      string    `json:"agent_key"      gorm:"not null;type:text;index"`
+	Protocol      Protocol  `json:"protocol"       gorm:"not null;type:text"`
+	Endpoint      string    `json:"endpoint"       gorm:"not null;type:text"`
+	Version       string    `json:"version"        gorm:"not null;type:text;default:''"`
+	SpecVersion   string    `json:"spec_version"   gorm:"type:text;default:''"`
+	ProviderID    *string   `json:"provider_id,omitempty" gorm:"type:text;index"`
+	Provider      *Provider `json:"provider,omitempty"    gorm:"foreignKey:ProviderID"`
+	RawDefinition []byte    `json:"-"              gorm:"not null;type:blob"`
+	CreatedOn     time.Time `json:"created_on"`
 
 	// Capabilities loaded separately, not via GORM auto-preload.
 	Capabilities []Capability `json:"capabilities,omitempty" gorm:"-"`

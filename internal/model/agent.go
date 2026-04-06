@@ -119,13 +119,13 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 
 	// Pull fields from AgentType when available.
 	var (
-		protocol    Protocol
-		endpoint    string
-		version     string
-		specVersion string
-		provider    *Provider
+		protocol     Protocol
+		endpoint     string
+		version      string
+		specVersion  string
+		provider     *Provider
 		capabilities []Capability
-		rawDef      json.RawMessage
+		rawDef       json.RawMessage
 	)
 	if e.AgentType != nil {
 		protocol = e.AgentType.Protocol
@@ -145,24 +145,24 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		ID          string            `json:"id"`
-		AgentTypeID string            `json:"agent_type_id"`
-		DisplayName string            `json:"display_name"`
-		Description string            `json:"description"`
-		Protocol    Protocol          `json:"protocol,omitempty"`
-		Endpoint    string            `json:"endpoint,omitempty"`
-		Version     string            `json:"version,omitempty"`
-		SpecVersion string            `json:"spec_version,omitempty"`
-		Status      Status            `json:"status"`
-		Source      SourceType        `json:"source"`
-		Provider    *Provider         `json:"provider,omitempty"`
-		Categories  []string          `json:"categories,omitempty"`
-		Capabilities json.RawMessage  `json:"capabilities,omitempty"`
-		Validity    Validity          `json:"validity"`
-		Metadata    map[string]string `json:"metadata,omitempty"`
-		RawDef      json.RawMessage   `json:"raw_definition,omitempty"`
-		CreatedAt   time.Time         `json:"created_at"`
-		UpdatedAt   time.Time         `json:"updated_at"`
+		ID           string            `json:"id"`
+		AgentTypeID  string            `json:"agent_type_id"`
+		DisplayName  string            `json:"display_name"`
+		Description  string            `json:"description"`
+		Protocol     Protocol          `json:"protocol,omitempty"`
+		Endpoint     string            `json:"endpoint,omitempty"`
+		Version      string            `json:"version,omitempty"`
+		SpecVersion  string            `json:"spec_version,omitempty"`
+		Status       Status            `json:"status"`
+		Source       SourceType        `json:"source"`
+		Provider     *Provider         `json:"provider,omitempty"`
+		Categories   []string          `json:"categories,omitempty"`
+		Capabilities json.RawMessage   `json:"capabilities,omitempty"`
+		Validity     Validity          `json:"validity"`
+		Metadata     map[string]string `json:"metadata,omitempty"`
+		RawDef       json.RawMessage   `json:"raw_definition,omitempty"`
+		CreatedAt    time.Time         `json:"created_at"`
+		UpdatedAt    time.Time         `json:"updated_at"`
 	}{
 		ID:           e.ID,
 		AgentTypeID:  e.AgentTypeID,

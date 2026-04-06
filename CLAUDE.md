@@ -248,6 +248,16 @@ rtk git worktree        # Compact worktree
 
 Note: Git passthrough works for ALL subcommands, even those not explicitly listed.
 
+### Go (70-90% savings)
+```bash
+rtk go build            # Compact build output (80%)
+rtk go test             # Compact test output (90%)
+rtk go vet              # Compact vet output (70%)
+rtk go fmt              # Compact formatting output
+rtk go mod tidy         # Compact module tidy output (85%)
+rtk go run <file>       # Compact run output
+```
+
 ### GitHub (26-87% savings)
 ```bash
 rtk gh pr view <num>    # Compact PR view (87%)

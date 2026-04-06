@@ -49,4 +49,3 @@ func (c *Core) Parser(protocol model.Protocol) (ParserPlugin, bool) {
 	p, ok := c.parsers[protocol]
 	return p, ok
 }
-

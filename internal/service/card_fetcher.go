@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -40,12 +41,37 @@ type CardFetcher struct {
 
 // NewCardFetcher creates a CardFetcher with safe defaults.
 func NewCardFetcher() *CardFetcher {
+	dialer := &net.Dialer{
+		Timeout: fetchTimeout,
+		Control: func(_, address string, _ syscall.RawConn) error {
+			// Defense-in-depth against DNS rebinding: reject any resolved address
+			// that turns out to be private/loopback/link-local at connect time.
+			host, _, err := net.SplitHostPort(address)
+			if err != nil {
+				return fmt.Errorf("invalid dial address: %w", err)
+			}
+			ip := net.ParseIP(host)
+			if ip == nil {
+				return fmt.Errorf("dial address is not an IP literal: %s", host)
+			}
+			if isPrivateIP(ip) {
+				return fmt.Errorf("refusing to connect to private address %s", host)
+			}
+			return nil
+		},
+	}
 	return &CardFetcher{
 		client: &http.Client{
-			Timeout: fetchTimeout,
+			Timeout:   fetchTimeout,
+			Transport: &http.Transport{DialContext: dialer.DialContext},
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				if len(via) >= maxRedirects {
 					return fmt.Errorf("too many redirects")
+				}
+				// Re-validate the redirect target — a public host must not be
+				// allowed to bounce us to an internal one.
+				if err := ValidateURL(req.URL.String()); err != nil {
+					return fmt.Errorf("unsafe redirect target: %w", err)
 				}
 				return nil
 			},
@@ -146,7 +172,19 @@ func (f *CardFetcher) Fetch(ctx context.Context, rawURL string) (*FetchResult, e
 	if err := ValidateURL(rawURL); err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	// Reparse and rebuild the URL from validated components so the request
+	// target cannot smuggle through anything ValidateURL did not inspect.
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid url: %w", err)
+	}
+	safeURL := (&url.URL{
+		Scheme:   parsed.Scheme,
+		Host:     parsed.Host,
+		Path:     parsed.Path,
+		RawQuery: parsed.RawQuery,
+	}).String()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, safeURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
@@ -173,7 +211,7 @@ func (f *CardFetcher) Fetch(ctx context.Context, rawURL string) (*FetchResult, e
 		return nil, fmt.Errorf("response is not valid JSON")
 	}
 
-	protocol := detectProtocol(rawURL, body)
+	protocol := detectProtocol(safeURL, body)
 
 	return &FetchResult{
 		RawJSON:          json.RawMessage(body),

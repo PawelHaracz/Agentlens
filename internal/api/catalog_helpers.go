@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	errUpsertProvider   = errors.New("failed to upsert provider")
+	errUpsertProvider    = errors.New("failed to upsert provider")
 	errDuplicateEndpoint = errors.New("an entry with this endpoint already exists")
-	errCreateEntry      = errors.New("failed to create catalog entry")
+	errCreateEntry       = errors.New("failed to create catalog entry")
 )
 
 // registerAgentType is shared post-parse logic used by both ImportCatalogEntry and
