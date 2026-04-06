@@ -11,7 +11,7 @@ vi.mock('../api', () => ({
   getToken: vi.fn(),
 }))
 
-const mockApi = api as Record<string, ReturnType<typeof vi.fn>>
+const mockApi = api as unknown as Record<string, ReturnType<typeof vi.fn>>
 
 beforeEach(() => {
   vi.clearAllMocks()

@@ -97,8 +97,8 @@ describe('LoginPage', () => {
   it('disables the submit button while signing in', async () => {
     const user = userEvent.setup()
     const { mockLogin } = renderLoginPage()
-    let resolve: () => void
-    mockLogin.mockReturnValue(new Promise(r => { resolve = r }))
+    let resolve!: (value: void | PromiseLike<void>) => void
+    mockLogin.mockReturnValue(new Promise<void>(r => { resolve = r }))
 
     await user.type(screen.getByLabelText(/username/i), 'admin')
     await user.type(screen.getByLabelText(/password/i), 'pass')
@@ -110,6 +110,6 @@ describe('LoginPage', () => {
       expect(screen.getByRole('button', { name: /signing in/i })).toBeDisabled()
     })
 
-    resolve!()
+    resolve()
   })
 })

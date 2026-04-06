@@ -32,7 +32,7 @@ import * as api from '../api'
 
 const mockUseAuth = useAuth as ReturnType<typeof vi.fn>
 const mockUseTheme = useTheme as ReturnType<typeof vi.fn>
-const mockApi = api as Record<string, ReturnType<typeof vi.fn>>
+const mockApi = api as unknown as Record<string, ReturnType<typeof vi.fn>>
 
 const mockUser = {
   id: 'u1',
