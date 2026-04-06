@@ -591,7 +591,7 @@ hostname.
 - Health checking is disabled (`AGENTLENS_HEALTH_CHECK_ENABLED=false` or
   `health.check_interval` is very large).
 - The agent's endpoint is unreachable so the checker recorded an error — but in that case the
-  status would be `down`, not `unknown`.
+  status would be `Down`, not `Unknown`.
 
 ### An agent shows "Down" — how do I investigate?
 

@@ -30,6 +30,12 @@ const DOCS_IMAGES = path.resolve(__dirname, '../../docs/images');
 
 const VIEWPORT = { width: 1440, height: 900 };
 
+/** Timeout for error/validation elements to become visible. */
+const ERROR_DISPLAY_TIMEOUT = 10_000;
+
+/** Timeout for async operations (validation, import). */
+const ASYNC_OP_TIMEOUT = 15_000;
+
 // ────────── seed data ──────────
 // A2A entry with skills
 const A2A_CARD = JSON.stringify({
@@ -139,7 +145,7 @@ test.describe('Documentation Screenshots', () => {
     await page.getByLabel('Password').fill('wrongpassword!!');
     await page.getByRole('button', { name: 'Sign in' }).click();
     // Wait for error message
-    await page.waitForSelector('.text-destructive', { timeout: 10_000 });
+    await page.waitForSelector('.text-destructive', { timeout: ERROR_DISPLAY_TIMEOUT });
     await page.screenshot({ path: `${DOCS_IMAGES}/login-error.png`, fullPage: false });
   });
 
@@ -278,7 +284,7 @@ test.describe('Documentation Screenshots', () => {
     await page.getByPlaceholder(/https:\/\/example\.com/i).fill('http://127.0.0.1:9999/agent.json');
     await page.getByRole('button', { name: /fetch.*import/i }).click();
     // Wait for error to appear
-    await page.waitForSelector('.text-destructive', { timeout: 15_000 });
+    await page.waitForSelector('.text-destructive', { timeout: ASYNC_OP_TIMEOUT });
     await page.screenshot({ path: `${DOCS_IMAGES}/register-import-url-error-private.png`, fullPage: false });
   });
 
@@ -312,7 +318,7 @@ test.describe('Documentation Screenshots', () => {
     await page.locator('textarea').fill(invalidCard);
     await page.getByRole('button', { name: 'Validate' }).click();
     // Wait for validation result
-    await page.waitForSelector('.text-destructive, .border-destructive', { timeout: 15_000 });
+    await page.waitForSelector('.text-destructive, .border-destructive', { timeout: ASYNC_OP_TIMEOUT });
     await page.screenshot({ path: `${DOCS_IMAGES}/register-paste-json-validation.png`, fullPage: false });
   });
 
@@ -325,7 +331,7 @@ test.describe('Documentation Screenshots', () => {
     await page.locator('textarea').fill(A2A_CARD);
     await page.getByRole('button', { name: 'Validate' }).click();
     // Wait for preview step
-    await page.waitForSelector('button:has-text("Register Agent"):not([aria-label])', { timeout: 15_000 });
+    await page.waitForSelector('button:has-text("Register Agent"):not([aria-label])', { timeout: ASYNC_OP_TIMEOUT });
     await page.screenshot({ path: `${DOCS_IMAGES}/register-paste-json-preview.png`, fullPage: false });
   });
 
@@ -459,8 +465,8 @@ test.describe('Documentation Screenshots', () => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Open the user dropdown
-    await page.getByRole('button').filter({ hasText: /[A-Z]{1,2}/ }).first().click();
+    // Open the user dropdown — target the trigger button by its initials div child
+    await page.locator('header button').filter({ has: page.locator('.rounded-full') }).click();
     await page.waitForSelector('[role="menu"]');
     await page.screenshot({ path: `${DOCS_IMAGES}/user-dropdown.png`, fullPage: false });
   });
