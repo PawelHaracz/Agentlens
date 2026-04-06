@@ -1,6 +1,6 @@
-site_name: Agentlens
-site_description: Agentlens - AI Agent Observability Platform
-site_url: https://pawelharacz.github.io/Agentlens
+site_name: AgentLens
+site_description: AgentLens - AI Agent Observability Platform
+site_url: https://pawelharacz.github.io/Agentlens/
 repo_url: https://github.com/PawelHaracz/Agentlens
 repo_name: PawelHaracz/Agentlens
 docs_dir: docs

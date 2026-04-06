@@ -7,6 +7,7 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'requirements-docs.txt'
   workflow_dispatch:
 
 permissions:
@@ -24,9 +25,10 @@ jobs:
         with:
           python-version: '3.x'
           cache: pip
+          cache-dependency-path: requirements-docs.txt
 
       - name: Install MkDocs Material
-        run: pip install mkdocs-material
+        run: pip install -r requirements-docs.txt
 
       - name: Deploy to GitHub Pages
         run: mkdocs gh-deploy --force
