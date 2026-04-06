@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -39,9 +39,15 @@ const baseEntry: CatalogEntry = {
   updated_at: '2026-01-01T00:00:00Z',
 }
 
+let confirmSpy: ReturnType<typeof vi.spyOn>
+
 beforeEach(() => {
   vi.clearAllMocks()
-  window.confirm = vi.fn().mockReturnValue(true)
+  confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+})
+
+afterEach(() => {
+  confirmSpy.mockRestore()
 })
 
 function renderEntryDetail(id = 'entry-1') {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
@@ -67,6 +67,10 @@ beforeEach(() => {
   mockApi.getSettings.mockResolvedValue([])
   mockApi.listUsers.mockResolvedValue([])
   mockApi.listRoles.mockResolvedValue([])
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 function renderSettingsPage() {
@@ -213,7 +217,9 @@ describe('SettingsPage', () => {
   })
 
   it('saves settings via Save settings button in General tab', async () => {
-    const user = userEvent.setup()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+
     mockApi.updateSettings.mockResolvedValue(undefined)
     renderSettingsPage()
 
@@ -222,6 +228,8 @@ describe('SettingsPage', () => {
     await waitFor(() => {
       expect(mockApi.updateSettings).toHaveBeenCalled()
     })
+
+    vi.runOnlyPendingTimers()
   })
 })
 
@@ -366,16 +374,20 @@ describe('SettingsPage — Users tab CRUD', () => {
   })
 
   it('calls deleteUser when confirming delete', async () => {
-    window.confirm = vi.fn().mockReturnValue(true)
-    mockApi.deleteUser.mockResolvedValue(undefined)
-    const user = await openUsersTab()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    try {
+      mockApi.deleteUser.mockResolvedValue(undefined)
+      const user = await openUsersTab()
 
-    const deleteBtn = screen.getByTitle('Delete')
-    await user.click(deleteBtn)
+      const deleteBtn = screen.getByTitle('Delete')
+      await user.click(deleteBtn)
 
-    await waitFor(() => {
-      expect(mockApi.deleteUser).toHaveBeenCalledWith('u2')
-    })
+      await waitFor(() => {
+        expect(mockApi.deleteUser).toHaveBeenCalledWith('u2')
+      })
+    } finally {
+      confirmSpy.mockRestore()
+    }
   })
 
   it('calls updateUser when toggling lock', async () => {

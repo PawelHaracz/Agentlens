@@ -352,7 +352,7 @@ describe('RegisterAgentDialog — URL import with explicit protocol', () => {
     vi.clearAllMocks()
   })
 
-  it('includes selected protocol when not auto', async () => {
+  it('omits protocol when set to auto (default)', async () => {
     const { importCardFromURL } = await import('../api')
     const mockImport = importCardFromURL as ReturnType<typeof vi.fn>
     mockImport.mockResolvedValue({})

@@ -144,7 +144,7 @@ describe('Layout — mobile menu', () => {
       </MemoryRouter>
     )
 
-    const hamburger = screen.getByRole('button', { name: '' })
+    const hamburger = screen.getByRole('button', { name: /Open menu/ })
     await user.click(hamburger)
 
     const navLinks = screen.getAllByRole('link', { name: 'Catalog' })
@@ -160,7 +160,7 @@ describe('Layout — mobile menu', () => {
       </MemoryRouter>
     )
 
-    const hamburger = screen.getByRole('button', { name: '' })
+    const hamburger = screen.getByRole('button', { name: /Open menu/ })
     await user.click(hamburger)
 
     const mobileLinks = screen.getAllByRole('link', { name: 'Catalog' })

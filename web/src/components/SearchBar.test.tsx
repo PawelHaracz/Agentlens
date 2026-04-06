@@ -26,6 +26,9 @@ describe('SearchBar', () => {
     render(<SearchBar value="" onChange={onChange} />)
     await user.type(screen.getByRole('textbox'), 'abc')
     expect(onChange).toHaveBeenCalledTimes(3)
+    expect(onChange).toHaveBeenNthCalledWith(1, 'a')
+    expect(onChange).toHaveBeenNthCalledWith(2, 'b')
+    expect(onChange).toHaveBeenNthCalledWith(3, 'c')
     expect(onChange).toHaveBeenLastCalledWith('c')
   })
 
