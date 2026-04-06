@@ -14,10 +14,10 @@ GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
 
 .PHONY: all check build test lint format run clean help \
         test-coverage test-race vet \
-        web-install web-build web-lint web-test web-test-coverage \
-        e2e-install e2e-test \
+        web-install web-build web-lint web-test \
+        e2e-install e2e-test docs-screenshots \
         helm-lint docker-build docker-scan \
-        deps tools arch-test
+        deps tools arch-test web-test-coverage
 
 ## help: Show this help message
 help:
@@ -128,6 +128,10 @@ e2e-install:
 ## e2e-test: Run Playwright E2E tests (requires built binary and frontend)
 e2e-test:
 	./e2e/run-e2e.sh
+
+## docs-screenshots: Regenerate docs/images/ screenshots using the Playwright generator spec
+docs-screenshots:
+	./e2e/run-e2e.sh tests/docs-screenshots.spec.ts
 
 # ---------------------------------------------------------------------------
 # Docker & Helm targets
