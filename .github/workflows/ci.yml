@@ -80,8 +80,16 @@ jobs:
       - name: Install frontend dependencies
         run: make web-install
 
-      - name: Run frontend unit tests
-        run: make web-test
+      - name: Run frontend unit tests with coverage
+        run: make web-test-coverage
+
+      - name: Upload frontend coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-coverage-report
+          path: web/coverage/
+          retention-days: 14
 
   build:
     name: Build
