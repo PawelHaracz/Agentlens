@@ -1,4 +1,1507 @@
-<!doctype html><html lang=en class=no-js> <head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="AgentLens - AI Agent Observability Platform"><link href=https://pawelharacz.github.io/Agentlens/architecture/ rel=canonical><link rel=prev href=..><link href=../api/ rel=next><link rel=icon href=../assets/images/favicon.png><meta name=generator content="mkdocs-1.6.1, mkdocs-material-9.7.6"><title>Architecture - AgentLens</title><link rel=stylesheet href=../assets/stylesheets/main.484c7ddc.min.css><link rel=stylesheet href=../assets/stylesheets/palette.ab4e12ef.min.css><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback"><style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style><link rel=stylesheet href=../css/timeago.css><script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script></head> <body dir=ltr data-md-color-scheme=default data-md-color-primary=indigo data-md-color-accent=indigo> <input class=md-toggle data-md-toggle=drawer type=checkbox id=__drawer autocomplete=off> <input class=md-toggle data-md-toggle=search type=checkbox id=__search autocomplete=off> <label class=md-overlay for=__drawer></label> <div data-md-component=skip> <a href=#architecture class=md-skip> Skip to content </a> </div> <div data-md-component=announce> </div> <header class=md-header data-md-component=header> <nav class="md-header__inner md-grid" aria-label=Header> <a href=.. title=AgentLens class="md-header__button md-logo" aria-label=AgentLens data-md-component=logo> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg> </a> <label class="md-header__button md-icon" for=__drawer> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg> </label> <div class=md-header__title data-md-component=header-title> <div class=md-header__ellipsis> <div class=md-header__topic> <span class=md-ellipsis> AgentLens </span> </div> <div class=md-header__topic data-md-component=header-topic> <span class=md-ellipsis> Architecture </span> </div> </div> </div> <form class=md-header__option data-md-component=palette> <input class=md-option data-md-color-media data-md-color-scheme=default data-md-color-primary=indigo data-md-color-accent=indigo aria-label="Switch to dark mode" type=radio name=__palette id=__palette_0> <label class="md-header__button md-icon" title="Switch to dark mode" for=__palette_1 hidden> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg> </label> <input class=md-option data-md-color-media data-md-color-scheme=slate data-md-color-primary=indigo data-md-color-accent=indigo aria-label="Switch to light mode" type=radio name=__palette id=__palette_1> <label class="md-header__button md-icon" title="Switch to light mode" for=__palette_0 hidden> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg> </label> </form> <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script> <label class="md-header__button md-icon" for=__search> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg> </label> <div class=md-search data-md-component=search role=dialog> <label class=md-search__overlay for=__search></label> <div class=md-search__inner role=search> <form class=md-search__form name=search> <input type=text class=md-search__input name=query aria-label=Search placeholder=Search autocapitalize=off autocorrect=off autocomplete=off spellcheck=false data-md-component=search-query required> <label class="md-search__icon md-icon" for=__search> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg> </label> <nav class=md-search__options aria-label=Search> <button type=reset class="md-search__icon md-icon" title=Clear aria-label=Clear tabindex=-1> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> </button> </nav> <div class=md-search__suggest data-md-component=search-suggest></div> </form> <div class=md-search__output> <div class=md-search__scrollwrap tabindex=0 data-md-scrollfix> <div class=md-search-result data-md-component=search-result> <div class=md-search-result__meta> Initializing search </div> <ol class=md-search-result__list role=presentation></ol> </div> </div> </div> </div> </div> <div class=md-header__source> <a href=https://github.com/PawelHaracz/Agentlens title="Go to repository" class=md-source data-md-component=source> <div class="md-source__icon md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 448 512"><!-- Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg> </div> <div class=md-source__repository> PawelHaracz/Agentlens </div> </a> </div> </nav> </header> <div class=md-container data-md-component=container> <nav class=md-tabs aria-label=Tabs data-md-component=tabs> <div class=md-grid> <ul class=md-tabs__list> <li class=md-tabs__item> <a href=.. class=md-tabs__link> Home </a> </li> <li class="md-tabs__item md-tabs__item--active"> <a href=./ class=md-tabs__link> Architecture </a> </li> <li class=md-tabs__item> <a href=../api/ class=md-tabs__link> API Reference </a> </li> <li class=md-tabs__item> <a href=../user-guide/ class=md-tabs__link> User Guide </a> </li> <li class=md-tabs__item> <a href=../end-user-guide/ class=md-tabs__link> End User Guide </a> </li> <li class=md-tabs__item> <a href=../developer-guide/ class=md-tabs__link> Developer Guide </a> </li> <li class=md-tabs__item> <a href=../devops-guide/ class=md-tabs__link> DevOps Guide </a> </li> <li class=md-tabs__item> <a href=../auth/ class=md-tabs__link> Authentication </a> </li> <li class=md-tabs__item> <a href=../database/ class=md-tabs__link> Database </a> </li> <li class=md-tabs__item> <a href=../settings/ class=md-tabs__link> Settings </a> </li> </ul> </div> </nav> <main class=md-main data-md-component=main> <div class="md-main__inner md-grid"> <div class="md-sidebar md-sidebar--primary" data-md-component=sidebar data-md-type=navigation> <div class=md-sidebar__scrollwrap> <div class=md-sidebar__inner> <nav class="md-nav md-nav--primary md-nav--lifted" aria-label=Navigation data-md-level=0> <label class=md-nav__title for=__drawer> <a href=.. title=AgentLens class="md-nav__button md-logo" aria-label=AgentLens data-md-component=logo> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg> </a> AgentLens </label> <div class=md-nav__source> <a href=https://github.com/PawelHaracz/Agentlens title="Go to repository" class=md-source data-md-component=source> <div class="md-source__icon md-icon"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 448 512"><!-- Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg> </div> <div class=md-source__repository> PawelHaracz/Agentlens </div> </a> </div> <ul class=md-nav__list data-md-scrollfix> <li class=md-nav__item> <a href=.. class=md-nav__link> <span class=md-ellipsis> Home </span> </a> </li> <li class="md-nav__item md-nav__item--active"> <input class="md-nav__toggle md-toggle" type=checkbox id=__toc> <label class="md-nav__link md-nav__link--active" for=__toc> <span class=md-ellipsis> Architecture </span> <span class="md-nav__icon md-icon"></span> </label> <a href=./ class="md-nav__link md-nav__link--active"> <span class=md-ellipsis> Architecture </span> </a> <nav class="md-nav md-nav--secondary" aria-label="Table of contents"> <label class=md-nav__title for=__toc> <span class="md-nav__icon md-icon"></span> Table of contents </label> <ul class=md-nav__list data-md-component=toc data-md-scrollfix> <li class=md-nav__item> <a href=#high-level-overview class=md-nav__link> <span class=md-ellipsis> High-Level Overview </span> </a> </li> <li class=md-nav__item> <a href=#domain-model-product-archetype-pattern class=md-nav__link> <span class=md-ellipsis> Domain Model: Product Archetype Pattern </span> </a> <nav class=md-nav aria-label="Domain Model: Product Archetype Pattern"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#core-types class=md-nav__link> <span class=md-ellipsis> Core Types </span> </a> </li> <li class=md-nav__item> <a href=#auth-identity-types class=md-nav__link> <span class=md-ellipsis> Auth &amp; Identity Types </span> </a> </li> <li class=md-nav__item> <a href=#entity-relationships class=md-nav__link> <span class=md-ellipsis> Entity Relationships </span> </a> </li> <li class=md-nav__item> <a href=#capability-kinds class=md-nav__link> <span class=md-ellipsis> Capability Kinds </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#microkernel-plugin-architecture class=md-nav__link> <span class=md-ellipsis> Microkernel Plugin Architecture </span> </a> <nav class=md-nav aria-label="Microkernel Plugin Architecture"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#plugin-interface class=md-nav__link> <span class=md-ellipsis> Plugin Interface </span> </a> </li> <li class=md-nav__item> <a href=#plugin-types class=md-nav__link> <span class=md-ellipsis> Plugin Types </span> </a> </li> <li class=md-nav__item> <a href=#plugin-lifecycle class=md-nav__link> <span class=md-ellipsis> Plugin Lifecycle </span> </a> </li> <li class=md-nav__item> <a href=#kernel-interface class=md-nav__link> <span class=md-ellipsis> Kernel Interface </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#component-details class=md-nav__link> <span class=md-ellipsis> Component Details </span> </a> <nav class=md-nav aria-label="Component Details"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#rest-api class=md-nav__link> <span class=md-ellipsis> REST API </span> </a> </li> <li class=md-nav__item> <a href=#auth-layer class=md-nav__link> <span class=md-ellipsis> Auth Layer </span> </a> </li> <li class=md-nav__item> <a href=#database-layer class=md-nav__link> <span class=md-ellipsis> Database Layer </span> </a> </li> <li class=md-nav__item> <a href=#discovery-manager class=md-nav__link> <span class=md-ellipsis> Discovery Manager </span> </a> </li> <li class=md-nav__item> <a href=#web-dashboard class=md-nav__link> <span class=md-ellipsis> Web Dashboard </span> </a> </li> <li class=md-nav__item> <a href=#health-checker class=md-nav__link> <span class=md-ellipsis> Health Checker </span> </a> </li> <li class=md-nav__item> <a href=#enterprise-plugins-license-gated class=md-nav__link> <span class=md-ellipsis> Enterprise Plugins (License-Gated) </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#data-flow class=md-nav__link> <span class=md-ellipsis> Data Flow </span> </a> <nav class=md-nav aria-label="Data Flow"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#request-flow class=md-nav__link> <span class=md-ellipsis> Request Flow </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#directory-structure class=md-nav__link> <span class=md-ellipsis> Directory Structure </span> </a> </li> <li class=md-nav__item> <a href=#configuration class=md-nav__link> <span class=md-ellipsis> Configuration </span> </a> </li> <li class=md-nav__item> <a href=#deployment class=md-nav__link> <span class=md-ellipsis> Deployment </span> </a> <nav class=md-nav aria-label=Deployment> <ul class=md-nav__list> <li class=md-nav__item> <a href=#docker class=md-nav__link> <span class=md-ellipsis> Docker </span> </a> </li> <li class=md-nav__item> <a href=#docker-compose-sqlite class=md-nav__link> <span class=md-ellipsis> Docker Compose (SQLite) </span> </a> </li> <li class=md-nav__item> <a href=#docker-compose-postgresql class=md-nav__link> <span class=md-ellipsis> Docker Compose (PostgreSQL) </span> </a> </li> <li class=md-nav__item> <a href=#kubernetes-helm class=md-nav__link> <span class=md-ellipsis> Kubernetes (Helm) </span> </a> </li> </ul> </nav> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=../api/ class=md-nav__link> <span class=md-ellipsis> API Reference </span> </a> </li> <li class=md-nav__item> <a href=../user-guide/ class=md-nav__link> <span class=md-ellipsis> User Guide </span> </a> </li> <li class=md-nav__item> <a href=../end-user-guide/ class=md-nav__link> <span class=md-ellipsis> End User Guide </span> </a> </li> <li class=md-nav__item> <a href=../developer-guide/ class=md-nav__link> <span class=md-ellipsis> Developer Guide </span> </a> </li> <li class=md-nav__item> <a href=../devops-guide/ class=md-nav__link> <span class=md-ellipsis> DevOps Guide </span> </a> </li> <li class=md-nav__item> <a href=../auth/ class=md-nav__link> <span class=md-ellipsis> Authentication </span> </a> </li> <li class=md-nav__item> <a href=../database/ class=md-nav__link> <span class=md-ellipsis> Database </span> </a> </li> <li class=md-nav__item> <a href=../settings/ class=md-nav__link> <span class=md-ellipsis> Settings </span> </a> </li> </ul> </nav> </div> </div> </div> <div class="md-sidebar md-sidebar--secondary" data-md-component=sidebar data-md-type=toc> <div class=md-sidebar__scrollwrap> <div class=md-sidebar__inner> <nav class="md-nav md-nav--secondary" aria-label="Table of contents"> <label class=md-nav__title for=__toc> <span class="md-nav__icon md-icon"></span> Table of contents </label> <ul class=md-nav__list data-md-component=toc data-md-scrollfix> <li class=md-nav__item> <a href=#high-level-overview class=md-nav__link> <span class=md-ellipsis> High-Level Overview </span> </a> </li> <li class=md-nav__item> <a href=#domain-model-product-archetype-pattern class=md-nav__link> <span class=md-ellipsis> Domain Model: Product Archetype Pattern </span> </a> <nav class=md-nav aria-label="Domain Model: Product Archetype Pattern"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#core-types class=md-nav__link> <span class=md-ellipsis> Core Types </span> </a> </li> <li class=md-nav__item> <a href=#auth-identity-types class=md-nav__link> <span class=md-ellipsis> Auth &amp; Identity Types </span> </a> </li> <li class=md-nav__item> <a href=#entity-relationships class=md-nav__link> <span class=md-ellipsis> Entity Relationships </span> </a> </li> <li class=md-nav__item> <a href=#capability-kinds class=md-nav__link> <span class=md-ellipsis> Capability Kinds </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#microkernel-plugin-architecture class=md-nav__link> <span class=md-ellipsis> Microkernel Plugin Architecture </span> </a> <nav class=md-nav aria-label="Microkernel Plugin Architecture"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#plugin-interface class=md-nav__link> <span class=md-ellipsis> Plugin Interface </span> </a> </li> <li class=md-nav__item> <a href=#plugin-types class=md-nav__link> <span class=md-ellipsis> Plugin Types </span> </a> </li> <li class=md-nav__item> <a href=#plugin-lifecycle class=md-nav__link> <span class=md-ellipsis> Plugin Lifecycle </span> </a> </li> <li class=md-nav__item> <a href=#kernel-interface class=md-nav__link> <span class=md-ellipsis> Kernel Interface </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#component-details class=md-nav__link> <span class=md-ellipsis> Component Details </span> </a> <nav class=md-nav aria-label="Component Details"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#rest-api class=md-nav__link> <span class=md-ellipsis> REST API </span> </a> </li> <li class=md-nav__item> <a href=#auth-layer class=md-nav__link> <span class=md-ellipsis> Auth Layer </span> </a> </li> <li class=md-nav__item> <a href=#database-layer class=md-nav__link> <span class=md-ellipsis> Database Layer </span> </a> </li> <li class=md-nav__item> <a href=#discovery-manager class=md-nav__link> <span class=md-ellipsis> Discovery Manager </span> </a> </li> <li class=md-nav__item> <a href=#web-dashboard class=md-nav__link> <span class=md-ellipsis> Web Dashboard </span> </a> </li> <li class=md-nav__item> <a href=#health-checker class=md-nav__link> <span class=md-ellipsis> Health Checker </span> </a> </li> <li class=md-nav__item> <a href=#enterprise-plugins-license-gated class=md-nav__link> <span class=md-ellipsis> Enterprise Plugins (License-Gated) </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#data-flow class=md-nav__link> <span class=md-ellipsis> Data Flow </span> </a> <nav class=md-nav aria-label="Data Flow"> <ul class=md-nav__list> <li class=md-nav__item> <a href=#request-flow class=md-nav__link> <span class=md-ellipsis> Request Flow </span> </a> </li> </ul> </nav> </li> <li class=md-nav__item> <a href=#directory-structure class=md-nav__link> <span class=md-ellipsis> Directory Structure </span> </a> </li> <li class=md-nav__item> <a href=#configuration class=md-nav__link> <span class=md-ellipsis> Configuration </span> </a> </li> <li class=md-nav__item> <a href=#deployment class=md-nav__link> <span class=md-ellipsis> Deployment </span> </a> <nav class=md-nav aria-label=Deployment> <ul class=md-nav__list> <li class=md-nav__item> <a href=#docker class=md-nav__link> <span class=md-ellipsis> Docker </span> </a> </li> <li class=md-nav__item> <a href=#docker-compose-sqlite class=md-nav__link> <span class=md-ellipsis> Docker Compose (SQLite) </span> </a> </li> <li class=md-nav__item> <a href=#docker-compose-postgresql class=md-nav__link> <span class=md-ellipsis> Docker Compose (PostgreSQL) </span> </a> </li> <li class=md-nav__item> <a href=#kubernetes-helm class=md-nav__link> <span class=md-ellipsis> Kubernetes (Helm) </span> </a> </li> </ul> </nav> </li> </ul> </nav> </div> </div> </div> <div class=md-content data-md-component=content> <article class="md-content__inner md-typeset"> <h1 id=architecture>Architecture<a class=headerlink href=#architecture title="Permanent link">&para;</a></h1> <p>This document describes the internal architecture of AgentLens — a self-hosted service discovery platform for AI agents.</p> <hr> <h2 id=high-level-overview>High-Level Overview<a class=headerlink href=#high-level-overview title="Permanent link">&para;</a></h2> <pre class=mermaid><code>graph TD
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://pawelharacz.github.io/Agentlens/architecture/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Architecture - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/timeago.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-model-product-archetype-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Model: Product Archetype Pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Domain Model: Product Archetype Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auth-identity-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth &amp; Identity Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entity-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entity Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability Kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microkernel-plugin-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microkernel Plugin Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Microkernel Plugin Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plugin-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#component-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auth-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discovery-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-checker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health Checker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enterprise-plugins-license-gated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enterprise Plugins (License-Gated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#request-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-compose-sqlite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose (SQLite)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-compose-postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose (PostgreSQL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-helm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes (Helm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-model-product-archetype-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Model: Product Archetype Pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Domain Model: Product Archetype Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auth-identity-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth &amp; Identity Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entity-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entity Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability Kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microkernel-plugin-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microkernel Plugin Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Microkernel Plugin Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#plugin-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#component-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Component Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auth-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database Layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discovery-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-checker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health Checker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enterprise-plugins-license-gated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enterprise Plugins (License-Gated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#request-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-compose-sqlite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose (SQLite)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-compose-postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose (PostgreSQL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubernetes-helm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kubernetes (Helm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
+<p>This document describes the internal architecture of AgentLens — a self-hosted service discovery platform for AI agents.</p>
+<hr />
+<h2 id="high-level-overview">High-Level Overview<a class="headerlink" href="#high-level-overview" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>graph TD
     subgraph AgentLens
         API[REST API&lt;br/&gt;Chi Router]
         UI[Web UI&lt;br/&gt;React + Vite]
@@ -21,7 +1524,78 @@
 
     AGENTS[External Agents&lt;br/&gt;A2A / MCP] -.-&gt;|discovered by| SOURCES
     BROWSER[Browser] --&gt;|HTTP| API
-    BROWSER --&gt;|Static files| UI</code></pre> <hr> <h2 id=domain-model-product-archetype-pattern>Domain Model: Product Archetype Pattern<a class=headerlink href=#domain-model-product-archetype-pattern title="Permanent link">&para;</a></h2> <p>AgentLens models each discovered agent or server using the <strong>Product Archetype</strong> pattern. <code>AgentType</code> represents <em>what the agent IS</em> (its protocol, endpoint, capabilities, and raw definition), while <code>CatalogEntry</code> represents <em>how it is cataloged</em> (display name, status, source, validity, metadata). The two are linked 1:1 via a foreign key.</p> <h3 id=core-types>Core Types<a class=headerlink href=#core-types title="Permanent link">&para;</a></h3> <table> <thead> <tr> <th>Type</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td><code>AgentType</code></td> <td>The protocol-level identity of an agent: endpoint, protocol, version, <code>AgentKey</code> (SHA256 of protocol+endpoint), capabilities, raw definition, and provider. Maps to the <code>agent_types</code> table.</td> </tr> <tr> <td><code>CatalogEntry</code></td> <td>The catalog wrapper around an <code>AgentType</code>: display name, description, status, source, validity, categories, and metadata. Maps to the <code>catalog_entries</code> table.</td> </tr> <tr> <td><code>Capability</code></td> <td>Polymorphic agent feature (replaces <code>Skill</code>). Discriminated by <code>kind</code>: <code>a2a.skill</code>, <code>a2a.interface</code>, <code>a2a.security_scheme</code>, <code>a2a.extension</code>, <code>a2a.signature</code>, <code>mcp.tool</code>, <code>mcp.resource</code>, <code>mcp.prompt</code>. Stored in the <code>capabilities</code> table.</td> </tr> <tr> <td><code>Provider</code></td> <td>Organization and team that owns the agent. Reusable across agents; stored in the <code>providers</code> table.</td> </tr> <tr> <td><code>Protocol</code></td> <td>The agent communication protocol: <code>a2a</code> (Agent-to-Agent), <code>mcp</code> (Model Context Protocol), <code>a2ui</code> (Agent-to-UI).</td> </tr> <tr> <td><code>Validity</code></td> <td>Time-bounded availability with <code>from</code>, <code>to</code>, and <code>last_seen</code> timestamps.</td> </tr> <tr> <td><code>Status</code></td> <td>Health status: <code>healthy</code>, <code>degraded</code>, <code>down</code>, <code>unknown</code>.</td> </tr> <tr> <td><code>SourceType</code></td> <td>How the entry was discovered: <code>k8s</code>, <code>config</code>, <code>push</code>, <code>upstream</code>.</td> </tr> </tbody> </table> <h3 id=auth-identity-types>Auth &amp; Identity Types<a class=headerlink href=#auth-identity-types title="Permanent link">&para;</a></h3> <table> <thead> <tr> <th>Type</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td><code>User</code></td> <td>An authenticated user with username, display name, email, password hash, role, and active/locked state.</td> </tr> <tr> <td><code>Role</code></td> <td>A named set of permissions. Three built-in system roles: <code>admin</code>, <code>editor</code>, <code>viewer</code>.</td> </tr> <tr> <td><code>Setting</code></td> <td>A key-value configuration entry scoped to a category (e.g., <code>ui.theme</code>, <code>app.name</code>).</td> </tr> </tbody> </table> <h3 id=entity-relationships>Entity Relationships<a class=headerlink href=#entity-relationships title="Permanent link">&para;</a></h3> <pre class=mermaid><code>erDiagram
+    BROWSER --&gt;|Static files| UI</code></pre>
+<hr />
+<h2 id="domain-model-product-archetype-pattern">Domain Model: Product Archetype Pattern<a class="headerlink" href="#domain-model-product-archetype-pattern" title="Permanent link">&para;</a></h2>
+<p>AgentLens models each discovered agent or server using the <strong>Product Archetype</strong> pattern. <code>AgentType</code> represents <em>what the agent IS</em> (its protocol, endpoint, capabilities, and raw definition), while <code>CatalogEntry</code> represents <em>how it is cataloged</em> (display name, status, source, validity, metadata). The two are linked 1:1 via a foreign key.</p>
+<h3 id="core-types">Core Types<a class="headerlink" href="#core-types" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AgentType</code></td>
+<td>The protocol-level identity of an agent: endpoint, protocol, version, <code>AgentKey</code> (SHA256 of protocol+endpoint), capabilities, raw definition, and provider. Maps to the <code>agent_types</code> table.</td>
+</tr>
+<tr>
+<td><code>CatalogEntry</code></td>
+<td>The catalog wrapper around an <code>AgentType</code>: display name, description, status, source, validity, categories, and metadata. Maps to the <code>catalog_entries</code> table.</td>
+</tr>
+<tr>
+<td><code>Capability</code></td>
+<td>Polymorphic agent feature (replaces <code>Skill</code>). Discriminated by <code>kind</code>: <code>a2a.skill</code>, <code>a2a.interface</code>, <code>a2a.security_scheme</code>, <code>a2a.extension</code>, <code>a2a.signature</code>, <code>mcp.tool</code>, <code>mcp.resource</code>, <code>mcp.prompt</code>. Stored in the <code>capabilities</code> table.</td>
+</tr>
+<tr>
+<td><code>Provider</code></td>
+<td>Organization and team that owns the agent. Reusable across agents; stored in the <code>providers</code> table.</td>
+</tr>
+<tr>
+<td><code>Protocol</code></td>
+<td>The agent communication protocol: <code>a2a</code> (Agent-to-Agent), <code>mcp</code> (Model Context Protocol), <code>a2ui</code> (Agent-to-UI).</td>
+</tr>
+<tr>
+<td><code>Validity</code></td>
+<td>Time-bounded availability with <code>from</code>, <code>to</code>, and <code>last_seen</code> timestamps.</td>
+</tr>
+<tr>
+<td><code>Status</code></td>
+<td>Health status: <code>healthy</code>, <code>degraded</code>, <code>down</code>, <code>unknown</code>.</td>
+</tr>
+<tr>
+<td><code>SourceType</code></td>
+<td>How the entry was discovered: <code>k8s</code>, <code>config</code>, <code>push</code>, <code>upstream</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="auth-identity-types">Auth &amp; Identity Types<a class="headerlink" href="#auth-identity-types" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>User</code></td>
+<td>An authenticated user with username, display name, email, password hash, role, and active/locked state.</td>
+</tr>
+<tr>
+<td><code>Role</code></td>
+<td>A named set of permissions. Three built-in system roles: <code>admin</code>, <code>editor</code>, <code>viewer</code>.</td>
+</tr>
+<tr>
+<td><code>Setting</code></td>
+<td>A key-value configuration entry scoped to a category (e.g., <code>ui.theme</code>, <code>app.name</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="entity-relationships">Entity Relationships<a class="headerlink" href="#entity-relationships" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>erDiagram
     providers ||--o{ agent_types : "owns"
     agent_types ||--o{ capabilities : "has"
     agent_types ||--|| catalog_entries : "cataloged as"
@@ -62,33 +1636,180 @@
         DATETIME validity_last_seen
         DATETIME created_at
         DATETIME updated_at
-    }</code></pre> <h3 id=capability-kinds>Capability Kinds<a class=headerlink href=#capability-kinds title="Permanent link">&para;</a></h3> <table> <thead> <tr> <th>Kind</th> <th>Protocol</th> <th>Properties (JSON)</th> </tr> </thead> <tbody> <tr> <td><code>a2a.skill</code></td> <td>A2A</td> <td><code>tags</code>, <code>input_modes</code>, <code>output_modes</code></td> </tr> <tr> <td><code>a2a.interface</code></td> <td>A2A</td> <td><code>url</code>, <code>binding</code></td> </tr> <tr> <td><code>a2a.security_scheme</code></td> <td>A2A</td> <td><code>type</code>, <code>method</code></td> </tr> <tr> <td><code>a2a.extension</code></td> <td>A2A</td> <td><code>uri</code>, <code>required</code></td> </tr> <tr> <td><code>a2a.signature</code></td> <td>A2A</td> <td><code>algorithm</code>, <code>key_id</code></td> </tr> <tr> <td><code>mcp.tool</code></td> <td>MCP</td> <td><code>input_schema</code></td> </tr> <tr> <td><code>mcp.resource</code></td> <td>MCP</td> <td><code>uri</code></td> </tr> <tr> <td><code>mcp.prompt</code></td> <td>MCP</td> <td><code>arguments</code></td> </tr> </tbody> </table> <hr> <h2 id=microkernel-plugin-architecture>Microkernel Plugin Architecture<a class=headerlink href=#microkernel-plugin-architecture title="Permanent link">&para;</a></h2> <p>AgentLens uses a <strong>microkernel</strong> design. The core kernel manages shared resources (store, config, logger, license), and all extensible behavior is implemented through plugins.</p> <h3 id=plugin-interface>Plugin Interface<a class=headerlink href=#plugin-interface title="Permanent link">&para;</a></h3> <p>Every plugin implements the base <code>Plugin</code> interface:</p> <div class=highlight><pre><span></span><code><span class=kd>type</span><span class=w> </span><span class=nx>Plugin</span><span class=w> </span><span class=kd>interface</span><span class=w> </span><span class=p>{</span>
-<span class=w>    </span><span class=nx>Name</span><span class=p>()</span><span class=w> </span><span class=kt>string</span>
-<span class=w>    </span><span class=nx>Version</span><span class=p>()</span><span class=w> </span><span class=kt>string</span>
-<span class=w>    </span><span class=nx>Type</span><span class=p>()</span><span class=w> </span><span class=nx>PluginType</span>
-<span class=w>    </span><span class=nx>Init</span><span class=p>(</span><span class=nx>k</span><span class=w> </span><span class=nx>Kernel</span><span class=p>)</span><span class=w> </span><span class=kt>error</span>
-<span class=w>    </span><span class=nx>Start</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span><span class=w> </span><span class=kt>error</span>
-<span class=w>    </span><span class=nx>Stop</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>)</span><span class=w> </span><span class=kt>error</span>
-<span class=p>}</span>
-</code></pre></div> <p>Specialized interfaces extend <code>Plugin</code>:</p> <ul> <li><strong><code>ParserPlugin</code></strong> — parses and validates protocol-specific cards into <code>AgentType</code>. Registered per-protocol. Methods: <code>Protocol()</code>, <code>Parse(raw)</code>, <code>Validate(raw)</code>, <code>CardPath()</code>.</li> <li><strong><code>SourcePlugin</code></strong> — discovers catalog entries from a specific source. Method: <code>Discover(ctx)</code>.</li> </ul> <p>The <code>Validate</code> method returns a <code>kernel.ValidationResult</code>:</p> <div class=highlight><pre><span></span><code><span class=kd>type</span><span class=w> </span><span class=nx>ValidationResult</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span>
-<span class=w>    </span><span class=nx>Valid</span><span class=w>       </span><span class=kt>bool</span><span class=w>              </span><span class=s>`json:&quot;valid&quot;`</span>
-<span class=w>    </span><span class=nx>SpecVersion</span><span class=w> </span><span class=kt>string</span><span class=w>            </span><span class=s>`json:&quot;spec_version&quot;`</span>
-<span class=w>    </span><span class=nx>Errors</span><span class=w>      </span><span class=p>[]</span><span class=nx>ValidationError</span><span class=w> </span><span class=s>`json:&quot;errors&quot;`</span>
-<span class=w>    </span><span class=nx>Warnings</span><span class=w>    </span><span class=p>[]</span><span class=kt>string</span><span class=w>          </span><span class=s>`json:&quot;warnings&quot;`</span>
-<span class=w>    </span><span class=nx>Preview</span><span class=w>     </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=w>    </span><span class=s>`json:&quot;preview,omitempty&quot;`</span>
-<span class=p>}</span>
+    }</code></pre>
+<h3 id="capability-kinds">Capability Kinds<a class="headerlink" href="#capability-kinds" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Protocol</th>
+<th>Properties (JSON)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a2a.skill</code></td>
+<td>A2A</td>
+<td><code>tags</code>, <code>input_modes</code>, <code>output_modes</code></td>
+</tr>
+<tr>
+<td><code>a2a.interface</code></td>
+<td>A2A</td>
+<td><code>url</code>, <code>binding</code></td>
+</tr>
+<tr>
+<td><code>a2a.security_scheme</code></td>
+<td>A2A</td>
+<td><code>type</code>, <code>method</code></td>
+</tr>
+<tr>
+<td><code>a2a.extension</code></td>
+<td>A2A</td>
+<td><code>uri</code>, <code>required</code></td>
+</tr>
+<tr>
+<td><code>a2a.signature</code></td>
+<td>A2A</td>
+<td><code>algorithm</code>, <code>key_id</code></td>
+</tr>
+<tr>
+<td><code>mcp.tool</code></td>
+<td>MCP</td>
+<td><code>input_schema</code></td>
+</tr>
+<tr>
+<td><code>mcp.resource</code></td>
+<td>MCP</td>
+<td><code>uri</code></td>
+</tr>
+<tr>
+<td><code>mcp.prompt</code></td>
+<td>MCP</td>
+<td><code>arguments</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="microkernel-plugin-architecture">Microkernel Plugin Architecture<a class="headerlink" href="#microkernel-plugin-architecture" title="Permanent link">&para;</a></h2>
+<p>AgentLens uses a <strong>microkernel</strong> design. The core kernel manages shared resources (store, config, logger, license), and all extensible behavior is implemented through plugins.</p>
+<h3 id="plugin-interface">Plugin Interface<a class="headerlink" href="#plugin-interface" title="Permanent link">&para;</a></h3>
+<p>Every plugin implements the base <code>Plugin</code> interface:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Plugin</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Name</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Version</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Type</span><span class="p">()</span><span class="w"> </span><span class="nx">PluginType</span>
+<span class="w">    </span><span class="nx">Init</span><span class="p">(</span><span class="nx">k</span><span class="w"> </span><span class="nx">Kernel</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">Start</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">Stop</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Specialized interfaces extend <code>Plugin</code>:</p>
+<ul>
+<li><strong><code>ParserPlugin</code></strong> — parses and validates protocol-specific cards into <code>AgentType</code>. Registered per-protocol. Methods: <code>Protocol()</code>, <code>Parse(raw)</code>, <code>Validate(raw)</code>, <code>CardPath()</code>.</li>
+<li><strong><code>SourcePlugin</code></strong> — discovers catalog entries from a specific source. Method: <code>Discover(ctx)</code>.</li>
+</ul>
+<p>The <code>Validate</code> method returns a <code>kernel.ValidationResult</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">ValidationResult</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Valid</span><span class="w">       </span><span class="kt">bool</span><span class="w">              </span><span class="s">`json:&quot;valid&quot;`</span>
+<span class="w">    </span><span class="nx">SpecVersion</span><span class="w"> </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;spec_version&quot;`</span>
+<span class="w">    </span><span class="nx">Errors</span><span class="w">      </span><span class="p">[]</span><span class="nx">ValidationError</span><span class="w"> </span><span class="s">`json:&quot;errors&quot;`</span>
+<span class="w">    </span><span class="nx">Warnings</span><span class="w">    </span><span class="p">[]</span><span class="kt">string</span><span class="w">          </span><span class="s">`json:&quot;warnings&quot;`</span>
+<span class="w">    </span><span class="nx">Preview</span><span class="w">     </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">any</span><span class="w">    </span><span class="s">`json:&quot;preview,omitempty&quot;`</span>
+<span class="p">}</span>
 
-<span class=kd>type</span><span class=w> </span><span class=nx>ValidationError</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span>
-<span class=w>    </span><span class=nx>Field</span><span class=w>   </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&quot;field&quot;`</span>
-<span class=w>    </span><span class=nx>Message</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&quot;message&quot;`</span>
-<span class=p>}</span>
-</code></pre></div> <h3 id=plugin-types>Plugin Types<a class=headerlink href=#plugin-types title="Permanent link">&para;</a></h3> <table> <thead> <tr> <th>Type</th> <th>Description</th> <th>Examples</th> </tr> </thead> <tbody> <tr> <td><code>parser</code></td> <td>Parses protocol-specific card JSON</td> <td>A2A parser, MCP parser</td> </tr> <tr> <td><code>source</code></td> <td>Discovers catalog entries</td> <td>Static config, Kubernetes</td> </tr> <tr> <td><code>middleware</code></td> <td>HTTP middleware hooks</td> <td>SSO, RBAC (enterprise)</td> </tr> <tr> <td><code>store</code></td> <td>Alternative store backends</td> <td>PostgreSQL (enterprise)</td> </tr> </tbody> </table> <h3 id=plugin-lifecycle>Plugin Lifecycle<a class=headerlink href=#plugin-lifecycle title="Permanent link">&para;</a></h3> <pre class=mermaid><code>graph LR
+<span class="kd">type</span><span class="w"> </span><span class="nx">ValidationError</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Field</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;field&quot;`</span>
+<span class="w">    </span><span class="nx">Message</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;message&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="plugin-types">Plugin Types<a class="headerlink" href="#plugin-types" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parser</code></td>
+<td>Parses protocol-specific card JSON</td>
+<td>A2A parser, MCP parser</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Discovers catalog entries</td>
+<td>Static config, Kubernetes</td>
+</tr>
+<tr>
+<td><code>middleware</code></td>
+<td>HTTP middleware hooks</td>
+<td>SSO, RBAC (enterprise)</td>
+</tr>
+<tr>
+<td><code>store</code></td>
+<td>Alternative store backends</td>
+<td>PostgreSQL (enterprise)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="plugin-lifecycle">Plugin Lifecycle<a class="headerlink" href="#plugin-lifecycle" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>graph LR
     R[Register] --&gt; I[InitAll]
     I --&gt; S[StartAll]
     S --&gt; RUN([Running])
     RUN --&gt; STOP[StopAll]
 
-    I --&gt;|ErrLicenseRequired| SKIP[Skipped&lt;br/&gt;not started/stopped]</code></pre> <p>The <code>PluginManager</code> tracks which plugins were successfully initialized in a separate <code>initialized</code> slice. Only those are started and stopped — plugins that were skipped during init (e.g., enterprise plugins without a license) are never started.</p> <h3 id=kernel-interface>Kernel Interface<a class=headerlink href=#kernel-interface title="Permanent link">&para;</a></h3> <p>The kernel exposes these services to plugins:</p> <table> <thead> <tr> <th>Method</th> <th>Returns</th> </tr> </thead> <tbody> <tr> <td><code>Store()</code></td> <td>Data store (SQLite or PostgreSQL)</td> </tr> <tr> <td><code>Config()</code></td> <td>Application configuration</td> </tr> <tr> <td><code>Logger()</code></td> <td>Structured logger (<code>slog</code>)</td> </tr> <tr> <td><code>License()</code></td> <td>License information</td> </tr> <tr> <td><code>Parser(protocol)</code></td> <td>Protocol-specific parser plugin</td> </tr> <tr> <td><code>RegisterRoutes(prefix, handler)</code></td> <td>Register HTTP route handlers</td> </tr> <tr> <td><code>RegisterMiddleware(mw)</code></td> <td>Register HTTP middleware</td> </tr> </tbody> </table> <hr> <h2 id=component-details>Component Details<a class=headerlink href=#component-details title="Permanent link">&para;</a></h2> <h3 id=rest-api>REST API<a class=headerlink href=#rest-api title="Permanent link">&para;</a></h3> <p>Built with <a href=https://github.com/go-chi/chi>Chi router</a>. All routes under <code>/api/v1/</code> are protected by the <code>RequireAuth</code> JWT middleware. The <code>RequirePermission</code> middleware enforces per-route permission checks.</p> <p><strong>Handler wiring:</strong></p> <p><code>RouterDeps</code> requires a <code>kernel.Kernel</code> instance. The <code>Handler</code> struct holds the kernel (via a <code>parsers</code> field) and derives <code>store.Store</code> from <code>kernel.Store()</code>. API handlers that need to parse or validate a protocol card look up the appropriate <code>ParserPlugin</code> dynamically via <code>kernel.Parser(protocol)</code> — no parser is directly instantiated in handler code. <code>import_handler.go</code> performs auto-detection (tries each registered parser), while <code>register_handler.go</code> and <code>validate_handler.go</code> look up the A2A parser by protocol name.</p> <pre class=mermaid><code>sequenceDiagram
+    I --&gt;|ErrLicenseRequired| SKIP[Skipped&lt;br/&gt;not started/stopped]</code></pre>
+<p>The <code>PluginManager</code> tracks which plugins were successfully initialized in a separate <code>initialized</code> slice. Only those are started and stopped — plugins that were skipped during init (e.g., enterprise plugins without a license) are never started.</p>
+<h3 id="kernel-interface">Kernel Interface<a class="headerlink" href="#kernel-interface" title="Permanent link">&para;</a></h3>
+<p>The kernel exposes these services to plugins:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Store()</code></td>
+<td>Data store (SQLite or PostgreSQL)</td>
+</tr>
+<tr>
+<td><code>Config()</code></td>
+<td>Application configuration</td>
+</tr>
+<tr>
+<td><code>Logger()</code></td>
+<td>Structured logger (<code>slog</code>)</td>
+</tr>
+<tr>
+<td><code>License()</code></td>
+<td>License information</td>
+</tr>
+<tr>
+<td><code>Parser(protocol)</code></td>
+<td>Protocol-specific parser plugin</td>
+</tr>
+<tr>
+<td><code>RegisterRoutes(prefix, handler)</code></td>
+<td>Register HTTP route handlers</td>
+</tr>
+<tr>
+<td><code>RegisterMiddleware(mw)</code></td>
+<td>Register HTTP middleware</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="component-details">Component Details<a class="headerlink" href="#component-details" title="Permanent link">&para;</a></h2>
+<h3 id="rest-api">REST API<a class="headerlink" href="#rest-api" title="Permanent link">&para;</a></h3>
+<p>Built with <a href="https://github.com/go-chi/chi">Chi router</a>. All routes under <code>/api/v1/</code> are protected by the <code>RequireAuth</code> JWT middleware. The <code>RequirePermission</code> middleware enforces per-route permission checks.</p>
+<p><strong>Handler wiring:</strong></p>
+<p><code>RouterDeps</code> requires a <code>kernel.Kernel</code> instance. The <code>Handler</code> struct holds the kernel (via a <code>parsers</code> field) and derives <code>store.Store</code> from <code>kernel.Store()</code>. API handlers that need to parse or validate a protocol card look up the appropriate <code>ParserPlugin</code> dynamically via <code>kernel.Parser(protocol)</code> — no parser is directly instantiated in handler code. <code>import_handler.go</code> performs auto-detection (tries each registered parser), while <code>register_handler.go</code> and <code>validate_handler.go</code> look up the A2A parser by protocol name.</p>
+<pre class="mermaid"><code>sequenceDiagram
     participant C as Client
     participant H as API Handler
     participant K as Kernel
@@ -108,7 +1829,9 @@
     ST--&gt;&gt;H: ok (cascades to capabilities)
     H-&gt;&gt;ST: Create(catalogEntry wrapping agentType)
     ST--&gt;&gt;H: ok
-    H--&gt;&gt;C: 201 Created (flat JSON via MarshalJSON)</code></pre> <p>The <code>POST /api/v1/catalog/import</code> endpoint follows a similar pattern but fetches the card from a URL first and auto-detects the protocol:</p> <pre class=mermaid><code>sequenceDiagram
+    H--&gt;&gt;C: 201 Created (flat JSON via MarshalJSON)</code></pre>
+<p>The <code>POST /api/v1/catalog/import</code> endpoint follows a similar pattern but fetches the card from a URL first and auto-detects the protocol:</p>
+<pre class="mermaid"><code>sequenceDiagram
     participant C as Client
     participant H as import_handler
     participant CF as CardFetcher
@@ -130,7 +1853,179 @@
     P--&gt;&gt;H: AgentType (with Provider + Capabilities)
     H-&gt;&gt;ST: UpsertProvider / Create(agentType) / Create(catalogEntry)
     ST--&gt;&gt;H: ok
-    H--&gt;&gt;C: 201 Created (flat JSON via MarshalJSON)</code></pre> <p><strong>Auth routes (public):</strong></p> <table> <thead> <tr> <th>Endpoint</th> <th>Method</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td><code>/api/v1/auth/login</code></td> <td>POST</td> <td>Authenticate and obtain a JWT token</td> </tr> <tr> <td><code>/api/v1/auth/logout</code></td> <td>POST</td> <td>Clear the session cookie</td> </tr> </tbody> </table> <p><strong>Auth routes (protected):</strong></p> <table> <thead> <tr> <th>Endpoint</th> <th>Method</th> <th>Permission</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td><code>/api/v1/auth/refresh</code></td> <td>POST</td> <td>Any</td> <td>Refresh JWT token</td> </tr> <tr> <td><code>/api/v1/auth/me</code></td> <td>GET</td> <td>Any</td> <td>Current user info</td> </tr> <tr> <td><code>/api/v1/auth/password</code></td> <td>PUT</td> <td>Any</td> <td>Change password</td> </tr> </tbody> </table> <p><strong>Catalog routes (protected):</strong></p> <table> <thead> <tr> <th>Endpoint</th> <th>Method</th> <th>Permission</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td><code>/api/v1/catalog</code></td> <td>GET</td> <td><code>catalog:read</code></td> <td>List entries (with filters)</td> </tr> <tr> <td><code>/api/v1/catalog</code></td> <td>POST</td> <td><code>catalog:write</code></td> <td>Push-register an entry</td> </tr> <tr> <td><code>/api/v1/catalog/validate</code></td> <td>POST</td> <td><code>catalog:write</code></td> <td>Validate an A2A agent card (dry-run)</td> </tr> <tr> <td><code>/api/v1/catalog/register</code></td> <td>POST</td> <td><code>catalog:write</code></td> <td>Register an A2A agent from a raw card JSON</td> </tr> <tr> <td><code>/api/v1/catalog/import</code></td> <td>POST</td> <td><code>catalog:write</code></td> <td>Fetch and import an agent card from a URL</td> </tr> <tr> <td><code>/api/v1/catalog/{id}</code></td> <td>GET</td> <td><code>catalog:read</code></td> <td>Get entry by ID</td> </tr> <tr> <td><code>/api/v1/catalog/{id}</code></td> <td>DELETE</td> <td><code>catalog:delete</code></td> <td>Delete entry</td> </tr> <tr> <td><code>/api/v1/catalog/{id}/card</code></td> <td>GET</td> <td><code>catalog:read</code></td> <td>Get raw protocol card JSON</td> </tr> <tr> <td><code>/api/v1/skills</code></td> <td>GET</td> <td><code>catalog:read</code></td> <td>Search entries by skill name</td> </tr> <tr> <td><code>/api/v1/stats</code></td> <td>GET</td> <td><code>catalog:read</code></td> <td>Aggregate statistics</td> </tr> </tbody> </table> <p><strong>User/Role/Settings routes (protected):</strong></p> <table> <thead> <tr> <th>Endpoint</th> <th>Method</th> <th>Permission</th> </tr> </thead> <tbody> <tr> <td><code>/api/v1/users</code></td> <td>GET / POST</td> <td><code>users:read</code> / <code>users:write</code></td> </tr> <tr> <td><code>/api/v1/users/{id}</code></td> <td>GET / PUT / DELETE</td> <td><code>users:read</code> / <code>users:write</code> / <code>users:delete</code></td> </tr> <tr> <td><code>/api/v1/roles</code></td> <td>GET / POST</td> <td><code>roles:read</code> / <code>roles:write</code></td> </tr> <tr> <td><code>/api/v1/roles/{id}</code></td> <td>PUT / DELETE</td> <td><code>roles:write</code></td> </tr> <tr> <td><code>/api/v1/settings</code></td> <td>GET / PUT</td> <td><code>settings:read</code> / <code>settings:write</code></td> </tr> <tr> <td><code>/api/v1/settings/{category}</code></td> <td>GET</td> <td><code>settings:read</code></td> </tr> </tbody> </table> <p>See <a href=../api/ >api.md</a> for full API documentation.</p> <h3 id=auth-layer>Auth Layer<a class=headerlink href=#auth-layer title="Permanent link">&para;</a></h3> <p>Authentication uses <strong>JWT tokens</strong> signed with HS256:</p> <pre class=mermaid><code>sequenceDiagram
+    H--&gt;&gt;C: 201 Created (flat JSON via MarshalJSON)</code></pre>
+<p><strong>Auth routes (public):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/v1/auth/login</code></td>
+<td>POST</td>
+<td>Authenticate and obtain a JWT token</td>
+</tr>
+<tr>
+<td><code>/api/v1/auth/logout</code></td>
+<td>POST</td>
+<td>Clear the session cookie</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Auth routes (protected):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Permission</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/v1/auth/refresh</code></td>
+<td>POST</td>
+<td>Any</td>
+<td>Refresh JWT token</td>
+</tr>
+<tr>
+<td><code>/api/v1/auth/me</code></td>
+<td>GET</td>
+<td>Any</td>
+<td>Current user info</td>
+</tr>
+<tr>
+<td><code>/api/v1/auth/password</code></td>
+<td>PUT</td>
+<td>Any</td>
+<td>Change password</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Catalog routes (protected):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Permission</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/v1/catalog</code></td>
+<td>GET</td>
+<td><code>catalog:read</code></td>
+<td>List entries (with filters)</td>
+</tr>
+<tr>
+<td><code>/api/v1/catalog</code></td>
+<td>POST</td>
+<td><code>catalog:write</code></td>
+<td>Push-register an entry</td>
+</tr>
+<tr>
+<td><code>/api/v1/catalog/validate</code></td>
+<td>POST</td>
+<td><code>catalog:write</code></td>
+<td>Validate an A2A agent card (dry-run)</td>
+</tr>
+<tr>
+<td><code>/api/v1/catalog/register</code></td>
+<td>POST</td>
+<td><code>catalog:write</code></td>
+<td>Register an A2A agent from a raw card JSON</td>
+</tr>
+<tr>
+<td><code>/api/v1/catalog/import</code></td>
+<td>POST</td>
+<td><code>catalog:write</code></td>
+<td>Fetch and import an agent card from a URL</td>
+</tr>
+<tr>
+<td><code>/api/v1/catalog/{id}</code></td>
+<td>GET</td>
+<td><code>catalog:read</code></td>
+<td>Get entry by ID</td>
+</tr>
+<tr>
+<td><code>/api/v1/catalog/{id}</code></td>
+<td>DELETE</td>
+<td><code>catalog:delete</code></td>
+<td>Delete entry</td>
+</tr>
+<tr>
+<td><code>/api/v1/catalog/{id}/card</code></td>
+<td>GET</td>
+<td><code>catalog:read</code></td>
+<td>Get raw protocol card JSON</td>
+</tr>
+<tr>
+<td><code>/api/v1/skills</code></td>
+<td>GET</td>
+<td><code>catalog:read</code></td>
+<td>Search entries by skill name</td>
+</tr>
+<tr>
+<td><code>/api/v1/stats</code></td>
+<td>GET</td>
+<td><code>catalog:read</code></td>
+<td>Aggregate statistics</td>
+</tr>
+</tbody>
+</table>
+<p><strong>User/Role/Settings routes (protected):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Permission</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/v1/users</code></td>
+<td>GET / POST</td>
+<td><code>users:read</code> / <code>users:write</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/users/{id}</code></td>
+<td>GET / PUT / DELETE</td>
+<td><code>users:read</code> / <code>users:write</code> / <code>users:delete</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/roles</code></td>
+<td>GET / POST</td>
+<td><code>roles:read</code> / <code>roles:write</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/roles/{id}</code></td>
+<td>PUT / DELETE</td>
+<td><code>roles:write</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/settings</code></td>
+<td>GET / PUT</td>
+<td><code>settings:read</code> / <code>settings:write</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/settings/{category}</code></td>
+<td>GET</td>
+<td><code>settings:read</code></td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../api/">api.md</a> for full API documentation.</p>
+<h3 id="auth-layer">Auth Layer<a class="headerlink" href="#auth-layer" title="Permanent link">&para;</a></h3>
+<p>Authentication uses <strong>JWT tokens</strong> signed with HS256:</p>
+<pre class="mermaid"><code>sequenceDiagram
     participant B as Browser
     participant A as API
     participant US as UserStore
@@ -155,27 +2050,92 @@
     B-&gt;&gt;A: GET /api/v1/catalog (Authorization: Bearer)
     A-&gt;&gt;JWT: ValidateToken()
     A-&gt;&gt;A: RequirePermission(catalog:read)
-    A--&gt;&gt;B: 200 OK + entries</code></pre> <p><strong>JWT Claims:</strong></p> <div class=highlight><pre><span></span><code><span class=p>{</span>
-<span class=w>  </span><span class=nt>&quot;user_id&quot;</span><span class=p>:</span><span class=w> </span><span class=s2>&quot;...&quot;</span><span class=p>,</span>
-<span class=w>  </span><span class=nt>&quot;username&quot;</span><span class=p>:</span><span class=w> </span><span class=s2>&quot;admin&quot;</span><span class=p>,</span>
-<span class=w>  </span><span class=nt>&quot;role_id&quot;</span><span class=p>:</span><span class=w> </span><span class=s2>&quot;role-admin&quot;</span><span class=p>,</span>
-<span class=w>  </span><span class=nt>&quot;permissions&quot;</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=s2>&quot;catalog:read&quot;</span><span class=p>,</span><span class=w> </span><span class=s2>&quot;catalog:write&quot;</span><span class=p>,</span><span class=w> </span><span class=s2>&quot;...&quot;</span><span class=p>],</span>
-<span class=w>  </span><span class=nt>&quot;exp&quot;</span><span class=p>:</span><span class=w> </span><span class=s2>&quot;...&quot;</span><span class=p>,</span>
-<span class=w>  </span><span class=nt>&quot;iss&quot;</span><span class=p>:</span><span class=w> </span><span class=s2>&quot;agentlens&quot;</span>
-<span class=p>}</span>
-</code></pre></div> <p>The JWT secret is loaded from <code>AGENTLENS_JWT_SECRET</code>. If not set, a random secret is generated at startup (tokens will not survive restarts).</p> <p><strong>Admin Bootstrap:</strong></p> <p>On first startup, if no users exist, the <code>BootstrapAdmin</code> function creates an <code>admin</code> user with a cryptographically random 20-character password (upper + lower + digit + special) and prints it to stdout.</p> <h3 id=database-layer>Database Layer<a class=headerlink href=#database-layer title="Permanent link">&para;</a></h3> <p>AgentLens uses <a href=https://gorm.io/ >GORM</a> as its ORM with support for two backends:</p> <table> <thead> <tr> <th>Backend</th> <th>Use case</th> </tr> </thead> <tbody> <tr> <td><strong>SQLite</strong> (default)</td> <td>Single-instance, zero-config, file-based</td> </tr> <tr> <td><strong>PostgreSQL</strong></td> <td>Production, multi-instance, high-availability</td> </tr> </tbody> </table> <p>The active dialect is selected by <code>database.dialect</code> in the config (or <code>AGENTLENS_DB_DIALECT</code>).</p> <p><strong>Schema Migrations:</strong></p> <p>Migrations are versioned and tracked in the <code>schema_migrations</code> table. They run automatically at startup. Current migrations:</p> <table> <thead> <tr> <th>Version</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td>1</td> <td>Create <code>providers</code>, <code>agent_types</code>, <code>capabilities</code>, and <code>catalog_entries</code> tables with FK constraints and unique indexes</td> </tr> <tr> <td>2</td> <td>Create <code>roles</code> and <code>users</code> tables</td> </tr> <tr> <td>3</td> <td>Seed default roles (admin, editor, viewer)</td> </tr> <tr> <td>4</td> <td>Create <code>settings</code> table with defaults</td> </tr> </tbody> </table> <p><strong>Store Interface:</strong></p> <div class=highlight><pre><span></span><code><span class=kd>type</span><span class=w> </span><span class=nx>Store</span><span class=w> </span><span class=kd>interface</span><span class=w> </span><span class=p>{</span>
-<span class=w>    </span><span class=nx>Create</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>entry</span><span class=p>)</span><span class=w> </span><span class=kt>error</span>
-<span class=w>    </span><span class=nx>Get</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>id</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>CatalogEntry</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span>
-<span class=w>    </span><span class=nx>List</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>filter</span><span class=p>)</span><span class=w> </span><span class=p>([]</span><span class=o>*</span><span class=nx>CatalogEntry</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span>
-<span class=w>    </span><span class=nx>Update</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>entry</span><span class=p>)</span><span class=w> </span><span class=kt>error</span>
-<span class=w>    </span><span class=nx>Delete</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>id</span><span class=p>)</span><span class=w> </span><span class=kt>error</span>
-<span class=w>    </span><span class=nx>FindByEndpoint</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>endpoint</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>CatalogEntry</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span>
-<span class=w>    </span><span class=nx>SearchCapabilities</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>query</span><span class=p>)</span><span class=w> </span><span class=p>([]</span><span class=o>*</span><span class=nx>CatalogEntry</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span>
-<span class=w>    </span><span class=nx>Stats</span><span class=p>(</span><span class=nx>ctx</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>Stats</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span>
-<span class=w>    </span><span class=nx>UpsertProvider</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>provider</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=kt>string</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span>
-<span class=w>    </span><span class=nx>CreateAgentType</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>agentType</span><span class=p>)</span><span class=w> </span><span class=kt>error</span>
-<span class=p>}</span>
-</code></pre></div> <p>Alongside <code>Store</code>, the data layer includes:</p> <ul> <li><strong><code>UserStore</code></strong> — CRUD for users, failed-attempt tracking, lockout management</li> <li><strong><code>RoleStore</code></strong> — CRUD for roles (system roles protected from deletion)</li> <li><strong><code>SettingsStore</code></strong> — key-value settings with category scoping</li> </ul> <h3 id=discovery-manager>Discovery Manager<a class=headerlink href=#discovery-manager title="Permanent link">&para;</a></h3> <p>The discovery manager polls sources at a configurable interval (<code>poll_interval</code>). For each discovered entry, it upserts into the store keyed by <code>endpoint</code> (which has a UNIQUE constraint).</p> <pre class=mermaid><code>sequenceDiagram
+    A--&gt;&gt;B: 200 OK + entries</code></pre>
+<p><strong>JWT Claims:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;role_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;role-admin&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;permissions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;catalog:read&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;catalog:write&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;exp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;iss&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agentlens&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The JWT secret is loaded from <code>AGENTLENS_JWT_SECRET</code>. If not set, a random secret is generated at startup (tokens will not survive restarts).</p>
+<p><strong>Admin Bootstrap:</strong></p>
+<p>On first startup, if no users exist, the <code>BootstrapAdmin</code> function creates an <code>admin</code> user with a cryptographically random 20-character password (upper + lower + digit + special) and prints it to stdout.</p>
+<h3 id="database-layer">Database Layer<a class="headerlink" href="#database-layer" title="Permanent link">&para;</a></h3>
+<p>AgentLens uses <a href="https://gorm.io/">GORM</a> as its ORM with support for two backends:</p>
+<table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SQLite</strong> (default)</td>
+<td>Single-instance, zero-config, file-based</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL</strong></td>
+<td>Production, multi-instance, high-availability</td>
+</tr>
+</tbody>
+</table>
+<p>The active dialect is selected by <code>database.dialect</code> in the config (or <code>AGENTLENS_DB_DIALECT</code>).</p>
+<p><strong>Schema Migrations:</strong></p>
+<p>Migrations are versioned and tracked in the <code>schema_migrations</code> table. They run automatically at startup. Current migrations:</p>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Create <code>providers</code>, <code>agent_types</code>, <code>capabilities</code>, and <code>catalog_entries</code> tables with FK constraints and unique indexes</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Create <code>roles</code> and <code>users</code> tables</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Seed default roles (admin, editor, viewer)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Create <code>settings</code> table with defaults</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Store Interface:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Store</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Create</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">entry</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">CatalogEntry</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">List</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">filter</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">CatalogEntry</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">Update</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">entry</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">Delete</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">FindByEndpoint</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">endpoint</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">CatalogEntry</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">SearchCapabilities</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="o">*</span><span class="nx">CatalogEntry</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">Stats</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Stats</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">UpsertProvider</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">provider</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">CreateAgentType</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">agentType</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Alongside <code>Store</code>, the data layer includes:</p>
+<ul>
+<li><strong><code>UserStore</code></strong> — CRUD for users, failed-attempt tracking, lockout management</li>
+<li><strong><code>RoleStore</code></strong> — CRUD for roles (system roles protected from deletion)</li>
+<li><strong><code>SettingsStore</code></strong> — key-value settings with category scoping</li>
+</ul>
+<h3 id="discovery-manager">Discovery Manager<a class="headerlink" href="#discovery-manager" title="Permanent link">&para;</a></h3>
+<p>The discovery manager polls sources at a configurable interval (<code>poll_interval</code>). For each discovered entry, it upserts into the store keyed by <code>endpoint</code> (which has a UNIQUE constraint).</p>
+<pre class="mermaid"><code>sequenceDiagram
     participant SP as Source Plugin
     participant DM as Discovery Manager
     participant ST as Store
@@ -194,7 +2154,65 @@
         end
 
         DM-&gt;&gt;ST: Mark missing entries as "down"
-    end</code></pre> <p><strong>Sources:</strong></p> <ol> <li><strong>Static source</strong> — reads from <code>sources:</code> in the config file, fetches card JSON from each URL, and passes it through the appropriate parser plugin.</li> <li><strong>Kubernetes source</strong> — watches Kubernetes Services annotated with <code>agentlens.io/type</code>, constructs card URLs from service endpoints + card paths, and discovers agents.</li> </ol> <h3 id=web-dashboard>Web Dashboard<a class=headerlink href=#web-dashboard title="Permanent link">&para;</a></h3> <p>React + Vite + TypeScript frontend using <a href=https://ui.shadcn.com/ >shadcn/ui</a> components. Embedded into the Go binary at build time via <code>embed.FS</code>. Components:</p> <ul> <li><strong>AuthContext</strong> — JWT token management, 401-redirect, permission checking</li> <li><strong>ThemeContext</strong> — light/dark/system theme with CSS class switching</li> <li><strong>LoginPage</strong> — authentication form</li> <li><strong>Layout</strong> — sticky navbar with user avatar dropdown, mobile hamburger</li> <li><strong>CatalogList</strong> — paginated table with protocol/status badges and filters</li> <li><strong>EntryDetail</strong> — full entry view with capabilities, metadata, categories, and raw protocol definition</li> <li><strong>RegisterAgentDialog</strong> — multi-tab registration modal: Paste JSON, Upload File, Import from URL</li> <li><strong>CardPreview</strong> — renders a validated agent card preview before registration</li> <li><strong>SettingsPage</strong> — 4-tab management UI (General, Users, Roles, My Account)</li> <li><strong>ProtectedRoute</strong> — auth guard that redirects unauthenticated users to <code>/login</code></li> </ul> <h3 id=health-checker>Health Checker<a class=headerlink href=#health-checker title="Permanent link">&para;</a></h3> <p>A plugin that periodically pings each catalog entry's endpoint and updates its status (<code>healthy</code>, <code>degraded</code>, <code>down</code>). Configurable interval, timeout, and concurrency.</p> <h3 id=enterprise-plugins-license-gated>Enterprise Plugins (License-Gated)<a class=headerlink href=#enterprise-plugins-license-gated title="Permanent link">&para;</a></h3> <p>These plugins are registered but gracefully skipped when no enterprise license is present:</p> <table> <thead> <tr> <th>Plugin</th> <th>Type</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td>SSO</td> <td>middleware</td> <td>Single Sign-On integration</td> </tr> <tr> <td>RBAC</td> <td>middleware</td> <td>Role-Based Access Control</td> </tr> <tr> <td>Audit</td> <td>middleware</td> <td>Audit logging</td> </tr> <tr> <td>PostgreSQL</td> <td>store</td> <td>PostgreSQL store backend</td> </tr> </tbody> </table> <hr> <h2 id=data-flow>Data Flow<a class=headerlink href=#data-flow title="Permanent link">&para;</a></h2> <h3 id=request-flow>Request Flow<a class=headerlink href=#request-flow title="Permanent link">&para;</a></h3> <pre class=mermaid><code>graph LR
+    end</code></pre>
+<p><strong>Sources:</strong></p>
+<ol>
+<li><strong>Static source</strong> — reads from <code>sources:</code> in the config file, fetches card JSON from each URL, and passes it through the appropriate parser plugin.</li>
+<li><strong>Kubernetes source</strong> — watches Kubernetes Services annotated with <code>agentlens.io/type</code>, constructs card URLs from service endpoints + card paths, and discovers agents.</li>
+</ol>
+<h3 id="web-dashboard">Web Dashboard<a class="headerlink" href="#web-dashboard" title="Permanent link">&para;</a></h3>
+<p>React + Vite + TypeScript frontend using <a href="https://ui.shadcn.com/">shadcn/ui</a> components. Embedded into the Go binary at build time via <code>embed.FS</code>. Components:</p>
+<ul>
+<li><strong>AuthContext</strong> — JWT token management, 401-redirect, permission checking</li>
+<li><strong>ThemeContext</strong> — light/dark/system theme with CSS class switching</li>
+<li><strong>LoginPage</strong> — authentication form</li>
+<li><strong>Layout</strong> — sticky navbar with user avatar dropdown, mobile hamburger</li>
+<li><strong>CatalogList</strong> — paginated table with protocol/status badges and filters</li>
+<li><strong>EntryDetail</strong> — full entry view with capabilities, metadata, categories, and raw protocol definition</li>
+<li><strong>RegisterAgentDialog</strong> — multi-tab registration modal: Paste JSON, Upload File, Import from URL</li>
+<li><strong>CardPreview</strong> — renders a validated agent card preview before registration</li>
+<li><strong>SettingsPage</strong> — 4-tab management UI (General, Users, Roles, My Account)</li>
+<li><strong>ProtectedRoute</strong> — auth guard that redirects unauthenticated users to <code>/login</code></li>
+</ul>
+<h3 id="health-checker">Health Checker<a class="headerlink" href="#health-checker" title="Permanent link">&para;</a></h3>
+<p>A plugin that periodically pings each catalog entry's endpoint and updates its status (<code>healthy</code>, <code>degraded</code>, <code>down</code>). Configurable interval, timeout, and concurrency.</p>
+<h3 id="enterprise-plugins-license-gated">Enterprise Plugins (License-Gated)<a class="headerlink" href="#enterprise-plugins-license-gated" title="Permanent link">&para;</a></h3>
+<p>These plugins are registered but gracefully skipped when no enterprise license is present:</p>
+<table>
+<thead>
+<tr>
+<th>Plugin</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SSO</td>
+<td>middleware</td>
+<td>Single Sign-On integration</td>
+</tr>
+<tr>
+<td>RBAC</td>
+<td>middleware</td>
+<td>Role-Based Access Control</td>
+</tr>
+<tr>
+<td>Audit</td>
+<td>middleware</td>
+<td>Audit logging</td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td>store</td>
+<td>PostgreSQL store backend</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
+<h3 id="request-flow">Request Flow<a class="headerlink" href="#request-flow" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>graph LR
     REQ[HTTP Request] --&gt; ROUTER[Chi Router]
     ROUTER --&gt; AUTH[RequireAuth]
     AUTH --&gt;|Valid token| PERM[RequirePermission]
@@ -206,7 +2224,10 @@
     PERM --&gt;|Insufficient| R403[403 Forbidden]
 
     ROUTER --&gt; STATIC[Static Files]
-    STATIC --&gt; SPA[React SPA]</code></pre> <hr> <h2 id=directory-structure>Directory Structure<a class=headerlink href=#directory-structure title="Permanent link">&para;</a></h2> <div class=highlight><pre><span></span><code>agentlens/
+    STATIC --&gt; SPA[React SPA]</code></pre>
+<hr />
+<h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>agentlens/
 ├── cmd/agentlens/          # Application entrypoint
 │   └── main.go
 ├── internal/
@@ -250,13 +2271,236 @@
 ├── Dockerfile              # Multi-stage Docker build (distroless)
 ├── Makefile                # Build automation
 └── .github/workflows/      # CI, code scanning, E2E, release
-</code></pre></div> <hr> <h2 id=configuration>Configuration<a class=headerlink href=#configuration title="Permanent link">&para;</a></h2> <p>AgentLens is configured via YAML file and/or environment variables (prefixed with <code>AGENTLENS_</code>):</p> <table> <thead> <tr> <th>Setting</th> <th>Env Var</th> <th>Default</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td><code>port</code></td> <td><code>AGENTLENS_PORT</code></td> <td>8080</td> <td>HTTP port</td> </tr> <tr> <td><code>data_dir</code></td> <td><code>AGENTLENS_DATA_DIR</code></td> <td><code>./data</code></td> <td>Data directory</td> </tr> <tr> <td><code>log_level</code></td> <td><code>AGENTLENS_LOG_LEVEL</code></td> <td><code>info</code></td> <td>Log level (debug/info/warn/error)</td> </tr> <tr> <td><code>license_key</code></td> <td><code>AGENTLENS_LICENSE_KEY</code></td> <td>—</td> <td>Enterprise license key</td> </tr> <tr> <td><code>poll_interval</code></td> <td><code>AGENTLENS_POLL_INTERVAL</code></td> <td><code>5m</code></td> <td>Discovery poll interval</td> </tr> <tr> <td><code>database.dialect</code></td> <td><code>AGENTLENS_DB_DIALECT</code></td> <td><code>sqlite</code></td> <td>Database backend (sqlite/postgres)</td> </tr> <tr> <td><code>database.sqlite.path</code></td> <td><code>AGENTLENS_DB_SQLITE_PATH</code></td> <td><code>./data/agentlens.db</code></td> <td>SQLite file path</td> </tr> <tr> <td><code>database.postgres.host</code></td> <td><code>AGENTLENS_DB_POSTGRES_HOST</code></td> <td><code>localhost</code></td> <td>PostgreSQL host</td> </tr> <tr> <td><code>database.postgres.port</code></td> <td><code>AGENTLENS_DB_POSTGRES_PORT</code></td> <td><code>5432</code></td> <td>PostgreSQL port</td> </tr> <tr> <td><code>auth.jwt_secret</code></td> <td><code>AGENTLENS_JWT_SECRET</code></td> <td>(auto)</td> <td>JWT signing secret</td> </tr> <tr> <td><code>auth.session_duration</code></td> <td><code>AGENTLENS_SESSION_DURATION</code></td> <td><code>24h</code></td> <td>Token expiry</td> </tr> <tr> <td><code>kubernetes.enabled</code></td> <td><code>AGENTLENS_KUBERNETES_ENABLED</code></td> <td><code>false</code></td> <td>Enable K8s discovery</td> </tr> <tr> <td><code>health_check.enabled</code></td> <td><code>AGENTLENS_HEALTH_CHECK_ENABLED</code></td> <td><code>true</code></td> <td>Enable health checks</td> </tr> <tr> <td><code>health_check.interval</code></td> <td><code>AGENTLENS_HEALTH_CHECK_INTERVAL</code></td> <td><code>30s</code></td> <td>Health check interval</td> </tr> <tr> <td><code>health_check.timeout</code></td> <td><code>AGENTLENS_HEALTH_CHECK_TIMEOUT</code></td> <td><code>5s</code></td> <td>Per-endpoint timeout</td> </tr> <tr> <td><code>health_check.concurrency</code></td> <td><code>AGENTLENS_HEALTH_CHECK_CONCURRENCY</code></td> <td><code>10</code></td> <td>Max concurrent checks</td> </tr> </tbody> </table> <hr> <h2 id=deployment>Deployment<a class=headerlink href=#deployment title="Permanent link">&para;</a></h2> <p>See <a href=../devops-guide/ >DevOps Guide</a> for full deployment documentation including Docker, Helm, CI/CD, and release pipeline details.</p> <h3 id=docker>Docker<a class=headerlink href=#docker title="Permanent link">&para;</a></h3> <p>Multi-stage build: Bun (frontend) → Go (backend) → Distroless (runtime).</p> <div class=highlight><pre><span></span><code>docker<span class=w> </span>build<span class=w> </span>-t<span class=w> </span>agentlens<span class=w> </span>.
-docker<span class=w> </span>run<span class=w> </span>-p<span class=w> </span><span class=m>8080</span>:8080<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>-e<span class=w> </span><span class=nv>AGENTLENS_JWT_SECRET</span><span class=o>=</span>your-secret<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>agentlens
-</code></pre></div> <h3 id=docker-compose-sqlite>Docker Compose (SQLite)<a class=headerlink href=#docker-compose-sqlite title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=nb>cd</span><span class=w> </span>examples<span class=w> </span><span class=o>&amp;&amp;</span><span class=w> </span>docker<span class=w> </span>compose<span class=w> </span>up
-</code></pre></div> <h3 id=docker-compose-postgresql>Docker Compose (PostgreSQL)<a class=headerlink href=#docker-compose-postgresql title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code><span class=nb>cd</span><span class=w> </span>examples<span class=w> </span><span class=o>&amp;&amp;</span><span class=w> </span>docker<span class=w> </span>compose<span class=w> </span>-f<span class=w> </span>docker-compose.postgres.yaml<span class=w> </span>up
-</code></pre></div> <h3 id=kubernetes-helm>Kubernetes (Helm)<a class=headerlink href=#kubernetes-helm title="Permanent link">&para;</a></h3> <div class=highlight><pre><span></span><code>helm<span class=w> </span>install<span class=w> </span>agentlens<span class=w> </span>deploy/helm/agentlens<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>-n<span class=w> </span>agentlens<span class=w> </span>--create-namespace<span class=w> </span><span class=se>\</span>
-<span class=w>  </span>--set<span class=w> </span>auth.jwtSecret<span class=o>=</span>your-secret
-</code></pre></div> <p>The Helm chart creates: Deployment, Service, ServiceAccount, ClusterRole (for K8s discovery), ClusterRoleBinding, ConfigMap, and optionally a PersistentVolumeClaim for SQLite storage.</p> <aside class=md-source-file> <span class=md-source-file__fact> <span class=md-icon title="Last update"> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg> </span> <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 6, 2026 15:17:57 UTC"><span class=timeago datetime=2026-04-06T15:17:57+00:00 locale=en></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 6, 2026 15:17:57 UTC">2026-04-06</span> </span> <span class=md-source-file__fact> <span class=md-icon title=Created> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg> </span> <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="March 29, 2026 14:53:07 UTC"><span class=timeago datetime=2026-03-29T14:53:07+00:00 locale=en></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="March 29, 2026 14:53:07 UTC">2026-03-29</span> </span> </aside> </article> </div> <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script> </div> <button type=button class="md-top md-icon" data-md-component=top hidden> <svg xmlns=http://www.w3.org/2000/svg viewbox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg> Back to top </button> </main> <footer class=md-footer> <div class="md-footer-meta md-typeset"> <div class="md-footer-meta__inner md-grid"> <div class=md-copyright> Made with <a href=https://squidfunk.github.io/mkdocs-material/ target=_blank rel=noopener> Material for MkDocs </a> </div> </div> </div> </footer> </div> <div class=md-dialog data-md-component=dialog> <div class="md-dialog__inner md-typeset"></div> </div> <script id=__config type=application/json>{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script> <script src=../assets/javascripts/bundle.79ae519e.min.js></script> <script src=../js/timeago.min.js></script> <script src=../js/timeago_mkdocs_material.js></script> </body> </html>
+</code></pre></div>
+<hr />
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>AgentLens is configured via YAML file and/or environment variables (prefixed with <code>AGENTLENS_</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Env Var</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>port</code></td>
+<td><code>AGENTLENS_PORT</code></td>
+<td>8080</td>
+<td>HTTP port</td>
+</tr>
+<tr>
+<td><code>data_dir</code></td>
+<td><code>AGENTLENS_DATA_DIR</code></td>
+<td><code>./data</code></td>
+<td>Data directory</td>
+</tr>
+<tr>
+<td><code>log_level</code></td>
+<td><code>AGENTLENS_LOG_LEVEL</code></td>
+<td><code>info</code></td>
+<td>Log level (debug/info/warn/error)</td>
+</tr>
+<tr>
+<td><code>license_key</code></td>
+<td><code>AGENTLENS_LICENSE_KEY</code></td>
+<td>—</td>
+<td>Enterprise license key</td>
+</tr>
+<tr>
+<td><code>poll_interval</code></td>
+<td><code>AGENTLENS_POLL_INTERVAL</code></td>
+<td><code>5m</code></td>
+<td>Discovery poll interval</td>
+</tr>
+<tr>
+<td><code>database.dialect</code></td>
+<td><code>AGENTLENS_DB_DIALECT</code></td>
+<td><code>sqlite</code></td>
+<td>Database backend (sqlite/postgres)</td>
+</tr>
+<tr>
+<td><code>database.sqlite.path</code></td>
+<td><code>AGENTLENS_DB_SQLITE_PATH</code></td>
+<td><code>./data/agentlens.db</code></td>
+<td>SQLite file path</td>
+</tr>
+<tr>
+<td><code>database.postgres.host</code></td>
+<td><code>AGENTLENS_DB_POSTGRES_HOST</code></td>
+<td><code>localhost</code></td>
+<td>PostgreSQL host</td>
+</tr>
+<tr>
+<td><code>database.postgres.port</code></td>
+<td><code>AGENTLENS_DB_POSTGRES_PORT</code></td>
+<td><code>5432</code></td>
+<td>PostgreSQL port</td>
+</tr>
+<tr>
+<td><code>auth.jwt_secret</code></td>
+<td><code>AGENTLENS_JWT_SECRET</code></td>
+<td>(auto)</td>
+<td>JWT signing secret</td>
+</tr>
+<tr>
+<td><code>auth.session_duration</code></td>
+<td><code>AGENTLENS_SESSION_DURATION</code></td>
+<td><code>24h</code></td>
+<td>Token expiry</td>
+</tr>
+<tr>
+<td><code>kubernetes.enabled</code></td>
+<td><code>AGENTLENS_KUBERNETES_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Enable K8s discovery</td>
+</tr>
+<tr>
+<td><code>health_check.enabled</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Enable health checks</td>
+</tr>
+<tr>
+<td><code>health_check.interval</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_INTERVAL</code></td>
+<td><code>30s</code></td>
+<td>Health check interval</td>
+</tr>
+<tr>
+<td><code>health_check.timeout</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_TIMEOUT</code></td>
+<td><code>5s</code></td>
+<td>Per-endpoint timeout</td>
+</tr>
+<tr>
+<td><code>health_check.concurrency</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_CONCURRENCY</code></td>
+<td><code>10</code></td>
+<td>Max concurrent checks</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
+<p>See <a href="../devops-guide/">DevOps Guide</a> for full deployment documentation including Docker, Helm, CI/CD, and release pipeline details.</p>
+<h3 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h3>
+<p>Multi-stage build: Bun (frontend) → Go (backend) → Distroless (runtime).</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>agentlens<span class="w"> </span>.
+docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">AGENTLENS_JWT_SECRET</span><span class="o">=</span>your-secret<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>agentlens
+</code></pre></div>
+<h3 id="docker-compose-sqlite">Docker Compose (SQLite)<a class="headerlink" href="#docker-compose-sqlite" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>examples<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>up
+</code></pre></div>
+<h3 id="docker-compose-postgresql">Docker Compose (PostgreSQL)<a class="headerlink" href="#docker-compose-postgresql" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>examples<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.postgres.yaml<span class="w"> </span>up
+</code></pre></div>
+<h3 id="kubernetes-helm">Kubernetes (Helm)<a class="headerlink" href="#kubernetes-helm" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>helm<span class="w"> </span>install<span class="w"> </span>agentlens<span class="w"> </span>deploy/helm/agentlens<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-n<span class="w"> </span>agentlens<span class="w"> </span>--create-namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>auth.jwtSecret<span class="o">=</span>your-secret
+</code></pre></div>
+<p>The Helm chart creates: Deployment, Service, ServiceAccount, ClusterRole (for K8s discovery), ClusterRoleBinding, ConfigMap, and optionally a PersistentVolumeClaim for SQLite storage.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 6, 2026 15:17:57 UTC"><span class="timeago" datetime="2026-04-06T15:17:57+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 6, 2026 15:17:57 UTC">2026-04-06</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="March 29, 2026 14:53:07 UTC"><span class="timeago" datetime="2026-03-29T14:53:07+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="March 29, 2026 14:53:07 UTC">2026-03-29</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../js/timeago.min.js"></script>
+      
+        <script src="../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>
