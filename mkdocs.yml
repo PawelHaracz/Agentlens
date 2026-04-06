@@ -1,0 +1,46 @@
+site_name: Agentlens
+site_description: Agentlens - AI Agent Observability Platform
+site_url: https://pawelharacz.github.io/Agentlens
+repo_url: https://github.com/PawelHaracz/Agentlens
+repo_name: PawelHaracz/Agentlens
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - API Reference: api.md
+  - User Guide: user-guide.md
+  - End User Guide: end-user-guide.md
+  - Developer Guide: developer-guide.md
+  - DevOps Guide: devops-guide.md
+  - Authentication: auth.md
+  - Database: database.md
+  - Settings: settings.md
