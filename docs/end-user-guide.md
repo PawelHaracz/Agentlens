@@ -1,38 +1,68 @@
-# AgentLens End-User Documentation
+# AgentLens End-User Guide
 
-Welcome to AgentLens — a real-time AI agent catalog for discovering, tracking, and inspecting A2A, MCP, and A2UI agents across your infrastructure.
+AgentLens is a self-hosted service-discovery platform for AI agents. It discovers, tracks, and
+presents a real-time catalog of **A2A**, **MCP**, and **A2UI** agents running across your
+infrastructure — Kubernetes workloads, static configuration, push registrations, and remote
+upstream sources.
+
+This guide covers everyday use of the AgentLens web UI. For REST API reference see
+[docs/api.md](api.md). For deployment and configuration see [docs/user-guide.md](user-guide.md).
+For architectural details see [docs/architecture.md](architecture.md).
 
 ---
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
 - [Signing In](#signing-in)
-- [Dashboard Overview](#dashboard-overview)
-- [Browsing the Catalog](#browsing-the-catalog)
+  - [First-Run Admin Bootstrap](#first-run-admin-bootstrap)
+  - [Password Requirements](#password-requirements)
+  - [Account Lockout](#account-lockout)
+- [Navigation Bar](#navigation-bar)
+- [Dashboard / Catalog Overview](#dashboard--catalog-overview)
+  - [Stats Bar](#stats-bar)
+  - [Catalog Table Columns](#catalog-table-columns)
 - [Searching and Filtering](#searching-and-filtering)
 - [Viewing Agent Details](#viewing-agent-details)
+  - [Header Fields](#header-fields)
+  - [Capabilities](#capabilities)
+  - [Raw Definition](#raw-definition)
+  - [Deleting an Entry](#deleting-an-entry)
 - [Registering an Agent](#registering-an-agent)
-  - [Importing from a URL](#importing-from-a-url)
-  - [Pasting or Uploading a JSON Card](#pasting-or-uploading-a-json-card)
-- [Understanding Status Indicators](#understanding-status-indicators)
+  - [Paste JSON](#paste-json)
+  - [Upload a JSON File](#upload-a-json-file)
+  - [Import from URL](#import-from-url)
+- [Status Indicators](#status-indicators)
 - [Protocol Types](#protocol-types)
 - [Settings](#settings)
+  - [General](#general)
+  - [Users](#users)
+  - [Roles](#roles)
+  - [My Account](#my-account)
 - [User Management](#user-management)
 - [Role Management](#role-management)
-- [My Account](#my-account)
 - [Using the REST API](#using-the-rest-api)
-- [FAQ](#faq)
+- [FAQ / Troubleshooting](#faq--troubleshooting)
 
 ---
 
-## Getting Started
+## Signing In
 
-Open your browser and navigate to the AgentLens URL (default: `http://localhost:8080`). You will be redirected to the login page.
+![Empty login form](images/login-page.png)
+*Login page — enter your username and password, then click **Sign in**.*
 
-### First Run — Admin Credentials
+Navigate to the AgentLens URL in your browser (default: `http://localhost:8080`). You are
+redirected automatically to `/login` when not authenticated.
 
-On the very first startup, AgentLens generates an initial admin account and prints the credentials to the server console:
+Enter your **Username** and **Password**, then click **Sign in**. On success you land on the
+catalog dashboard.
+
+![Login form showing an error message](images/login-error.png)
+*The login form shows an error if credentials are wrong or the account is locked.*
+
+### First-Run Admin Bootstrap
+
+On the very first startup AgentLens generates a random admin account and prints the credentials to
+the server's standard output:
 
 ```
 ============================================
@@ -43,668 +73,555 @@ On the very first startup, AgentLens generates an initial admin account and prin
 ============================================
 ```
 
-Use these credentials to sign in. After logging in, change your password immediately via **Settings → My Account → Change password**.
+Use these credentials to sign in for the first time. Change the password immediately via
+**Settings → My Account → Change password** (see [My Account](#my-account)).
+
+If the server is running as a container or behind a process manager, check the container/service
+logs to retrieve the bootstrap password.
+
+### Password Requirements
+
+All passwords — including the one you set after first login — must satisfy:
+
+| Requirement | Rule |
+|-------------|------|
+| Minimum length | 10 characters |
+| Uppercase | At least one uppercase letter (A–Z) |
+| Lowercase | At least one lowercase letter (a–z) |
+| Digit | At least one digit (0–9) |
+| Special character | At least one punctuation or symbol character |
+
+Example of a valid password: `Catalog$2025`.
+
+### Account Lockout
+
+After **5 consecutive failed login attempts** an account is automatically locked for **15 minutes**.
+During this window every login attempt returns an error regardless of the password. An administrator
+can unlock the account early via **Settings → Users** (see [Users](#users)).
 
 ---
 
-## Signing In
+## Navigation Bar
 
-![Login Page](images/login-page.png)
+![User dropdown menu open in the top navigation bar](images/user-dropdown.png)
+*Top navigation bar with the user dropdown open.*
 
-Enter your **username** and **password**, then click **Sign in**. After successful authentication you are redirected to the catalog dashboard.
+After signing in the top navigation bar is always visible:
 
-If your account has been locked due to too many failed attempts (5 failed logins trigger a 15-minute lockout), contact your administrator.
+| Element | Description |
+|---------|-------------|
+| **AgentLens** (logo) | Click to return to the catalog from anywhere |
+| **Catalog** | Direct link to the agent catalog |
+| **Settings** | Link to the settings page; only visible to users with `settings:read` |
+| **User avatar** | Initials badge — click to open the user dropdown |
 
-### Navigation Bar
+The user dropdown contains:
 
-After signing in, the top navigation bar shows:
+- **My Account** — jump to the My Account settings tab
+- **Settings** — jump to the Settings page (if you have `settings:read`)
+- **Logout** — invalidate the session and return to the login page
 
-- **AgentLens** — click to return to the catalog from anywhere
-- **Catalog** — direct link to the agent catalog
-- **Settings** — link to the settings page (visible only to users with `settings:read` permission)
-- **User avatar (initials)** — opens a dropdown with My Account, Settings, and Logout
-
-![User Dropdown](images/user-dropdown.png)
+On narrow screens the nav links collapse behind a hamburger menu.
 
 ---
 
-## Dashboard Overview
+## Dashboard / Catalog Overview
 
-The AgentLens dashboard provides a single-pane view of all discovered AI agents and MCP servers.
+![Catalog dashboard populated with seeded entries](images/dashboard-overview.png)
+*The catalog dashboard showing the stats bar, filter controls, and the agent table.*
 
-![Dashboard Overview](images/dashboard-overview.png)
-
-The dashboard consists of three main sections, all accessible after signing in:
+The catalog is the default view at `/`. It shows every registered agent entry visible to your
+account.
 
 ### Stats Bar
 
-At the top, four summary cards show aggregate counts:
+Four summary cards appear at the top:
 
 | Card | Description |
 |------|-------------|
-| **TOTAL** | Total number of catalog entries |
-| **HEALTHY** | Agents responding successfully (green) |
-| **DEGRADED** | Agents returning errors (yellow) |
-| **DOWN** | Agents unreachable (red) |
+| **Total** | Total number of catalog entries |
+| **Healthy** | Entries whose last health check succeeded |
+| **Degraded** | Entries returning partial or error responses |
+| **Down** | Entries that are unreachable |
 
-These counters update automatically as health checks run.
+Counts update automatically as health checks run in the background.
 
-### Search and Filters
-
-Below the stats bar, a search input and dropdown filters let you narrow down the catalog:
-
-- **Search** — type any keyword to filter by agent name or description
-- **Protocol filter** — select `A2A`, `MCP`, or `A2UI` to show only agents of that protocol
-- **Status filter** — select `healthy`, `degraded`, `down`, or `unknown` to show only agents with that health status
-
-### Catalog Table
-
-The main table lists all catalog entries with these columns:
+### Catalog Table Columns
 
 | Column | Description |
 |--------|-------------|
-| **Name** | Display name and truncated description |
-| **Protocol** | Color-coded badge — blue for A2A, purple for MCP |
-| **Status** | Health status badge — green (healthy), yellow (degraded), red (down), gray (unknown) |
-| **Source** | How the entry was discovered — `k8s`, `config`, or `push` |
-| **Endpoint** | The agent's service URL |
+| **Name** | Display name (clickable link to the detail page); optional description underneath |
+| **Protocol** | Protocol badge: `A2A`, `MCP`, or `A2UI` |
+| **Status** | Health status badge: `Healthy`, `Degraded`, `Down`, or `Unknown` |
+| **Source** | Discovery source: `k8s`, `config`, `push`, or `upstream` (hidden on small screens) |
+| **Endpoint** | Base URL of the agent (hidden on medium and smaller screens) |
 
-Click any row to see the full agent details.
+Rows are ordered by the API default (registration time, most recent first).
 
----
-
-## Browsing the Catalog
-
-The catalog table shows all discovered agents sorted alphabetically. Each entry displays:
-
-- **Display name** — the human-readable name of the agent or server
-- **Description** — a brief description (truncated in the table, full text in the detail view)
-- **Protocol badge** — color-coded to distinguish A2A agents from MCP servers
-- **Status badge** — reflects the most recent health check result
-- **Source** — indicates whether the agent was discovered via Kubernetes annotations (`k8s`), static config file (`config`), or push registration (`push`)
-- **Endpoint** — the URL where the agent is reachable
+**Empty state:** when no entries match the current filters a "No catalog entries found." message is
+displayed.
 
 ---
 
 ## Searching and Filtering
 
-### Text Search
+![Catalog with an active text search for "Translator"](images/catalog-search.png)
+*Free-text search narrows the catalog to matching entries.*
 
-Use the search bar at the top to find agents by name or description. The search is case-insensitive and filters results in real-time as you type.
+Three controls sit above the catalog table:
 
-![Search Results](images/search-results.png)
+1. **Search box** — type any keyword to filter entries by display name or description. Results
+   update as you type.
 
-### Protocol Filter
+2. **Protocol filter** — dropdown with: *All protocols*, `A2A`, `MCP`, `A2UI`.
 
-Use the "All protocols" dropdown to show only agents of a specific protocol type:
+3. **Status filter** — dropdown with: *All statuses*, `Healthy`, `Degraded`, `Down`, `Unknown`.
 
-- **A2A** — Agent-to-Agent protocol agents
-- **MCP** — Model Context Protocol servers
-- **A2UI** — Agent-to-UI protocol agents
+![Catalog filtered to show only A2A protocol entries](images/catalog-filter-protocol.png)
+*Protocol filter set to A2A — only A2A entries are shown.*
 
-### Status Filter
+![Catalog filtered by status](images/catalog-filter-status.png)
+*Status filter applied — only entries with the selected health status are shown.*
 
-Use the "All statuses" dropdown to show only agents with a specific health status:
-
-- **healthy** — responding normally
-- **degraded** — responding with errors (HTTP 5xx)
-- **down** — not reachable
-- **unknown** — not yet checked
-
-Filters can be combined with the search bar for precise results.
+Filters are combined (AND logic). Selecting `A2A` and `Healthy` shows only A2A entries that are
+currently healthy.
 
 ---
 
 ## Viewing Agent Details
 
-Click any row in the catalog table to open the detail view for that agent.
+Click any agent name in the catalog table to open its detail page at `/catalog/:id`.
 
-![Entry Detail](images/entry-detail.png)
+![Detail page for an A2A agent](images/entry-detail-a2a.png)
+*Agent detail page — header badges, metadata fields, and capabilities.*
 
-The detail view shows the complete information for a catalog entry:
+### Header Fields
 
-### Agent Information
+| Badge / Field | Description |
+|---------------|-------------|
+| Protocol badge | Protocol of the agent (`A2A`, `MCP`, `A2UI`) |
+| Status badge | Current health status |
+| Source badge | Discovery source |
+| Version badge | Agent version declared in its card |
+| Spec version badge | Agent Card spec version (e.g. `1.0`) |
+| **Endpoint** | Full URL of the agent |
+| **Namespace** | Kubernetes namespace (shown when source is `k8s`) |
+| **Team** / **Organization** | Provider fields from the agent card |
+| **Last Seen** | Timestamp of the most recent health check |
+| **Created** | Timestamp when the entry was first registered |
 
-- **Display Name** — full agent name
-- **Description** — complete description text
-- **Protocol** — A2A, MCP, or A2UI
-- **Endpoint** — the service URL
-- **Version** — the agent's reported version
-- **Status** — current health status with color indicator
-- **Source** — how this agent was discovered
+Below the header, **categories** are shown as outline badges when present.
 
-Users with `catalog:delete` permission will also see a **Delete** button in the top-right corner of the detail view.
+### Capabilities
 
-### Provider
+![Detail page showing the capabilities section for an A2A agent](images/entry-detail-a2a-skills.png)
+*Capabilities section — each capability shows its name, kind badge, and description.*
 
-- **Organization** — the organization that maintains the agent
-- **Team** — the team responsible for the agent
+Each capability has a `kind` tag:
 
-### Categories
+| Kind | Protocol | Description |
+|------|----------|-------------|
+| `a2a.skill` | A2A | A discrete task the agent can perform |
+| `a2a.interface` | A2A | Supported interface (e.g. `push`, `request`) |
+| `a2a.security_scheme` | A2A | Authentication scheme advertised by the card |
+| `a2a.extension` | A2A | Custom extension declared in the card |
+| `a2a.signature` | A2A | Cryptographic signature entry |
+| `mcp.tool` | MCP | A callable tool exposed by the MCP server |
+| `mcp.resource` | MCP | A resource URI provided by the MCP server |
+| `mcp.prompt` | MCP | A prompt template offered by the MCP server |
 
-Tags that categorize the agent (e.g., "nlp", "support", "code", "data"). These help with discovery and navigation.
+![Detail page for an MCP server entry](images/entry-detail-mcp.png)
+*MCP server detail — tools, resources, and prompts appear as capabilities.*
 
-### Skills
+### Raw Definition
 
-Each agent exposes one or more skills — named capabilities with descriptions and supported input/output modes:
+![Raw JSON definition view](images/entry-detail-raw-json.png)
+*Raw Definition section — the original agent card JSON as received during registration.*
 
-| Field | Description |
-|-------|-------------|
-| **Name** | Skill identifier (e.g., `answer_question`, `translate`) |
-| **Description** | What the skill does |
-| **Input Modes** | Supported input formats (e.g., `text`, `json`) |
-| **Output Modes** | Supported output formats (e.g., `text`, `json`) |
+At the bottom of the detail page the **Raw Definition** section shows the full JSON document as
+stored in the catalog. Use the scroll area to navigate large cards.
 
-### Raw Card
+### Deleting an Entry
 
-For discovered agents (not push-registered), the raw protocol card JSON is available, showing the original A2A Agent Card or MCP Server Card as fetched from the agent.
+Click the red **Delete** button in the top-right of the detail card to remove the entry. A browser
+confirm dialog asks for confirmation. After deletion you are returned to the catalog.
 
-Use the back button or breadcrumb to return to the catalog list.
+> **Note:** Deletion requires `catalog:delete` permission.
 
 ---
 
 ## Registering an Agent
 
-You can register agents in several ways. Click the **+ Register Agent** button in the catalog toolbar to open the registration modal.
+![The Register Agent button on the catalog page](images/register-menu.png)
+*The **Register Agent** button — located in the top-right of the filter bar.*
 
-![Register Agent Button](images/register-agent-button.png)
+Click **Register Agent** to open the registration dialog. Three methods are available as tabs.
 
-The modal has **three tabs** at the top:
+### Paste JSON
 
-| Tab | Description |
-|-----|-------------|
-| **Paste JSON** | Type or paste an A2A/MCP card directly |
-| **Upload File** | Drag-and-drop or browse for a `.json` file |
-| **Import from URL** | Provide a URL — the server fetches and imports the card automatically |
+![Register dialog with the Paste JSON tab empty](images/register-paste-json-empty.png)
+*Paste JSON tab — type or paste an A2A or MCP agent card JSON document.*
 
----
+1. Select the **Paste JSON** tab (default).
+2. Paste a valid A2A or MCP agent card JSON into the text area.
+3. Click **Validate** — the server parses the card and returns errors or warnings.
 
-### Importing from a URL
+![Paste JSON tab showing schema validation errors](images/register-paste-json-validation.png)
+*Validation errors are listed with the failing field and message.*
 
-The **Import from URL** tab is the fastest way to register an agent whose card is already publicly accessible (e.g., at `/.well-known/agent.json`).
+4. If validation passes, the dialog advances to the **Preview** step.
 
-![Register Dialog — Import from URL tab](images/register-import-url-tab.png)
+![Paste JSON tab showing the parsed card preview](images/register-paste-json-preview.png)
+*Preview step — review the parsed card before saving.*
 
-**Step 1 — Open the Import from URL tab.** Click the **+ Register Agent** button, then select the **Import from URL** tab.
+5. Review the preview and click **Register Agent** to save. The dialog closes and the catalog
+   refreshes.
 
-**Step 2 — Enter the URL.** Paste the full URL of the agent card into the **Agent Card URL** field. For A2A agents the card is typically served at:
-```
-https://your-agent.example.com/.well-known/agent.json
-```
-For MCP servers, the card is typically at:
-```
-https://your-server.example.com/.well-known/mcp/server.json
-```
+### Upload a JSON File
 
-**Step 3 — (Optional) Select a protocol.** The **Protocol** dropdown defaults to **Auto-detect**. AgentLens will determine the protocol from the URL path and the card content:
+1. Select the **Upload File** tab.
+2. Click **Browse** or drag a `.json` file onto the drop zone.
+3. The file contents are loaded into the validator — the flow then continues exactly as in
+   [Paste JSON](#paste-json) above (Validate → Preview → Register).
 
-| Signal | Detected protocol |
-|--------|-------------------|
-| URL contains `/.well-known/agent` | A2A |
-| URL contains `/mcp` | MCP |
-| Card JSON contains a `"skills"` array | A2A |
-| Card JSON contains a `"tools"` array | MCP |
+### Import from URL
 
-If detection fails, select the correct protocol manually from the dropdown: **A2A** or **MCP**.
+![Import from URL tab — empty state](images/register-import-url-empty.png)
+*Import from URL tab — enter a publicly reachable agent card URL.*
 
-**Step 4 — Click "Fetch & Import".** The button shows **Importing...** while the server fetches and parses the card. The URL field and protocol selector are disabled during this time.
+1. Select the **Import from URL** tab.
+2. Enter the full URL of the agent card (e.g. `https://example.com/.well-known/agent.json`).
+3. Optionally choose the **Protocol**: `Auto-detect` (default), `A2A`, or `MCP`.
+4. Click **Fetch & Import**.
 
-![Register Dialog — Import loading state](images/register-import-url-loading.png)
+![Import from URL tab with a URL filled in](images/register-import-url-filled.png)
+*Import from URL — URL entered, ready to fetch.*
 
-**Step 5 — Result:**
+AgentLens fetches the document server-side, parses it, and registers it directly. You land back on
+the catalog showing the new entry.
 
-- **Success** — the modal closes automatically and the new agent appears in the catalog table.
-- **Error** — an inline error message appears below the URL field. Common errors:
+![Import from URL showing the SSRF guard error for a private address](images/register-import-url-error-private.png)
+*Private/loopback URLs are rejected by the SSRF guard — the error message is shown inline.*
 
-| Error message | Cause |
-|---------------|-------|
-| *Could not reach the URL. Check that it is accessible.* | The URL is unreachable, timed out, or returned a non-2xx HTTP status. |
-| *The URL did not return a valid agent card.* | The URL returned non-JSON, or the JSON does not meet the card schema requirements. |
-| *An agent with this endpoint already exists.* | An entry with the same declared endpoint is already in the catalog. |
-| *url resolves to a private or reserved address* | Private/internal network addresses are blocked for security reasons. |
+> **SSRF protection:** URLs that resolve to private RFC-1918 ranges (`10.x`, `172.16.x`,
+> `192.168.x`), loopback (`127.0.0.0/8`, `::1`), or link-local addresses are rejected by the
+> server before any outbound connection is made. `localhost` is similarly blocked. This is a
+> security measure and cannot be bypassed from the UI.
 
-![Register Dialog — Import error state](images/register-import-url-error.png)
-
-**Security note:** The import feature only allows `http://` and `https://` URLs. Requests to private IP ranges (`10.x`, `192.168.x`, `172.16–31.x`), loopback (`127.x`, `localhost`), and link-local addresses (`169.254.x`) are rejected to prevent server-side request forgery (SSRF). Response bodies larger than 1 MB are also rejected.
+![Catalog showing entries after a successful registration](images/register-import-url-success.png)
+*After a successful registration the catalog refreshes to show the new entry.*
 
 ---
 
-### Pasting or Uploading a JSON Card
+## Status Indicators
 
-Before registering an A2A agent card by pasting JSON, validate it to ensure the format is correct.
+Each catalog entry carries a **status** that reflects its last health check result:
 
-#### Validating A2A Agent Cards
-
-Use the validation endpoint to check your A2A agent card before registering it:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/catalog/validate \
-  -H "Content-Type: application/json" \
-  -d @agent-card.json
-```
-
-**Important:** The validation endpoint requires authentication with `catalog:write` permission and returns detailed error messages to help you fix any issues.
-
-The response includes:
-- **valid** — boolean indicating whether the card passed validation
-- **spec_version** — detected A2A version (0.3 or 1.0)
-- **errors** — array of validation errors (if any)
-- **warnings** — array of non-critical warnings
-- **preview** — summary of agent details (if valid)
-
-Example error response:
-
-```json
-{
-  "valid": false,
-  "spec_version": "",
-  "errors": [
-    {
-      "field": "url",
-      "message": "url or supportedInterfaces is required"
-    }
-  ],
-  "warnings": [],
-  "preview": null
-}
-```
-
-Common validation errors:
-- **Missing `name` field** — Required: agent display name
-- **Missing `url` or `supportedInterfaces`** — Required: at least one endpoint URL
-- **Invalid JSON syntax** — Check for trailing commas, missing quotes
-- **Invalid `version` format** — Must follow semantic versioning (e.g., 1.0.0)
-
-**Web UI Registration Flow:**
-
-The web dashboard provides a 4-step registration modal for A2A agent cards:
-
-**Step 1 — Open the dialog.** Click the **+ Register Agent** button in the catalog toolbar.
-
-**Step 2 — Paste or upload your card.** Select the **Paste JSON** or **Upload File** tab. Type or paste the card directly, or drag-and-drop a `.json` file. Click **Validate** when ready.
-
-![Register Dialog — Input](images/register-dialog-input.png)
-
-**Step 3a — Fix validation errors (if any).** If the card has missing or invalid fields, the dialog shows each error with the field name and message in red. Click **Back to Edit** to correct the card and re-validate.
-
-![Register Dialog — Validation Errors](images/register-validation-errors.png)
-
-**Step 3b — Review the preview.** If validation passes, the dialog shows a green "Card validated successfully" banner followed by a preview of the agent: name, description, protocol badge (A2A), detected spec version (v0.3 or v1.0), skill count, and security schemes.
-
-![Register Dialog — Card Preview](images/register-card-preview.png)
-
-**Step 4 — Register.** Click **Register Agent** to persist the entry. The modal closes and the new agent appears immediately in the catalog table.
-
-![Catalog — Registered Agent](images/register-success-catalog.png)
-
-Click the agent name to open the detail view, which includes the full agent information, skills, spec version badge, and the raw card JSON.
-
-![Agent Detail View](images/register-agent-detail.png)
-
-After successful validation, clicking **Register Agent** in the modal sends the card to `POST /api/v1/catalog/register`, which parses the raw agent card via the A2A parser (converting it into a CatalogEntry following the Product Archetype pattern) and stores it in the catalog.
-
-### 1. Push Registration (API)
-
-Send a POST request to the catalog endpoint:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/catalog \
-  -H "Content-Type: application/json" \
-  -d '{
-    "display_name": "My Agent",
-    "description": "Does amazing things",
-    "protocol": "a2a",
-    "endpoint": "http://my-agent.internal:8080",
-    "version": "1.0.0",
-    "provider": {
-      "organization": "My Org",
-      "team": "engineering"
-    },
-    "categories": ["nlp"],
-    "skills": [
-      {
-        "name": "chat",
-        "description": "Chat with the agent",
-        "input_modes": ["text"],
-        "output_modes": ["text"]
-      }
-    ]
-  }'
-```
-
-**Required fields:** `display_name`, `endpoint`, `protocol` (must be `a2a`, `mcp`, or `a2ui`).
-
-The API returns `201 Created` with the full entry including the generated `id`.
-
-If an entry with the same endpoint already exists, the API returns `409 Conflict`.
-
-### 2. Static Configuration
-
-Add entries to your `agentlens.yaml` config file:
-
-```yaml
-sources:
-  - name: my-agent
-    type: a2a
-    url: http://my-agent.internal:8080
-  - name: my-mcp-server
-    type: mcp
-    url: http://mcp-server.internal:9000
-```
-
-AgentLens automatically fetches the agent card from the well-known path and adds it to the catalog.
-
-### 3. Kubernetes Annotations
-
-Annotate your Kubernetes Services:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-agent
-  annotations:
-    agentlens.io/type: "a2a"
-    agentlens.io/team: "platform"
-    agentlens.io/tags: "nlp,support"
-spec:
-  selector:
-    app: my-agent
-  ports:
-    - port: 8080
-```
-
-AgentLens discovers annotated Services automatically when Kubernetes discovery is enabled.
-
----
-
-## Understanding Status Indicators
-
-AgentLens periodically checks the health of all catalog entries by sending HTTP GET requests to their endpoints.
-
-| Status | Badge Color | Meaning |
+| Status | Badge colour | Meaning |
 |--------|-------------|---------|
-| **healthy** | 🟢 Green | Agent responded with HTTP 2xx |
-| **degraded** | 🟡 Yellow | Agent responded with HTTP 5xx |
-| **down** | 🔴 Red | Agent is unreachable or timed out |
-| **unknown** | ⚪ Gray | Agent has not been checked yet |
+| `healthy` | Green | The agent responded successfully to the last health probe |
+| `degraded` | Yellow/amber | The agent responded but returned an error or partial data |
+| `down` | Red | The agent did not respond (connection refused, timeout, etc.) |
+| `unknown` | Grey | No health check has run yet, or health checking is disabled |
 
-Health checks run at a configurable interval (default: 30 seconds) with configurable timeout and concurrency.
+Health checks run on a configurable interval (`health.check_interval`, default 60 s). Newly
+registered agents start with status `unknown` until the first check completes.
 
 ---
 
 ## Protocol Types
 
-AgentLens supports three agent communication protocols:
+AgentLens recognises three agent protocols:
 
-### A2A (Agent-to-Agent)
+| Protocol | Value | Description |
+|----------|-------|-------------|
+| **A2A** | `a2a` | Agent-to-Agent protocol. Agents expose a card at `/.well-known/agent.json` describing their skills and supported interfaces. |
+| **MCP** | `mcp` | Model Context Protocol. Servers expose tools, resources, and prompt templates to AI assistants. |
+| **A2UI** | `a2ui` | Agent-to-UI protocol variant for browser-facing agents. |
 
-The Agent-to-Agent protocol enables direct communication between AI agents. A2A agents expose their capabilities via an **Agent Card** at `/.well-known/agent-card.json`.
-
-Agent Cards include:
-- Agent name, description, and version
-- Service URL
-- Skills with input/output mode definitions
-- Provider information
-
-### MCP (Model Context Protocol)
-
-The Model Context Protocol provides a standardized way for language models to access external tools and data sources. MCP servers expose their capabilities via a **Server Card** at `/.well-known/mcp/server.json`.
-
-Server Cards include:
-- Server name, description, and version
-- Remote connection URLs
-- Available tools with parameter definitions
-- Provider information
-
-### A2UI (Agent-to-UI)
-
-The Agent-to-UI protocol defines how agents present interactive interfaces to users. A2UI support is planned for future releases.
+The protocol is auto-detected when importing from a URL (unless you override it in the Protocol
+dropdown).
 
 ---
 
 ## Settings
 
-The **Settings** page is accessible from the top navigation bar (or from the user dropdown → **Settings**). It requires the `settings:read` permission.
+Navigate to **Settings** via the top navigation bar or the user dropdown. The settings page is
+organised into tabs.
 
-![Settings — General](images/settings-general.png)
+> **Permission required:** `settings:read` to view the Settings page.
 
-The Settings page has four tabs:
+### General
 
-| Tab | Description |
-|-----|-------------|
-| **General** | Appearance (theme) and display preferences |
-| **Users** | User account management — requires `users:read` |
-| **Roles** | Role and permission management — requires `roles:read` |
-| **My Account** | Edit your own profile and change your password |
-
-### General Tab
+![Settings → General tab](images/settings-general.png)
+*General settings — appearance and display options.*
 
 The **General** tab has two sections:
 
-**Appearance** — choose between Light, Dark, and System themes. The selected theme is saved to your settings and applied immediately.
+**Appearance**
 
-**Display** — configure:
-- *Items per page* — how many catalog entries to show per page
-- *Poll interval* — how often (in seconds) the UI refreshes data
-- *Health check interval* — background health check frequency
+| Setting | Description |
+|---------|-------------|
+| Theme | `Light`, `Dark`, or `System` (follows OS preference) |
 
-Click **Save settings** to persist changes.
+**Display**
+
+| Setting | Key | Default |
+|---------|-----|---------|
+| Items per page | `ui.items_per_page` | 25 |
+| Poll interval (seconds) | `ui.poll_interval` | 30 |
+| Health check interval (seconds) | `health.check_interval` | 60 |
+
+Click **Save settings** to persist changes. A brief "Settings saved." confirmation appears.
+
+> **Permission required:** `settings:write` to save changes.
+
+### Users
+
+![Settings → Users tab](images/settings-users-list.png)
+*Users tab — list of all user accounts with role and status columns.*
+
+Manage user accounts. See [User Management](#user-management) for full details.
+
+### Roles
+
+![Settings → Roles tab](images/settings-roles-list.png)
+*Roles tab — system-defined and custom roles with their permission sets.*
+
+Manage roles and their permissions. See [Role Management](#role-management) for full details.
+
+### My Account
+
+![Settings → My Account tab](images/settings-account.png)
+*My Account tab — change your display name, email, and password.*
+
+The **My Account** tab lets you update your own profile:
+
+- **Display name** and **Email** — informational fields shown in the UI.
+- **Change password** — enter your current password, then a new password that meets the
+  [password requirements](#password-requirements). Click **Save**.
+
+> You do not need any special permission to update your own account.
 
 ---
 
 ## User Management
 
-The **Users** tab (requires `users:read`) shows all user accounts:
+> **Permissions required:** `users:read` to view users; `users:write` to create/edit/lock;
+> `users:delete` to delete.
 
-![Settings — Users](images/settings-users.png)
+Navigate to **Settings → Users**.
 
-| Column | Description |
-|--------|-------------|
-| **Username** | The user's login name |
-| **Email** | Contact email (optional) |
-| **Role** | The assigned role badge |
-| **Status** | Active or Locked |
-| **Actions** | Edit, Lock/Unlock, Delete buttons |
+![Users tab showing the Add User dialog](images/settings-users-create.png)
+*Add user dialog — fill in username, optional email and display name, password, and role.*
 
-### Actions (require `users:write` / `users:delete`)
+### Creating a User
 
-- **Edit** (pencil icon) — opens a dialog to update display name, email, and role
-- **Lock / Unlock** (padlock icon) — toggles account lock state, preventing or restoring login
-- **Delete** (trash icon) — permanently removes the user (cannot delete your own account or the last admin)
+1. Click **Add user**.
+2. Fill in:
+   - **Username** (required, unique)
+   - **Email** (optional)
+   - **Display name** (optional)
+   - **Password** (required for new users; must meet [password requirements](#password-requirements))
+   - **Role** (select from the dropdown)
+3. Click **Save**.
 
-### Adding a New User
+### Editing a User
 
-Click **Add user** to open the creation dialog. Fill in:
-- **Username** (required) — must be unique
-- **Display name** — shown in the UI
-- **Email** — optional
-- **Password** — must meet strength requirements (10+ characters, uppercase, lowercase, digit, special character)
-- **Role** — select from available roles
+Click the **pencil** icon on a user row to open the edit dialog. You can update the username,
+email, display name, and role. Leave the password field blank to keep the current password.
+
+### Locking and Unlocking
+
+Click the **lock** icon to toggle a user's active state:
+
+- A locked (inactive) user cannot log in regardless of their password.
+- An administrator can unlock a user locked by the automatic lockout policy this way.
+
+![Users list with a locked user row visible](images/settings-users-locked.png)
+*A locked user shown with the "Locked" badge; the unlock icon is visible in the Actions column.*
+
+### Deleting a User
+
+Click the **trash** icon to delete a user. A browser confirm dialog is shown. The last active admin
+user cannot be deleted (the API returns an error).
 
 ---
 
 ## Role Management
 
-The **Roles** tab (requires `roles:read`) lists all roles and their permissions:
+> **Permissions required:** `roles:read` to view roles; `roles:write` to create/edit custom roles.
 
-![Settings — Roles](images/settings-roles.png)
+Navigate to **Settings → Roles**.
 
-Three **system roles** are created by default and cannot be deleted:
+Roles bundle a set of permissions that are assigned to users. Every role is either a **system role**
+or a **custom role**.
 
-| Role | Permissions |
-|------|-------------|
-| **admin** | Full access: catalog, users, roles, settings (read/write/delete) |
-| **editor** | catalog:read/write, users:read, roles:read, settings:read |
-| **viewer** | catalog:read, users:read, roles:read, settings:read |
+**System roles** (`IsSystem = true`) are seeded by AgentLens and cannot be edited or deleted:
 
-System roles are marked with a shield icon and cannot be modified or deleted.
+| Role | Typical permissions |
+|------|---------------------|
+| `admin` | All permissions |
+| `editor` | `catalog:read`, `catalog:write`, `catalog:delete`, `users:read`, `roles:read`, `settings:read` |
+| `viewer` | `catalog:read` |
 
-### Custom Roles (requires `roles:write`)
+**Custom roles** can be created, edited, and deleted freely.
 
-Click **Add role** to create a custom role. Select a name, description, and any combination of the available permissions:
+### Creating a Role
 
-- `catalog:read` / `catalog:write` / `catalog:delete`
-- `users:read` / `users:write` / `users:delete`
-- `roles:read` / `roles:write`
-- `settings:read` / `settings:write`
+1. Click **Add role**.
+2. Enter a **Name** and optional **Description**.
+3. Check the permissions this role should grant.
+4. Click **Save**.
+
+Available permissions:
+
+| Permission | What it grants |
+|------------|----------------|
+| `catalog:read` | View catalog entries and stats |
+| `catalog:write` | Register new entries, import from URL |
+| `catalog:delete` | Delete catalog entries |
+| `users:read` | View user list |
+| `users:write` | Create and edit users |
+| `users:delete` | Delete users |
+| `roles:read` | View roles |
+| `roles:write` | Create, edit, and delete custom roles |
+| `settings:read` | View Settings page and read settings |
+| `settings:write` | Update settings |
+
+### Editing a Role
+
+Click the **pencil** icon on a custom role row. System roles show the icon as disabled.
+
+![Editing a non-system role — permissions checkboxes visible](images/settings-roles-edit.png)
+*Role edit dialog — toggle individual permissions for the selected role.*
+
+### Deleting a Role
+
+Click the **trash** icon on a custom role row. System roles cannot be deleted.
 
 ---
 
-## My Account
+## Using the REST API
 
-The **My Account** tab allows you to manage your own profile and credentials:
+AgentLens exposes a REST API at `/api/v1/`. Full reference: [docs/api.md](api.md).
 
-![Settings — My Account](images/settings-account.png)
+### Authentication
 
-### Profile
+Obtain a token:
 
-Update your **Display name** and **Email**. Your **Username** is read-only and cannot be changed after creation. Click **Update profile** to save.
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
 
-### Change Password
+{"username": "admin", "password": "YourPassword1!"}
+```
 
-Enter your **Current password**, then your **New password** (twice to confirm). Password requirements:
-- At least 10 characters
-- At least one uppercase letter
-- At least one lowercase letter
-- At least one digit
-- At least one special character (`!@#$%^&*()`)
+Response:
 
-Click **Change password** to apply. You will remain logged in with the new password.
+```json
+{"token": "<jwt>"}
+```
 
----
+Use the token in subsequent requests:
 
-AgentLens exposes a REST API for programmatic access. All responses use JSON. Most endpoints require a JWT token obtained from the login endpoint.
-
-### Authenticating
-
-```bash
-# Login and get a token
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "your-password"}' \
-  | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
-
-# Use the token in subsequent requests
-curl http://localhost:8080/api/v1/catalog \
-  -H "Authorization: Bearer $TOKEN"
+```http
+GET /api/v1/catalog
+Authorization: Bearer <jwt>
 ```
 
 ### Quick Reference
 
-| Method | Endpoint | Permission | Description |
-|--------|----------|------------|-------------|
-| `GET` | `/healthz` | None | Server health check |
-| `POST` | `/api/v1/auth/login` | None | Get JWT token |
-| `POST` | `/api/v1/auth/logout` | None | Invalidate session cookie |
-| `GET` | `/api/v1/auth/me` | Any | Current user info |
-| `PUT` | `/api/v1/auth/password` | Any | Change password |
-| `GET` | `/api/v1/catalog` | `catalog:read` | List all entries (supports filters) |
-| `POST` | `/api/v1/catalog` | `catalog:write` | Register a new entry |
-| `POST` | `/api/v1/catalog/register` | `catalog:write` | Register from raw A2A agent card |
-| `POST` | `/api/v1/catalog/import` | `catalog:write` | Import agent card from a URL |
-| `GET` | `/api/v1/catalog/{id}` | `catalog:read` | Get entry by ID |
-| `DELETE` | `/api/v1/catalog/{id}` | `catalog:delete` | Delete an entry |
-| `GET` | `/api/v1/catalog/{id}/card` | `catalog:read` | Get raw protocol card |
-| `GET` | `/api/v1/skills?q=...` | `catalog:read` | Search by skill name |
+| Method | Path | Permission | Description |
+|--------|------|------------|-------------|
+| `GET` | `/api/v1/catalog` | `catalog:read` | List entries (filter via query params) |
+| `POST` | `/api/v1/catalog` | `catalog:write` | Create an entry |
+| `GET` | `/api/v1/catalog/:id` | `catalog:read` | Get a single entry |
+| `DELETE` | `/api/v1/catalog/:id` | `catalog:delete` | Delete an entry |
+| `POST` | `/api/v1/catalog/validate` | `catalog:write` | Validate a card JSON |
+| `POST` | `/api/v1/catalog/import` | `catalog:write` | Import from URL |
 | `GET` | `/api/v1/stats` | `catalog:read` | Aggregate statistics |
 | `GET` | `/api/v1/users` | `users:read` | List users |
 | `POST` | `/api/v1/users` | `users:write` | Create user |
+| `PUT` | `/api/v1/users/:id` | `users:write` | Update user |
+| `DELETE` | `/api/v1/users/:id` | `users:delete` | Delete user |
 | `GET` | `/api/v1/roles` | `roles:read` | List roles |
-| `GET` | `/api/v1/settings` | `settings:read` | Get all settings |
-| `PUT` | `/api/v1/settings` | `settings:write` | Update settings |
+| `POST` | `/api/v1/roles` | `roles:write` | Create role |
+| `PUT` | `/api/v1/roles/:id` | `roles:write` | Update role |
+| `DELETE` | `/api/v1/roles/:id` | `roles:write` | Delete role |
 
-### Filtering the Catalog
-
-```bash
-# Filter by protocol
-curl "http://localhost:8080/api/v1/catalog?protocol=a2a" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Filter by status
-curl "http://localhost:8080/api/v1/catalog?status=healthy" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Search by text
-curl "http://localhost:8080/api/v1/catalog?q=support" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Combine filters
-curl "http://localhost:8080/api/v1/catalog?protocol=mcp&status=healthy&q=code" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Paginate results
-curl "http://localhost:8080/api/v1/catalog?limit=10&offset=20" \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-### Getting Statistics
-
-```bash
-curl http://localhost:8080/api/v1/stats \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-Returns:
-```json
-{
-  "total": 4,
-  "by_status": {
-    "healthy": 2,
-    "down": 2
-  },
-  "by_source": {
-    "push": 3,
-    "k8s": 1
-  }
-}
-```
-
-For the complete API reference, see [api.md](api.md).
+See [docs/api.md](api.md) for the full request/response schemas.
 
 ---
 
-## FAQ
+## FAQ / Troubleshooting
 
-### How often does AgentLens check agent health?
+### My account is locked — how do I regain access?
 
-By default, every 30 seconds. Configure this via `health_check.interval` in the config file or `AGENTLENS_HEALTH_CHECK_INTERVAL` environment variable.
+Ask an administrator to navigate to **Settings → Users**, find your account, and click the
+**unlock** (padlock) icon.
 
-### Can I remove an agent from the catalog?
+If you are the only admin and your account is locked, see below.
 
-Yes — use `DELETE /api/v1/catalog/{id}` (requires `catalog:delete` permission) or wait for the next discovery cycle, which will mark missing agents as "down".
+### I forgot the admin password / I am locked out of the only admin account
 
-### Does AgentLens require authentication?
+If you still have server access:
 
-Yes. All catalog and management endpoints require a valid JWT token. Obtain one via `POST /api/v1/auth/login`. See [docs/auth.md](auth.md) for full details.
+1. Stop the AgentLens server.
+2. Delete (or rename) the SQLite database file specified by `AGENTLENS_DB_SQLITE_PATH` (default
+   `agentlens.db` in the data directory).
+3. Restart the server. With no existing users the bootstrap procedure runs again and prints fresh
+   admin credentials to stdout.
 
-### What happens if I register the same endpoint twice?
+> **Warning:** deleting the database removes all catalog entries, users, and roles. Export any data
+> you need first via the REST API.
 
-The API returns `409 Conflict`. Endpoints are unique identifiers in the catalog. Discovery sources automatically update existing entries rather than creating duplicates.
+### I imported from a URL and got "url points to a private or reserved address"
 
-### Can AgentLens discover agents outside Kubernetes?
+AgentLens's SSRF guard blocks outbound connections to private/loopback addresses. This is
+intentional. The agent card must be hosted on a publicly reachable HTTPS URL. The following ranges
+are blocked: `10.x`, `172.16–31.x`, `192.168.x`, `127.x`, `::1`, `169.254.x`, and the `localhost`
+hostname.
 
-Yes — use the static configuration (`sources:` in `agentlens.yaml`) or push registration (`POST /api/v1/catalog`) for agents running anywhere. You can also use the **Import from URL** feature in the dashboard to register a single agent card by URL.
+### The catalog shows an agent as "Unknown" — why?
 
-### How do I enable Kubernetes discovery?
+`Unknown` means no health check has been recorded yet. Possible reasons:
 
-Set `kubernetes.enabled: true` in the config file or `AGENTLENS_KUBERNETES_ENABLED=true` as an environment variable. The Helm chart enables this by default.
+- The agent was just registered and the health checker has not run its first cycle.
+- Health checking is disabled (`AGENTLENS_HEALTH_CHECK_ENABLED=false` or
+  `health.check_interval` is very large).
+- The agent's endpoint is unreachable so the checker recorded an error — but in that case the
+  status would be `down`, not `unknown`.
 
-### I forgot the admin password — how do I reset it?
+### An agent shows "Down" — how do I investigate?
 
-Connect directly to the SQLite database and update the password hash, or delete the database file and restart AgentLens to regenerate the admin credentials. For PostgreSQL, update the `password_hash` column in the `users` table with a new bcrypt hash.
+1. Check that the agent process is running at the registered endpoint.
+2. Verify network connectivity between the AgentLens server and the agent endpoint.
+3. The Raw Definition section of the detail page shows the card URL and protocol — confirm the
+   agent is serving that path.
 
-### How do I create additional users?
+### How do I push an agent card without using the UI?
 
-Administrators can create users via the **Settings → Users** page or via the API:
+Use the REST API directly:
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/users \
+curl -s -X POST https://agentlens.example.com/api/v1/catalog/import \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username":"alice","password":"SecurePass1!","role_id":"role-editor"}'
+  -d '{"url": "https://my-agent.example.com/.well-known/agent.json"}'
 ```
 
-### Why can't I import from a private/internal URL?
+Or register a card directly:
 
-AgentLens blocks requests to private IP ranges (`10.x`, `192.168.x`, `172.16–31.x`), loopback (`127.x`, `localhost`), and link-local addresses (`169.254.x`) to prevent server-side request forgery (SSRF) attacks. If you need to register an agent running on a private network, use **Paste JSON** / **Upload File** or the `POST /api/v1/catalog/register` API instead.
+```bash
+curl -s -X POST https://agentlens.example.com/api/v1/catalog \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"display_name":"My Agent","endpoint":"https://my-agent.example.com","protocol":"a2a","version":"1.0.0"}'
+```
+
+### Kubernetes-discovered agents have a `k8s` source — what controls that?
+
+Agents running in Kubernetes are discovered when their `Pod` or `Service` carries the annotation
+`agentlens.io/enabled: "true"`. See [docs/user-guide.md](user-guide.md) and
+[docs/architecture.md](architecture.md) for the full annotation schema.
