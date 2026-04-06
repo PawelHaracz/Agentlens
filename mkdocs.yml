@@ -54,5 +54,5 @@ plugins:
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
-  - minify:
-      minify_html: true 
+  # - minify:
+  #     minify_html: true 
