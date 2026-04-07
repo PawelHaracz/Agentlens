@@ -48,7 +48,7 @@ func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
 		filter.Protocol = &p
 	}
 	if v := q.Get("status"); v != "" {
-		s := model.Status(v)
+		s := model.LifecycleState(v)
 		filter.Status = &s
 	}
 	if v := q.Get("source"); v != "" {

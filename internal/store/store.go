@@ -28,7 +28,7 @@ type Store interface {
 // ListFilter holds filtering parameters for listing catalog entries.
 type ListFilter struct {
 	Protocol   *model.Protocol
-	Status     *model.Status
+	Status     *model.LifecycleState
 	Source     *model.SourceType
 	Team       string
 	Query      string

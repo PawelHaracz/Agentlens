@@ -113,7 +113,7 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 				AgentType:   at,
 				DisplayName: at.Endpoint,
 				Source:      source,
-				Status:      model.StatusUnknown,
+				Status:      model.LifecycleRegistered,
 				Validity:    model.Validity{LastSeen: now},
 				CreatedAt:   now,
 				UpdatedAt:   now,
@@ -133,7 +133,7 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 	}
 	for _, e := range allEntries {
 		if !seen[e.ID] {
-			e.Status = model.StatusDown
+			e.Status = model.LifecycleOffline
 			e.UpdatedAt = time.Now().UTC()
 			if err := m.store.Update(ctx, &e); err != nil {
 				m.log.Warn("failed to mark entry down", "id", e.ID, "err", err)

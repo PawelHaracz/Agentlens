@@ -50,7 +50,7 @@ func newMockCatalogEntry(id, endpoint string) *model.CatalogEntry {
 		AgentTypeID: at.ID,
 		AgentType:   at,
 		DisplayName: "Entry " + endpoint,
-		Status:      model.StatusUnknown,
+		Status:      model.LifecycleRegistered,
 		Source:      model.SourceConfig,
 		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,
@@ -144,5 +144,5 @@ func TestManager_MarksMissingEntriesDown(t *testing.T) {
 	got, err := s.Get(ctx, existing.ID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
-	assert.Equal(t, model.StatusDown, got.Status)
+	assert.Equal(t, model.LifecycleOffline, got.Status)
 }
