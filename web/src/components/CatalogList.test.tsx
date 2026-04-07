@@ -34,10 +34,16 @@ const makeEntry = (overrides: Partial<CatalogEntry> = {}): CatalogEntry => ({
   protocol: 'a2a',
   endpoint: 'https://example.com/agent',
   version: '1.0.0',
-  status: 'healthy',
+  status: 'active',
   source: 'push',
   agent_type_id: 'type-1',
   validity: { last_seen: '2026-01-01T00:00:00Z' },
+  health: {
+    state: 'active',
+    latencyMs: 0,
+    consecutiveFailures: 0,
+    lastError: '',
+  },
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
   ...overrides,
@@ -121,7 +127,7 @@ describe('CatalogList', () => {
     renderCatalogList()
     await waitFor(() => {
       expect(screen.getByText('mcp')).toBeInTheDocument()
-      expect(screen.getByText('degraded')).toBeInTheDocument()
+      expect(screen.getAllByText('Degraded').length).toBeGreaterThan(0)
     })
   })
 
