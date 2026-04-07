@@ -148,13 +148,12 @@ func main() {
 	pm.Register(a2aplugin.New())
 	pm.Register(mcpplugin.New())
 
+	var healthPlugin *healthplugin.Plugin
 	if cfg.HealthCheck.Enabled {
-		pm.Register(healthplugin.New(
-			cfg.HealthCheck.Interval,
-			cfg.HealthCheck.Timeout,
-			cfg.HealthCheck.Concurrency,
-		))
+		healthPlugin = healthplugin.New(cfg.HealthCheck)
+		pm.Register(healthPlugin)
 	}
+	// healthPlugin may be nil when health checks are disabled; RouterDeps accepts nil.
 
 	// Enterprise plugins (skipped with warning if no license)
 	pm.Register(sso.New())
@@ -211,13 +210,17 @@ func main() {
 	}
 
 	// 8. Create router with full RouterDeps & 11. HTTP server with graceful shutdown
-	router := api.NewRouter(api.RouterDeps{
+	routerDeps := api.RouterDeps{
 		Kernel:        core,
 		UserStore:     userStore,
 		RoleStore:     roleStore,
 		SettingsStore: settingsStore,
 		JWTService:    jwtService,
-	})
+	}
+	if healthPlugin != nil {
+		routerDeps.HealthProber = healthPlugin
+	}
+	router := api.NewRouter(routerDeps)
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := server.New(addr, router)
 	if err := srv.Start(ctx); err != nil {

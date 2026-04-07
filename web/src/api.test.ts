@@ -110,10 +110,18 @@ describe('createAgentFromCard', () => {
       protocol: 'a2a',
       endpoint: 'https://example.com/agent',
       version: '1.0.0',
-      status: 'healthy',
+      status: 'active',
       source: 'push',
       agent_type_id: 'a2a-agent',
       validity: { last_seen: '2026-04-01T00:00:00Z' },
+      health: {
+        state: 'active',
+        latencyMs: 0,
+        consecutiveFailures: 0,
+        lastError: '',
+        lastProbedAt: '2026-04-01T00:00:00Z',
+        lastSuccessAt: '2026-04-01T00:00:00Z',
+      },
       created_at: '2026-04-01T00:00:00Z',
       updated_at: '2026-04-01T00:00:00Z',
     }
@@ -163,9 +171,10 @@ import {
 
 const mockEntry = {
   id: 'e1', display_name: 'Agent', description: '', protocol: 'a2a' as const,
-  endpoint: 'https://x.com', version: '1.0', status: 'healthy' as const,
+  endpoint: 'https://x.com', version: '1.0', status: 'active' as const,
   source: 'push' as const, agent_type_id: 't1',
   validity: { last_seen: '2026-01-01T00:00:00Z' },
+  health: { state: 'active' as const, latencyMs: 0, consecutiveFailures: 0, lastError: '' },
   created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
 }
 
@@ -199,7 +208,7 @@ describe('listCatalog', () => {
 
   it('appends filter query params', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(mockOk([]))
-    await listCatalog({ protocol: 'a2a', status: 'healthy', q: 'bot', limit: 10, offset: 5 })
+    await listCatalog({ protocol: 'a2a', status: 'active', q: 'bot', limit: 10, offset: 5 })
     expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.stringContaining('protocol=a2a'),
       expect.anything(),

@@ -6,7 +6,9 @@ export interface Capability {
 }
 
 export type Protocol = 'a2a' | 'mcp' | 'a2ui'
-export type Status = 'healthy' | 'degraded' | 'down' | 'unknown'
+export type LifecycleState = 'registered' | 'active' | 'degraded' | 'offline' | 'deprecated'
+// Status is an alias for backward compatibility
+export type Status = LifecycleState
 export type SourceType = 'k8s' | 'config' | 'push' | 'upstream'
 
 export interface Provider {
@@ -21,6 +23,15 @@ export interface Validity {
   last_seen: string
 }
 
+export interface Health {
+  state: LifecycleState
+  lastProbedAt: string | null
+  lastSuccessAt: string | null
+  latencyMs: number
+  consecutiveFailures: number
+  lastError: string
+}
+
 export interface CatalogEntry {
   id: string
   display_name: string
@@ -28,13 +39,14 @@ export interface CatalogEntry {
   protocol: Protocol
   endpoint: string
   version: string
-  status: Status
+  status: LifecycleState
   source: SourceType
   agent_type_id: string
   provider?: Provider
   categories?: string[]
   capabilities?: Capability[]
   validity: Validity
+  health: Health
   raw_definition?: unknown
   spec_version?: string
   metadata?: Record<string, string>
@@ -49,8 +61,9 @@ export interface Stats {
 }
 
 export interface ListFilter {
+  state?: string        // comma-separated lifecycle states (preferred, new)
   protocol?: Protocol
-  status?: Status
+  status?: LifecycleState  // single status backward compat
   source?: SourceType
   team?: string
   q?: string

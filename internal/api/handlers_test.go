@@ -73,12 +73,17 @@ func TestCreateEntry(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	var entry model.CatalogEntry
+	var entry struct {
+		ID          string               `json:"id"`
+		DisplayName string               `json:"display_name"`
+		Source      model.SourceType     `json:"source"`
+		Status      model.LifecycleState `json:"status"`
+	}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &entry))
 	assert.NotEmpty(t, entry.ID)
 	assert.Equal(t, "My Entry", entry.DisplayName)
 	assert.Equal(t, model.SourcePush, entry.Source)
-	assert.Equal(t, model.StatusUnknown, entry.Status)
+	assert.Equal(t, model.LifecycleRegistered, entry.Status)
 }
 
 func TestGetEntry_NotFound(t *testing.T) {
@@ -106,7 +111,7 @@ func TestDeleteEntry(t *testing.T) {
 		AgentTypeID: agentType.ID,
 		AgentType:   agentType,
 		DisplayName: "Del Entry",
-		Status:      model.StatusUnknown,
+		Status:      model.LifecycleRegistered,
 		Source:      model.SourcePush,
 		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,

@@ -1,4 +1,4 @@
-import type { CatalogEntry, ListFilter, Stats, ValidationResult } from './types'
+import type { CatalogEntry, ListFilter, Stats, ValidationResult, LifecycleState, Health } from './types'
 
 const BASE = '/api/v1'
 
@@ -79,8 +79,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function listCatalog(filter: ListFilter = {}): Promise<CatalogEntry[]> {
   const params = new URLSearchParams()
+  if (filter.state) params.set('state', filter.state)
+  else if (filter.status) params.set('state', filter.status) // backward compat
   if (filter.protocol) params.set('protocol', filter.protocol)
-  if (filter.status) params.set('status', filter.status)
   if (filter.source) params.set('source', filter.source)
   if (filter.team) params.set('team', filter.team)
   if (filter.q) params.set('q', filter.q)
@@ -142,6 +143,17 @@ export function importCardFromURL(req: ImportCardRequest): Promise<CatalogEntry>
     method: 'POST',
     body: JSON.stringify(req),
   })
+}
+
+export function patchLifecycle(id: string, state: LifecycleState): Promise<CatalogEntry> {
+  return request<CatalogEntry>(`/catalog/${id}/lifecycle`, {
+    method: 'PATCH',
+    body: JSON.stringify({ state }),
+  })
+}
+
+export function postProbe(id: string): Promise<Health> {
+  return request<Health>(`/catalog/${id}/probe`, { method: 'POST' })
 }
 
 /* ─── Auth API ─── */

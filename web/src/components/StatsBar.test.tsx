@@ -17,10 +17,10 @@ describe('StatsBar', () => {
     expect(screen.getByText('Total')).toBeInTheDocument()
   })
 
-  it('renders healthy count', () => {
-    render(<StatsBar stats={makeStats({ by_status: { healthy: 10 } })} />)
+  it('renders active count', () => {
+    render(<StatsBar stats={makeStats({ by_status: { active: 10 } })} />)
     expect(screen.getByText('10')).toBeInTheDocument()
-    expect(screen.getByText('Healthy')).toBeInTheDocument()
+    expect(screen.getByText('Active')).toBeInTheDocument()
   })
 
   it('renders degraded count', () => {
@@ -29,10 +29,10 @@ describe('StatsBar', () => {
     expect(screen.getByText('Degraded')).toBeInTheDocument()
   })
 
-  it('renders Down stat combining down and unknown', () => {
-    render(<StatsBar stats={makeStats({ by_status: { down: 2, unknown: 1 } })} />)
+  it('renders Offline stat combining offline and registered', () => {
+    render(<StatsBar stats={makeStats({ by_status: { offline: 2, registered: 1 } })} />)
     expect(screen.getByText('3')).toBeInTheDocument()
-    expect(screen.getByText('Down')).toBeInTheDocument()
+    expect(screen.getByText('Offline')).toBeInTheDocument()
   })
 
   it('renders zeros when by_status is empty', () => {

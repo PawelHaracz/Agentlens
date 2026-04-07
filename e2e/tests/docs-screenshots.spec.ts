@@ -19,12 +19,9 @@ import {
   loginViaUI,
   loginViaAPI,
   authHeader,
-  createCatalogEntry,
   deleteCatalogEntry,
   createUser,
   BASE,
-  adminPassword,
-  ADMIN_USER,
 } from './helpers';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +46,61 @@ function ignoreCleanupError(label: string) {
   return (err: unknown) => console.warn(`[docs-screenshots] cleanup warning (${label}):`, err);
 }
 
+/**
+ * Create a catalog entry, or return the existing entry's ID if the endpoint
+ * already exists (409). This makes beforeAll idempotent across re-runs.
+ */
+async function seedOrFind(
+  request: import('@playwright/test').APIRequestContext,
+  token: string,
+  body: Record<string, unknown>,
+): Promise<string> {
+  const res = await request.post(`${BASE}/api/v1/catalog`, {
+    headers: authHeader(token),
+    data: body,
+  });
+  if (res.ok()) {
+    const entry = await res.json();
+    return entry.id as string;
+  }
+  if (res.status() === 409) {
+    // Entry already exists — search by display_name and match endpoint or name
+    const endpoint = body.endpoint as string;
+    const displayName = body.display_name as string;
+    const q = encodeURIComponent(displayName.substring(0, 30));
+    const listRes = await request.get(`${BASE}/api/v1/catalog?q=${q}`, {
+      headers: authHeader(token),
+    });
+    if (listRes.ok()) {
+      const entries: Array<{ id: string; endpoint: string; display_name: string }> =
+        await listRes.json();
+      const existing =
+        entries.find(e => e.endpoint === endpoint) ??
+        entries.find(e => e.display_name === displayName);
+      if (existing) return existing.id;
+    }
+    // Last resort: list without filter and scan all entries
+    const allRes = await request.get(`${BASE}/api/v1/catalog`, {
+      headers: authHeader(token),
+    });
+    if (allRes.ok()) {
+      const all: Array<{ id: string; endpoint: string; display_name: string }> =
+        await allRes.json();
+      const existing =
+        all.find(e => e.endpoint === endpoint) ??
+        all.find(e => e.display_name === displayName);
+      if (existing) return existing.id;
+      // Log for diagnosis
+      console.warn(
+        `[seedOrFind] 409 but "${endpoint}" / "${displayName}" not found in`,
+        all.map(e => `${e.display_name}:${e.endpoint}`),
+      );
+    }
+  }
+  const body2 = await res.text().catch(() => '(body unreadable)');
+  throw new Error(`seedOrFind failed: ${res.status()} ${body2}`);
+}
+
 // A2A entry with skills
 const A2A_CARD = JSON.stringify({
   name: 'Demo Translator Agent',
@@ -61,20 +113,6 @@ const A2A_CARD = JSON.stringify({
   ],
 });
 
-// MCP entry
-const MCP_CARD = JSON.stringify({
-  name: 'Demo File System MCP',
-  description: 'Provides file-system access to MCP-capable AI assistants.',
-  version: '0.8.0',
-  mcpVersion: '1.0',
-  tools: [
-    { name: 'readFile', description: 'Read file contents from disk.' },
-    { name: 'writeFile', description: 'Write content to a file.' },
-    { name: 'listDirectory', description: 'List files in a directory.' },
-  ],
-  resources: [{ uri: 'file:///data', name: 'Data directory' }],
-  prompts: [{ name: 'summarize', description: 'Summarize a file.' }],
-});
 
 test.describe('Documentation Screenshots', () => {
   let token: string;
@@ -85,25 +123,23 @@ test.describe('Documentation Screenshots', () => {
   test.beforeAll(async ({ request }) => {
     token = await loginViaAPI(request);
 
-    // Seed A2A entry
-    const a2aEntry = await createCatalogEntry(request, token, {
+    // Seed A2A entry — if the endpoint already exists from a previous run, reuse it.
+    a2aEntryId = await seedOrFind(request, token, {
       display_name: 'Demo Translator Agent',
       description: 'Translates text between languages using neural machine translation.',
       protocol: 'a2a',
       endpoint: 'https://demo-translator.example.com',
       version: '1.2.0',
     });
-    a2aEntryId = a2aEntry.id;
 
-    // Seed MCP entry
-    const mcpEntry = await createCatalogEntry(request, token, {
+    // Seed MCP entry — if the endpoint already exists from a previous run, reuse it.
+    mcpEntryId = await seedOrFind(request, token, {
       display_name: 'Demo File System MCP',
       description: 'Provides file-system access to MCP-capable AI assistants.',
       protocol: 'mcp',
       endpoint: 'https://demo-fs-mcp.example.com',
       version: '0.8.0',
     });
-    mcpEntryId = mcpEntry.id;
 
     // Seed viewer user for settings screenshots
     // Get roles list first
@@ -198,9 +234,10 @@ test.describe('Documentation Screenshots', () => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Open status filter and select Unknown
-    await page.getByRole('combobox').filter({ hasText: /status/i }).click();
-    await page.getByRole('option', { name: 'Unknown' }).click();
+    // Open the status multi-select dropdown and select Pending
+    await page.getByRole('button', { name: /all statuses/i }).click();
+    await page.waitForSelector('[role="menuitemcheckbox"]');
+    await page.getByRole('menuitemcheckbox', { name: 'Pending' }).click();
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/catalog-filter-status.png`, fullPage: false });
   });
@@ -300,7 +337,7 @@ test.describe('Documentation Screenshots', () => {
     await page.screenshot({ path: `${DOCS_IMAGES}/register-import-url-error-private.png`, fullPage: false });
   });
 
-  test('register-import-url-success', async ({ page, request }) => {
+  test('register-import-url-success', async ({ page }) => {
     // This screenshot shows the catalog after a successful import.
     // We'll register via the API (to keep it fast & reliable), then screenshot the dashboard.
     await page.setViewportSize(VIEWPORT);
@@ -469,6 +506,117 @@ test.describe('Documentation Screenshots', () => {
     await request.delete(`${BASE}/api/v1/roles/${customRole.id}`, {
       headers: authHeader(token),
     }).catch(ignoreCleanupError('delete custom role'));
+  });
+
+  // ───────── Health lifecycle screenshots ─────────
+
+  test('health-status-badges', async ({ page }) => {
+    // Shows the catalog list with the new lifecycle status badges visible.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.waitForLoadState('networkidle');
+    // Wait for at least one StatusBadge to render — Badge renders as a div with cursor-default
+    await page.locator('.cursor-default').first().waitFor({ timeout: ASYNC_OP_TIMEOUT_MS });
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-status-badges.png`, fullPage: false });
+  });
+
+  test('health-filter-multi-select', async ({ page }) => {
+    // Shows the status dropdown open with multiple lifecycle states.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: /all statuses/i }).click();
+    await page.waitForSelector('[role="menuitemcheckbox"]');
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-multi-select.png`, fullPage: false });
+  });
+
+  test('health-filter-active-selected', async ({ page }) => {
+    // Shows the catalog filtered to Active entries only.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: /all statuses/i }).click();
+    await page.waitForSelector('[role="menuitemcheckbox"]');
+    await page.getByRole('menuitemcheckbox', { name: 'Active' }).click();
+    // Close dropdown by clicking elsewhere
+    await page.keyboard.press('Escape');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-active-selected.png`, fullPage: false });
+  });
+
+  test('health-detail-section', async ({ page }) => {
+    // Shows the Health section in an entry detail view.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    // Scroll to the Health section
+    await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h3'));
+      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
+      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-detail-section.png`, fullPage: false });
+  });
+
+  test('health-probe-now', async ({ page }) => {
+    // Shows the Probe now button in the health section (before clicking).
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h3'));
+      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
+      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    // Highlight the Probe now button by hovering
+    await page.getByRole('button', { name: /probe now/i }).hover();
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-probe-now.png`, fullPage: false });
+  });
+
+  test('health-deprecate-dialog', async ({ page }) => {
+    // Shows the confirmation dialog before deprecating an entry.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h3'));
+      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
+      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    await page.getByRole('button', { name: /deprecate/i }).click();
+    await page.waitForSelector('[role="alertdialog"]', { timeout: ERROR_DISPLAY_TIMEOUT_MS });
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecate-dialog.png`, fullPage: false });
+    // Close dialog without confirming so the entry stays intact for other tests
+    await page.getByRole('button', { name: /cancel/i }).click();
+  });
+
+  test('health-deprecated-badge', async ({ page, request }) => {
+    // Shows an entry with the Deprecated badge.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // Deprecate the MCP entry via API for this screenshot
+    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
+      headers: authHeader(token),
+      data: { state: 'deprecated' },
+    });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${mcpEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecated-badge.png`, fullPage: false });
+    // Restore to active
+    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
+      headers: authHeader(token),
+      data: { state: 'active' },
+    }).catch(ignoreCleanupError('un-deprecate mcp entry'));
   });
 
   // ───────── User dropdown ─────────

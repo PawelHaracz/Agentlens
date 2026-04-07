@@ -34,10 +34,18 @@ const makeEntry = (overrides: Partial<CatalogEntry> = {}): CatalogEntry => ({
   protocol: 'a2a',
   endpoint: 'https://example.com/agent',
   version: '1.0.0',
-  status: 'healthy',
+  status: 'active',
   source: 'push',
   agent_type_id: 'type-1',
   validity: { last_seen: '2026-01-01T00:00:00Z' },
+  health: {
+    state: 'active',
+    latencyMs: 0,
+    consecutiveFailures: 0,
+    lastError: '',
+    lastProbedAt: '2026-01-01T00:00:00Z',
+    lastSuccessAt: '2026-01-01T00:00:00Z',
+  },
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
   ...overrides,
@@ -121,7 +129,7 @@ describe('CatalogList', () => {
     renderCatalogList()
     await waitFor(() => {
       expect(screen.getByText('mcp')).toBeInTheDocument()
-      expect(screen.getByText('degraded')).toBeInTheDocument()
+      expect(screen.getAllByText('Degraded').length).toBeGreaterThan(0)
     })
   })
 
@@ -143,6 +151,49 @@ describe('CatalogList', () => {
     await user.type(screen.getByPlaceholderText(/search catalog/i), 'bot')
     await waitFor(() => {
       expect(mockListCatalog).toHaveBeenCalledWith(expect.objectContaining({ q: 'b' }))
+    })
+  })
+
+  it('reloads entries when register callback is triggered', async () => {
+    const user = userEvent.setup()
+    mockListCatalog.mockResolvedValue([])
+    renderCatalogList()
+
+    await waitFor(() => {
+      expect(mockListCatalog).toHaveBeenCalledTimes(1)
+    })
+
+    await user.click(screen.getByRole('button', { name: /register agent/i }))
+
+    await waitFor(() => {
+      expect(mockListCatalog).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('filters by lifecycle state and can clear filters', async () => {
+    const user = userEvent.setup()
+    mockListCatalog.mockResolvedValue([])
+    renderCatalogList()
+
+    await waitFor(() => {
+      expect(mockListCatalog).toHaveBeenCalledTimes(1)
+    })
+
+    await user.click(screen.getByRole('button', { name: /all statuses/i }))
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Active' }))
+
+    await waitFor(() => {
+      expect(mockListCatalog).toHaveBeenCalledWith(expect.objectContaining({ state: 'active' }))
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/no entries match the selected status filter/i)).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /clear filters/i }))
+
+    await waitFor(() => {
+      expect(mockListCatalog).toHaveBeenLastCalledWith(expect.objectContaining({ state: undefined }))
     })
   })
 })

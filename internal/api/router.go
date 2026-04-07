@@ -24,6 +24,8 @@ type RouterDeps struct {
 	JWTService    *auth.JWTService
 	// CardFetcher is optional. When nil, a default CardFetcher with SSRF protection is used.
 	CardFetcher service.Fetcher
+	// HealthProber is optional; enables POST /catalog/{id}/probe.
+	HealthProber HealthProber
 }
 
 // NewRouter creates and returns a configured chi router with all routes.
@@ -48,12 +50,12 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 			}
 			authHandler := NewAuthHandler(deps.UserStore, deps.RoleStore, deps.JWTService)
 			registerAuthRoutes(r, deps, authHandler)
-			registerCatalogRoutes(r, h, deps.JWTService)
+			registerCatalogRoutes(r, h, deps)
 			registerUserRoutes(r, deps)
 			registerSettingsRoutes(r, deps)
 		} else {
 			// No auth configured — register catalog routes without protection.
-			registerUnauthenticatedCatalogRoutes(r, h)
+			registerUnauthenticatedCatalogRoutes(r, h, deps)
 		}
 	})
 
@@ -79,9 +81,10 @@ func registerAuthRoutes(r chi.Router, deps RouterDeps, authHandler *AuthHandler)
 }
 
 // registerCatalogRoutes mounts catalog endpoints behind auth middleware.
-func registerCatalogRoutes(r chi.Router, h *Handler, jwtSvc *auth.JWTService) {
+func registerCatalogRoutes(r chi.Router, h *Handler, deps RouterDeps) {
+	hh := NewHealthHandler(deps.Kernel.Store(), deps.HealthProber)
 	r.Group(func(r chi.Router) {
-		r.Use(RequireAuth(jwtSvc))
+		r.Use(RequireAuth(deps.JWTService))
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog", h.ListCatalog)
 		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog", h.CreateEntry)
 		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/validate", h.ValidateAgentCard)
@@ -90,6 +93,8 @@ func registerCatalogRoutes(r chi.Router, h *Handler, jwtSvc *auth.JWTService) {
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}", h.GetEntry)
 		r.With(RequirePermission(auth.PermCatalogDelete)).Delete("/catalog/{id}", h.DeleteEntry)
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}/card", h.GetEntryCard)
+		r.With(RequirePermission(auth.PermCatalogWrite)).Patch("/catalog/{id}/lifecycle", hh.PatchLifecycle)
+		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/{id}/probe", hh.ProbeEntry)
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/skills", h.SearchCapabilities)
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/stats", h.GetStats)
 	})
@@ -142,7 +147,8 @@ func registerSettingsRoutes(r chi.Router, deps RouterDeps) {
 }
 
 // registerUnauthenticatedCatalogRoutes mounts catalog endpoints without authentication.
-func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler) {
+func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler, deps RouterDeps) {
+	hh := NewHealthHandler(h.store, deps.HealthProber)
 	r.Get("/catalog", h.ListCatalog)
 	r.Post("/catalog", h.CreateEntry)
 	r.Post("/catalog/validate", h.ValidateAgentCard)
@@ -151,6 +157,8 @@ func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler) {
 	r.Get("/catalog/{id}", h.GetEntry)
 	r.Delete("/catalog/{id}", h.DeleteEntry)
 	r.Get("/catalog/{id}/card", h.GetEntryCard)
+	r.Patch("/catalog/{id}/lifecycle", hh.PatchLifecycle)
+	r.Post("/catalog/{id}/probe", hh.ProbeEntry)
 	r.Get("/skills", h.SearchCapabilities)
 	r.Get("/stats", h.GetStats)
 }

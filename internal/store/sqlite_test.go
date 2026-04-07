@@ -38,7 +38,7 @@ func sampleEntry(id string) *model.CatalogEntry {
 		AgentType:   agentType,
 		DisplayName: "Test Entry " + id,
 		Description: "A test entry",
-		Status:      model.StatusUnknown,
+		Status:      model.LifecycleRegistered,
 		Source:      model.SourcePush,
 		Categories:  []string{"cat1", "cat2"},
 		Validity:    model.Validity{LastSeen: now},
@@ -85,14 +85,14 @@ func TestUpdate(t *testing.T) {
 	require.NoError(t, s.Create(ctx, a))
 
 	a.DisplayName = "Updated Name"
-	a.Status = model.StatusHealthy
+	a.Status = model.LifecycleActive
 	a.UpdatedAt = time.Now().UTC()
 	require.NoError(t, s.Update(ctx, a))
 
 	got, err := s.Get(ctx, "entry-2")
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Name", got.DisplayName)
-	assert.Equal(t, model.StatusHealthy, got.Status)
+	assert.Equal(t, model.LifecycleActive, got.Status)
 }
 
 func TestDelete(t *testing.T) {
@@ -120,7 +120,7 @@ func TestList(t *testing.T) {
 	// Override protocol for a2 (endpoint is already unique per sampleEntry)
 	entries[1].AgentType.Protocol = model.ProtocolMCP
 	entries[1].AgentType.AgentKey = model.ComputeAgentKey(model.ProtocolMCP, entries[1].AgentType.Endpoint)
-	entries[2].Status = model.StatusHealthy
+	entries[2].Status = model.LifecycleActive
 
 	for _, e := range entries {
 		require.NoError(t, s.Create(ctx, e))
@@ -140,8 +140,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("filter by status", func(t *testing.T) {
-		st := model.StatusHealthy
-		list, err := s.List(ctx, store.ListFilter{Status: &st})
+		list, err := s.List(ctx, store.ListFilter{States: []model.LifecycleState{model.LifecycleActive}})
 		require.NoError(t, err)
 		assert.Len(t, list, 1)
 	})
@@ -194,11 +193,11 @@ func TestStats(t *testing.T) {
 	ctx := context.Background()
 
 	a1 := sampleEntry("s1")
-	a1.Status = model.StatusHealthy
+	a1.Status = model.LifecycleActive
 	a2 := sampleEntry("s2")
-	a2.Status = model.StatusDown
+	a2.Status = model.LifecycleOffline
 	a3 := sampleEntry("s3")
-	a3.Status = model.StatusHealthy
+	a3.Status = model.LifecycleActive
 	a3.Source = model.SourceK8s
 
 	for _, e := range []*model.CatalogEntry{a1, a2, a3} {
@@ -208,6 +207,6 @@ func TestStats(t *testing.T) {
 	stats, err := s.Stats(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 3, stats.Total)
-	assert.Equal(t, 2, stats.ByStatus["healthy"])
-	assert.Equal(t, 1, stats.ByStatus["down"])
+	assert.Equal(t, 2, stats.ByStatus["active"])
+	assert.Equal(t, 1, stats.ByStatus["offline"])
 }

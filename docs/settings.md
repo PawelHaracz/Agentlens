@@ -18,6 +18,17 @@ Settings are organized by **category** and identified by a unique **key**. Each 
 | `app.registration_enabled` | auth | `true` | Allow new user registration |
 | `app.default_role` | auth | `viewer` | Default role for new users |
 
+### Health Check
+
+| Key | Default | Env var | Description |
+| --- | --- | --- | --- |
+| `health_check.enabled` | `true` | `AGENTLENS_HEALTH_CHECK_ENABLED` | Enable/disable periodic health probing |
+| `health_check.interval` | `30s` | `AGENTLENS_HEALTH_CHECK_INTERVAL` | How often to probe each entry |
+| `health_check.timeout` | `5s` | `AGENTLENS_HEALTH_CHECK_TIMEOUT` | Probe request timeout |
+| `health_check.concurrency` | `8` | `AGENTLENS_HEALTH_CHECK_CONCURRENCY` | Parallel probes |
+| `health_check.degraded_latency` | `1500ms` | `AGENTLENS_HEALTH_CHECK_DEGRADED_LATENCY` | Latency threshold above which a 2xx response → degraded state |
+| `health_check.failure_threshold` | `3` | `AGENTLENS_HEALTH_CHECK_FAILURE_THRESHOLD` | Consecutive failures before → offline state |
+
 ---
 
 ## Categories

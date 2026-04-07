@@ -6,6 +6,17 @@ AgentLens automatically discovers AI agents running in Kubernetes (via Service a
 
 ---
 
+## Features
+
+- **Discovery** — Automatically discover agents in Kubernetes (via Service annotations), static configuration, or push registration
+- **Multi-protocol support** — A2A, MCP, and A2UI agent protocols
+- **Real-time catalog** — Browse, filter, and inspect agent capabilities via REST API and web dashboard
+- **Health Monitoring** — AgentLens continuously probes registered endpoints and shows real-time status on the dashboard. Entries transition through lifecycle states (`registered → active → degraded → offline`) based on HTTP response codes and latency. Admins can manually deprecate entries and trigger on-demand probes from the UI.
+- **Authentication & Authorization** — JWT-based auth with role-based access control (admin, editor, viewer)
+- **Multi-database support** — SQLite (single-instance) or PostgreSQL (production)
+
+---
+
 ## Quickstart
 
 ### Docker Compose
