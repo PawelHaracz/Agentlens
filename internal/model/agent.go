@@ -25,6 +25,29 @@ const (
 	StatusUnknown  Status = "unknown"
 )
 
+// LifecycleState is the source of truth for the runtime state of a catalog entry.
+// It replaces the old Status type for new code. The status DB column stores these values.
+type LifecycleState string
+
+const (
+	LifecycleRegistered LifecycleState = "registered"
+	LifecycleActive     LifecycleState = "active"
+	LifecycleDegraded   LifecycleState = "degraded"
+	LifecycleOffline    LifecycleState = "offline"
+	LifecycleDeprecated LifecycleState = "deprecated"
+)
+
+// Health holds the runtime health state populated by the health prober.
+// It is built from DB columns in SyncFromDB and is not stored directly.
+type Health struct {
+	State               LifecycleState
+	LastProbedAt        *time.Time
+	LastSuccessAt       *time.Time
+	LastError           string
+	LatencyMs           int64
+	ConsecutiveFailures int
+}
+
 // SourceType represents how the catalog entry was discovered.
 type SourceType string
 
@@ -61,13 +84,14 @@ type CatalogEntry struct {
 	AgentType   *AgentType        `json:"-"            gorm:"foreignKey:AgentTypeID"`
 	DisplayName string            `json:"display_name"  gorm:"not null;type:text"`
 	Description string            `json:"description"   gorm:"type:text;default:''"`
-	Status      Status            `json:"status"        gorm:"not null;type:text;default:'unknown';index"`
-	Source      SourceType        `json:"source"        gorm:"not null;type:text;index"`
-	CreatedAt   time.Time         `json:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at"`
-	Categories  []string          `json:"-" gorm:"-"`
-	Metadata    map[string]string `json:"-" gorm:"-"`
-	Validity    Validity          `json:"-" gorm:"-"`
+	// Status stores the LifecycleState value. Updated by the health prober and lifecycle API.
+	Status LifecycleState `json:"-" gorm:"not null;type:text;default:'registered';index"`
+	Source SourceType     `json:"source"        gorm:"not null;type:text;index"`
+	CreatedAt  time.Time         `json:"created_at"`
+	UpdatedAt  time.Time         `json:"updated_at"`
+	Categories []string          `json:"-" gorm:"-"`
+	Metadata   map[string]string `json:"-" gorm:"-"`
+	Validity   Validity          `json:"-" gorm:"-"`
 
 	// Database-serialized JSON fields (used by GORM, hidden from JSON API).
 	CategoriesJSON string     `json:"-" gorm:"column:categories;type:text;not null;default:'[]'"`
@@ -75,6 +99,16 @@ type CatalogEntry struct {
 	ValidFrom      *time.Time `json:"-" gorm:"column:validity_from"`
 	ValidTo        *time.Time `json:"-" gorm:"column:validity_to"`
 	LastSeen       time.Time  `json:"-" gorm:"column:validity_last_seen;not null"`
+
+	// Health check backing columns — managed by the health prober, hidden from direct JSON.
+	HealthLastProbedAt        *time.Time `json:"-" gorm:"column:health_last_probed_at"`
+	HealthLastSuccessAt       *time.Time `json:"-" gorm:"column:health_last_success_at"`
+	HealthLastError           string     `json:"-" gorm:"column:health_last_error;type:text;not null;default:''"`
+	HealthLatencyMs           int64      `json:"-" gorm:"column:health_latency_ms;not null;default:0"`
+	HealthConsecutiveFailures int        `json:"-" gorm:"column:health_consecutive_failures;not null;default:0"`
+
+	// Health is built by SyncFromDB. Not persisted directly.
+	Health Health `json:"-" gorm:"-"`
 }
 
 // TableName overrides the GORM table name.
@@ -109,6 +143,14 @@ func (e *CatalogEntry) SyncFromDB() {
 	}
 	if e.AgentType != nil {
 		e.AgentType.SyncRawDefForJSON()
+	}
+	e.Health = Health{
+		State:               e.Status,
+		LastProbedAt:        e.HealthLastProbedAt,
+		LastSuccessAt:       e.HealthLastSuccessAt,
+		LastError:           e.HealthLastError,
+		LatencyMs:           e.HealthLatencyMs,
+		ConsecutiveFailures: e.HealthConsecutiveFailures,
 	}
 }
 
@@ -153,7 +195,7 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 		Endpoint     string            `json:"endpoint,omitempty"`
 		Version      string            `json:"version,omitempty"`
 		SpecVersion  string            `json:"spec_version,omitempty"`
-		Status       Status            `json:"status"`
+		Status       LifecycleState    `json:"status"`
 		Source       SourceType        `json:"source"`
 		Provider     *Provider         `json:"provider,omitempty"`
 		Categories   []string          `json:"categories,omitempty"`
@@ -163,6 +205,14 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 		RawDef       json.RawMessage   `json:"raw_definition,omitempty"`
 		CreatedAt    time.Time         `json:"created_at"`
 		UpdatedAt    time.Time         `json:"updated_at"`
+		Health       struct {
+			State               string     `json:"state"`
+			LastProbedAt        *time.Time `json:"lastProbedAt"`
+			LastSuccessAt       *time.Time `json:"lastSuccessAt"`
+			LatencyMs           int64      `json:"latencyMs"`
+			ConsecutiveFailures int        `json:"consecutiveFailures"`
+			LastError           string     `json:"lastError"`
+		} `json:"health"`
 	}{
 		ID:           e.ID,
 		AgentTypeID:  e.AgentTypeID,
@@ -182,5 +232,20 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 		RawDef:       rawDef,
 		CreatedAt:    e.CreatedAt,
 		UpdatedAt:    e.UpdatedAt,
+		Health: struct {
+			State               string     `json:"state"`
+			LastProbedAt        *time.Time `json:"lastProbedAt"`
+			LastSuccessAt       *time.Time `json:"lastSuccessAt"`
+			LatencyMs           int64      `json:"latencyMs"`
+			ConsecutiveFailures int        `json:"consecutiveFailures"`
+			LastError           string     `json:"lastError"`
+		}{
+			State:               string(e.Health.State),
+			LastProbedAt:        e.Health.LastProbedAt,
+			LastSuccessAt:       e.Health.LastSuccessAt,
+			LatencyMs:           e.Health.LatencyMs,
+			ConsecutiveFailures: e.Health.ConsecutiveFailures,
+			LastError:           e.Health.LastError,
+		},
 	})
 }

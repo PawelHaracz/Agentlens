@@ -167,7 +167,7 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 		DisplayName: req.DisplayName,
 		Description: req.Description,
 		Source:      model.SourcePush,
-		Status:      model.StatusUnknown,
+		Status:      model.LifecycleRegistered,
 		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,
 		UpdatedAt:   now,

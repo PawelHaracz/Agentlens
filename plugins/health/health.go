@@ -109,31 +109,31 @@ func (p *Plugin) checkOne(ctx context.Context, entry *model.CatalogEntry) {
 	client := &http.Client{Timeout: p.timeout}
 	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, entry.AgentType.Endpoint, nil)
 	if err != nil {
-		p.updateStatus(ctx, entry, model.StatusDown)
+		p.updateStatus(ctx, entry, model.LifecycleOffline)
 		return
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		p.updateStatus(ctx, entry, model.StatusDown)
+		p.updateStatus(ctx, entry, model.LifecycleOffline)
 		return
 	}
 	_ = resp.Body.Close()
 
-	var status model.Status
+	var status model.LifecycleState
 	switch {
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:
-		status = model.StatusHealthy
+		status = model.LifecycleActive
 	case resp.StatusCode >= 500:
-		status = model.StatusDegraded
+		status = model.LifecycleDegraded
 	default:
-		status = model.StatusUnknown
+		status = model.LifecycleRegistered
 	}
 
 	p.updateStatus(ctx, entry, status)
 }
 
-func (p *Plugin) updateStatus(ctx context.Context, entry *model.CatalogEntry, status model.Status) {
+func (p *Plugin) updateStatus(ctx context.Context, entry *model.CatalogEntry, status model.LifecycleState) {
 	now := time.Now().UTC()
 	entry.Status = status
 	entry.Validity.LastSeen = now

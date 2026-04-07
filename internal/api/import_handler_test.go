@@ -92,18 +92,18 @@ func TestImportCatalogEntry_HappyPath_A2A(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code, "body: %s", w.Body.String())
 
 	var entry struct {
-		ID          string           `json:"id"`
-		DisplayName string           `json:"display_name"`
-		Protocol    model.Protocol   `json:"protocol"`
-		Source      model.SourceType `json:"source"`
-		Status      model.Status     `json:"status"`
+		ID          string               `json:"id"`
+		DisplayName string               `json:"display_name"`
+		Protocol    model.Protocol       `json:"protocol"`
+		Source      model.SourceType     `json:"source"`
+		Status      model.LifecycleState `json:"status"`
 	}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &entry))
 	assert.NotEmpty(t, entry.ID)
 	assert.Equal(t, "Import Test Agent", entry.DisplayName)
 	assert.Equal(t, model.ProtocolA2A, entry.Protocol)
 	assert.Equal(t, model.SourcePush, entry.Source)
-	assert.Equal(t, model.StatusUnknown, entry.Status)
+	assert.Equal(t, model.LifecycleRegistered, entry.Status)
 }
 
 func TestImportCatalogEntry_HappyPath_MCP_AutoDetect(t *testing.T) {
