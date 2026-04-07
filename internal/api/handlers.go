@@ -47,9 +47,35 @@ func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
 		p := model.Protocol(v)
 		filter.Protocol = &p
 	}
-	if v := q.Get("status"); v != "" {
+
+	// Validate lifecycle state values
+	validLifecycleStates := map[string]bool{
+		"registered": true, "active": true, "degraded": true,
+		"offline": true, "deprecated": true,
+	}
+
+	// Parse ?state= filter (comma-separated, multiple states)
+	if v := q.Get("state"); v != "" {
+		parts := strings.Split(v, ",")
+		states := make([]model.LifecycleState, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if !validLifecycleStates[p] {
+				ErrorResponse(w, http.StatusBadRequest, "invalid state value: "+p)
+				return
+			}
+			states = append(states, model.LifecycleState(p))
+		}
+		filter.States = states
+	} else if v := q.Get("status"); v != "" {
+		// Backward-compat: single status value
+		if !validLifecycleStates[v] {
+			ErrorResponse(w, http.StatusBadRequest, "invalid status value: "+v)
+			return
+		}
 		filter.States = []model.LifecycleState{model.LifecycleState(v)}
 	}
+
 	if v := q.Get("source"); v != "" {
 		s := model.SourceType(v)
 		filter.Source = &s
