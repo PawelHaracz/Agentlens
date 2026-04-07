@@ -32,11 +32,11 @@ func TestRegisterAgentCard_ValidCard(t *testing.T) {
 
 	// Check scalar fields via a partial decode.
 	var entry struct {
-		ID          string           `json:"id"`
-		DisplayName string           `json:"display_name"`
-		Endpoint    string           `json:"endpoint"`
-		Protocol    model.Protocol   `json:"protocol"`
-		SpecVersion string           `json:"spec_version"`
+		ID          string               `json:"id"`
+		DisplayName string               `json:"display_name"`
+		Endpoint    string               `json:"endpoint"`
+		Protocol    model.Protocol       `json:"protocol"`
+		SpecVersion string               `json:"spec_version"`
 		Source      model.SourceType     `json:"source"`
 		Status      model.LifecycleState `json:"status"`
 		CreatedAt   string               `json:"created_at"`

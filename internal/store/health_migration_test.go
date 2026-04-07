@@ -14,7 +14,9 @@ import (
 func TestMigration005HealthColumns(t *testing.T) {
 	s, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 
 	// Create a catalog entry
 	entry := sampleEntry("migration-test-1")

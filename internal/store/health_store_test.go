@@ -14,7 +14,9 @@ func TestUpdateHealth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSQLiteStore: %v", err)
 	}
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 	ctx := context.Background()
 
 	entry := sampleEntry("health-update-1")
@@ -59,7 +61,9 @@ func TestUpdateHealthFailure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSQLiteStore: %v", err)
 	}
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 	ctx := context.Background()
 
 	entry := sampleEntry("health-update-fail-1")
@@ -98,7 +102,9 @@ func TestListForProbing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSQLiteStore: %v", err)
 	}
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 	ctx := context.Background()
 
 	// e1: never probed → should be included
@@ -156,7 +162,9 @@ func TestSetLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSQLiteStore: %v", err)
 	}
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 	ctx := context.Background()
 
 	entry := sampleEntry("lifecycle-set-1")
@@ -182,7 +190,9 @@ func TestListFilterByStates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSQLiteStore: %v", err)
 	}
-	defer s.Close()
+	defer func() {
+		_ = s.Close()
+	}()
 	ctx := context.Background()
 
 	active := sampleEntry("filter-active")

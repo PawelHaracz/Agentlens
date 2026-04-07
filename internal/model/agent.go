@@ -79,14 +79,14 @@ func (v Validity) IsActiveAt(t time.Time) bool {
 // CatalogEntry is the catalog wrapper (Product archetype) around an AgentType.
 // It represents a discoverable listing of an agent in the catalog.
 type CatalogEntry struct {
-	ID          string            `json:"id"           gorm:"primaryKey;type:text"`
-	AgentTypeID string            `json:"agent_type_id" gorm:"not null;type:text;index"`
-	AgentType   *AgentType        `json:"-"            gorm:"foreignKey:AgentTypeID"`
-	DisplayName string            `json:"display_name"  gorm:"not null;type:text"`
-	Description string            `json:"description"   gorm:"type:text;default:''"`
+	ID          string     `json:"id"           gorm:"primaryKey;type:text"`
+	AgentTypeID string     `json:"agent_type_id" gorm:"not null;type:text;index"`
+	AgentType   *AgentType `json:"-"            gorm:"foreignKey:AgentTypeID"`
+	DisplayName string     `json:"display_name"  gorm:"not null;type:text"`
+	Description string     `json:"description"   gorm:"type:text;default:''"`
 	// Status stores the LifecycleState value. Updated by the health prober and lifecycle API.
-	Status LifecycleState `json:"-" gorm:"not null;type:text;default:'registered';index"`
-	Source SourceType     `json:"source"        gorm:"not null;type:text;index"`
+	Status     LifecycleState    `json:"-" gorm:"not null;type:text;default:'registered';index"`
+	Source     SourceType        `json:"source"        gorm:"not null;type:text;index"`
 	CreatedAt  time.Time         `json:"created_at"`
 	UpdatedAt  time.Time         `json:"updated_at"`
 	Categories []string          `json:"-" gorm:"-"`
@@ -156,25 +156,25 @@ func (e *CatalogEntry) SyncFromDB() {
 
 // catalogEntryJSON is the flat, backward-compatible JSON shape for CatalogEntry.
 type catalogEntryJSON struct {
-	ID           string          `json:"id"`
-	AgentTypeID  string          `json:"agent_type_id"`
-	DisplayName  string          `json:"display_name"`
-	Description  string          `json:"description"`
-	Protocol     Protocol        `json:"protocol,omitempty"`
-	Endpoint     string          `json:"endpoint,omitempty"`
-	Version      string          `json:"version,omitempty"`
-	SpecVersion  string          `json:"spec_version,omitempty"`
-	Status       LifecycleState  `json:"status"`
-	Source       SourceType      `json:"source"`
-	Provider     *Provider       `json:"provider,omitempty"`
-	Categories   []string        `json:"categories,omitempty"`
-	Capabilities json.RawMessage `json:"capabilities,omitempty"`
-	Validity     Validity        `json:"validity"`
+	ID           string            `json:"id"`
+	AgentTypeID  string            `json:"agent_type_id"`
+	DisplayName  string            `json:"display_name"`
+	Description  string            `json:"description"`
+	Protocol     Protocol          `json:"protocol,omitempty"`
+	Endpoint     string            `json:"endpoint,omitempty"`
+	Version      string            `json:"version,omitempty"`
+	SpecVersion  string            `json:"spec_version,omitempty"`
+	Status       LifecycleState    `json:"status"`
+	Source       SourceType        `json:"source"`
+	Provider     *Provider         `json:"provider,omitempty"`
+	Categories   []string          `json:"categories,omitempty"`
+	Capabilities json.RawMessage   `json:"capabilities,omitempty"`
+	Validity     Validity          `json:"validity"`
 	Metadata     map[string]string `json:"metadata,omitempty"`
-	RawDef       json.RawMessage `json:"raw_definition,omitempty"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
-	Health       healthJSON      `json:"health"`
+	RawDef       json.RawMessage   `json:"raw_definition,omitempty"`
+	CreatedAt    time.Time         `json:"created_at"`
+	UpdatedAt    time.Time         `json:"updated_at"`
+	Health       healthJSON        `json:"health"`
 }
 
 // healthJSON is the JSON shape for the embedded Health object.
