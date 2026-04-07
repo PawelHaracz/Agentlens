@@ -154,12 +154,47 @@ func (e *CatalogEntry) SyncFromDB() {
 	}
 }
 
+// catalogEntryJSON is the flat, backward-compatible JSON shape for CatalogEntry.
+type catalogEntryJSON struct {
+	ID           string          `json:"id"`
+	AgentTypeID  string          `json:"agent_type_id"`
+	DisplayName  string          `json:"display_name"`
+	Description  string          `json:"description"`
+	Protocol     Protocol        `json:"protocol,omitempty"`
+	Endpoint     string          `json:"endpoint,omitempty"`
+	Version      string          `json:"version,omitempty"`
+	SpecVersion  string          `json:"spec_version,omitempty"`
+	Status       LifecycleState  `json:"status"`
+	Source       SourceType      `json:"source"`
+	Provider     *Provider       `json:"provider,omitempty"`
+	Categories   []string        `json:"categories,omitempty"`
+	Capabilities json.RawMessage `json:"capabilities,omitempty"`
+	Validity     Validity        `json:"validity"`
+	Metadata     map[string]string `json:"metadata,omitempty"`
+	RawDef       json.RawMessage `json:"raw_definition,omitempty"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+	Health       healthJSON      `json:"health"`
+}
+
+// healthJSON is the JSON shape for the embedded Health object.
+type healthJSON struct {
+	State               string     `json:"state"`
+	LastProbedAt        *time.Time `json:"lastProbedAt"`
+	LastSuccessAt       *time.Time `json:"lastSuccessAt"`
+	LatencyMs           int64      `json:"latencyMs"`
+	ConsecutiveFailures int        `json:"consecutiveFailures"`
+	LastError           string     `json:"lastError"`
+}
+
 // MarshalJSON produces a flat, backward-compatible JSON representation that
 // merges AgentType fields into the CatalogEntry output.
 func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 	e.SyncFromDB()
+	return json.Marshal(e.toCatalogEntryJSON())
+}
 
-	// Pull fields from AgentType when available.
+func (e CatalogEntry) toCatalogEntryJSON() catalogEntryJSON {
 	var (
 		protocol     Protocol
 		endpoint     string
@@ -178,74 +213,23 @@ func (e CatalogEntry) MarshalJSON() ([]byte, error) {
 		capabilities = e.AgentType.Capabilities
 		rawDef = e.AgentType.RawDefJSON
 	}
-
 	var capJSON json.RawMessage
 	if len(capabilities) > 0 {
 		if b, err := MarshalCapabilitiesJSON(capabilities); err == nil {
 			capJSON = b
 		}
 	}
-
-	return json.Marshal(struct {
-		ID           string            `json:"id"`
-		AgentTypeID  string            `json:"agent_type_id"`
-		DisplayName  string            `json:"display_name"`
-		Description  string            `json:"description"`
-		Protocol     Protocol          `json:"protocol,omitempty"`
-		Endpoint     string            `json:"endpoint,omitempty"`
-		Version      string            `json:"version,omitempty"`
-		SpecVersion  string            `json:"spec_version,omitempty"`
-		Status       LifecycleState    `json:"status"`
-		Source       SourceType        `json:"source"`
-		Provider     *Provider         `json:"provider,omitempty"`
-		Categories   []string          `json:"categories,omitempty"`
-		Capabilities json.RawMessage   `json:"capabilities,omitempty"`
-		Validity     Validity          `json:"validity"`
-		Metadata     map[string]string `json:"metadata,omitempty"`
-		RawDef       json.RawMessage   `json:"raw_definition,omitempty"`
-		CreatedAt    time.Time         `json:"created_at"`
-		UpdatedAt    time.Time         `json:"updated_at"`
-		Health       struct {
-			State               string     `json:"state"`
-			LastProbedAt        *time.Time `json:"lastProbedAt"`
-			LastSuccessAt       *time.Time `json:"lastSuccessAt"`
-			LatencyMs           int64      `json:"latencyMs"`
-			ConsecutiveFailures int        `json:"consecutiveFailures"`
-			LastError           string     `json:"lastError"`
-		} `json:"health"`
-	}{
-		ID:           e.ID,
-		AgentTypeID:  e.AgentTypeID,
-		DisplayName:  e.DisplayName,
-		Description:  e.Description,
-		Protocol:     protocol,
-		Endpoint:     endpoint,
-		Version:      version,
-		SpecVersion:  specVersion,
-		Status:       e.Status,
-		Source:       e.Source,
-		Provider:     provider,
-		Categories:   e.Categories,
-		Capabilities: capJSON,
-		Validity:     e.Validity,
-		Metadata:     e.Metadata,
-		RawDef:       rawDef,
-		CreatedAt:    e.CreatedAt,
-		UpdatedAt:    e.UpdatedAt,
-		Health: struct {
-			State               string     `json:"state"`
-			LastProbedAt        *time.Time `json:"lastProbedAt"`
-			LastSuccessAt       *time.Time `json:"lastSuccessAt"`
-			LatencyMs           int64      `json:"latencyMs"`
-			ConsecutiveFailures int        `json:"consecutiveFailures"`
-			LastError           string     `json:"lastError"`
-		}{
-			State:               string(e.Health.State),
-			LastProbedAt:        e.Health.LastProbedAt,
-			LastSuccessAt:       e.Health.LastSuccessAt,
-			LatencyMs:           e.Health.LatencyMs,
-			ConsecutiveFailures: e.Health.ConsecutiveFailures,
-			LastError:           e.Health.LastError,
+	return catalogEntryJSON{
+		ID: e.ID, AgentTypeID: e.AgentTypeID, DisplayName: e.DisplayName,
+		Description: e.Description, Protocol: protocol, Endpoint: endpoint,
+		Version: version, SpecVersion: specVersion, Status: e.Status,
+		Source: e.Source, Provider: provider, Categories: e.Categories,
+		Capabilities: capJSON, Validity: e.Validity, Metadata: e.Metadata,
+		RawDef: rawDef, CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt,
+		Health: healthJSON{
+			State: string(e.Health.State), LastProbedAt: e.Health.LastProbedAt,
+			LastSuccessAt: e.Health.LastSuccessAt, LatencyMs: e.Health.LatencyMs,
+			ConsecutiveFailures: e.Health.ConsecutiveFailures, LastError: e.Health.LastError,
 		},
-	})
+	}
 }

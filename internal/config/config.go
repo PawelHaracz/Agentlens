@@ -163,62 +163,8 @@ func applyEnv(cfg *Config) {
 	if v := env("KUBERNETES_ENABLED"); v != "" {
 		cfg.Kubernetes.Enabled = strings.EqualFold(v, "true") || v == "1"
 	}
-	if v := env("HEALTH_CHECK_ENABLED"); v != "" {
-		cfg.HealthCheck.Enabled = strings.EqualFold(v, "true") || v == "1"
-	}
-	if v := env("HEALTH_CHECK_INTERVAL"); v != "" {
-		if d, err := time.ParseDuration(v); err == nil {
-			cfg.HealthCheck.Interval = d
-		}
-	}
-	if v := env("HEALTH_CHECK_TIMEOUT"); v != "" {
-		if d, err := time.ParseDuration(v); err == nil {
-			cfg.HealthCheck.Timeout = d
-		}
-	}
-	if v := env("HEALTH_CHECK_CONCURRENCY"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			cfg.HealthCheck.Concurrency = n
-		}
-	}
-	if v := env("HEALTH_CHECK_DEGRADED_LATENCY"); v != "" {
-		if d, err := time.ParseDuration(v); err == nil {
-			cfg.HealthCheck.DegradedLatency = d
-		}
-	}
-	if v := env("HEALTH_CHECK_FAILURE_THRESHOLD"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			cfg.HealthCheck.FailureThreshold = n
-		}
-	}
-	// Database env overrides
-	if v := env("DB_DIALECT"); v != "" {
-		cfg.Database.Dialect = v
-	}
-	if v := env("DB_SQLITE_PATH"); v != "" {
-		cfg.Database.SQLite.Path = v
-	}
-	if v := env("DB_POSTGRES_HOST"); v != "" {
-		cfg.Database.Postgres.Host = v
-	}
-	if v := env("DB_POSTGRES_PORT"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			cfg.Database.Postgres.Port = n
-		}
-	}
-	if v := env("DB_POSTGRES_USER"); v != "" {
-		cfg.Database.Postgres.User = v
-	}
-	if v := env("DB_POSTGRES_PASSWORD"); v != "" {
-		cfg.Database.Postgres.Password = v
-	}
-	if v := env("DB_POSTGRES_DBNAME"); v != "" {
-		cfg.Database.Postgres.DBName = v
-	}
-	if v := env("DB_POSTGRES_SSLMODE"); v != "" {
-		cfg.Database.Postgres.SSLMode = v
-	}
-	// Auth env overrides
+	applyHealthCheckEnv(&cfg.HealthCheck)
+	applyDatabaseEnv(&cfg.Database)
 	if v := env("JWT_SECRET"); v != "" {
 		cfg.Auth.JWTSecret = v
 	}
@@ -226,6 +172,66 @@ func applyEnv(cfg *Config) {
 		if d, err := time.ParseDuration(v); err == nil {
 			cfg.Auth.SessionDuration = d
 		}
+	}
+}
+
+func applyHealthCheckEnv(hc *HealthCheckConfig) {
+	if v := env("HEALTH_CHECK_ENABLED"); v != "" {
+		hc.Enabled = strings.EqualFold(v, "true") || v == "1"
+	}
+	if v := env("HEALTH_CHECK_INTERVAL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			hc.Interval = d
+		}
+	}
+	if v := env("HEALTH_CHECK_TIMEOUT"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			hc.Timeout = d
+		}
+	}
+	if v := env("HEALTH_CHECK_CONCURRENCY"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			hc.Concurrency = n
+		}
+	}
+	if v := env("HEALTH_CHECK_DEGRADED_LATENCY"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			hc.DegradedLatency = d
+		}
+	}
+	if v := env("HEALTH_CHECK_FAILURE_THRESHOLD"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			hc.FailureThreshold = n
+		}
+	}
+}
+
+func applyDatabaseEnv(db *DatabaseConfig) {
+	if v := env("DB_DIALECT"); v != "" {
+		db.Dialect = v
+	}
+	if v := env("DB_SQLITE_PATH"); v != "" {
+		db.SQLite.Path = v
+	}
+	if v := env("DB_POSTGRES_HOST"); v != "" {
+		db.Postgres.Host = v
+	}
+	if v := env("DB_POSTGRES_PORT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			db.Postgres.Port = n
+		}
+	}
+	if v := env("DB_POSTGRES_USER"); v != "" {
+		db.Postgres.User = v
+	}
+	if v := env("DB_POSTGRES_PASSWORD"); v != "" {
+		db.Postgres.Password = v
+	}
+	if v := env("DB_POSTGRES_DBNAME"); v != "" {
+		db.Postgres.DBName = v
+	}
+	if v := env("DB_POSTGRES_SSLMODE"); v != "" {
+		db.Postgres.SSLMode = v
 	}
 }
 
