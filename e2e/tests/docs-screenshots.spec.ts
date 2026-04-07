@@ -198,9 +198,10 @@ test.describe('Documentation Screenshots', () => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Open status filter and select Unknown
-    await page.getByRole('combobox').filter({ hasText: /status/i }).click();
-    await page.getByRole('option', { name: 'Unknown' }).click();
+    // Open the status multi-select dropdown and select Pending
+    await page.getByRole('button', { name: /all statuses/i }).click();
+    await page.waitForSelector('[role="menuitemcheckbox"]');
+    await page.getByRole('menuitemcheckbox', { name: 'Pending' }).click();
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/catalog-filter-status.png`, fullPage: false });
   });
@@ -469,6 +470,117 @@ test.describe('Documentation Screenshots', () => {
     await request.delete(`${BASE}/api/v1/roles/${customRole.id}`, {
       headers: authHeader(token),
     }).catch(ignoreCleanupError('delete custom role'));
+  });
+
+  // ───────── Health lifecycle screenshots ─────────
+
+  test('health-status-badges', async ({ page }) => {
+    // Shows the catalog list with the new lifecycle status badges visible.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.waitForLoadState('networkidle');
+    // Wait for at least one badge to render (Pending or Active)
+    await page.waitForSelector('[data-slot="badge"]', { timeout: ASYNC_OP_TIMEOUT_MS });
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-status-badges.png`, fullPage: false });
+  });
+
+  test('health-filter-multi-select', async ({ page }) => {
+    // Shows the status dropdown open with multiple lifecycle states.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: /all statuses/i }).click();
+    await page.waitForSelector('[role="menuitemcheckbox"]');
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-multi-select.png`, fullPage: false });
+  });
+
+  test('health-filter-active-selected', async ({ page }) => {
+    // Shows the catalog filtered to Active entries only.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: /all statuses/i }).click();
+    await page.waitForSelector('[role="menuitemcheckbox"]');
+    await page.getByRole('menuitemcheckbox', { name: 'Active' }).click();
+    // Close dropdown by clicking elsewhere
+    await page.keyboard.press('Escape');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-active-selected.png`, fullPage: false });
+  });
+
+  test('health-detail-section', async ({ page }) => {
+    // Shows the Health section in an entry detail view.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    // Scroll to the Health section
+    await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h3'));
+      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
+      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-detail-section.png`, fullPage: false });
+  });
+
+  test('health-probe-now', async ({ page }) => {
+    // Shows the Probe now button in the health section (before clicking).
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h3'));
+      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
+      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    // Highlight the Probe now button by hovering
+    await page.getByRole('button', { name: /probe now/i }).hover();
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-probe-now.png`, fullPage: false });
+  });
+
+  test('health-deprecate-dialog', async ({ page }) => {
+    // Shows the confirmation dialog before deprecating an entry.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h3'));
+      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
+      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    await page.getByRole('button', { name: /deprecate/i }).click();
+    await page.waitForSelector('[role="alertdialog"]', { timeout: ERROR_DISPLAY_TIMEOUT_MS });
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecate-dialog.png`, fullPage: false });
+    // Close dialog without confirming so the entry stays intact for other tests
+    await page.getByRole('button', { name: /cancel/i }).click();
+  });
+
+  test('health-deprecated-badge', async ({ page, request }) => {
+    // Shows an entry with the Deprecated badge.
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // Deprecate the MCP entry via API for this screenshot
+    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
+      headers: authHeader(token),
+      data: { state: 'deprecated' },
+    });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${mcpEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecated-badge.png`, fullPage: false });
+    // Restore to active
+    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
+      headers: authHeader(token),
+      data: { state: 'active' },
+    }).catch(ignoreCleanupError('un-deprecate mcp entry'));
   });
 
   // ───────── User dropdown ─────────
