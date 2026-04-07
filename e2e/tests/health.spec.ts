@@ -33,6 +33,8 @@ test.describe('Lifecycle State Machine', () => {
     // Entry creation may fail if stub URL conflicts — leave entryID unset so
     // individual tests can skip using their existing guards.
     if (!res.ok()) {
+      // eslint-disable-next-line no-console
+      console.warn('Health E2E: entry creation failed, tests in this suite will be skipped:', await res.text())
       return
     }
     const entry = await res.json()
