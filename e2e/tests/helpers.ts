@@ -121,6 +121,7 @@ export async function loginViaUI(
   await page.getByLabel('Username').fill(username);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  // Wait for dashboard (stats bar or catalog table)
-  await expect(page.getByText(/Total|Catalog/i).first()).toBeVisible({ timeout: 15_000 });
+  // Wait for redirect away from /login — more reliable than waiting for specific text
+  await page.waitForURL(url => !url.includes('/login'), { timeout: 15_000 });
+  await page.waitForLoadState('networkidle');
 }

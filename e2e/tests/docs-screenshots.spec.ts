@@ -19,12 +19,9 @@ import {
   loginViaUI,
   loginViaAPI,
   authHeader,
-  createCatalogEntry,
   deleteCatalogEntry,
   createUser,
   BASE,
-  adminPassword,
-  ADMIN_USER,
 } from './helpers';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +46,35 @@ function ignoreCleanupError(label: string) {
   return (err: unknown) => console.warn(`[docs-screenshots] cleanup warning (${label}):`, err);
 }
 
+/**
+ * Create a catalog entry, or return the existing entry's ID if the endpoint
+ * already exists (409). This makes beforeAll idempotent across re-runs.
+ */
+async function seedOrFind(
+  request: import('@playwright/test').APIRequestContext,
+  token: string,
+  body: Record<string, unknown>,
+): Promise<string> {
+  const res = await request.post(`${BASE}/api/v1/catalog`, {
+    headers: authHeader(token),
+    data: body,
+  });
+  if (res.ok()) {
+    const entry = await res.json();
+    return entry.id as string;
+  }
+  if (res.status() === 409) {
+    // Entry already exists — find it by listing the catalog and matching the endpoint
+    const listRes = await request.get(`${BASE}/api/v1/catalog`, {
+      headers: authHeader(token),
+    });
+    const entries: Array<{ id: string; endpoint: string }> = await listRes.json();
+    const existing = entries.find(e => e.endpoint === body.endpoint);
+    if (existing) return existing.id;
+  }
+  throw new Error(`seedOrFind failed: ${res.status()} ${await res.text()}`);
+}
+
 // A2A entry with skills
 const A2A_CARD = JSON.stringify({
   name: 'Demo Translator Agent',
@@ -61,20 +87,6 @@ const A2A_CARD = JSON.stringify({
   ],
 });
 
-// MCP entry
-const MCP_CARD = JSON.stringify({
-  name: 'Demo File System MCP',
-  description: 'Provides file-system access to MCP-capable AI assistants.',
-  version: '0.8.0',
-  mcpVersion: '1.0',
-  tools: [
-    { name: 'readFile', description: 'Read file contents from disk.' },
-    { name: 'writeFile', description: 'Write content to a file.' },
-    { name: 'listDirectory', description: 'List files in a directory.' },
-  ],
-  resources: [{ uri: 'file:///data', name: 'Data directory' }],
-  prompts: [{ name: 'summarize', description: 'Summarize a file.' }],
-});
 
 test.describe('Documentation Screenshots', () => {
   let token: string;
@@ -85,25 +97,23 @@ test.describe('Documentation Screenshots', () => {
   test.beforeAll(async ({ request }) => {
     token = await loginViaAPI(request);
 
-    // Seed A2A entry
-    const a2aEntry = await createCatalogEntry(request, token, {
+    // Seed A2A entry — if the endpoint already exists from a previous run, reuse it.
+    a2aEntryId = await seedOrFind(request, token, {
       display_name: 'Demo Translator Agent',
       description: 'Translates text between languages using neural machine translation.',
       protocol: 'a2a',
       endpoint: 'https://demo-translator.example.com',
       version: '1.2.0',
     });
-    a2aEntryId = a2aEntry.id;
 
-    // Seed MCP entry
-    const mcpEntry = await createCatalogEntry(request, token, {
+    // Seed MCP entry — if the endpoint already exists from a previous run, reuse it.
+    mcpEntryId = await seedOrFind(request, token, {
       display_name: 'Demo File System MCP',
       description: 'Provides file-system access to MCP-capable AI assistants.',
       protocol: 'mcp',
       endpoint: 'https://demo-fs-mcp.example.com',
       version: '0.8.0',
     });
-    mcpEntryId = mcpEntry.id;
 
     // Seed viewer user for settings screenshots
     // Get roles list first
@@ -301,7 +311,7 @@ test.describe('Documentation Screenshots', () => {
     await page.screenshot({ path: `${DOCS_IMAGES}/register-import-url-error-private.png`, fullPage: false });
   });
 
-  test('register-import-url-success', async ({ page, request }) => {
+  test('register-import-url-success', async ({ page }) => {
     // This screenshot shows the catalog after a successful import.
     // We'll register via the API (to keep it fast & reliable), then screenshot the dashboard.
     await page.setViewportSize(VIEWPORT);
