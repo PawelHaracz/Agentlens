@@ -2,17 +2,17 @@ import type { Stats } from '../types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function StatsBar({ stats }: { stats: Stats }) {
-  const healthy = stats.by_status['healthy'] ?? 0
+  const active = stats.by_status['active'] ?? 0
   const degraded = stats.by_status['degraded'] ?? 0
-  const down = stats.by_status['down'] ?? 0
-  const unknown = stats.by_status['unknown'] ?? 0
+  const offline = stats.by_status['offline'] ?? 0
+  const registered = stats.by_status['registered'] ?? 0
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <StatCard label="Total" value={stats.total} className="text-foreground" />
-      <StatCard label="Healthy" value={healthy} className="text-green-600" />
+      <StatCard label="Active" value={active} className="text-green-600" />
       <StatCard label="Degraded" value={degraded} className="text-yellow-600" />
-      <StatCard label="Down" value={down + unknown} className="text-destructive" />
+      <StatCard label="Offline" value={offline + registered} className="text-destructive" />
     </div>
   )
 }

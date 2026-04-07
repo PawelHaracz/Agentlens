@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
 )
@@ -19,8 +20,12 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 	if filter.Protocol != nil {
 		query = query.Where("agent_types.protocol = ?", string(*filter.Protocol))
 	}
-	if filter.Status != nil {
-		query = query.Where("catalog_entries.status = ?", string(*filter.Status))
+	if len(filter.States) > 0 {
+		states := make([]string, len(filter.States))
+		for i, s := range filter.States {
+			states[i] = string(s)
+		}
+		query = query.Where("catalog_entries.status IN ?", states)
 	}
 	if filter.Source != nil {
 		query = query.Where("catalog_entries.source = ?", string(*filter.Source))
@@ -82,6 +87,32 @@ func (s *SQLStore) SearchCapabilities(ctx context.Context, query string) ([]mode
 		if err := s.loadCapabilities(ctx, entries[i].AgentType); err != nil {
 			return nil, err
 		}
+		entries[i].SyncFromDB()
+	}
+	return entries, nil
+}
+
+// ListForProbing returns entries due for a health probe. Entries are excluded
+// if deprecated or if last probed after olderThan. Results are ordered with
+// never-probed entries first, capped by limit.
+func (s *SQLStore) ListForProbing(ctx context.Context, olderThan time.Time, limit int) ([]model.CatalogEntry, error) {
+	var entries []model.CatalogEntry
+	err := s.gdb.WithContext(ctx).
+		Model(&model.CatalogEntry{}).
+		Preload("AgentType").
+		Joins("JOIN agent_types ON agent_types.id = catalog_entries.agent_type_id").
+		Where(
+			"catalog_entries.status != ? AND (catalog_entries.health_last_probed_at IS NULL OR catalog_entries.health_last_probed_at < ?)",
+			string(model.LifecycleDeprecated),
+			olderThan,
+		).
+		Order("catalog_entries.health_last_probed_at NULLS FIRST").
+		Limit(limit).
+		Find(&entries).Error
+	if err != nil {
+		return nil, fmt.Errorf("listing for probing: %w", err)
+	}
+	for i := range entries {
 		entries[i].SyncFromDB()
 	}
 	return entries, nil

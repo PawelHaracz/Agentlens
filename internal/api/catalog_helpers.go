@@ -66,7 +66,7 @@ func (h *Handler) registerAgentType(
 		AgentType:   agentType,
 		DisplayName: displayName,
 		Source:      source,
-		Status:      model.StatusUnknown,
+		Status:      model.LifecycleRegistered,
 		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,
 		UpdatedAt:   now,

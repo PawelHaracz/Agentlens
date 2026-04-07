@@ -18,6 +18,7 @@ func AllMigrations() []Migration {
 		migration002UsersAndRoles(),
 		migration003DefaultRoles(),
 		migration004Settings(),
+		migration005HealthColumns(),
 	}
 }
 
@@ -204,6 +205,46 @@ func migration004Settings() Migration {
 					return result.Error
 				}
 			}
+			return nil
+		},
+	}
+}
+
+func migration005HealthColumns() Migration {
+	return Migration{
+		Version:     5,
+		Description: "add health check columns to catalog_entries",
+		Up: func(tx *gorm.DB) error {
+			// AutoMigrate adds new columns declared on CatalogEntry (idempotent).
+			if err := tx.AutoMigrate(&model.CatalogEntry{}); err != nil {
+				return fmt.Errorf("automigrate catalog_entries: %w", err)
+			}
+
+			// Map existing old status values to the new lifecycle vocabulary.
+			// 'healthy' → 'active', 'down' → 'offline', 'unknown' → 'registered'.
+			// 'degraded' is the same string in both old and new; no update needed.
+			mappings := [][2]string{
+				{"healthy", "active"},
+				{"down", "offline"},
+				{"unknown", "registered"},
+			}
+			for _, m := range mappings {
+				if err := tx.Exec(
+					"UPDATE catalog_entries SET status = ? WHERE status = ?",
+					m[1], m[0],
+				).Error; err != nil {
+					return fmt.Errorf("migrating status value %q: %w", m[0], err)
+				}
+			}
+
+			// Create index on health_last_probed_at for efficient ListForProbing queries.
+			if err := tx.Exec(
+				"CREATE INDEX IF NOT EXISTS idx_catalog_entries_health_probed_at " +
+					"ON catalog_entries(health_last_probed_at)",
+			).Error; err != nil {
+				return fmt.Errorf("creating health_probed_at index: %w", err)
+			}
+
 			return nil
 		},
 	}

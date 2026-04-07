@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getEntry, deleteEntry } from '../api'
+import { getEntry, deleteEntry, patchLifecycle, postProbe } from '../api'
 import type { CatalogEntry } from '../types'
+import { useAuth } from '../contexts/AuthContext'
 import StatusBadge from './StatusBadge'
 import ProtocolBadge from './ProtocolBadge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,15 +11,33 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { ArrowLeft, Trash2, RefreshCw, Archive, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function EntryDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
+  const canEdit = hasPermission('catalog:write')
   const [entry, setEntry] = useState<CatalogEntry | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [probing, setProbing] = useState(false)
+  const [lifecycleLoading, setLifecycleLoading] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -38,6 +57,55 @@ export default function EntryDetail() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed')
       setDeleting(false)
+    }
+  }
+
+  function relativeTime(isoStr: string): string {
+    const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000)
+    if (diff < 60) return `${diff}s ago`
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+    return `${Math.floor(diff / 3600)}h ago`
+  }
+
+  const handleProbeNow = async () => {
+    if (!entry) return
+    setProbing(true)
+    setActionError(null)
+    try {
+      const health = await postProbe(entry.id)
+      setEntry(prev => prev ? { ...prev, health, status: health.state } : prev)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Probe failed')
+    } finally {
+      setProbing(false)
+    }
+  }
+
+  const handleDeprecate = async () => {
+    if (!entry) return
+    setLifecycleLoading(true)
+    setActionError(null)
+    try {
+      const updated = await patchLifecycle(entry.id, 'deprecated')
+      setEntry(updated)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Failed to deprecate')
+    } finally {
+      setLifecycleLoading(false)
+    }
+  }
+
+  const handleUndeprecate = async () => {
+    if (!entry) return
+    setLifecycleLoading(true)
+    setActionError(null)
+    try {
+      const updated = await patchLifecycle(entry.id, 'active')
+      setEntry(updated)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Failed to un-deprecate')
+    } finally {
+      setLifecycleLoading(false)
     }
   }
 
@@ -171,6 +239,104 @@ export default function EntryDetail() {
               </div>
             </>
           )}
+
+          <Separator className="my-4" />
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm">Health</h3>
+              {canEdit && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={probing || entry.status === 'deprecated'}
+                    onClick={handleProbeNow}
+                  >
+                    <RefreshCw className={cn('mr-2 h-4 w-4', probing && 'animate-spin')} />
+                    Probe now
+                  </Button>
+
+                  {entry.status === 'deprecated' ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={lifecycleLoading}
+                      onClick={handleUndeprecate}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Un-deprecate
+                    </Button>
+                  ) : (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" disabled={lifecycleLoading}>
+                          <Archive className="mr-2 h-4 w-4" />
+                          Deprecate
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Deprecate this entry?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            The health prober will stop monitoring this entry. You can un-deprecate it later.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeprecate}>Deprecate</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {actionError && (
+              <Alert variant="destructive" className="mb-3">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{actionError}</AlertDescription>
+              </Alert>
+            )}
+
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <dt className="text-muted-foreground">State</dt>
+              <dd><StatusBadge status={entry.status} /></dd>
+
+              <dt className="text-muted-foreground">Last probed</dt>
+              <dd>
+                {entry.health?.lastProbedAt
+                  ? <span title={new Date(entry.health.lastProbedAt).toUTCString()}>
+                      {relativeTime(entry.health.lastProbedAt)}
+                    </span>
+                  : <span className="text-muted-foreground">—</span>}
+              </dd>
+
+              <dt className="text-muted-foreground">Last successful</dt>
+              <dd>
+                {entry.health?.lastSuccessAt
+                  ? <span title={new Date(entry.health.lastSuccessAt).toUTCString()}>
+                      {relativeTime(entry.health.lastSuccessAt)}
+                    </span>
+                  : <span className="text-muted-foreground">—</span>}
+              </dd>
+
+              <dt className="text-muted-foreground">Latency</dt>
+              <dd>
+                {(entry.health?.latencyMs ?? 0) > 0
+                  ? `${entry.health.latencyMs} ms`
+                  : <span className="text-muted-foreground">—</span>}
+              </dd>
+
+              <dt className="text-muted-foreground">Failures (run)</dt>
+              <dd>{entry.health?.consecutiveFailures ?? 0}</dd>
+
+              <dt className="text-muted-foreground">Last error</dt>
+              <dd className="font-mono text-xs break-all">
+                {entry.health?.lastError || <span className="text-muted-foreground">—</span>}
+              </dd>
+            </dl>
+          </div>
         </CardContent>
       </Card>
     </div>

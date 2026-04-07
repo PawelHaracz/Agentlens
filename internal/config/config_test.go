@@ -21,7 +21,7 @@ func TestDefaults(t *testing.T) {
 	assert.True(t, cfg.HealthCheck.Enabled)
 	assert.Equal(t, 30*time.Second, cfg.HealthCheck.Interval)
 	assert.Equal(t, 5*time.Second, cfg.HealthCheck.Timeout)
-	assert.Equal(t, 10, cfg.HealthCheck.Concurrency)
+	assert.Equal(t, 8, cfg.HealthCheck.Concurrency)
 }
 
 func TestEnvOverrides(t *testing.T) {

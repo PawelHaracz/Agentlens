@@ -3,6 +3,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
 )
@@ -22,13 +23,24 @@ type Store interface {
 	SearchCapabilities(ctx context.Context, query string) ([]model.CatalogEntry, error)
 	Stats(ctx context.Context) (*StoreStats, error)
 
+	// UpdateHealth persists health check results for a single entry.
+	// It also updates validity_last_seen when LastSuccessAt is non-nil.
+	UpdateHealth(ctx context.Context, entryID string, h model.Health) error
+
+	// ListForProbing returns entries due for a probe: not deprecated, and either
+	// never probed or last probed before olderThan. Ordered NULLS FIRST, capped by limit.
+	ListForProbing(ctx context.Context, olderThan time.Time, limit int) ([]model.CatalogEntry, error)
+
+	// SetLifecycle sets the lifecycle state of an entry (admin/editor action).
+	SetLifecycle(ctx context.Context, entryID string, state model.LifecycleState) error
+
 	Close() error
 }
 
 // ListFilter holds filtering parameters for listing catalog entries.
 type ListFilter struct {
 	Protocol   *model.Protocol
-	Status     *model.Status
+	States     []model.LifecycleState // filter by one or more lifecycle states (IN clause)
 	Source     *model.SourceType
 	Team       string
 	Query      string

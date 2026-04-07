@@ -39,7 +39,7 @@ func insertEntry(t *testing.T, s store.Store, id, endpoint string) *model.Catalo
 		AgentTypeID: agentType.ID,
 		AgentType:   agentType,
 		DisplayName: "Test Entry",
-		Status:      model.StatusUnknown,
+		Status:      model.LifecycleRegistered,
 		Source:      model.SourcePush,
 		Validity:    model.Validity{LastSeen: now},
 		CreatedAt:   now,
@@ -68,7 +68,7 @@ func TestChecker_Healthy(t *testing.T) {
 
 	e, err := s.Get(context.Background(), "h1")
 	require.NoError(t, err)
-	assert.Equal(t, model.StatusHealthy, e.Status)
+	assert.Equal(t, model.LifecycleActive, e.Status)
 }
 
 func TestChecker_Down(t *testing.T) {
@@ -85,5 +85,5 @@ func TestChecker_Down(t *testing.T) {
 
 	e, err := s.Get(context.Background(), "d1")
 	require.NoError(t, err)
-	assert.Equal(t, model.StatusDown, e.Status)
+	assert.Equal(t, model.LifecycleOffline, e.Status)
 }

@@ -3,34 +3,69 @@ package health
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
-	"github.com/PawelHaracz/agentlens/internal/store"
 )
+
+// proberStore is the minimal store surface the prober needs.
+// Keeping it minimal lets the health package avoid a dependency on the store package.
+type proberStore interface {
+	Get(ctx context.Context, id string) (*model.CatalogEntry, error)
+	UpdateHealth(ctx context.Context, id string, h model.Health) error
+	ListForProbing(ctx context.Context, olderThan time.Time, limit int) ([]model.CatalogEntry, error)
+}
 
 // Plugin implements the health checker plugin.
 type Plugin struct {
-	store       store.Store
-	interval    time.Duration
-	timeout     time.Duration
-	concurrency int
-	log         *slog.Logger
+	store            proberStore
+	interval         time.Duration
+	timeout          time.Duration
+	concurrency      int
+	degradedLatency  time.Duration
+	failureThreshold int
+	httpClient       *http.Client
+	log              *slog.Logger
 }
 
-// New creates a new health checker plugin.
-func New(interval, timeout time.Duration, concurrency int) *Plugin {
+// New creates a Plugin from HealthCheckConfig.
+func New(cfg config.HealthCheckConfig) *Plugin {
+	concurrency := cfg.Concurrency
 	if concurrency < 1 {
 		concurrency = 1
 	}
 	return &Plugin{
-		interval:    interval,
-		timeout:     timeout,
-		concurrency: concurrency,
+		interval:         cfg.Interval,
+		timeout:          cfg.Timeout,
+		concurrency:      concurrency,
+		degradedLatency:  cfg.DegradedLatency,
+		failureThreshold: cfg.FailureThreshold,
+		httpClient:       &http.Client{},
+	}
+}
+
+// NewForTest creates a Plugin for unit tests (no kernel).
+func NewForTest(degradedLatency time.Duration, failureThreshold int) *Plugin {
+	return NewForTestWithTimeout(degradedLatency, failureThreshold, 5*time.Second)
+}
+
+// NewForTestWithTimeout creates a Plugin for unit tests with a custom probe timeout.
+func NewForTestWithTimeout(degradedLatency time.Duration, failureThreshold int, timeout time.Duration) *Plugin {
+	return &Plugin{
+		interval:         30 * time.Second,
+		timeout:          timeout,
+		concurrency:      1,
+		degradedLatency:  degradedLatency,
+		failureThreshold: failureThreshold,
+		httpClient:       &http.Client{Timeout: timeout},
+		log:              slog.Default(),
 	}
 }
 
@@ -38,15 +73,16 @@ func New(interval, timeout time.Duration, concurrency int) *Plugin {
 func (p *Plugin) Name() string { return "health-checker" }
 
 // Version returns the plugin version.
-func (p *Plugin) Version() string { return "1.0.0" }
+func (p *Plugin) Version() string { return "2.0.0" }
 
 // Type returns the plugin type.
 func (p *Plugin) Type() kernel.PluginType { return kernel.PluginTypeMiddleware }
 
-// Init initializes the plugin.
+// Init initializes the plugin with kernel dependencies.
 func (p *Plugin) Init(k kernel.Kernel) error {
 	p.store = k.Store()
 	p.log = k.Logger().With("component", "health-checker")
+	p.httpClient = &http.Client{Timeout: p.timeout}
 	return nil
 }
 
@@ -56,11 +92,38 @@ func (p *Plugin) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops the plugin (no-op, context cancellation handles it).
-func (p *Plugin) Stop(ctx context.Context) error { return nil }
+// Stop stops the plugin (context cancellation is sufficient).
+func (p *Plugin) Stop(_ context.Context) error { return nil }
+
+// ProbeEntry probes an entry by ID and persists the result.
+// Implements the api.HealthProber interface structurally.
+func (p *Plugin) ProbeEntry(ctx context.Context, id string) (model.Health, error) {
+	entry, err := p.store.Get(ctx, id)
+	if err != nil {
+		return model.Health{}, fmt.Errorf("getting entry for probe: %w", err)
+	}
+	if entry == nil {
+		return model.Health{}, model.ErrEntryNotFound
+	}
+	h := p.probeOne(ctx, entry)
+	if err := p.store.UpdateHealth(ctx, id, h); err != nil {
+		p.log.Warn("failed to persist on-demand probe", "id", id, "err", err)
+	}
+	return h, nil
+}
+
+// ProbeOneForTest exposes probeOne for white-box unit tests.
+func (p *Plugin) ProbeOneForTest(ctx context.Context, entry *model.CatalogEntry) (model.Health, error) {
+	return p.probeOne(ctx, entry), nil
+}
 
 func (p *Plugin) run(ctx context.Context) {
-	p.log.Info("starting health checker", "interval", p.interval, "concurrency", p.concurrency)
+	p.log.Info("starting health checker",
+		"interval", p.interval,
+		"concurrency", p.concurrency,
+		"degradedLatency", p.degradedLatency,
+		"failureThreshold", p.failureThreshold,
+	)
 	ticker := time.NewTicker(p.interval)
 	defer ticker.Stop()
 	for {
@@ -74,9 +137,11 @@ func (p *Plugin) run(ctx context.Context) {
 }
 
 func (p *Plugin) checkAll(ctx context.Context) {
-	entries, err := p.store.List(ctx, store.ListFilter{})
+	olderThan := time.Now().UTC().Add(-p.interval)
+	batchSize := p.concurrency * 4
+	entries, err := p.store.ListForProbing(ctx, olderThan, batchSize)
 	if err != nil {
-		p.log.Warn("failed to list entries for health check", "err", err)
+		p.log.Warn("failed to list entries for probing", "err", err)
 		return
 	}
 
@@ -89,56 +154,123 @@ func (p *Plugin) checkAll(ctx context.Context) {
 		go func() {
 			defer wg.Done()
 			defer func() { <-sem }()
-			p.checkOne(ctx, &e)
+			h := p.probeOne(ctx, &e)
+			if err := p.store.UpdateHealth(ctx, e.ID, h); err != nil {
+				p.log.Warn("failed to persist probe result", "id", e.ID, "err", err)
+			}
 		}()
 	}
 	wg.Wait()
 }
 
-func (p *Plugin) checkOne(ctx context.Context, entry *model.CatalogEntry) {
-	if entry.AgentType == nil {
-		return
-	}
-	if entry.AgentType.Endpoint == "" {
-		return
+// probeOne executes a single HTTP probe and returns the resulting Health value.
+// It does NOT write to the store. Deprecated entries are returned unchanged.
+func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.Health {
+	if entry.Status == model.LifecycleDeprecated {
+		return entry.Health
 	}
 
-	checkCtx, cancel := context.WithTimeout(ctx, p.timeout)
+	url := resolveProbURL(entry)
+	if url == "" {
+		return p.noURLHealth(entry.Health)
+	}
+
+	probeCtx, cancel := context.WithTimeout(ctx, p.timeout)
 	defer cancel()
 
-	client := &http.Client{Timeout: p.timeout}
-	req, err := http.NewRequestWithContext(checkCtx, http.MethodGet, entry.AgentType.Endpoint, nil)
+	req, err := http.NewRequestWithContext(probeCtx, http.MethodGet, url, nil)
 	if err != nil {
-		p.updateStatus(ctx, entry, model.StatusDown)
-		return
+		return p.failureHealth(entry.Health, truncateStr("invalid URL: "+err.Error(), 512))
 	}
 
-	resp, err := client.Do(req)
+	start := time.Now()
+	resp, err := p.httpClient.Do(req)
+	latency := time.Since(start)
+
 	if err != nil {
-		p.updateStatus(ctx, entry, model.StatusDown)
-		return
+		return p.failureHealth(entry.Health, truncateStr(err.Error(), 512))
 	}
 	_ = resp.Body.Close()
 
-	var status model.Status
-	switch {
-	case resp.StatusCode >= 200 && resp.StatusCode < 300:
-		status = model.StatusHealthy
-	case resp.StatusCode >= 500:
-		status = model.StatusDegraded
-	default:
-		status = model.StatusUnknown
+	is2xx := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !is2xx {
+		return p.failureHealth(entry.Health, fmt.Sprintf("HTTP %d", resp.StatusCode))
 	}
 
-	p.updateStatus(ctx, entry, status)
+	return p.successHealth(latency)
 }
 
-func (p *Plugin) updateStatus(ctx context.Context, entry *model.CatalogEntry, status model.Status) {
+func (p *Plugin) successHealth(latency time.Duration) model.Health {
 	now := time.Now().UTC()
-	entry.Status = status
-	entry.Validity.LastSeen = now
-	entry.UpdatedAt = now
-	if err := p.store.Update(ctx, entry); err != nil {
-		p.log.Warn("failed to update entry status", "id", entry.ID, "err", err)
+	state := model.LifecycleActive
+	if latency > p.degradedLatency {
+		state = model.LifecycleDegraded
 	}
+	return model.Health{
+		State:               state,
+		LastProbedAt:        &now,
+		LastSuccessAt:       &now,
+		LastError:           "",
+		LatencyMs:           latency.Milliseconds(),
+		ConsecutiveFailures: 0,
+	}
+}
+
+func (p *Plugin) failureHealth(current model.Health, errMsg string) model.Health {
+	now := time.Now().UTC()
+	failures := current.ConsecutiveFailures + 1
+	state := model.LifecycleDegraded
+	if failures >= p.failureThreshold {
+		state = model.LifecycleOffline
+	}
+	return model.Health{
+		State:               state,
+		LastProbedAt:        &now,
+		LastSuccessAt:       current.LastSuccessAt,
+		LastError:           errMsg,
+		LatencyMs:           0,
+		ConsecutiveFailures: failures,
+	}
+}
+
+func (p *Plugin) noURLHealth(current model.Health) model.Health {
+	now := time.Now().UTC()
+	failures := current.ConsecutiveFailures + 1
+	return model.Health{
+		State:               model.LifecycleOffline,
+		LastProbedAt:        &now,
+		LastSuccessAt:       current.LastSuccessAt,
+		LastError:           "no probeable endpoint",
+		LatencyMs:           0,
+		ConsecutiveFailures: failures,
+	}
+}
+
+// resolveProbURL returns the URL to probe for a catalog entry.
+// For A2A: uses supportedInterfaces[0].url if present, falls back to Endpoint.
+// For all others: uses Endpoint directly.
+func resolveProbURL(entry *model.CatalogEntry) string {
+	if entry.AgentType == nil {
+		return ""
+	}
+	if entry.AgentType.Protocol == model.ProtocolA2A && len(entry.AgentType.RawDefinition) > 0 {
+		var card struct {
+			SupportedInterfaces []struct {
+				URL string `json:"url"`
+			} `json:"supportedInterfaces"`
+		}
+		if err := json.Unmarshal(entry.AgentType.RawDefinition, &card); err == nil {
+			if len(card.SupportedInterfaces) > 0 && card.SupportedInterfaces[0].URL != "" {
+				return card.SupportedInterfaces[0].URL
+			}
+		}
+	}
+	return entry.AgentType.Endpoint
+}
+
+func truncateStr(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen]
 }

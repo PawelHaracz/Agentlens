@@ -32,15 +32,15 @@ func TestRegisterAgentCard_ValidCard(t *testing.T) {
 
 	// Check scalar fields via a partial decode.
 	var entry struct {
-		ID          string           `json:"id"`
-		DisplayName string           `json:"display_name"`
-		Endpoint    string           `json:"endpoint"`
-		Protocol    model.Protocol   `json:"protocol"`
-		SpecVersion string           `json:"spec_version"`
-		Source      model.SourceType `json:"source"`
-		Status      model.Status     `json:"status"`
-		CreatedAt   string           `json:"created_at"`
-		UpdatedAt   string           `json:"updated_at"`
+		ID          string               `json:"id"`
+		DisplayName string               `json:"display_name"`
+		Endpoint    string               `json:"endpoint"`
+		Protocol    model.Protocol       `json:"protocol"`
+		SpecVersion string               `json:"spec_version"`
+		Source      model.SourceType     `json:"source"`
+		Status      model.LifecycleState `json:"status"`
+		CreatedAt   string               `json:"created_at"`
+		UpdatedAt   string               `json:"updated_at"`
 	}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &entry))
 	assert.NotEmpty(t, entry.ID)
@@ -49,7 +49,7 @@ func TestRegisterAgentCard_ValidCard(t *testing.T) {
 	assert.Equal(t, model.ProtocolA2A, entry.Protocol)
 	assert.Equal(t, "1.0", entry.SpecVersion)
 	assert.Equal(t, model.SourcePush, entry.Source)
-	assert.Equal(t, model.StatusUnknown, entry.Status)
+	assert.Equal(t, model.LifecycleRegistered, entry.Status)
 	assert.NotEmpty(t, entry.CreatedAt)
 	assert.NotEmpty(t, entry.UpdatedAt)
 
