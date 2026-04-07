@@ -785,6 +785,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Settings Keys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -912,6 +929,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Settings Keys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1044,6 +1078,55 @@
 </tr>
 </tbody>
 </table>
+<h3 id="health-check">Health Check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Env var</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>health_check.enabled</code></td>
+<td><code>true</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_ENABLED</code></td>
+<td>Enable/disable periodic health probing</td>
+</tr>
+<tr>
+<td><code>health_check.interval</code></td>
+<td><code>30s</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_INTERVAL</code></td>
+<td>How often to probe each entry</td>
+</tr>
+<tr>
+<td><code>health_check.timeout</code></td>
+<td><code>5s</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_TIMEOUT</code></td>
+<td>Probe request timeout</td>
+</tr>
+<tr>
+<td><code>health_check.concurrency</code></td>
+<td><code>8</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_CONCURRENCY</code></td>
+<td>Parallel probes</td>
+</tr>
+<tr>
+<td><code>health_check.degraded_latency</code></td>
+<td><code>1500ms</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_DEGRADED_LATENCY</code></td>
+<td>Latency threshold above which a 2xx response → degraded state</td>
+</tr>
+<tr>
+<td><code>health_check.failure_threshold</code></td>
+<td><code>3</code></td>
+<td><code>AGENTLENS_HEALTH_CHECK_FAILURE_THRESHOLD</code></td>
+<td>Consecutive failures before → offline state</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="categories">Categories<a class="headerlink" href="#categories" title="Permanent link">&para;</a></h2>
 <table>
@@ -1128,7 +1211,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="March 31, 2026 22:14:53 UTC"><span class="timeago" datetime="2026-03-31T22:14:53+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="March 31, 2026 22:14:53 UTC">2026-03-31</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 7, 2026 15:37:28 UTC"><span class="timeago" datetime="2026-04-07T15:37:28+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 7, 2026 15:37:28 UTC">2026-04-07</span>
   </span>
 
     
