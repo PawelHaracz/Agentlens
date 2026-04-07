@@ -140,8 +140,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("filter by status", func(t *testing.T) {
-		st := model.LifecycleActive
-		list, err := s.List(ctx, store.ListFilter{Status: &st})
+		list, err := s.List(ctx, store.ListFilter{States: []model.LifecycleState{model.LifecycleActive}})
 		require.NoError(t, err)
 		assert.Len(t, list, 1)
 	})
