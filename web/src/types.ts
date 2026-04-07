@@ -25,8 +25,8 @@ export interface Validity {
 
 export interface Health {
   state: LifecycleState
-  lastProbedAt?: string
-  lastSuccessAt?: string
+  lastProbedAt: string | null
+  lastSuccessAt: string | null
   latencyMs: number
   consecutiveFailures: number
   lastError: string

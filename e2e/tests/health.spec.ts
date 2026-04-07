@@ -30,9 +30,9 @@ test.describe('Lifecycle State Machine', () => {
         version: '1.0.0',
       },
     })
-    // Entry creation may fail if stub URL conflicts — we skip in that case
+    // Entry creation may fail if stub URL conflicts — leave entryID unset so
+    // individual tests can skip using their existing guards.
     if (!res.ok()) {
-      test.skip()
       return
     }
     const entry = await res.json()

@@ -31,6 +31,9 @@ func (s *SQLStore) UpdateHealth(ctx context.Context, entryID string, h model.Hea
 	if result.Error != nil {
 		return fmt.Errorf("updating health for %s: %w", entryID, result.Error)
 	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("updating health for %s: %w", entryID, model.ErrEntryNotFound)
+	}
 	return nil
 }
 

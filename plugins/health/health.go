@@ -103,7 +103,7 @@ func (p *Plugin) ProbeEntry(ctx context.Context, id string) (model.Health, error
 		return model.Health{}, fmt.Errorf("getting entry for probe: %w", err)
 	}
 	if entry == nil {
-		return model.Health{}, fmt.Errorf("entry not found")
+		return model.Health{}, model.ErrEntryNotFound
 	}
 	h := p.probeOne(ctx, entry)
 	if err := p.store.UpdateHealth(ctx, id, h); err != nil {

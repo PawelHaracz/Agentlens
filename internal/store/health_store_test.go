@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -94,6 +95,25 @@ func TestUpdateHealthFailure(t *testing.T) {
 	}
 	if got.Health.ConsecutiveFailures != 1 {
 		t.Errorf("ConsecutiveFailures = %v, want 1", got.Health.ConsecutiveFailures)
+	}
+}
+
+func TestUpdateHealthNotFound(t *testing.T) {
+	s, err := store.NewSQLiteStore(":memory:")
+	if err != nil {
+		t.Fatalf("NewSQLiteStore: %v", err)
+	}
+	defer func() {
+		_ = s.Close()
+	}()
+	ctx := context.Background()
+
+	err = s.UpdateHealth(ctx, "nonexistent-id", model.Health{State: model.LifecycleActive})
+	if err == nil {
+		t.Fatal("expected error for nonexistent entry, got nil")
+	}
+	if !errors.Is(err, model.ErrEntryNotFound) {
+		t.Errorf("expected ErrEntryNotFound, got: %v", err)
 	}
 }
 
@@ -205,10 +225,16 @@ func TestListFilterByStates(t *testing.T) {
 		}
 	}
 	// Set non-registered states
-	_ = s.SetLifecycle(ctx, offline.ID, model.LifecycleOffline)
-	_ = s.SetLifecycle(ctx, deprecated.ID, model.LifecycleDeprecated)
+	if err := s.SetLifecycle(ctx, offline.ID, model.LifecycleOffline); err != nil {
+		t.Fatalf("SetLifecycle offline: %v", err)
+	}
+	if err := s.SetLifecycle(ctx, deprecated.ID, model.LifecycleDeprecated); err != nil {
+		t.Fatalf("SetLifecycle deprecated: %v", err)
+	}
 	h := model.Health{State: model.LifecycleActive, LastProbedAt: func() *time.Time { t := time.Now().UTC(); return &t }()}
-	_ = s.UpdateHealth(ctx, active.ID, h)
+	if err := s.UpdateHealth(ctx, active.ID, h); err != nil {
+		t.Fatalf("UpdateHealth active: %v", err)
+	}
 
 	entries, err := s.List(ctx, store.ListFilter{
 		States: []model.LifecycleState{model.LifecycleActive, model.LifecycleOffline},

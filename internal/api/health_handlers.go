@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -106,11 +107,12 @@ func (h *HealthHandler) ProbeEntry(w http.ResponseWriter, r *http.Request) {
 
 	health, err := h.prober.ProbeEntry(r.Context(), id)
 	if err != nil {
-		if err.Error() == "entry not found" {
+		if errors.Is(err, model.ErrEntryNotFound) {
 			ErrorResponse(w, http.StatusNotFound, "catalog entry not found")
 			return
 		}
-		ErrorResponse(w, http.StatusInternalServerError, "probe failed: "+err.Error())
+		slog.Error("on-demand probe failed", "entry_id", id, "err", err)
+		ErrorResponse(w, http.StatusInternalServerError, "probe failed")
 		return
 	}
 
@@ -130,17 +132,34 @@ func healthToDTO(h model.Health) map[string]any {
 }
 
 // probeRateLimiter tracks last probe call time per entry ID.
+// Stale entries (older than the window) are periodically evicted to keep the
+// map bounded in long-running deployments.
 type probeRateLimiter struct {
-	mu       sync.Mutex
-	lastCall map[string]time.Time
+	mu          sync.Mutex
+	lastCall    map[string]time.Time
+	lastCleanup time.Time
 }
 
 func (r *probeRateLimiter) allow(id string, window time.Duration) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if last, ok := r.lastCall[id]; ok && time.Since(last) < window {
+
+	now := time.Now()
+
+	// Evict expired entries whenever the cleanup interval has elapsed.
+	if r.lastCleanup.IsZero() || now.Sub(r.lastCleanup) >= window {
+		for entryID, last := range r.lastCall {
+			if now.Sub(last) >= window {
+				delete(r.lastCall, entryID)
+			}
+		}
+		r.lastCleanup = now
+	}
+
+	if last, ok := r.lastCall[id]; ok && now.Sub(last) < window {
 		return false
 	}
-	r.lastCall[id] = time.Now()
+
+	r.lastCall[id] = now
 	return true
 }
