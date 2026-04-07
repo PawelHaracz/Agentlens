@@ -34,10 +34,12 @@ type KubernetesConfig struct {
 
 // HealthCheckConfig holds health-check settings.
 type HealthCheckConfig struct {
-	Enabled     bool          `yaml:"enabled"`
-	Interval    time.Duration `yaml:"interval"`
-	Timeout     time.Duration `yaml:"timeout"`
-	Concurrency int           `yaml:"concurrency"`
+	Enabled          bool          `yaml:"enabled"`
+	Interval         time.Duration `yaml:"interval"`
+	Timeout          time.Duration `yaml:"timeout"`
+	Concurrency      int           `yaml:"concurrency"`
+	DegradedLatency  time.Duration `yaml:"degraded_latency"`
+	FailureThreshold int           `yaml:"failure_threshold"`
 }
 
 // SQLiteConfig holds SQLite-specific database settings.
@@ -114,10 +116,12 @@ func defaults() *Config {
 		LogLevel:     "info",
 		PollInterval: 5 * time.Minute,
 		HealthCheck: HealthCheckConfig{
-			Enabled:     true,
-			Interval:    30 * time.Second,
-			Timeout:     5 * time.Second,
-			Concurrency: 10,
+			Enabled:          true,
+			Interval:         30 * time.Second,
+			Timeout:          5 * time.Second,
+			Concurrency:      8,
+			DegradedLatency:  1500 * time.Millisecond,
+			FailureThreshold: 3,
 		},
 		Database: DatabaseConfig{
 			Dialect: "sqlite",
@@ -175,6 +179,16 @@ func applyEnv(cfg *Config) {
 	if v := env("HEALTH_CHECK_CONCURRENCY"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			cfg.HealthCheck.Concurrency = n
+		}
+	}
+	if v := env("HEALTH_CHECK_DEGRADED_LATENCY"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			cfg.HealthCheck.DegradedLatency = d
+		}
+	}
+	if v := env("HEALTH_CHECK_FAILURE_THRESHOLD"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.HealthCheck.FailureThreshold = n
 		}
 	}
 	// Database env overrides
