@@ -316,6 +316,46 @@ the catalog showing the new entry.
 
 ---
 
+## Health Monitoring
+
+AgentLens continuously probes registered catalog entries and shows their runtime state on the dashboard.
+
+### Status badges
+
+Each entry displays a colored status badge:
+
+| Badge | Meaning |
+| --- | --- |
+| **Active** (green) | Last probe succeeded within the latency threshold |
+| **Degraded** (amber) | Last probe was slow, or a single failure occurred |
+| **Offline** (red) | Multiple consecutive probe failures |
+| **Pending** (gray) | Entry created but not yet probed |
+| **Deprecated** (slate) | Manually deprecated; no longer probed |
+
+The badge also shows response latency (e.g., `142 ms`) for Active and Degraded entries, and a relative timestamp (e.g., `5s ago`) for when the entry was last seen.
+
+### Filtering by status
+
+Use the **Status** dropdown above the catalog list to filter entries by one or more lifecycle states.
+
+### Health detail
+
+Click any entry to open its detail view. The **Health** section shows:
+
+- Current state
+- Last probed / last successful timestamps
+- Response latency
+- Consecutive failure count
+- Last error message (if any)
+
+### Actions (editor and admin only)
+
+- **Probe now** — trigger an immediate probe without waiting for the next scheduled interval
+- **Deprecate** — stop monitoring an entry (with confirmation dialog)
+- **Un-deprecate** — resume monitoring a deprecated entry
+
+---
+
 ## Status Indicators
 
 Each catalog entry carries a **status** that reflects its last health check result:

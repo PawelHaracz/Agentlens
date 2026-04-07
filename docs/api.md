@@ -417,6 +417,73 @@ Get the raw protocol card JSON (A2A or MCP card fetched from the agent).
 
 ---
 
+### Health check fields
+
+All catalog entry responses now include a `health` object:
+
+```json
+{
+  "status": "active",
+  "health": {
+    "state": "active",
+    "lastProbedAt": "2026-04-07T11:42:13Z",
+    "lastSuccessAt": "2026-04-07T11:42:13Z",
+    "latencyMs": 142,
+    "consecutiveFailures": 0,
+    "lastError": ""
+  }
+}
+```
+
+The `status` field is a backward-compatible alias for `health.state`.
+
+**Lifecycle states:** `registered` (not yet probed) · `active` · `degraded` · `offline` · `deprecated`
+
+### GET /api/v1/catalog
+
+**New query parameter:** `?state=` — comma-separated lifecycle states filter. Example: `?state=active,degraded`
+
+Returns 400 if an unknown state value is provided.
+
+### PATCH /api/v1/catalog/{id}/lifecycle
+
+Update the lifecycle state of a catalog entry.
+
+**Permission:** `catalog:write` (editor or admin)
+
+**Request body:**
+```json
+{ "state": "deprecated" }
+```
+
+**Allowed values:** `deprecated`, `active` (to un-deprecate)
+
+**Response:** Updated catalog entry (200), 400 for invalid state, 404 for missing entry.
+
+### POST /api/v1/catalog/{id}/probe
+
+Trigger an immediate health probe for a catalog entry.
+
+**Permission:** `catalog:write` (editor or admin)
+
+**Rate limit:** 1 request per entry per 5 seconds (429 if exceeded)
+
+**Response:**
+```json
+{
+  "state": "active",
+  "lastProbedAt": "2026-04-07T11:42:13Z",
+  "lastSuccessAt": "2026-04-07T11:42:13Z",
+  "latencyMs": 142,
+  "consecutiveFailures": 0,
+  "lastError": ""
+}
+```
+
+Returns 503 if health monitoring is disabled.
+
+---
+
 ## Skills
 
 ### `GET /api/v1/skills`

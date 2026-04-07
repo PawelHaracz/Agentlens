@@ -455,6 +455,43 @@ React + Vite + TypeScript frontend using [shadcn/ui](https://ui.shadcn.com/) com
 
 A plugin that periodically pings each catalog entry's endpoint and updates its status (`healthy`, `degraded`, `down`). Configurable interval, timeout, and concurrency.
 
+---
+
+## Health Check & Lifecycle State Machine
+
+AgentLens periodically probes each catalog entry's endpoint and tracks its runtime state.
+
+### Lifecycle states
+
+```mermaid
+stateDiagram-v2
+    [*] --> registered: POST /catalog
+    registered --> active: probe 2xx fast
+    registered --> degraded: probe 2xx slow
+    registered --> offline: no URL
+    active --> degraded: probe slow OR 1 failure
+    active --> offline: failureThreshold failures
+    degraded --> active: probe 2xx fast
+    degraded --> offline: failureThreshold failures
+    offline --> active: probe 2xx
+    active --> deprecated: PATCH /lifecycle
+    degraded --> deprecated: PATCH /lifecycle
+    offline --> deprecated: PATCH /lifecycle
+    registered --> deprecated: PATCH /lifecycle
+    deprecated --> active: PATCH /lifecycle (un-deprecate)
+```
+
+### Probe worker
+
+The `plugins/health.Plugin` runs as a microkernel plugin (`Register → Init → Start → Stop`). On each tick it:
+
+1. Calls `store.ListForProbing` to fetch entries due for a probe (not deprecated, not recently probed)
+2. Probes each entry's endpoint via HTTP GET with a configurable timeout
+3. Applies the state machine (latency threshold → degraded; consecutive failures → offline)
+4. Persists results via `store.UpdateHealth`
+
+For A2A entries, the probe URL is resolved from `supportedInterfaces[0].url` if present, otherwise falls back to the entry's primary endpoint.
+
 ### Enterprise Plugins (License-Gated)
 
 These plugins are registered but gracefully skipped when no enterprise license is present:
