@@ -148,13 +148,12 @@ func main() {
 	pm.Register(a2aplugin.New())
 	pm.Register(mcpplugin.New())
 
+	var healthPlugin *healthplugin.Plugin
 	if cfg.HealthCheck.Enabled {
-		pm.Register(healthplugin.New(
-			cfg.HealthCheck.Interval,
-			cfg.HealthCheck.Timeout,
-			cfg.HealthCheck.Concurrency,
-		))
+		healthPlugin = healthplugin.New(cfg.HealthCheck)
+		pm.Register(healthPlugin)
 	}
+	_ = healthPlugin // reserved for use in Task 7 (on-demand probe handler)
 
 	// Enterprise plugins (skipped with warning if no license)
 	pm.Register(sso.New())
