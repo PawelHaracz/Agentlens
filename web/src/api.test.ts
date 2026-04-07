@@ -114,7 +114,14 @@ describe('createAgentFromCard', () => {
       source: 'push',
       agent_type_id: 'a2a-agent',
       validity: { last_seen: '2026-04-01T00:00:00Z' },
-      health: { state: 'active', latencyMs: 0, consecutiveFailures: 0, lastError: '' },
+      health: {
+        state: 'active',
+        latencyMs: 0,
+        consecutiveFailures: 0,
+        lastError: '',
+        lastProbedAt: '2026-04-01T00:00:00Z',
+        lastSuccessAt: '2026-04-01T00:00:00Z',
+      },
       created_at: '2026-04-01T00:00:00Z',
       updated_at: '2026-04-01T00:00:00Z',
     }

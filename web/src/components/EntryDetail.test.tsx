@@ -32,10 +32,12 @@ vi.mock('../api', () => ({
   getToken: vi.fn(),
 }))
 
-import { getEntry, deleteEntry } from '../api'
+import { getEntry, deleteEntry, postProbe, patchLifecycle } from '../api'
 
 const mockGetEntry = getEntry as ReturnType<typeof vi.fn>
 const mockDeleteEntry = deleteEntry as ReturnType<typeof vi.fn>
+const mockPostProbe = postProbe as ReturnType<typeof vi.fn>
+const mockPatchLifecycle = patchLifecycle as ReturnType<typeof vi.fn>
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -62,6 +64,8 @@ const baseEntry: CatalogEntry = {
     latencyMs: 0,
     consecutiveFailures: 0,
     lastError: '',
+    lastProbedAt: '2026-01-01T00:00:00Z',
+    lastSuccessAt: '2026-01-01T00:00:00Z',
   },
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
@@ -225,6 +229,137 @@ describe('EntryDetail', () => {
     await waitFor(() => {
       expect(screen.getByText('Health')).toBeInTheDocument()
       expect(screen.getByText('State')).toBeInTheDocument()
+    })
+  })
+
+  it('probes now and updates health details', async () => {
+    const user = userEvent.setup()
+    mockGetEntry.mockResolvedValue(baseEntry)
+    mockPostProbe.mockResolvedValue({
+      state: 'degraded',
+      latencyMs: 142,
+      consecutiveFailures: 1,
+      lastError: 'timeout',
+      lastProbedAt: new Date(Date.now() - 30_000).toISOString(),
+      lastSuccessAt: new Date(Date.now() - 65_000).toISOString(),
+    })
+
+    renderEntryDetail()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /probe now/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /probe now/i }))
+
+    await waitFor(() => {
+      expect(mockPostProbe).toHaveBeenCalledWith('entry-1')
+      expect(screen.getByText('142 ms')).toBeInTheDocument()
+      expect(screen.getByText('timeout')).toBeInTheDocument()
+      expect(screen.getByText('30s ago')).toBeInTheDocument()
+      expect(screen.getByText('1m ago')).toBeInTheDocument()
+    })
+  })
+
+  it('shows action error when probe now fails', async () => {
+    const user = userEvent.setup()
+    mockGetEntry.mockResolvedValue(baseEntry)
+    mockPostProbe.mockRejectedValue(new Error('Probe failed on server'))
+
+    renderEntryDetail()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /probe now/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /probe now/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Probe failed on server')).toBeInTheDocument()
+    })
+  })
+
+  it('deprecates an entry through the confirmation dialog', async () => {
+    const user = userEvent.setup()
+    mockGetEntry.mockResolvedValue(baseEntry)
+    mockPatchLifecycle.mockResolvedValue({ ...baseEntry, status: 'deprecated' })
+
+    renderEntryDetail()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^deprecate$/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /^deprecate$/i }))
+    await user.click(screen.getByRole('button', { name: /^deprecate$/i }))
+
+    await waitFor(() => {
+      expect(mockPatchLifecycle).toHaveBeenCalledWith('entry-1', 'deprecated')
+      expect(screen.getByRole('button', { name: /un-deprecate/i })).toBeInTheDocument()
+    })
+  })
+
+  it('un-deprecates an entry', async () => {
+    const user = userEvent.setup()
+    mockGetEntry.mockResolvedValue({ ...baseEntry, status: 'deprecated' })
+    mockPatchLifecycle.mockResolvedValue({ ...baseEntry, status: 'active' })
+
+    renderEntryDetail()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /un-deprecate/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /un-deprecate/i }))
+
+    await waitFor(() => {
+      expect(mockPatchLifecycle).toHaveBeenCalledWith('entry-1', 'active')
+      expect(screen.getByRole('button', { name: /^deprecate$/i })).toBeInTheDocument()
+    })
+  })
+
+  it('shows lifecycle action error when deprecate fails', async () => {
+    const user = userEvent.setup()
+    mockGetEntry.mockResolvedValue(baseEntry)
+    mockPatchLifecycle.mockRejectedValue(new Error('Cannot deprecate'))
+
+    renderEntryDetail()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^deprecate$/i })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /^deprecate$/i }))
+    await user.click(screen.getByRole('button', { name: /^deprecate$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Cannot deprecate')).toBeInTheDocument()
+    })
+  })
+
+  it('disables probe now for deprecated entries', async () => {
+    mockGetEntry.mockResolvedValue({ ...baseEntry, status: 'deprecated' })
+
+    renderEntryDetail()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /probe now/i })).toBeDisabled()
+    })
+  })
+
+  it('renders hours in relative time for older health timestamps', async () => {
+    mockGetEntry.mockResolvedValue({
+      ...baseEntry,
+      health: {
+        ...baseEntry.health,
+        lastProbedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      },
+    })
+
+    renderEntryDetail()
+
+    await waitFor(() => {
+      expect(screen.getByText('2h ago')).toBeInTheDocument()
     })
   })
 })

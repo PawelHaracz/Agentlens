@@ -13,35 +13,58 @@ For architectural details see [docs/architecture.md](architecture.md).
 
 ## Table of Contents
 
-- [Signing In](#signing-in)
-  - [First-Run Admin Bootstrap](#first-run-admin-bootstrap)
-  - [Password Requirements](#password-requirements)
-  - [Account Lockout](#account-lockout)
-- [Navigation Bar](#navigation-bar)
-- [Dashboard / Catalog Overview](#dashboard--catalog-overview)
-  - [Stats Bar](#stats-bar)
-  - [Catalog Table Columns](#catalog-table-columns)
-- [Searching and Filtering](#searching-and-filtering)
-- [Viewing Agent Details](#viewing-agent-details)
-  - [Header Fields](#header-fields)
-  - [Capabilities](#capabilities)
-  - [Raw Definition](#raw-definition)
-  - [Deleting an Entry](#deleting-an-entry)
-- [Registering an Agent](#registering-an-agent)
-  - [Paste JSON](#paste-json)
-  - [Upload a JSON File](#upload-a-json-file)
-  - [Import from URL](#import-from-url)
-- [Status Indicators](#status-indicators)
-- [Protocol Types](#protocol-types)
-- [Settings](#settings)
-  - [General](#general)
-  - [Users](#users)
-  - [Roles](#roles)
-  - [My Account](#my-account)
-- [User Management](#user-management)
-- [Role Management](#role-management)
-- [Using the REST API](#using-the-rest-api)
-- [FAQ / Troubleshooting](#faq--troubleshooting)
+- [AgentLens End-User Guide](#agentlens-end-user-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Signing In](#signing-in)
+    - [First-Run Admin Bootstrap](#first-run-admin-bootstrap)
+    - [Password Requirements](#password-requirements)
+    - [Account Lockout](#account-lockout)
+  - [Navigation Bar](#navigation-bar)
+  - [Dashboard / Catalog Overview](#dashboard--catalog-overview)
+    - [Stats Bar](#stats-bar)
+    - [Catalog Table Columns](#catalog-table-columns)
+  - [Searching and Filtering](#searching-and-filtering)
+  - [Viewing Agent Details](#viewing-agent-details)
+    - [Header Fields](#header-fields)
+    - [Capabilities](#capabilities)
+    - [Raw Definition](#raw-definition)
+    - [Deleting an Entry](#deleting-an-entry)
+  - [Registering an Agent](#registering-an-agent)
+    - [Paste JSON](#paste-json)
+    - [Upload a JSON File](#upload-a-json-file)
+    - [Import from URL](#import-from-url)
+  - [Health Monitoring](#health-monitoring)
+    - [Status badges](#status-badges)
+    - [Filtering by status](#filtering-by-status)
+    - [Health detail](#health-detail)
+    - [Actions (editor and admin only)](#actions-editor-and-admin-only)
+  - [Status Indicators](#status-indicators)
+  - [Protocol Types](#protocol-types)
+  - [Settings](#settings)
+    - [General](#general)
+    - [Users](#users)
+    - [Roles](#roles)
+    - [My Account](#my-account)
+  - [User Management](#user-management)
+    - [Creating a User](#creating-a-user)
+    - [Editing a User](#editing-a-user)
+    - [Locking and Unlocking](#locking-and-unlocking)
+    - [Deleting a User](#deleting-a-user)
+  - [Role Management](#role-management)
+    - [Creating a Role](#creating-a-role)
+    - [Editing a Role](#editing-a-role)
+    - [Deleting a Role](#deleting-a-role)
+  - [Using the REST API](#using-the-rest-api)
+    - [Authentication](#authentication)
+    - [Quick Reference](#quick-reference)
+  - [FAQ / Troubleshooting](#faq--troubleshooting)
+    - [My account is locked — how do I regain access?](#my-account-is-locked--how-do-i-regain-access)
+    - [I forgot the admin password / I am locked out of the only admin account](#i-forgot-the-admin-password--i-am-locked-out-of-the-only-admin-account)
+    - [I imported from a URL and got "url points to a private or reserved address"](#i-imported-from-a-url-and-got-url-points-to-a-private-or-reserved-address)
+    - [The catalog shows an agent as "Pending" — why?](#the-catalog-shows-an-agent-as-pending--why)
+    - [An agent shows "Offline" — how do I investigate?](#an-agent-shows-offline--how-do-i-investigate)
+    - [How do I push an agent card without using the UI?](#how-do-i-push-an-agent-card-without-using-the-ui)
+    - [Kubernetes-discovered agents have a `k8s` source — what controls that?](#kubernetes-discovered-agents-have-a-k8s-source--what-controls-that)
 
 ---
 
@@ -140,9 +163,9 @@ Four summary cards appear at the top:
 | Card | Description |
 |------|-------------|
 | **Total** | Total number of catalog entries |
-| **Healthy** | Entries whose last health check succeeded |
+| **Active** | Entries whose last health check succeeded within latency expectations |
 | **Degraded** | Entries returning partial or error responses |
-| **Down** | Entries that are unreachable |
+| **Offline** | Entries that are unreachable after consecutive probe failures |
 
 Counts update automatically as health checks run in the background.
 
@@ -152,7 +175,7 @@ Counts update automatically as health checks run in the background.
 |--------|-------------|
 | **Name** | Display name (clickable link to the detail page); optional description underneath |
 | **Protocol** | Protocol badge: `A2A`, `MCP`, or `A2UI` |
-| **Status** | Health status badge: `Healthy`, `Degraded`, `Down`, or `Unknown` |
+| **Status** | Health status badge: `Active`, `Degraded`, `Offline`, `Pending`, or `Deprecated` |
 | **Source** | Discovery source: `k8s`, `config`, `push`, or `upstream` (hidden on small screens) |
 | **Endpoint** | Base URL of the agent (hidden on medium and smaller screens) |
 
@@ -175,7 +198,7 @@ Three controls sit above the catalog table:
 
 2. **Protocol filter** — dropdown with: *All protocols*, `A2A`, `MCP`, `A2UI`.
 
-3. **Status filter** — dropdown with: *All statuses*, `Healthy`, `Degraded`, `Down`, `Unknown`.
+3. **Status filter** — dropdown with: *All statuses*, `Active`, `Degraded`, `Offline`, `Pending`, `Deprecated`.
 
 ![Catalog filtered to show only A2A protocol entries](images/catalog-filter-protocol.png)
 *Protocol filter set to A2A — only A2A entries are shown.*
@@ -183,8 +206,8 @@ Three controls sit above the catalog table:
 ![Catalog filtered by status](images/catalog-filter-status.png)
 *Status filter applied — only entries with the selected health status are shown.*
 
-Filters are combined (AND logic). Selecting `A2A` and `Healthy` shows only A2A entries that are
-currently healthy.
+Filters are combined (AND logic). Selecting `A2A` and `Active` shows only A2A entries that are
+currently active.
 
 ---
 
@@ -320,6 +343,9 @@ the catalog showing the new entry.
 
 AgentLens continuously probes registered catalog entries and shows their runtime state on the dashboard.
 
+![Catalog rows with health badges](images/health-status-badges.png)
+*Health badges in the catalog list show the current lifecycle state for each entry.*
+
 ### Status badges
 
 Each entry displays a colored status badge:
@@ -336,7 +362,15 @@ The badge also shows response latency (e.g., `142 ms`) for Active and Degraded e
 
 ### Filtering by status
 
-Use the **Status** dropdown above the catalog list to filter entries by one or more lifecycle states.
+Use the **Status** dropdown above the catalog list to filter entries by lifecycle state.
+
+![Status filter with Active selected](images/health-filter-active-selected.png)
+*Single-select filtering narrows the table to one status, such as Active.*
+
+You can also select multiple statuses at once to combine result sets.
+
+![Status filter in multi-select mode](images/health-filter-multi-select.png)
+*Multi-select filtering is useful when monitoring related states together (for example Active + Degraded).*
 
 ### Health detail
 
@@ -348,27 +382,46 @@ Click any entry to open its detail view. The **Health** section shows:
 - Consecutive failure count
 - Last error message (if any)
 
+![Health section on entry details page](images/health-detail-section.png)
+*The Health detail section exposes probe timing, latency, and failure diagnostics for troubleshooting.*
+
 ### Actions (editor and admin only)
 
 - **Probe now** — trigger an immediate probe without waiting for the next scheduled interval
 - **Deprecate** — stop monitoring an entry (with confirmation dialog)
 - **Un-deprecate** — resume monitoring a deprecated entry
 
+Use **Probe now** when you have just fixed an endpoint and want immediate status refresh.
+
+![Probe now action on entry detail](images/health-probe-now.png)
+*Probe now executes an on-demand health check and updates the badge after the probe completes.*
+
+When you click **Deprecate**, AgentLens asks for confirmation before removing the entry from active monitoring.
+
+![Deprecate confirmation dialog](images/health-deprecate-dialog.png)
+*Deprecation requires confirmation to avoid accidental monitoring disablement.*
+
+After deprecation, the entry shows the **Deprecated** state badge in the catalog/detail views. Use **Un-deprecate** to return it to normal probe scheduling.
+
+![Deprecated state badge](images/health-deprecated-badge.png)
+*Deprecated entries remain in the catalog but are excluded from active probe cycles until restored.*
+
 ---
 
 ## Status Indicators
 
-Each catalog entry carries a **status** that reflects its last health check result:
+Each catalog entry carries a **status** that reflects its health lifecycle state:
 
 | Status | Badge colour | Meaning |
 |--------|-------------|---------|
-| `healthy` | Green | The agent responded successfully to the last health probe |
-| `degraded` | Yellow/amber | The agent responded but returned an error or partial data |
-| `down` | Red | The agent did not respond (connection refused, timeout, etc.) |
-| `unknown` | Grey | No health check has run yet, or health checking is disabled |
+| `active` | Green | Last probe succeeded within latency expectations |
+| `degraded` | Yellow/amber | Last probe was slow or had a partial issue |
+| `offline` | Red | Entry failed multiple consecutive probes |
+| `pending` | Grey | Entry is registered but has not been probed yet |
+| `deprecated` | Slate | Monitoring is manually disabled for this entry |
 
 Health checks run on a configurable interval (`health.check_interval`, default 60 s). Newly
-registered agents start with status `unknown` until the first check completes.
+registered agents start with status `pending` until the first check completes.
 
 ---
 
@@ -626,17 +679,17 @@ intentional. The agent card must be hosted on a publicly reachable HTTPS URL. Th
 are blocked: `10.x`, `172.16–31.x`, `192.168.x`, `127.x`, `::1`, `169.254.x`, and the `localhost`
 hostname.
 
-### The catalog shows an agent as "Unknown" — why?
+### The catalog shows an agent as "Pending" — why?
 
-`Unknown` means no health check has been recorded yet. Possible reasons:
+`Pending` means no completed health check has been recorded yet. Possible reasons:
 
 - The agent was just registered and the health checker has not run its first cycle.
 - Health checking is disabled (`AGENTLENS_HEALTH_CHECK_ENABLED=false` or
   `health.check_interval` is very large).
 - The agent's endpoint is unreachable so the checker recorded an error — but in that case the
-  status would be `Down`, not `Unknown`.
+  status would transition to `Offline`, not remain `Pending`.
 
-### An agent shows "Down" — how do I investigate?
+### An agent shows "Offline" — how do I investigate?
 
 1. Check that the agent process is running at the registered endpoint.
 2. Verify network connectivity between the AgentLens server and the agent endpoint.
