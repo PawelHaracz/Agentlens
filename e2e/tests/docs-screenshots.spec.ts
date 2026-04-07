@@ -64,15 +64,41 @@ async function seedOrFind(
     return entry.id as string;
   }
   if (res.status() === 409) {
-    // Entry already exists — find it by listing the catalog and matching the endpoint
-    const listRes = await request.get(`${BASE}/api/v1/catalog`, {
+    // Entry already exists — search by display_name and match endpoint or name
+    const endpoint = body.endpoint as string;
+    const displayName = body.display_name as string;
+    const q = encodeURIComponent(displayName.substring(0, 30));
+    const listRes = await request.get(`${BASE}/api/v1/catalog?q=${q}`, {
       headers: authHeader(token),
     });
-    const entries: Array<{ id: string; endpoint: string }> = await listRes.json();
-    const existing = entries.find(e => e.endpoint === body.endpoint);
-    if (existing) return existing.id;
+    if (listRes.ok()) {
+      const entries: Array<{ id: string; endpoint: string; display_name: string }> =
+        await listRes.json();
+      const existing =
+        entries.find(e => e.endpoint === endpoint) ??
+        entries.find(e => e.display_name === displayName);
+      if (existing) return existing.id;
+    }
+    // Last resort: list without filter and scan all entries
+    const allRes = await request.get(`${BASE}/api/v1/catalog`, {
+      headers: authHeader(token),
+    });
+    if (allRes.ok()) {
+      const all: Array<{ id: string; endpoint: string; display_name: string }> =
+        await allRes.json();
+      const existing =
+        all.find(e => e.endpoint === endpoint) ??
+        all.find(e => e.display_name === displayName);
+      if (existing) return existing.id;
+      // Log for diagnosis
+      console.warn(
+        `[seedOrFind] 409 but "${endpoint}" / "${displayName}" not found in`,
+        all.map(e => `${e.display_name}:${e.endpoint}`),
+      );
+    }
   }
-  throw new Error(`seedOrFind failed: ${res.status()} ${await res.text()}`);
+  const body2 = await res.text().catch(() => '(body unreadable)');
+  throw new Error(`seedOrFind failed: ${res.status()} ${body2}`);
 }
 
 // A2A entry with skills
@@ -490,8 +516,8 @@ test.describe('Documentation Screenshots', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     await page.waitForLoadState('networkidle');
-    // Wait for at least one badge to render (Pending or Active)
-    await page.waitForSelector('[data-slot="badge"]', { timeout: ASYNC_OP_TIMEOUT_MS });
+    // Wait for at least one StatusBadge to render — Badge renders as a div with cursor-default
+    await page.locator('.cursor-default').first().waitFor({ timeout: ASYNC_OP_TIMEOUT_MS });
     await page.screenshot({ path: `${DOCS_IMAGES}/health-status-badges.png`, fullPage: false });
   });
 
