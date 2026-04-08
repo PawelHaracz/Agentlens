@@ -18,12 +18,11 @@ import (
 func makeTestCatalogEntry(id string, state model.LifecycleState) *model.CatalogEntry {
 	now := time.Now().UTC()
 	agentType := &model.AgentType{
-		ID:            id + "-type",
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      "http://test-" + id + ".example.com",
-		Version:       "1.0.0",
-		RawDefinition: []byte("{}"),
-		CreatedOn:     now,
+		ID:        id + "-type",
+		Protocol:  model.ProtocolA2A,
+		Endpoint:  "http://test-" + id + ".example.com",
+		Version:   "1.0.0",
+		CreatedOn: now,
 	}
 	agentType.AgentKey = model.ComputeAgentKey(agentType.Protocol, agentType.Endpoint)
 	e := &model.CatalogEntry{
@@ -121,6 +120,42 @@ func TestListCatalogInvalidState(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestListCatalogInvalidProtocol(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?protocol=bogus", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestListCatalogInvalidSource(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?source=bogus", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestListCatalogValidProtocolAndSource(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	// Known valid values should return 200 (even if no matching entries).
+	for _, protocol := range []string{"a2a", "mcp", "a2ui"} {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?protocol="+protocol, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code, "protocol=%s should return 200", protocol)
+	}
+	for _, source := range []string{"k8s", "config", "push", "upstream"} {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?source="+source, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code, "source=%s should return 200", source)
+	}
 }
 
 func TestListCatalogStateFilterBackwardCompat(t *testing.T) {

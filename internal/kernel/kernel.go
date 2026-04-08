@@ -18,6 +18,7 @@ type Core struct {
 	parsers     map[model.Protocol]ParserPlugin
 	routes      map[string]http.Handler
 	middlewares []func(http.Handler) http.Handler
+	cardStore   CardStorePlugin
 }
 
 // NewCore creates a new Core kernel.
@@ -49,3 +50,6 @@ func (c *Core) Parser(protocol model.Protocol) (ParserPlugin, bool) {
 	p, ok := c.parsers[protocol]
 	return p, ok
 }
+
+// CardStore returns the registered card store plugin, or nil if not loaded.
+func (c *Core) CardStore() CardStorePlugin { return c.cardStore }

@@ -7,6 +7,11 @@ func (c *Core) RegisterParser(p ParserPlugin) {
 	c.parsers[p.Protocol()] = p
 }
 
+// RegisterCardStore registers the card store plugin.
+func (c *Core) RegisterCardStore(p CardStorePlugin) {
+	c.cardStore = p
+}
+
 // RegisterRoutes registers route handlers for a prefix.
 func (c *Core) RegisterRoutes(prefix string, handler http.Handler) {
 	c.routes[prefix] = handler

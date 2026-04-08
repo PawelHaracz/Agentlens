@@ -51,6 +51,11 @@ func (pm *PluginManager) InitAll() error {
 			pm.core.RegisterParser(pp)
 		}
 
+		// Register card store plugins with the kernel
+		if csp, ok := p.(CardStorePlugin); ok {
+			pm.core.RegisterCardStore(csp)
+		}
+
 		pm.log.Info("plugin initialized", "plugin", p.Name(), "type", p.Type(), "version", p.Version())
 	}
 	return nil

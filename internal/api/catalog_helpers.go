@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -78,6 +79,13 @@ func (h *Handler) registerAgentType(
 			return nil, errDuplicateEndpoint
 		}
 		return nil, errCreateEntry
+	}
+
+	// Store the raw card via the card store plugin (best-effort — not fatal if plugin absent).
+	if cs := h.parsers.CardStore(); cs != nil && len(rawCard) > 0 {
+		if err := cs.StoreCard(ctx, agentType.ID, rawCard, "application/json"); err != nil {
+			slog.WarnContext(ctx, "failed to store raw card", "agent_type_id", agentType.ID, "err", err)
+		}
 	}
 
 	return entry, nil

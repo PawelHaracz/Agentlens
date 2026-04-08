@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
 )
@@ -24,6 +26,8 @@ type Manager struct {
 	store        store.Store
 	pollInterval time.Duration
 	log          *slog.Logger
+	cardStoreMu  sync.RWMutex
+	cardStore    kernel.CardStorePlugin // may be nil
 }
 
 // NewManager creates a new Manager.
@@ -34,6 +38,13 @@ func NewManager(sources []Source, s store.Store, pollInterval time.Duration) *Ma
 		pollInterval: pollInterval,
 		log:          slog.With("component", "discovery-manager"),
 	}
+}
+
+// SetCardStore injects the card store plugin (called after plugin init).
+func (m *Manager) SetCardStore(cs kernel.CardStorePlugin) {
+	m.cardStoreMu.Lock()
+	defer m.cardStoreMu.Unlock()
+	m.cardStore = cs
 }
 
 // Run starts the poll loop and blocks until ctx is cancelled.
@@ -75,7 +86,6 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 	seen := make(map[string]bool)
 
 	for _, at := range agentTypes {
-		// Compute the agent key from protocol + endpoint.
 		at.AgentKey = model.ComputeAgentKey(at.Protocol, at.Endpoint)
 
 		existing, err := m.store.FindByEndpoint(ctx, at.Endpoint)
@@ -84,28 +94,26 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 		}
 		now := time.Now().UTC()
 		if existing != nil {
-			// Never overwrite push-registered entries.
 			if existing.Source == model.SourcePush {
 				continue
 			}
-			// Update AgentType fields on the existing entry.
 			if existing.AgentType != nil {
 				existing.AgentType.Protocol = at.Protocol
+				existing.AgentType.AgentKey = model.ComputeAgentKey(at.Protocol, at.Endpoint)
 				existing.AgentType.Version = at.Version
 				existing.AgentType.SpecVersion = at.SpecVersion
 				existing.AgentType.Provider = at.Provider
-				existing.AgentType.RawDefinition = at.RawDefinition
 				existing.AgentType.Capabilities = at.Capabilities
 			}
-			// Update CatalogEntry timestamps.
 			existing.Validity.LastSeen = now
 			existing.UpdatedAt = now
 			if err := m.store.Update(ctx, existing); err != nil {
 				m.log.Warn("failed to update entry", "id", existing.ID, "err", err)
+			} else if existing.AgentType != nil {
+				m.maybeStoreCard(ctx, existing.AgentType.ID, at.RawBytes)
 			}
 			seen[existing.ID] = true
 		} else {
-			// New entry: create AgentType + CatalogEntry wrapper.
 			at.ID = uuid.NewString()
 			entry := &model.CatalogEntry{
 				ID:          uuid.NewString(),
@@ -121,12 +129,12 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 			if err := m.store.Create(ctx, entry); err != nil {
 				m.log.Warn("failed to create entry", "endpoint", at.Endpoint, "err", err)
 			} else {
+				m.maybeStoreCard(ctx, at.ID, at.RawBytes)
 				seen[entry.ID] = true
 			}
 		}
 	}
 
-	// Mark missing non-push entries as down.
 	allEntries, err := m.store.List(ctx, store.ListFilter{Source: &source})
 	if err != nil {
 		return fmt.Errorf("listing entries for source: %w", err)
@@ -141,6 +149,21 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 		}
 	}
 	return nil
+}
+
+func (m *Manager) maybeStoreCard(ctx context.Context, agentTypeID string, rawBytes []byte) {
+	if len(rawBytes) == 0 {
+		return
+	}
+	m.cardStoreMu.RLock()
+	cs := m.cardStore
+	m.cardStoreMu.RUnlock()
+	if cs == nil {
+		return
+	}
+	if err := cs.StoreCard(ctx, agentTypeID, rawBytes, "application/json"); err != nil {
+		m.log.Warn("failed to store raw card", "agent_type_id", agentTypeID, "err", err)
+	}
 }
 
 func (m *Manager) sourceType(name string) model.SourceType {

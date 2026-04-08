@@ -171,6 +171,7 @@ type ValidationError struct {
 | `source` | Discovers catalog entries | Static config, Kubernetes |
 | `middleware` | HTTP middleware hooks | SSO, RBAC (enterprise) |
 | `store` | Alternative store backends | PostgreSQL (enterprise) |
+| `cardstore` | `CardStorePlugin` | Persists verbatim raw card bytes keyed by `agent_type_id`. Owns the `raw_cards` table. Enforces 256 KiB cap. |
 
 ### Plugin Lifecycle
 
@@ -450,6 +451,8 @@ React + Vite + TypeScript frontend using [shadcn/ui](https://ui.shadcn.com/) com
 - **CardPreview** — renders a validated agent card preview before registration
 - **SettingsPage** — 4-tab management UI (General, Users, Roles, My Account)
 - **ProtectedRoute** — auth guard that redirects unauthenticated users to `/login`
+
+**Data fetching:** migrated from plain `fetch`+`useState` to `@tanstack/react-query`. Catalog list page uses `useCatalogQuery` hook for URL-synced filter state. Detail page uses tabbed layout (Overview + Raw Card).
 
 ### Health Checker
 

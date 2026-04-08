@@ -128,7 +128,6 @@ func (e *CatalogEntry) SyncToDB() {
 }
 
 // SyncFromDB deserializes GORM database columns into public fields.
-// If AgentType is loaded, it also calls AgentType.SyncRawDefForJSON().
 func (e *CatalogEntry) SyncFromDB() {
 	if e.CategoriesJSON != "" {
 		_ = json.Unmarshal([]byte(e.CategoriesJSON), &e.Categories)
@@ -140,9 +139,6 @@ func (e *CatalogEntry) SyncFromDB() {
 		From:     e.ValidFrom,
 		To:       e.ValidTo,
 		LastSeen: e.LastSeen,
-	}
-	if e.AgentType != nil {
-		e.AgentType.SyncRawDefForJSON()
 	}
 	e.Health = Health{
 		State:               e.Status,
@@ -171,7 +167,6 @@ type catalogEntryJSON struct {
 	Capabilities json.RawMessage   `json:"capabilities,omitempty"`
 	Validity     Validity          `json:"validity"`
 	Metadata     map[string]string `json:"metadata,omitempty"`
-	RawDef       json.RawMessage   `json:"raw_definition,omitempty"`
 	CreatedAt    time.Time         `json:"created_at"`
 	UpdatedAt    time.Time         `json:"updated_at"`
 	Health       healthJSON        `json:"health"`
@@ -202,7 +197,6 @@ func (e CatalogEntry) toCatalogEntryJSON() catalogEntryJSON {
 		specVersion  string
 		provider     *Provider
 		capabilities []Capability
-		rawDef       json.RawMessage
 	)
 	if e.AgentType != nil {
 		protocol = e.AgentType.Protocol
@@ -211,7 +205,6 @@ func (e CatalogEntry) toCatalogEntryJSON() catalogEntryJSON {
 		specVersion = e.AgentType.SpecVersion
 		provider = e.AgentType.Provider
 		capabilities = e.AgentType.Capabilities
-		rawDef = e.AgentType.RawDefJSON
 	}
 	var capJSON json.RawMessage
 	if len(capabilities) > 0 {
@@ -225,7 +218,7 @@ func (e CatalogEntry) toCatalogEntryJSON() catalogEntryJSON {
 		Version: version, SpecVersion: specVersion, Status: e.Status,
 		Source: e.Source, Provider: provider, Categories: e.Categories,
 		Capabilities: capJSON, Validity: e.Validity, Metadata: e.Metadata,
-		RawDef: rawDef, CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt,
+		CreatedAt: e.CreatedAt, UpdatedAt: e.UpdatedAt,
 		Health: healthJSON{
 			State: string(e.Health.State), LastProbedAt: e.Health.LastProbedAt,
 			LastSuccessAt: e.Health.LastSuccessAt, LatencyMs: e.Health.LatencyMs,

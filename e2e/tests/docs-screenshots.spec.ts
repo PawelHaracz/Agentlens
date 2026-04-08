@@ -64,37 +64,29 @@ async function seedOrFind(
     return entry.id as string;
   }
   if (res.status() === 409) {
-    // Entry already exists — search by display_name and match endpoint or name
+    // Entry already exists — scan all entries and match by endpoint (most reliable).
+    // Retry a few times in case of a write-then-read race on a shared database.
     const endpoint = body.endpoint as string;
     const displayName = body.display_name as string;
-    const q = encodeURIComponent(displayName.substring(0, 30));
-    const listRes = await request.get(`${BASE}/api/v1/catalog?q=${q}`, {
-      headers: authHeader(token),
-    });
-    if (listRes.ok()) {
-      const entries: Array<{ id: string; endpoint: string; display_name: string }> =
-        await listRes.json();
-      const existing =
-        entries.find(e => e.endpoint === endpoint) ??
-        entries.find(e => e.display_name === displayName);
-      if (existing) return existing.id;
-    }
-    // Last resort: list without filter and scan all entries
-    const allRes = await request.get(`${BASE}/api/v1/catalog`, {
-      headers: authHeader(token),
-    });
-    if (allRes.ok()) {
-      const all: Array<{ id: string; endpoint: string; display_name: string }> =
-        await allRes.json();
-      const existing =
-        all.find(e => e.endpoint === endpoint) ??
-        all.find(e => e.display_name === displayName);
-      if (existing) return existing.id;
-      // Log for diagnosis
-      console.warn(
-        `[seedOrFind] 409 but "${endpoint}" / "${displayName}" not found in`,
-        all.map(e => `${e.display_name}:${e.endpoint}`),
-      );
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (attempt > 0) {
+        await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+      }
+      const allRes = await request.get(`${BASE}/api/v1/catalog`, {
+        headers: authHeader(token),
+      });
+      if (allRes.ok()) {
+        const all: Array<{ id: string; endpoint: string; display_name: string }> =
+          await allRes.json();
+        const existing =
+          all.find(e => e.endpoint === endpoint) ??
+          all.find(e => e.display_name === displayName);
+        if (existing) return existing.id;
+        console.warn(
+          `[seedOrFind] attempt ${attempt + 1}: 409 but "${endpoint}" not found in`,
+          all.map(e => `${e.display_name}:${e.endpoint}`),
+        );
+      }
     }
   }
   const body2 = await res.text().catch(() => '(body unreadable)');
@@ -213,33 +205,40 @@ test.describe('Documentation Screenshots', () => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Type into the search box
+    // Type into the unified search box
     await page.getByPlaceholder(/search/i).fill('Translator');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/catalog-search.png`, fullPage: false });
+  });
+
+  test('catalog-unified-search', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Focus and type into the unified search box (wide input with placeholder text)
+    await page.getByPlaceholder(/search across/i).fill('Translator');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-unified-search.png`, fullPage: false });
   });
 
   test('catalog-filter-protocol', async ({ page }) => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Open protocol filter and select A2A
-    await page.getByRole('combobox').filter({ hasText: /protocol/i }).click();
-    await page.getByRole('option', { name: 'A2A' }).click();
+    // ToggleGroup with type="single" renders ToggleGroupItems as role="radio" (Radix UI).
+    await page.getByRole('radio', { name: 'A2A' }).click();
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/catalog-filter-protocol.png`, fullPage: false });
   });
 
-  test('catalog-filter-status', async ({ page }) => {
+  test('catalog-protocol-filter', async ({ page }) => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Open the status multi-select dropdown and select Pending
-    await page.getByRole('button', { name: /all statuses/i }).click();
-    await page.waitForSelector('[role="menuitemcheckbox"]');
-    await page.getByRole('menuitemcheckbox', { name: 'Pending' }).click();
+    // ToggleGroup with type="single" renders ToggleGroupItems as role="radio" (Radix UI).
+    await page.getByRole('radio', { name: 'MCP' }).click();
     await page.waitForLoadState('networkidle');
-    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-filter-status.png`, fullPage: false });
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-protocol-filter.png`, fullPage: false });
   });
 
   // ───────── Agent detail screenshots ─────────
@@ -252,6 +251,17 @@ test.describe('Documentation Screenshots', () => {
     await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-a2a.png`, fullPage: false });
+  });
+
+  test('entry-detail-overview-tab', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    // Overview tab is selected by default — click it to be explicit
+    await page.getByRole('tab', { name: /overview/i }).click();
+    await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-overview-tab.png`, fullPage: false });
   });
 
   test('entry-detail-a2a-skills', async ({ page }) => {
@@ -280,13 +290,22 @@ test.describe('Documentation Screenshots', () => {
     await loginViaUI(page);
     await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
-    // Scroll to raw definition section at bottom of page
-    await page.evaluate(() => {
-      const els = Array.from(document.querySelectorAll('p'));
-      const rawEl = els.find(el => /raw definition/i.test(el.textContent ?? ''));
-      rawEl?.scrollIntoView({ behavior: 'instant' });
-    });
+    // Click the Raw Card tab to reveal syntax-highlighted JSON
+    await page.getByRole('tab', { name: /raw card/i }).click();
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-raw-json.png`, fullPage: false });
+  });
+
+  test('entry-detail-raw-card-tab', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    // Click the Raw Card tab to reveal syntax-highlighted JSON, Copy, and Download buttons
+    await page.getByRole('tab', { name: /raw card/i }).click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-raw-card-tab.png`, fullPage: false });
   });
 
   // ───────── Register Agent screenshots ─────────
@@ -522,27 +541,24 @@ test.describe('Documentation Screenshots', () => {
   });
 
   test('health-filter-multi-select', async ({ page }) => {
-    // Shows the status dropdown open with multiple lifecycle states.
+    // Status is now shown per-row in the catalog table — show the catalog list
+    // with both A2A and MCP entries visible to illustrate the status column.
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: /all statuses/i }).click();
-    await page.waitForSelector('[role="menuitemcheckbox"]');
     await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-multi-select.png`, fullPage: false });
   });
 
   test('health-filter-active-selected', async ({ page }) => {
-    // Shows the catalog filtered to Active entries only.
+    // Show catalog filtered to the A2A protocol to illustrate narrowing entries
+    // (status filtering from the list is now done via the Status column in the table).
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: /all statuses/i }).click();
-    await page.waitForSelector('[role="menuitemcheckbox"]');
-    await page.getByRole('menuitemcheckbox', { name: 'Active' }).click();
-    // Close dropdown by clicking elsewhere
-    await page.keyboard.press('Escape');
+    // Use the protocol toggle to narrow to A2A entries
+    await page.getByRole('radio', { name: 'A2A' }).click();
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-active-selected.png`, fullPage: false });
   });
@@ -581,42 +597,38 @@ test.describe('Documentation Screenshots', () => {
   });
 
   test('health-deprecate-dialog', async ({ page }) => {
-    // Shows the confirmation dialog before deprecating an entry.
+    // Shows the Deprecate button in the detail page header (new UI — no confirmation
+    // dialog; clicking directly applies the lifecycle change).
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
-    await page.evaluate(() => {
-      const headings = Array.from(document.querySelectorAll('h3'));
-      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
-      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
-    });
-    await page.getByRole('button', { name: /deprecate/i }).click();
-    await page.waitForSelector('[role="alertdialog"]', { timeout: ERROR_DISPLAY_TIMEOUT_MS });
+    // Hover the Deprecate button to show the focused/hover state for documentation.
+    await page.getByRole('button', { name: /deprecate/i }).hover();
     await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecate-dialog.png`, fullPage: false });
-    // Close dialog without confirming so the entry stays intact for other tests
-    await page.getByRole('button', { name: /cancel/i }).click();
   });
 
   test('health-deprecated-badge', async ({ page, request }) => {
     // Shows an entry with the Deprecated badge.
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    // Deprecate the MCP entry via API for this screenshot
-    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
-      headers: authHeader(token),
+    // Get a fresh token for the API calls in this test — avoids stale-token issues on retry.
+    const freshToken = await loginViaAPI(request);
+    // Deprecate the A2A entry via API for this screenshot (MCP entry may be unavailable on retry).
+    await request.patch(`${BASE}/api/v1/catalog/${a2aEntryId}/lifecycle`, {
+      headers: authHeader(freshToken),
       data: { state: 'deprecated' },
     });
     await loginViaUI(page);
-    await page.goto(`/catalog/${mcpEntryId}`);
+    await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecated-badge.png`, fullPage: false });
-    // Restore to active
-    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
-      headers: authHeader(token),
-      data: { state: 'active' },
-    }).catch(ignoreCleanupError('un-deprecate mcp entry'));
+    // Restore to registered state so subsequent tests are not affected.
+    await request.patch(`${BASE}/api/v1/catalog/${a2aEntryId}/lifecycle`, {
+      headers: authHeader(freshToken),
+      data: { state: 'registered' },
+    }).catch(ignoreCleanupError('un-deprecate a2a entry'));
   });
 
   // ───────── User dropdown ─────────

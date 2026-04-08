@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import RegisterAgentDialog from './RegisterAgentDialog'
 
-vi.mock('../api', () => ({
+vi.mock('@/api', () => ({
   validateAgentCard: vi.fn(),
   createAgentFromCard: vi.fn(),
   importCardFromURL: vi.fn(),
@@ -99,7 +99,7 @@ describe('RegisterAgentDialog', () => {
   })
 })
 
-import { importCardFromURL } from '../api'
+import { importCardFromURL } from '@/api'
 
 const mockImportCardFromURL = importCardFromURL as ReturnType<typeof vi.fn>
 

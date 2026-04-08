@@ -37,14 +37,37 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 			Where("providers.team LIKE ?", "%"+filter.Team+"%")
 	}
 	if filter.Query != "" {
-		q := "%" + filter.Query + "%"
-		query = query.Where("catalog_entries.display_name LIKE ? OR catalog_entries.description LIKE ?", q, q)
+		q := "%" + strings.ToLower(filter.Query) + "%"
+		// Join capabilities for skill-level search.
+		// Join providers only when the Team filter hasn't already done so, to avoid a duplicate JOIN.
+		if filter.Team == "" {
+			query = query.Joins("LEFT JOIN providers ON providers.id = agent_types.provider_id")
+		}
+		query = query.
+			Joins("LEFT JOIN capabilities ON capabilities.agent_type_id = agent_types.id").
+			Where(
+				"LOWER(catalog_entries.display_name) LIKE ? OR "+
+					"LOWER(catalog_entries.description) LIKE ? OR "+
+					"LOWER(capabilities.name) LIKE ? OR "+
+					"LOWER(capabilities.description) LIKE ? OR "+
+					"LOWER(catalog_entries.categories) LIKE ? OR "+
+					"LOWER(providers.organization) LIKE ?",
+				q, q, q, q, q, q,
+			).
+			Distinct("catalog_entries.*")
 	}
 	for _, cat := range filter.Categories {
 		query = query.Where("catalog_entries.categories LIKE ?", "%"+cat+"%")
 	}
 
-	query = query.Order("catalog_entries.display_name")
+	switch filter.Sort {
+	case "displayName_asc":
+		query = query.Order("catalog_entries.display_name ASC")
+	case "createdAt_desc":
+		query = query.Order("catalog_entries.created_at DESC")
+	default: // "lastSuccessAt_desc" or empty
+		query = query.Order("catalog_entries.health_last_success_at DESC NULLS LAST, catalog_entries.display_name ASC")
+	}
 
 	if filter.Limit > 0 {
 		query = query.Limit(filter.Limit)

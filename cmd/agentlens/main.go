@@ -22,6 +22,7 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/server"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	cardstorePlugin "github.com/PawelHaracz/agentlens/plugins/cardstore"
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/audit"
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/postgres"
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/rbac"
@@ -145,6 +146,7 @@ func main() {
 	pm := kernel.NewPluginManager(core)
 
 	// Core plugins
+	pm.Register(cardstorePlugin.New(database))
 	pm.Register(a2aplugin.New())
 	pm.Register(mcpplugin.New())
 
@@ -202,6 +204,10 @@ func main() {
 	// Start discovery manager
 	if len(sources) > 0 {
 		mgr := discovery.NewManager(sources, catalogStore, cfg.PollInterval)
+		// Wire card store into discovery manager if plugin loaded.
+		if core.CardStore() != nil {
+			mgr.SetCardStore(core.CardStore())
+		}
 		go func() {
 			if err := mgr.Run(ctx); err != nil {
 				slog.Error("discovery manager error", "err", err)

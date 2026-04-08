@@ -3,7 +3,6 @@ package health
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -94,28 +93,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 
 // Stop stops the plugin (context cancellation is sufficient).
 func (p *Plugin) Stop(_ context.Context) error { return nil }
-
-// ProbeEntry probes an entry by ID and persists the result.
-// Implements the api.HealthProber interface structurally.
-func (p *Plugin) ProbeEntry(ctx context.Context, id string) (model.Health, error) {
-	entry, err := p.store.Get(ctx, id)
-	if err != nil {
-		return model.Health{}, fmt.Errorf("getting entry for probe: %w", err)
-	}
-	if entry == nil {
-		return model.Health{}, model.ErrEntryNotFound
-	}
-	h := p.probeOne(ctx, entry)
-	if err := p.store.UpdateHealth(ctx, id, h); err != nil {
-		p.log.Warn("failed to persist on-demand probe", "id", id, "err", err)
-	}
-	return h, nil
-}
-
-// ProbeOneForTest exposes probeOne for white-box unit tests.
-func (p *Plugin) ProbeOneForTest(ctx context.Context, entry *model.CatalogEntry) (model.Health, error) {
-	return p.probeOne(ctx, entry), nil
-}
 
 func (p *Plugin) run(ctx context.Context) {
 	p.log.Info("starting health checker",
@@ -247,23 +224,12 @@ func (p *Plugin) noURLHealth(current model.Health) model.Health {
 }
 
 // resolveProbURL returns the URL to probe for a catalog entry.
-// For A2A: uses supportedInterfaces[0].url if present, falls back to Endpoint.
-// For all others: uses Endpoint directly.
+// Falls back to Endpoint for all protocols.
+// Note: A2A supportedInterfaces URL resolution via RawDefinition was removed
+// when RawDefinition was dropped from AgentType (superseded by CardStorePlugin).
 func resolveProbURL(entry *model.CatalogEntry) string {
 	if entry.AgentType == nil {
 		return ""
-	}
-	if entry.AgentType.Protocol == model.ProtocolA2A && len(entry.AgentType.RawDefinition) > 0 {
-		var card struct {
-			SupportedInterfaces []struct {
-				URL string `json:"url"`
-			} `json:"supportedInterfaces"`
-		}
-		if err := json.Unmarshal(entry.AgentType.RawDefinition, &card); err == nil {
-			if len(card.SupportedInterfaces) > 0 && card.SupportedInterfaces[0].URL != "" {
-				return card.SupportedInterfaces[0].URL
-			}
-		}
 	}
 	return entry.AgentType.Endpoint
 }

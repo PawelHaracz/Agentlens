@@ -27,22 +27,20 @@ func (m *mockSource) Discover(_ context.Context) ([]*model.AgentType, error) {
 
 func newMockAgentType(endpoint string) *model.AgentType {
 	return &model.AgentType{
-		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      endpoint,
-		Version:       "1.0.0",
-		RawDefinition: []byte(`{}`),
+		AgentKey: model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol: model.ProtocolA2A,
+		Endpoint: endpoint,
+		Version:  "1.0.0",
 	}
 }
 
 func newMockCatalogEntry(id, endpoint string) *model.CatalogEntry {
 	at := &model.AgentType{
-		ID:            uuid.NewString(),
-		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      endpoint,
-		Version:       "1.0.0",
-		RawDefinition: []byte(`{}`),
+		ID:       uuid.NewString(),
+		AgentKey: model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol: model.ProtocolA2A,
+		Endpoint: endpoint,
+		Version:  "1.0.0",
 	}
 	now := time.Now().UTC()
 	entry := &model.CatalogEntry{
