@@ -27,7 +27,7 @@ For architectural details see [docs/architecture.md](architecture.md).
   - [Viewing Agent Details](#viewing-agent-details)
     - [Header Fields](#header-fields)
     - [Capabilities](#capabilities)
-    - [Raw Definition](#raw-definition)
+    - [Raw Card Tab](#raw-card-tab)
     - [Deleting an Entry](#deleting-an-entry)
   - [Registering an Agent](#registering-an-agent)
     - [Paste JSON](#paste-json)
@@ -151,7 +151,7 @@ On narrow screens the nav links collapse behind a hamburger menu.
 ## Dashboard / Catalog Overview
 
 ![Catalog dashboard populated with seeded entries](images/dashboard-overview.png)
-*The catalog dashboard showing the stats bar, filter controls, and the agent table.*
+*The catalog dashboard showing the stats bar, protocol filter, unified search, and the agent table.*
 
 The catalog is the default view at `/`. It shows every registered agent entry visible to your
 account.
@@ -173,67 +173,72 @@ Counts update automatically as health checks run in the background.
 
 | Column | Description |
 |--------|-------------|
-| **Name** | Display name (clickable link to the detail page); optional description underneath |
 | **Protocol** | Protocol badge: `A2A`, `MCP`, or `A2UI` |
-| **Status** | Health status badge: `Active`, `Degraded`, `Offline`, `Pending`, or `Deprecated` |
-| **Source** | Discovery source: `k8s`, `config`, `push`, or `upstream` (hidden on small screens) |
-| **Endpoint** | Base URL of the agent (hidden on medium and smaller screens) |
+| **Name** | Display name (clickable link to the detail page); optional description underneath |
+| **Provider** | Team or organization from the agent card (hidden when absent) |
+| **Skills** | Number of capabilities (skills, tools, or resources) declared by the agent |
+| **Status** | Health status badge: `Active`, `Degraded`, `Offline`, `Pending`, or `Deprecated`; includes latency and last-seen timestamp |
+| **Spec** | Agent Card spec version (e.g. `A2A 1.0`) |
+| **Last seen** | Relative timestamp of the most recent successful health probe |
 
-Rows are ordered by the API default (registration time, most recent first).
+Rows are sorted by registration time (most recent first) by default. Click any column header to re-sort.
 
-**Empty state:** when no entries match the current filters a "No catalog entries found." message is
-displayed.
+**Empty state:** when no entries are registered, "No agents registered yet." is displayed. When
+filters are active but return no results, "No results match your filters." is shown with a
+**Clear filters** button.
 
 ---
 
 ## Searching and Filtering
 
-![Catalog with an active text search for "Translator"](images/catalog-search.png)
-*Free-text search narrows the catalog to matching entries.*
+![Catalog with an active text search for "Translator"](images/catalog-unified-search.png)
+*Unified search box — searches across name, description, skills, tags, and provider fields.*
 
-Three controls sit above the catalog table:
+Two controls sit above the catalog table:
 
-1. **Search box** — type any keyword to filter entries by display name or description. Results
-   update as you type.
+1. **Unified search box** — a wide text input (press `/` to focus from anywhere on the page).
+   Searches across display name, description, skills, tags, provider name, and organization.
+   Results update as you type (debounced 300 ms). Placeholder:
+   *"Search across A2A and MCP — name, description, skills, tags, provider…"*
 
-2. **Protocol filter** — dropdown with: *All protocols*, `A2A`, `MCP`, `A2UI`.
-
-3. **Status filter** — dropdown with: *All statuses*, `Active`, `Degraded`, `Offline`, `Pending`, `Deprecated`.
+2. **Protocol filter** — a toggle group with three buttons: **All** (default), **A2A**, **MCP**.
+   Selecting a protocol immediately filters the table and syncs the URL (`?protocol=a2a`).
 
 ![Catalog filtered to show only A2A protocol entries](images/catalog-filter-protocol.png)
-*Protocol filter set to A2A — only A2A entries are shown.*
+*Protocol toggle set to A2A — only A2A entries are shown.*
 
-![Catalog filtered by status](images/catalog-filter-status.png)
-*Status filter applied — only entries with the selected health status are shown.*
-
-Filters are combined (AND logic). Selecting `A2A` and `Active` shows only A2A entries that are
-currently active.
+Search and protocol filter are combined (AND logic): selecting `A2A` and typing `translate` shows
+only A2A entries whose metadata matches "translate". Clear the search box or click **All** in the
+toggle group to reset the respective filter.
 
 ---
 
 ## Viewing Agent Details
 
-Click any agent name in the catalog table to open its detail page at `/catalog/:id`.
+Click any agent name in the catalog table to open its detail page at `/catalog/:id`. The detail
+page uses a tabbed layout with an **Overview** tab and a **Raw Card** tab.
 
-![Detail page for an A2A agent](images/entry-detail-a2a.png)
-*Agent detail page — header badges, metadata fields, and capabilities.*
+![Detail page for an A2A agent — Overview tab](images/entry-detail-overview-tab.png)
+*Agent detail page — header badges, metadata fields, and capabilities on the Overview tab.*
 
 ### Header Fields
 
 | Badge / Field | Description |
 |---------------|-------------|
 | Protocol badge | Protocol of the agent (`A2A`, `MCP`, `A2UI`) |
-| Status badge | Current health status |
-| Source badge | Discovery source |
-| Version badge | Agent version declared in its card |
-| Spec version badge | Agent Card spec version (e.g. `1.0`) |
+| Status badge | Current health status with latency and last-seen time |
+| Spec version badge | Agent Card spec version (e.g. `A2A 1.0`) |
 | **Endpoint** | Full URL of the agent |
-| **Namespace** | Kubernetes namespace (shown when source is `k8s`) |
-| **Team** / **Organization** | Provider fields from the agent card |
-| **Last Seen** | Timestamp of the most recent health check |
+| **Provider** | Team and organization from the agent card |
+| **Version** | Agent version declared in its card |
+| **Source** | Discovery source (`k8s`, `config`, `push`, `upstream`) |
+| **Last Seen** | Timestamp of the most recent health probe |
 | **Created** | Timestamp when the entry was first registered |
 
 Below the header, **categories** are shown as outline badges when present.
+
+Action buttons — **Probe Now** and **Deprecate / Un-deprecate** — appear in the header area for
+users with `catalog:write` permission. Lifecycle action errors are shown inline below the buttons.
 
 ### Capabilities
 
@@ -256,13 +261,20 @@ Each capability has a `kind` tag:
 ![Detail page for an MCP server entry](images/entry-detail-mcp.png)
 *MCP server detail — tools, resources, and prompts appear as capabilities.*
 
-### Raw Definition
+### Raw Card Tab
 
-![Raw JSON definition view](images/entry-detail-raw-json.png)
-*Raw Definition section — the original agent card JSON as received during registration.*
+![Raw Card tab showing syntax-highlighted JSON](images/entry-detail-raw-card-tab.png)
+*Raw Card tab — the original agent card JSON with syntax highlighting, a Copy button, and a Download button.*
 
-At the bottom of the detail page the **Raw Definition** section shows the full JSON document as
-stored in the catalog. Use the scroll area to navigate large cards.
+Click the **Raw Card** tab on the detail page to view the full JSON document as received from the
+agent or stored at registration time. Features:
+
+- **Syntax highlighting** — Prism.js colour-coded JSON for readability.
+- **Copy** — copies the full JSON to the clipboard.
+- **Download** — saves the card as a `.json` file named after the agent.
+- **Fetched at** — shows the ISO timestamp of when the card was last fetched.
+- **Truncation warning** — if the raw card exceeds 256 KiB a warning banner is shown; the full
+  card is still available via the API at `GET /api/v1/catalog/:id/card`.
 
 ### Deleting an Entry
 
@@ -362,15 +374,15 @@ The badge also shows response latency (e.g., `142 ms`) for Active and Degraded e
 
 ### Filtering by status
 
-Use the **Status** dropdown above the catalog list to filter entries by lifecycle state.
+Status is visible as a badge in the **Status** column of the catalog table. Use the **Unified
+search box** or the **Protocol filter** toggle to narrow entries; the status badge on each row lets
+you see health at a glance without a separate filter control.
 
-![Status filter with Active selected](images/health-filter-active-selected.png)
-*Single-select filtering narrows the table to one status, such as Active.*
+![Catalog table showing status badges per row](images/health-filter-active-selected.png)
+*Each row displays a status badge — Active, Degraded, Offline, Pending, or Deprecated.*
 
-You can also select multiple statuses at once to combine result sets.
-
-![Status filter in multi-select mode](images/health-filter-multi-select.png)
-*Multi-select filtering is useful when monitoring related states together (for example Active + Degraded).*
+For deeper filtering by health state, use the REST API `?status=active` query parameter (see
+[docs/api.md](api.md)).
 
 ### Health detail
 
@@ -693,8 +705,8 @@ hostname.
 
 1. Check that the agent process is running at the registered endpoint.
 2. Verify network connectivity between the AgentLens server and the agent endpoint.
-3. The Raw Definition section of the detail page shows the card URL and protocol — confirm the
-   agent is serving that path.
+   3. The **Raw Card** tab on the detail page shows the card URL and protocol — confirm the
+      agent is serving that path.
 
 ### How do I push an agent card without using the UI?
 

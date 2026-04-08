@@ -213,33 +213,40 @@ test.describe('Documentation Screenshots', () => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Type into the search box
+    // Type into the unified search box
     await page.getByPlaceholder(/search/i).fill('Translator');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/catalog-search.png`, fullPage: false });
+  });
+
+  test('catalog-unified-search', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Focus and type into the unified search box (wide input with placeholder text)
+    await page.getByPlaceholder(/search across/i).fill('Translator');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-unified-search.png`, fullPage: false });
   });
 
   test('catalog-filter-protocol', async ({ page }) => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Open protocol filter and select A2A
-    await page.getByRole('combobox').filter({ hasText: /protocol/i }).click();
-    await page.getByRole('option', { name: 'A2A' }).click();
+    // Click the A2A toggle button in the ToggleGroup protocol filter
+    await page.getByRole('button', { name: 'A2A', exact: true }).click();
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/catalog-filter-protocol.png`, fullPage: false });
   });
 
-  test('catalog-filter-status', async ({ page }) => {
+  test('catalog-protocol-filter', async ({ page }) => {
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
-    // Open the status multi-select dropdown and select Pending
-    await page.getByRole('button', { name: /all statuses/i }).click();
-    await page.waitForSelector('[role="menuitemcheckbox"]');
-    await page.getByRole('menuitemcheckbox', { name: 'Pending' }).click();
+    // Click the MCP toggle button to show MCP-only view
+    await page.getByRole('button', { name: 'MCP', exact: true }).click();
     await page.waitForLoadState('networkidle');
-    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-filter-status.png`, fullPage: false });
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-protocol-filter.png`, fullPage: false });
   });
 
   // ───────── Agent detail screenshots ─────────
@@ -252,6 +259,17 @@ test.describe('Documentation Screenshots', () => {
     await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-a2a.png`, fullPage: false });
+  });
+
+  test('entry-detail-overview-tab', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    // Overview tab is selected by default — click it to be explicit
+    await page.getByRole('tab', { name: /overview/i }).click();
+    await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-overview-tab.png`, fullPage: false });
   });
 
   test('entry-detail-a2a-skills', async ({ page }) => {
@@ -280,13 +298,22 @@ test.describe('Documentation Screenshots', () => {
     await loginViaUI(page);
     await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
-    // Scroll to raw definition section at bottom of page
-    await page.evaluate(() => {
-      const els = Array.from(document.querySelectorAll('p'));
-      const rawEl = els.find(el => /raw definition/i.test(el.textContent ?? ''));
-      rawEl?.scrollIntoView({ behavior: 'instant' });
-    });
+    // Click the Raw Card tab to reveal syntax-highlighted JSON
+    await page.getByRole('tab', { name: /raw card/i }).click();
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-raw-json.png`, fullPage: false });
+  });
+
+  test('entry-detail-raw-card-tab', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    // Click the Raw Card tab to reveal syntax-highlighted JSON, Copy, and Download buttons
+    await page.getByRole('tab', { name: /raw card/i }).click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/entry-detail-raw-card-tab.png`, fullPage: false });
   });
 
   // ───────── Register Agent screenshots ─────────
@@ -522,27 +549,24 @@ test.describe('Documentation Screenshots', () => {
   });
 
   test('health-filter-multi-select', async ({ page }) => {
-    // Shows the status dropdown open with multiple lifecycle states.
+    // Status is now shown per-row in the catalog table — show the catalog list
+    // with both A2A and MCP entries visible to illustrate the status column.
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: /all statuses/i }).click();
-    await page.waitForSelector('[role="menuitemcheckbox"]');
     await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-multi-select.png`, fullPage: false });
   });
 
   test('health-filter-active-selected', async ({ page }) => {
-    // Shows the catalog filtered to Active entries only.
+    // Show catalog filtered to the A2A protocol to illustrate narrowing entries
+    // (status filtering from the list is now done via the Status column in the table).
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     await page.waitForLoadState('networkidle');
-    await page.getByRole('button', { name: /all statuses/i }).click();
-    await page.waitForSelector('[role="menuitemcheckbox"]');
-    await page.getByRole('menuitemcheckbox', { name: 'Active' }).click();
-    // Close dropdown by clicking elsewhere
-    await page.keyboard.press('Escape');
+    // Use the protocol toggle to narrow to A2A entries
+    await page.getByRole('button', { name: 'A2A', exact: true }).click();
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/health-filter-active-selected.png`, fullPage: false });
   });
