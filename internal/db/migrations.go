@@ -277,7 +277,7 @@ func migration006RawCards() Migration {
 			}
 			if colExists {
 				var insertSQL string
-				if tx.Dialector.Name() == "postgres" {
+				if tx.Name() == "postgres" {
 					insertSQL = `
 						INSERT INTO raw_cards (agent_type_id, data, content_type, fetched_at, truncated)
 						SELECT id, raw_definition, 'application/json', NOW(), FALSE
@@ -299,7 +299,7 @@ func migration006RawCards() Migration {
 				// Postgres supports DROP COLUMN IF EXISTS unconditionally.
 				// SQLite 3.35+ supports it; older SQLite versions do not.
 				if err := tx.Exec(`ALTER TABLE agent_types DROP COLUMN IF EXISTS raw_definition`).Error; err != nil {
-					if tx.Dialector.Name() != "postgres" {
+					if tx.Name() != "postgres" {
 						// Old SQLite doesn't support DROP COLUMN — leave as dead column.
 						slog.Warn("could not drop raw_definition column (old SQLite?), leaving as dead column", "err", err)
 					} else {
@@ -315,7 +315,7 @@ func migration006RawCards() Migration {
 
 // columnExists reports whether a column exists in a given table.
 func columnExists(db *gorm.DB, table, column string) (bool, error) {
-	switch db.Dialector.Name() {
+	switch db.Name() {
 	case "postgres":
 		var count int64
 		err := db.Raw(
