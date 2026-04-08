@@ -313,8 +313,20 @@ func migration006RawCards() Migration {
 	}
 }
 
+// columnExistsAllowedTables is the allowlist of tables that columnExists may inspect.
+// PRAGMA does not support parameterized table names, so we validate statically.
+var columnExistsAllowedTables = map[string]bool{
+	"agent_types":     true,
+	"catalog_entries": true,
+	"raw_cards":       true,
+}
+
 // columnExists reports whether a column exists in a given table.
+// The table name must be in the allowlist to prevent SQL injection via PRAGMA.
 func columnExists(db *gorm.DB, table, column string) (bool, error) {
+	if !columnExistsAllowedTables[table] {
+		return false, fmt.Errorf("columnExists: table %q is not in the allowed list", table)
+	}
 	switch db.Name() {
 	case "postgres":
 		var count int64
@@ -324,7 +336,9 @@ func columnExists(db *gorm.DB, table, column string) (bool, error) {
 		).Scan(&count).Error
 		return count > 0, err
 	default:
-		// SQLite: use PRAGMA table_info
+		// SQLite: use PRAGMA table_info. PRAGMA does not support ? placeholders;
+		// the table name is validated against the allowlist above.
+		// colInfo only maps the Name column; GORM binds by column name and ignores extras (cid, type, etc.).
 		type colInfo struct {
 			Name string
 		}
