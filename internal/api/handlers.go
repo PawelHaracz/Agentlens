@@ -2,6 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -9,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
@@ -228,9 +232,60 @@ func (h *Handler) DeleteEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetEntryCard handles GET /api/v1/catalog/{id}/card.
-// Returns 404: raw card storage was removed; cards are now managed by CardStorePlugin.
+// Returns the raw agent card bytes from the card store plugin.
+// Returns 404 if the entry does not exist or no card is stored.
 func (h *Handler) GetEntryCard(w http.ResponseWriter, r *http.Request) {
-	ErrorResponse(w, http.StatusNotFound, "raw card storage has been removed; use the card store plugin")
+	id := chi.URLParam(r, "id")
+	entry, err := h.store.Get(r.Context(), id)
+	if err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "failed to get catalog entry")
+		return
+	}
+	if entry == nil {
+		ErrorResponse(w, http.StatusNotFound, "catalog entry not found")
+		return
+	}
+
+	cs := h.parsers.CardStore()
+	if cs == nil {
+		ErrorResponse(w, http.StatusNotFound, "card store plugin not loaded")
+		return
+	}
+
+	card, err := cs.GetCard(r.Context(), entry.AgentTypeID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ErrorResponse(w, http.StatusNotFound, "no raw card stored")
+		} else {
+			slog.ErrorContext(r.Context(), "failed to get card from store", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to retrieve card")
+		}
+		return
+	}
+
+	// Only set ETag and X-Raw-Card-Fetched-At if FetchedAt is meaningful.
+	if !card.FetchedAt.IsZero() {
+		etag := fmt.Sprintf(`W/"%d"`, card.FetchedAt.UnixMilli())
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Set("X-Raw-Card-Fetched-At", card.FetchedAt.UTC().Format(time.RFC3339))
+		w.Header().Set("ETag", etag)
+	}
+
+	ct := card.ContentType
+	if ct == "" {
+		ct = "application/json"
+	}
+	w.Header().Set("Content-Type", ct)
+	if card.Truncated {
+		w.Header().Set("X-Raw-Card-Truncated", "true")
+	}
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(card.Data); err != nil {
+		slog.Error("failed to write card response", "err", err)
+	}
 }
 
 // SearchCapabilities handles GET /api/v1/skills.
