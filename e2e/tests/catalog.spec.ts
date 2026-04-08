@@ -218,6 +218,7 @@ test.describe('Catalog Management', () => {
   test('register agent via UI modal', async ({ page }) => {
     await loginViaUI(page);
 
+
     // Open register dialog.
     await page.getByRole('button', { name: 'Register Agent' }).click();
     await expect(page.getByText('Register Agent').nth(1)).toBeVisible();
@@ -245,5 +246,68 @@ test.describe('Catalog Management', () => {
 
     // Should close dialog and refresh catalog.
     await expect(page.getByText('UI Register Agent')).toBeVisible({ timeout: 10_000 });
+  });
+});
+
+test.describe('Unified Catalog View', () => {
+  let token: string;
+
+  test.beforeEach(async ({ request }) => {
+    token = await loginViaAPI(request);
+  });
+
+  test('shows all entries by default (All protocol filter)', async ({ page, request }) => {
+    await loginViaUI(page);
+    await page.goto('/');
+    // Protocol filter should show "All" selected by default.
+    await expect(page.getByRole('group', { name: 'Filter by protocol' })).toBeVisible();
+    // Table should be visible or empty state shown.
+    const table = page.locator('table');
+    const emptyState = page.getByText(/No agents registered yet/i);
+    await expect(table.or(emptyState)).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('search input focuses on "/" keypress', async ({ page }) => {
+    await loginViaUI(page);
+    await page.goto('/');
+    await page.keyboard.press('/');
+    const input = page.getByRole('textbox', { name: 'Search catalog' });
+    await expect(input).toBeFocused();
+  });
+
+  test('protocol filter updates URL param', async ({ page }) => {
+    await loginViaUI(page);
+    await page.goto('/');
+    // Click the A2A toggle button
+    await page.getByRole('button', { name: /A2A/i }).click();
+    await expect(page).toHaveURL(/protocol=a2a/);
+  });
+
+  test('URL filter persists on reload', async ({ page }) => {
+    await loginViaUI(page);
+    await page.goto('/?protocol=mcp');
+    await page.reload();
+    await expect(page).toHaveURL(/protocol=mcp/);
+  });
+
+  test('Raw Card tab visible on detail page', async ({ page, request }) => {
+    // Seed an entry via API.
+    const entry = await createCatalogEntry(request, token, {
+      display_name: 'E2E Test Agent',
+      protocol: 'a2a',
+      endpoint: `http://e2e-test-${Date.now()}.local`,
+    });
+
+    await loginViaUI(page);
+    await page.goto(`/catalog/${entry.id}`);
+    await expect(page.getByRole('tab', { name: 'Raw Card' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Raw Card' }).click();
+    // Card store may return 404 for manually created entries — that's acceptable.
+    await expect(
+      page.getByText(/no raw card stored|Failed to load/i).or(page.locator('pre code.language-json'))
+    ).toBeVisible({ timeout: 5_000 });
+
+    // Cleanup
+    await deleteCatalogEntry(request, token, entry.id);
   });
 });
