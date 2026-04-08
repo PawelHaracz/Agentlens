@@ -43,6 +43,24 @@ func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
 
 // ListCatalog handles GET /api/v1/catalog.
 func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
+	filter, err := parseListFilter(r)
+	if err != nil {
+		ErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	entries, err := h.store.List(r.Context(), filter)
+	if err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "failed to list catalog entries")
+		return
+	}
+	if entries == nil {
+		entries = []model.CatalogEntry{}
+	}
+	JSONResponse(w, http.StatusOK, entries)
+}
+
+// parseListFilter builds a ListFilter from request query parameters.
+func parseListFilter(r *http.Request) (store.ListFilter, error) {
 	filter := store.ListFilter{}
 	q := r.URL.Query()
 
@@ -51,30 +69,24 @@ func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
 		filter.Protocol = &p
 	}
 
-	// Validate lifecycle state values
-	validLifecycleStates := map[string]bool{
+	validStates := map[string]bool{
 		"registered": true, "active": true, "degraded": true,
 		"offline": true, "deprecated": true,
 	}
-
-	// Parse ?state= filter (comma-separated, multiple states)
 	if v := q.Get("state"); v != "" {
 		parts := strings.Split(v, ",")
 		states := make([]model.LifecycleState, 0, len(parts))
 		for _, p := range parts {
 			p = strings.TrimSpace(p)
-			if !validLifecycleStates[p] {
-				ErrorResponse(w, http.StatusBadRequest, "invalid state value: "+p)
-				return
+			if !validStates[p] {
+				return filter, fmt.Errorf("invalid state value: %s", p)
 			}
 			states = append(states, model.LifecycleState(p))
 		}
 		filter.States = states
 	} else if v := q.Get("status"); v != "" {
-		// Backward-compat: single status value
-		if !validLifecycleStates[v] {
-			ErrorResponse(w, http.StatusBadRequest, "invalid status value: "+v)
-			return
+		if !validStates[v] {
+			return filter, fmt.Errorf("invalid status value: %s", v)
 		}
 		filter.States = []model.LifecycleState{model.LifecycleState(v)}
 	}
@@ -104,26 +116,14 @@ func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
 	}
 	if v := q.Get("sort"); v != "" {
 		validSorts := map[string]bool{
-			"lastSuccessAt_desc": true,
-			"displayName_asc":    true,
-			"createdAt_desc":     true,
+			"lastSuccessAt_desc": true, "displayName_asc": true, "createdAt_desc": true,
 		}
 		if !validSorts[v] {
-			ErrorResponse(w, http.StatusBadRequest, "invalid sort value: "+v)
-			return
+			return filter, fmt.Errorf("invalid sort value: %s", v)
 		}
 		filter.Sort = v
 	}
-
-	entries, err := h.store.List(r.Context(), filter)
-	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to list catalog entries")
-		return
-	}
-	if entries == nil {
-		entries = []model.CatalogEntry{}
-	}
-	JSONResponse(w, http.StatusOK, entries)
+	return filter, nil
 }
 
 // GetEntry handles GET /api/v1/catalog/{id}.
