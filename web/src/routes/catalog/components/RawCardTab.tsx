@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-json'
 import { getRawCard } from '../../../api'
@@ -27,6 +27,9 @@ export function RawCardTab({ entryId, displayName }: Props) {
   const [truncated, setTruncated] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
 
   useEffect(() => {
     setStatus('loading')
@@ -73,8 +76,9 @@ export function RawCardTab({ entryId, displayName }: Props) {
   function handleCopy() {
     navigator.clipboard.writeText(pretty).then(() => {
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
   }
 
   function handleDownload() {
