@@ -70,6 +70,12 @@ export interface ListFilter {
   categories?: string
   limit?: number
   offset?: number
+  sort?: 'lastSuccessAt_desc' | 'displayName_asc' | 'createdAt_desc'
+}
+
+export interface SearchMatch {
+  field: string
+  snippet: string
 }
 
 export interface ValidationError {

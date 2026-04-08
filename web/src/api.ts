@@ -88,12 +88,31 @@ export function listCatalog(filter: ListFilter = {}): Promise<CatalogEntry[]> {
   if (filter.categories) params.set('categories', filter.categories)
   if (filter.limit !== undefined) params.set('limit', String(filter.limit))
   if (filter.offset !== undefined) params.set('offset', String(filter.offset))
+  if (filter.sort) params.set('sort', filter.sort)
   const qs = params.toString()
   return request<CatalogEntry[]>(`/catalog${qs ? '?' + qs : ''}`)
 }
 
 export function getEntry(id: string): Promise<CatalogEntry> {
   return request<CatalogEntry>(`/catalog/${id}`)
+}
+
+export async function getRawCard(id: string): Promise<{ data: string; contentType: string; fetchedAt: string; truncated: boolean }> {
+  const headers: Record<string, string> = {}
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`
+  const res = await fetch(`${BASE}/catalog/${id}/card`, { headers })
+  if (res.status === 401 && authToken) handleUnauthorized()
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(body.error ?? res.statusText)
+  }
+  const data = await res.text()
+  return {
+    data,
+    contentType: res.headers.get('Content-Type') ?? 'application/json',
+    fetchedAt: res.headers.get('X-Raw-Card-Fetched-At') ?? '',
+    truncated: res.headers.get('X-Raw-Card-Truncated') === 'true',
+  }
 }
 
 export function deleteEntry(id: string): Promise<void> {
