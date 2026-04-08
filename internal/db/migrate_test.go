@@ -28,7 +28,7 @@ func TestMigrate_Fresh(t *testing.T) {
 
 	ver, err := m.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 5, ver)
+	assert.Equal(t, 6, ver)
 
 	// Verify tables exist by querying them.
 	assert.True(t, d.Migrator().HasTable("providers"))
@@ -50,7 +50,7 @@ func TestMigrate_Idempotent(t *testing.T) {
 
 	ver, err := m.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 5, ver)
+	assert.Equal(t, 6, ver)
 }
 
 func TestMigrate_CurrentVersion(t *testing.T) {
@@ -75,5 +75,28 @@ func TestMigrate_CurrentVersion(t *testing.T) {
 	require.NoError(t, m.Migrate(ctx))
 	ver, err = m.CurrentVersion(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 5, ver)
+	assert.Equal(t, 6, ver)
+}
+
+func TestMigration006_RawCardsCreated(t *testing.T) {
+	database, err := OpenMemory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		sqlDB, _ := database.DB.DB()
+		_ = sqlDB.Close()
+	}()
+	migrator := NewMigrator(database, AllMigrations())
+	if err := migrator.Migrate(context.Background()); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	// Verify raw_cards table exists.
+	if !database.Migrator().HasTable("raw_cards") {
+		t.Error("raw_cards table should exist after migration 006")
+	}
+	// Verify agent_types table still exists.
+	if !database.Migrator().HasTable("agent_types") {
+		t.Error("agent_types table should still exist")
+	}
 }

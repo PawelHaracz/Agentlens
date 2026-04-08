@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
@@ -19,6 +20,7 @@ func AllMigrations() []Migration {
 		migration003DefaultRoles(),
 		migration004Settings(),
 		migration005HealthColumns(),
+		migration006RawCards(),
 	}
 }
 
@@ -243,6 +245,60 @@ func migration005HealthColumns() Migration {
 					"ON catalog_entries(health_last_probed_at)",
 			).Error; err != nil {
 				return fmt.Errorf("creating health_probed_at index: %w", err)
+			}
+
+			return nil
+		},
+	}
+}
+
+func migration006RawCards() Migration {
+	return Migration{
+		Version:     6,
+		Description: "create raw_cards table, copy raw_definition data, drop raw_definition column",
+		Up: func(tx *gorm.DB) error {
+			// Step 1: Create raw_cards table if not already present.
+			if err := tx.Exec(`CREATE TABLE IF NOT EXISTS raw_cards (
+				agent_type_id TEXT PRIMARY KEY,
+				data BLOB NOT NULL,
+				content_type TEXT NOT NULL DEFAULT 'application/json',
+				fetched_at DATETIME NOT NULL,
+				truncated BOOLEAN NOT NULL DEFAULT FALSE
+			)`).Error; err != nil {
+				return fmt.Errorf("creating raw_cards table: %w", err)
+			}
+
+			// Step 2: Copy existing raw_definition bytes into raw_cards.
+			// Only copy rows that have non-empty raw_definition.
+			var insertSQL string
+			if tx.Dialector.Name() == "postgres" {
+				insertSQL = `
+					INSERT INTO raw_cards (agent_type_id, data, content_type, fetched_at, truncated)
+					SELECT id, raw_definition, 'application/json', NOW(), FALSE
+					FROM agent_types
+					WHERE raw_definition IS NOT NULL AND octet_length(raw_definition) > 0
+					ON CONFLICT (agent_type_id) DO NOTHING`
+			} else {
+				insertSQL = `
+					INSERT OR IGNORE INTO raw_cards (agent_type_id, data, content_type, fetched_at, truncated)
+					SELECT id, raw_definition, 'application/json', CURRENT_TIMESTAMP, FALSE
+					FROM agent_types
+					WHERE raw_definition IS NOT NULL AND length(raw_definition) > 0`
+			}
+			if err := tx.Exec(insertSQL).Error; err != nil {
+				return fmt.Errorf("copying raw_definition to raw_cards: %w", err)
+			}
+
+			// Step 3: Drop raw_definition column from agent_types.
+			// Postgres supports DROP COLUMN IF EXISTS unconditionally.
+			// SQLite 3.35+ supports it; older SQLite versions do not.
+			if err := tx.Exec(`ALTER TABLE agent_types DROP COLUMN IF EXISTS raw_definition`).Error; err != nil {
+				if tx.Dialector.Name() != "postgres" {
+					// Old SQLite doesn't support DROP COLUMN — leave as dead column.
+					slog.Warn("could not drop raw_definition column (old SQLite?), leaving as dead column", "err", err)
+				} else {
+					return fmt.Errorf("dropping raw_definition column: %w", err)
+				}
 			}
 
 			return nil
