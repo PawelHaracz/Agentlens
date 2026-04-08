@@ -99,6 +99,7 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 			}
 			if existing.AgentType != nil {
 				existing.AgentType.Protocol = at.Protocol
+				existing.AgentType.AgentKey = model.ComputeAgentKey(at.Protocol, at.Endpoint)
 				existing.AgentType.Version = at.Version
 				existing.AgentType.SpecVersion = at.SpecVersion
 				existing.AgentType.Provider = at.Provider

@@ -87,8 +87,11 @@ export function RawCardTab({ entryId, displayName }: Props) {
     const a = document.createElement('a')
     a.href = url
     a.download = `${toKebab(displayName)}.json`
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    // Defer revocation so the browser has time to initiate the download.
+    setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
   return (

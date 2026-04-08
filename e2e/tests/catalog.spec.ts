@@ -227,7 +227,6 @@ test.describe('Catalog Management', () => {
   test('register agent via UI modal', async ({ page }) => {
     await loginViaUI(page);
 
-
     // Open register dialog.
     await page.getByRole('button', { name: 'Register Agent' }).click();
     await expect(page.getByText('Register Agent').nth(1)).toBeVisible();

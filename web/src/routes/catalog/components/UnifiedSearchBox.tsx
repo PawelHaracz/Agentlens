@@ -16,9 +16,18 @@ export function UnifiedSearchBox({ value, onChange }: Props) {
     setDraft(value ?? '')
   }, [value])
 
+  // Clear pending debounce timer on unmount to prevent stale state updates.
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === '/' && document.activeElement !== inputRef.current) {
+      const active = document.activeElement
+      const isEditable =
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLTextAreaElement ||
+        active instanceof HTMLSelectElement ||
+        (active instanceof HTMLElement && active.isContentEditable)
+      if (e.key === '/' && !isEditable) {
         e.preventDefault()
         inputRef.current?.focus()
       }

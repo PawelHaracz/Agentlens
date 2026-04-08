@@ -19,6 +19,11 @@ func newTestPlugin(t *testing.T) *cardstore.Plugin {
 	if err != nil {
 		t.Fatalf("opening in-memory db: %v", err)
 	}
+	t.Cleanup(func() {
+		if sqlDB, err := database.DB.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
+	})
 	p := cardstore.New(database)
 	if err := p.MigrateSchema(context.Background()); err != nil {
 		t.Fatalf("migrating schema: %v", err)

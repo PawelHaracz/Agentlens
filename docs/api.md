@@ -32,7 +32,7 @@ List all catalog entries with optional filtering.
 | `q` | string | — | Full-text search across `display_name`, `description`, `capabilities.name`, `capabilities.description`, `categories`, `provider.organization`. |
 | `sort` | string | `lastSuccessAt_desc` | Sort order. Values: `lastSuccessAt_desc`, `displayName_asc`, `createdAt_desc`. Unknown values return `400`. |
 | `protocol` | string | — | Filter by protocol: `a2a`, `mcp`, `a2ui` |
-| `status` | string | — | Filter by status: `healthy`, `degraded`, `down`, `unknown` |
+| `status` | string | — | Filter by lifecycle status: `registered`, `active`, `degraded`, `offline`, `deprecated` |
 | `source` | string | — | Filter by source: `k8s`, `config`, `push`, `upstream` |
 | `team` | string | — | Filter by provider team name |
 | `categories` | string | — | Comma-separated category filter |
