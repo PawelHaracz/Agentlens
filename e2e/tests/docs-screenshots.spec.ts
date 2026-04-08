@@ -597,42 +597,38 @@ test.describe('Documentation Screenshots', () => {
   });
 
   test('health-deprecate-dialog', async ({ page }) => {
-    // Shows the confirmation dialog before deprecating an entry.
+    // Shows the Deprecate button in the detail page header (new UI — no confirmation
+    // dialog; clicking directly applies the lifecycle change).
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
-    await page.evaluate(() => {
-      const headings = Array.from(document.querySelectorAll('h3'));
-      const healthHeading = headings.find(h => /health/i.test(h.textContent ?? ''));
-      healthHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
-    });
-    await page.getByRole('button', { name: /deprecate/i }).click();
-    await page.waitForSelector('[role="alertdialog"]', { timeout: ERROR_DISPLAY_TIMEOUT_MS });
+    // Hover the Deprecate button to show the focused/hover state for documentation.
+    await page.getByRole('button', { name: /deprecate/i }).hover();
     await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecate-dialog.png`, fullPage: false });
-    // Close dialog without confirming so the entry stays intact for other tests
-    await page.getByRole('button', { name: /cancel/i }).click();
   });
 
   test('health-deprecated-badge', async ({ page, request }) => {
     // Shows an entry with the Deprecated badge.
     await page.setViewportSize(VIEWPORT);
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    // Deprecate the MCP entry via API for this screenshot
-    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
-      headers: authHeader(token),
+    // Get a fresh token for the API calls in this test — avoids stale-token issues on retry.
+    const freshToken = await loginViaAPI(request);
+    // Deprecate the A2A entry via API for this screenshot (MCP entry may be unavailable on retry).
+    await request.patch(`${BASE}/api/v1/catalog/${a2aEntryId}/lifecycle`, {
+      headers: authHeader(freshToken),
       data: { state: 'deprecated' },
     });
     await loginViaUI(page);
-    await page.goto(`/catalog/${mcpEntryId}`);
+    await page.goto(`/catalog/${a2aEntryId}`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/health-deprecated-badge.png`, fullPage: false });
-    // Restore to active
-    await request.patch(`${BASE}/api/v1/catalog/${mcpEntryId}/lifecycle`, {
-      headers: authHeader(token),
-      data: { state: 'active' },
-    }).catch(ignoreCleanupError('un-deprecate mcp entry'));
+    // Restore to registered state so subsequent tests are not affected.
+    await request.patch(`${BASE}/api/v1/catalog/${a2aEntryId}/lifecycle`, {
+      headers: authHeader(freshToken),
+      data: { state: 'registered' },
+    }).catch(ignoreCleanupError('un-deprecate a2a entry'));
   });
 
   // ───────── User dropdown ─────────
