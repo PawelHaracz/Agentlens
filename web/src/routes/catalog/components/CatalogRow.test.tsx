@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, vi, expect } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
-import React from 'react'
 import { CatalogRow } from './CatalogRow'
 import type { CatalogEntry } from '../../../types'
 
@@ -91,14 +90,14 @@ describe('CatalogRow', () => {
 
   it('renders provider organization when present', () => {
     renderRow(mkEntry({
-      provider: { id: 'p1', agent_type_id: 'at1', organization: 'ACME', team: '', url: '' },
+      provider: { organization: 'ACME', team: '', url: '' },
     }))
     expect(screen.getByText('ACME')).toBeInTheDocument()
   })
 
   it('renders provider with link when URL provided', () => {
     renderRow(mkEntry({
-      provider: { id: 'p1', agent_type_id: 'at1', organization: 'ACME', team: '', url: 'https://acme.com' },
+      provider: { organization: 'ACME', team: '', url: 'https://acme.com' },
     }))
     const link = screen.getByRole('link', { name: /open acme website/i })
     expect(link).toHaveAttribute('href', 'https://acme.com')
@@ -163,7 +162,7 @@ describe('CatalogRow', () => {
   it('provider link click does not navigate the row', () => {
     navigate.mockClear()
     renderRow(mkEntry({
-      provider: { id: 'p1', agent_type_id: 'at1', organization: 'ACME', team: '', url: 'https://acme.com' },
+      provider: { organization: 'ACME', team: '', url: 'https://acme.com' },
     }))
     const link = screen.getByRole('link', { name: /open acme website/i })
     // stopPropagation is called — click should not propagate to row

@@ -1,10 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import React from 'react'
 import CatalogDetailPage from './CatalogDetailPage'
 import * as api from '../../api'
-import type { CatalogEntry } from '../../types'
+import type { CatalogEntry, Health } from '../../types'
 
 vi.mock('../../api', () => ({
   getEntry: vi.fn(),
@@ -16,6 +15,8 @@ vi.mock('../../api', () => ({
 // Prism.js is not available in jsdom — mock it
 vi.mock('prismjs', () => ({ default: { highlightAll: vi.fn() } }))
 vi.mock('prismjs/components/prism-json', () => ({}))
+
+const HEALTH: Health = { state: 'active', lastProbedAt: null, lastSuccessAt: null, latencyMs: 42, consecutiveFailures: 0, lastError: '' }
 
 const ENTRY: CatalogEntry = {
   id: 'entry-1',
@@ -32,12 +33,19 @@ const ENTRY: CatalogEntry = {
   capabilities: [
     { kind: 'a2a.skill', name: 'translate', description: 'Translate text' },
   ],
-  provider: { id: 'p1', agent_type_id: 'at-1', organization: 'ACME Corp', team: 'AI', url: 'https://acme.example.com' },
+  provider: { organization: 'ACME Corp', team: 'AI', url: 'https://acme.example.com' },
   validity: { last_seen: new Date().toISOString() },
-  health: { state: 'active', lastProbedAt: null, lastSuccessAt: null, latencyMs: 42, consecutiveFailures: 0, lastError: '' },
+  health: HEALTH,
   metadata: {},
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+}
+
+const RAW_CARD_RESPONSE = {
+  data: '{"name":"test"}',
+  contentType: 'application/json',
+  fetchedAt: new Date().toISOString(),
+  truncated: false,
 }
 
 function renderPage(id = 'entry-1') {
@@ -54,12 +62,8 @@ function renderPage(id = 'entry-1') {
 describe('CatalogDetailPage', () => {
   beforeEach(() => {
     vi.spyOn(api, 'getEntry').mockResolvedValue(ENTRY)
-    vi.spyOn(api, 'getRawCard').mockResolvedValue({
-      data: '{"name":"test"}',
-      fetchedAt: new Date().toISOString(),
-      truncated: false,
-    })
-    vi.spyOn(api, 'postProbe').mockResolvedValue(undefined)
+    vi.spyOn(api, 'getRawCard').mockResolvedValue(RAW_CARD_RESPONSE)
+    vi.spyOn(api, 'postProbe').mockResolvedValue(HEALTH)
     vi.spyOn(api, 'patchLifecycle').mockResolvedValue({ ...ENTRY, status: 'deprecated' })
   })
 

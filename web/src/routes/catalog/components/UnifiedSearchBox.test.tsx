@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, vi, beforeEach, afterEach, expect } from 'vitest'
-import React from 'react'
 import { UnifiedSearchBox } from './UnifiedSearchBox'
 
 describe('UnifiedSearchBox', () => {

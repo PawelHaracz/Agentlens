@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, vi, expect } from 'vitest'
-import React from 'react'
 import { ProtocolFilter } from './ProtocolFilter'
 
 describe('ProtocolFilter', () => {
