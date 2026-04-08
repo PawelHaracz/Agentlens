@@ -64,7 +64,15 @@ func parseListFilter(r *http.Request) (store.ListFilter, error) {
 	filter := store.ListFilter{}
 	q := r.URL.Query()
 
+	validProtocols := map[string]bool{
+		string(model.ProtocolA2A):  true,
+		string(model.ProtocolMCP):  true,
+		string(model.ProtocolA2UI): true,
+	}
 	if v := q.Get("protocol"); v != "" {
+		if !validProtocols[v] {
+			return filter, fmt.Errorf("invalid protocol value: %s", v)
+		}
 		p := model.Protocol(v)
 		filter.Protocol = &p
 	}
@@ -91,7 +99,16 @@ func parseListFilter(r *http.Request) (store.ListFilter, error) {
 		filter.States = []model.LifecycleState{model.LifecycleState(v)}
 	}
 
+	validSources := map[string]bool{
+		string(model.SourceK8s):      true,
+		string(model.SourceConfig):   true,
+		string(model.SourcePush):     true,
+		string(model.SourceUpstream): true,
+	}
 	if v := q.Get("source"); v != "" {
+		if !validSources[v] {
+			return filter, fmt.Errorf("invalid source value: %s", v)
+		}
 		s := model.SourceType(v)
 		filter.Source = &s
 	}

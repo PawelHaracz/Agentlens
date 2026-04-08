@@ -122,6 +122,42 @@ func TestListCatalogInvalidState(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
+func TestListCatalogInvalidProtocol(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?protocol=bogus", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestListCatalogInvalidSource(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?source=bogus", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestListCatalogValidProtocolAndSource(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	// Known valid values should return 200 (even if no matching entries).
+	for _, protocol := range []string{"a2a", "mcp", "a2ui"} {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?protocol="+protocol, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code, "protocol=%s should return 200", protocol)
+	}
+	for _, source := range []string{"k8s", "config", "push", "upstream"} {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/catalog?source="+source, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code, "source=%s should return 200", source)
+	}
+}
+
 func TestListCatalogStateFilterBackwardCompat(t *testing.T) {
 	router, s := newTestRouter(t)
 	ctx := context.Background()
