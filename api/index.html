@@ -1905,6 +1905,7 @@
 <tr>
 <th>Parameter</th>
 <th>Type</th>
+<th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -1912,41 +1913,55 @@
 <tr>
 <td><code>q</code></td>
 <td>string</td>
-<td>Full-text search on display name, description</td>
+<td>—</td>
+<td>Full-text search across <code>display_name</code>, <code>description</code>, <code>capabilities.name</code>, <code>capabilities.description</code>, <code>categories</code>, <code>provider.organization</code>.</td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td>string</td>
+<td><code>lastSuccessAt_desc</code></td>
+<td>Sort order. Values: <code>lastSuccessAt_desc</code>, <code>displayName_asc</code>, <code>createdAt_desc</code>. Unknown values return <code>400</code>.</td>
 </tr>
 <tr>
 <td><code>protocol</code></td>
 <td>string</td>
+<td>—</td>
 <td>Filter by protocol: <code>a2a</code>, <code>mcp</code>, <code>a2ui</code></td>
 </tr>
 <tr>
 <td><code>status</code></td>
 <td>string</td>
-<td>Filter by status: <code>healthy</code>, <code>degraded</code>, <code>down</code>, <code>unknown</code></td>
+<td>—</td>
+<td>Filter by lifecycle status: <code>registered</code>, <code>active</code>, <code>degraded</code>, <code>offline</code>, <code>deprecated</code></td>
 </tr>
 <tr>
 <td><code>source</code></td>
 <td>string</td>
+<td>—</td>
 <td>Filter by source: <code>k8s</code>, <code>config</code>, <code>push</code>, <code>upstream</code></td>
 </tr>
 <tr>
 <td><code>team</code></td>
 <td>string</td>
+<td>—</td>
 <td>Filter by provider team name</td>
 </tr>
 <tr>
 <td><code>categories</code></td>
 <td>string</td>
+<td>—</td>
 <td>Comma-separated category filter</td>
 </tr>
 <tr>
 <td><code>limit</code></td>
 <td>int</td>
+<td>—</td>
 <td>Maximum results to return (default: no limit)</td>
 </tr>
 <tr>
 <td><code>offset</code></td>
 <td>int</td>
+<td>—</td>
 <td>Pagination offset</td>
 </tr>
 </tbody>
@@ -2354,8 +2369,17 @@
 <hr />
 <h3 id="get-apiv1catalogidcard"><code>GET /api/v1/catalog/{id}/card</code><a class="headerlink" href="#get-apiv1catalogidcard" title="Permanent link">&para;</a></h3>
 <p>Get the raw protocol card JSON (A2A or MCP card fetched from the agent).</p>
+<p><strong>Response headers:</strong>
+- <code>Content-Type</code> — MIME type as stored in the card store
+- <code>X-Raw-Card-Fetched-At</code> — ISO 8601 timestamp indicating when the card was last fetched
+- <code>ETag</code> — weak entity tag (e.g., <code>W/"abc123"</code>) for conditional GET support
+- <code>X-Raw-Card-Truncated: true</code> — present only when the card was truncated at the 256 KiB storage cap; the returned bytes are incomplete</p>
+<p><strong>Conditional GET:</strong> include <code>If-None-Match</code> with a previously received <code>ETag</code> value; if the card has not changed, the server returns <code>304 Not Modified</code> with no body.</p>
 <p><strong>Response 200:</strong> Raw JSON card (content varies by protocol).</p>
-<p><strong>Response 404:</strong> Entry or card not found.</p>
+<p><strong>Response 304:</strong> Not Modified (ETag matched — card unchanged since last fetch).</p>
+<p><strong>Response 404:</strong> Entry not found, or entry exists but no card has been stored (e.g., manually created entries):
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;no raw card stored&quot;</span><span class="p">}</span>
+</code></pre></div></p>
 <hr />
 <h3 id="health-check-fields">Health check fields<a class="headerlink" href="#health-check-fields" title="Permanent link">&para;</a></h3>
 <p>All catalog entry responses now include a <code>health</code> object:</p>
@@ -2760,7 +2784,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 7, 2026 15:37:28 UTC"><span class="timeago" datetime="2026-04-07T15:37:28+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 7, 2026 15:37:28 UTC">2026-04-07</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 8, 2026 15:27:33 UTC"><span class="timeago" datetime="2026-04-08T15:27:33+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 8, 2026 15:27:33 UTC">2026-04-08</span>
   </span>
 
     

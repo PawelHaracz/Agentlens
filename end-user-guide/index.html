@@ -789,10 +789,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#raw-definition" class="md-nav__link">
+  <a href="#raw-card-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Raw Definition
+        Raw Card Tab
       
     </span>
   </a>
@@ -1579,10 +1579,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#raw-definition" class="md-nav__link">
+  <a href="#raw-card-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Raw Definition
+        Raw Card Tab
       
     </span>
   </a>
@@ -2092,7 +2092,7 @@ For architectural details see <a href="../architecture/">docs/architecture.md</a
 <li><a href="#viewing-agent-details">Viewing Agent Details</a><ul>
 <li><a href="#header-fields">Header Fields</a></li>
 <li><a href="#capabilities">Capabilities</a></li>
-<li><a href="#raw-definition">Raw Definition</a></li>
+<li><a href="#raw-card-tab">Raw Card Tab</a></li>
 <li><a href="#deleting-an-entry">Deleting an Entry</a></li>
 </ul>
 </li>
@@ -2249,7 +2249,7 @@ can unlock the account early via <strong>Settings → Users</strong> (see <a hre
 <hr />
 <h2 id="dashboard-catalog-overview">Dashboard / Catalog Overview<a class="headerlink" href="#dashboard-catalog-overview" title="Permanent link">&para;</a></h2>
 <p><img alt="Catalog dashboard populated with seeded entries" src="../images/dashboard-overview.png" />
-<em>The catalog dashboard showing the stats bar, filter controls, and the agent table.</em></p>
+<em>The catalog dashboard showing the stats bar, protocol filter, unified search, and the agent table.</em></p>
 <p>The catalog is the default view at <code>/</code>. It shows every registered agent entry visible to your
 account.</p>
 <h3 id="stats-bar">Stats Bar<a class="headerlink" href="#stats-bar" title="Permanent link">&para;</a></h3>
@@ -2291,58 +2291,67 @@ account.</p>
 </thead>
 <tbody>
 <tr>
-<td><strong>Name</strong></td>
-<td>Display name (clickable link to the detail page); optional description underneath</td>
-</tr>
-<tr>
 <td><strong>Protocol</strong></td>
 <td>Protocol badge: <code>A2A</code>, <code>MCP</code>, or <code>A2UI</code></td>
 </tr>
 <tr>
+<td><strong>Name</strong></td>
+<td>Display name (clickable link to the detail page); optional description underneath</td>
+</tr>
+<tr>
+<td><strong>Provider</strong></td>
+<td>Team or organization from the agent card (hidden when absent)</td>
+</tr>
+<tr>
+<td><strong>Skills</strong></td>
+<td>Number of capabilities (skills, tools, or resources) declared by the agent</td>
+</tr>
+<tr>
 <td><strong>Status</strong></td>
-<td>Health status badge: <code>Active</code>, <code>Degraded</code>, <code>Offline</code>, <code>Pending</code>, or <code>Deprecated</code></td>
+<td>Health status badge: <code>Active</code>, <code>Degraded</code>, <code>Offline</code>, <code>Pending</code>, or <code>Deprecated</code>; includes latency and last-seen timestamp</td>
 </tr>
 <tr>
-<td><strong>Source</strong></td>
-<td>Discovery source: <code>k8s</code>, <code>config</code>, <code>push</code>, or <code>upstream</code> (hidden on small screens)</td>
+<td><strong>Spec</strong></td>
+<td>Agent Card spec version (e.g. <code>A2A 1.0</code>)</td>
 </tr>
 <tr>
-<td><strong>Endpoint</strong></td>
-<td>Base URL of the agent (hidden on medium and smaller screens)</td>
+<td><strong>Last seen</strong></td>
+<td>Relative timestamp of the most recent successful health probe</td>
 </tr>
 </tbody>
 </table>
-<p>Rows are ordered by the API default (registration time, most recent first).</p>
-<p><strong>Empty state:</strong> when no entries match the current filters a "No catalog entries found." message is
-displayed.</p>
+<p>Rows are sorted by registration time (most recent first) by default. Click any column header to re-sort.</p>
+<p><strong>Empty state:</strong> when no entries are registered, "No agents registered yet." is displayed. When
+filters are active but return no results, "No results match your filters." is shown with a
+<strong>Clear filters</strong> button.</p>
 <hr />
 <h2 id="searching-and-filtering">Searching and Filtering<a class="headerlink" href="#searching-and-filtering" title="Permanent link">&para;</a></h2>
-<p><img alt="Catalog with an active text search for &quot;Translator&quot;" src="../images/catalog-search.png" />
-<em>Free-text search narrows the catalog to matching entries.</em></p>
-<p>Three controls sit above the catalog table:</p>
+<p><img alt="Catalog with an active text search for &quot;Translator&quot;" src="../images/catalog-unified-search.png" />
+<em>Unified search box — searches across name, description, skills, tags, and provider fields.</em></p>
+<p>Two controls sit above the catalog table:</p>
 <ol>
 <li>
-<p><strong>Search box</strong> — type any keyword to filter entries by display name or description. Results
-   update as you type.</p>
+<p><strong>Unified search box</strong> — a wide text input (press <code>/</code> to focus from anywhere on the page).
+   Searches across display name, description, skills, tags, provider name, and organization.
+   Results update as you type (debounced 300 ms). Placeholder:
+   <em>"Search across A2A and MCP — name, description, skills, tags, provider…"</em></p>
 </li>
 <li>
-<p><strong>Protocol filter</strong> — dropdown with: <em>All protocols</em>, <code>A2A</code>, <code>MCP</code>, <code>A2UI</code>.</p>
-</li>
-<li>
-<p><strong>Status filter</strong> — dropdown with: <em>All statuses</em>, <code>Active</code>, <code>Degraded</code>, <code>Offline</code>, <code>Pending</code>, <code>Deprecated</code>.</p>
+<p><strong>Protocol filter</strong> — a toggle group with three buttons: <strong>All</strong> (default), <strong>A2A</strong>, <strong>MCP</strong>.
+   Selecting a protocol immediately filters the table and syncs the URL (<code>?protocol=a2a</code>).</p>
 </li>
 </ol>
 <p><img alt="Catalog filtered to show only A2A protocol entries" src="../images/catalog-filter-protocol.png" />
-<em>Protocol filter set to A2A — only A2A entries are shown.</em></p>
-<p><img alt="Catalog filtered by status" src="../images/catalog-filter-status.png" />
-<em>Status filter applied — only entries with the selected health status are shown.</em></p>
-<p>Filters are combined (AND logic). Selecting <code>A2A</code> and <code>Active</code> shows only A2A entries that are
-currently active.</p>
+<em>Protocol toggle set to A2A — only A2A entries are shown.</em></p>
+<p>Search and protocol filter are combined (AND logic): selecting <code>A2A</code> and typing <code>translate</code> shows
+only A2A entries whose metadata matches "translate". Clear the search box or click <strong>All</strong> in the
+toggle group to reset the respective filter.</p>
 <hr />
 <h2 id="viewing-agent-details">Viewing Agent Details<a class="headerlink" href="#viewing-agent-details" title="Permanent link">&para;</a></h2>
-<p>Click any agent name in the catalog table to open its detail page at <code>/catalog/:id</code>.</p>
-<p><img alt="Detail page for an A2A agent" src="../images/entry-detail-a2a.png" />
-<em>Agent detail page — header badges, metadata fields, and capabilities.</em></p>
+<p>Click any agent name in the catalog table to open its detail page at <code>/catalog/:id</code>. The detail
+page uses a tabbed layout with an <strong>Overview</strong> tab and a <strong>Raw Card</strong> tab.</p>
+<p><img alt="Detail page for an A2A agent — Overview tab" src="../images/entry-detail-overview-tab.png" />
+<em>Agent detail page — header badges, metadata fields, and capabilities on the Overview tab.</em></p>
 <h3 id="header-fields">Header Fields<a class="headerlink" href="#header-fields" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2358,35 +2367,31 @@ currently active.</p>
 </tr>
 <tr>
 <td>Status badge</td>
-<td>Current health status</td>
-</tr>
-<tr>
-<td>Source badge</td>
-<td>Discovery source</td>
-</tr>
-<tr>
-<td>Version badge</td>
-<td>Agent version declared in its card</td>
+<td>Current health status with latency and last-seen time</td>
 </tr>
 <tr>
 <td>Spec version badge</td>
-<td>Agent Card spec version (e.g. <code>1.0</code>)</td>
+<td>Agent Card spec version (e.g. <code>A2A 1.0</code>)</td>
 </tr>
 <tr>
 <td><strong>Endpoint</strong></td>
 <td>Full URL of the agent</td>
 </tr>
 <tr>
-<td><strong>Namespace</strong></td>
-<td>Kubernetes namespace (shown when source is <code>k8s</code>)</td>
+<td><strong>Provider</strong></td>
+<td>Team and organization from the agent card</td>
 </tr>
 <tr>
-<td><strong>Team</strong> / <strong>Organization</strong></td>
-<td>Provider fields from the agent card</td>
+<td><strong>Version</strong></td>
+<td>Agent version declared in its card</td>
+</tr>
+<tr>
+<td><strong>Source</strong></td>
+<td>Discovery source (<code>k8s</code>, <code>config</code>, <code>push</code>, <code>upstream</code>)</td>
 </tr>
 <tr>
 <td><strong>Last Seen</strong></td>
-<td>Timestamp of the most recent health check</td>
+<td>Timestamp of the most recent health probe</td>
 </tr>
 <tr>
 <td><strong>Created</strong></td>
@@ -2395,6 +2400,8 @@ currently active.</p>
 </tbody>
 </table>
 <p>Below the header, <strong>categories</strong> are shown as outline badges when present.</p>
+<p>Action buttons — <strong>Probe Now</strong> and <strong>Deprecate / Un-deprecate</strong> — appear in the header area for
+users with <code>catalog:write</code> permission. Lifecycle action errors are shown inline below the buttons.</p>
 <h3 id="capabilities">Capabilities<a class="headerlink" href="#capabilities" title="Permanent link">&para;</a></h3>
 <p><img alt="Detail page showing the capabilities section for an A2A agent" src="../images/entry-detail-a2a-skills.png" />
 <em>Capabilities section — each capability shows its name, kind badge, and description.</em></p>
@@ -2452,11 +2459,19 @@ currently active.</p>
 </table>
 <p><img alt="Detail page for an MCP server entry" src="../images/entry-detail-mcp.png" />
 <em>MCP server detail — tools, resources, and prompts appear as capabilities.</em></p>
-<h3 id="raw-definition">Raw Definition<a class="headerlink" href="#raw-definition" title="Permanent link">&para;</a></h3>
-<p><img alt="Raw JSON definition view" src="../images/entry-detail-raw-json.png" />
-<em>Raw Definition section — the original agent card JSON as received during registration.</em></p>
-<p>At the bottom of the detail page the <strong>Raw Definition</strong> section shows the full JSON document as
-stored in the catalog. Use the scroll area to navigate large cards.</p>
+<h3 id="raw-card-tab">Raw Card Tab<a class="headerlink" href="#raw-card-tab" title="Permanent link">&para;</a></h3>
+<p><img alt="Raw Card tab showing syntax-highlighted JSON" src="../images/entry-detail-raw-card-tab.png" />
+<em>Raw Card tab — the original agent card JSON with syntax highlighting, a Copy button, and a Download button.</em></p>
+<p>Click the <strong>Raw Card</strong> tab on the detail page to view the full JSON document as received from the
+agent or stored at registration time. Features:</p>
+<ul>
+<li><strong>Syntax highlighting</strong> — Prism.js colour-coded JSON for readability.</li>
+<li><strong>Copy</strong> — copies the full JSON to the clipboard.</li>
+<li><strong>Download</strong> — saves the card as a <code>.json</code> file named after the agent.</li>
+<li><strong>Fetched at</strong> — shows the ISO timestamp of when the card was last fetched.</li>
+<li><strong>Truncation warning</strong> — if the raw card exceeds 256 KiB a warning banner is shown; the full
+  card is still available via the API at <code>GET /api/v1/catalog/:id/card</code>.</li>
+</ul>
 <h3 id="deleting-an-entry">Deleting an Entry<a class="headerlink" href="#deleting-an-entry" title="Permanent link">&para;</a></h3>
 <p>Click the red <strong>Delete</strong> button in the top-right of the detail card to remove the entry. A browser
 confirm dialog asks for confirmation. After deletion you are returned to the catalog.</p>
@@ -2558,12 +2573,13 @@ security measure and cannot be bypassed from the UI.</p>
 </table>
 <p>The badge also shows response latency (e.g., <code>142 ms</code>) for Active and Degraded entries, and a relative timestamp (e.g., <code>5s ago</code>) for when the entry was last seen.</p>
 <h3 id="filtering-by-status">Filtering by status<a class="headerlink" href="#filtering-by-status" title="Permanent link">&para;</a></h3>
-<p>Use the <strong>Status</strong> dropdown above the catalog list to filter entries by lifecycle state.</p>
-<p><img alt="Status filter with Active selected" src="../images/health-filter-active-selected.png" />
-<em>Single-select filtering narrows the table to one status, such as Active.</em></p>
-<p>You can also select multiple statuses at once to combine result sets.</p>
-<p><img alt="Status filter in multi-select mode" src="../images/health-filter-multi-select.png" />
-<em>Multi-select filtering is useful when monitoring related states together (for example Active + Degraded).</em></p>
+<p>Status is visible as a badge in the <strong>Status</strong> column of the catalog table. Use the <strong>Unified
+search box</strong> or the <strong>Protocol filter</strong> toggle to narrow entries; the status badge on each row lets
+you see health at a glance without a separate filter control.</p>
+<p><img alt="Catalog table showing status badges per row" src="../images/health-filter-active-selected.png" />
+<em>Each row displays a status badge — Active, Degraded, Offline, Pending, or Deprecated.</em></p>
+<p>For deeper filtering by health state, use the REST API <code>?status=active</code> query parameter (see
+<a href="../api/">docs/api.md</a>).</p>
 <h3 id="health-detail">Health detail<a class="headerlink" href="#health-detail" title="Permanent link">&para;</a></h3>
 <p>Click any entry to open its detail view. The <strong>Health</strong> section shows:</p>
 <ul>
@@ -3027,8 +3043,8 @@ hostname.</p>
 <ol>
 <li>Check that the agent process is running at the registered endpoint.</li>
 <li>Verify network connectivity between the AgentLens server and the agent endpoint.</li>
-<li>The Raw Definition section of the detail page shows the card URL and protocol — confirm the
-   agent is serving that path.</li>
+<li>The <strong>Raw Card</strong> tab on the detail page shows the card URL and protocol — confirm the
+      agent is serving that path.</li>
 </ol>
 <h3 id="how-do-i-push-an-agent-card-without-using-the-ui">How do I push an agent card without using the UI?<a class="headerlink" href="#how-do-i-push-an-agent-card-without-using-the-ui" title="Permanent link">&para;</a></h3>
 <p>Use the REST API directly:</p>
@@ -3069,7 +3085,7 @@ hostname.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 7, 2026 15:37:28 UTC"><span class="timeago" datetime="2026-04-07T15:37:28+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 7, 2026 15:37:28 UTC">2026-04-07</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 8, 2026 15:27:33 UTC"><span class="timeago" datetime="2026-04-08T15:27:33+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 8, 2026 15:27:33 UTC">2026-04-08</span>
   </span>
 
     

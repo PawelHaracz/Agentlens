@@ -1,0 +1,1650 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://agentlens.cloudtown.io/superpowers/specs/2026-04-08-unified-catalog-view-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Feature 2.2 — Unified Catalog View (A2A + MCP in one screen) - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../css/timeago.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#feature-22-unified-catalog-view-a2a-mcp-in-one-screen" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Feature 2.2 — Unified Catalog View (A2A + MCP in one screen)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-made-during-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions Made During Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope (in)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope (out)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backend-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-rawcard-plugin-cardstoreplugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. RawCard Plugin (CardStorePlugin)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. RawCard Plugin (CardStorePlugin)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-kernel-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New kernel interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plugin-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kernel extension
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-006-extract-raw_definition-from-agent_types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration 006: Extract raw_definition from agent_types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ingestion-path-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingestion path changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoint-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API endpoint changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-list-endpoint-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. List Endpoint Extension
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-handler-requires-cardstore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Handler requires CardStore
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#react-query-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        react-query Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#url-state-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        URL State Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#empty-loading-error-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Empty / Loading / Error States
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyboard Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#route-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Route Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-client-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Client Extension
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-tests-vitest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Tests (Vitest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e2e-tests-playwright" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E2E Tests (Playwright)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-traps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Traps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-order-suggested-commit-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution Order (suggested commit sequence)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="feature-22-unified-catalog-view-a2a-mcp-in-one-screen">Feature 2.2 — Unified Catalog View (A2A + MCP in one screen)<a class="headerlink" href="#feature-22-unified-catalog-view-a2a-mcp-in-one-screen" title="Permanent link">&para;</a></h1>
+<p><strong>Tier:</strong> 2 — SHOULD HAVE, first post-launch feature
+<strong>Effort:</strong> M-L (5-7 days, increased from original 3-5 due to RawCard plugin extraction)
+<strong>Date:</strong> 2026-04-08</p>
+<hr />
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Turn the catalog screen into a single unified table listing every discovered resource — A2A agents, MCP servers, and (future) A2UI surfaces — side by side, with protocol filtering, unified search, and a drill-down with the raw card JSON.</p>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p>Multi-protocol registry in a single UI is AgentLens's strongest differentiator. No existing tool shows "all your AI agents and MCP servers in one place, filter by protocol, search across all of them." The backend already stores both protocols in the same <code>catalog_entries</code> table — the UI just does not yet show them unified.</p>
+<hr />
+<h2 id="decisions-made-during-design">Decisions Made During Design<a class="headerlink" href="#decisions-made-during-design" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw card storage</td>
+<td>New <code>CardStorePlugin</code> in microkernel</td>
+<td>Respects Product Archetype — <code>RawDefinition</code> is being extracted from <code>AgentType</code> into a dedicated plugin to encapsulate growing complexity (content type, fetch time, truncation, future: history, diffing)</td>
+</tr>
+<tr>
+<td>List endpoint</td>
+<td>Extend existing <code>GET /api/v1/catalog</code></td>
+<td>Already supports <code>protocol</code> and <code>q</code> params. Add <code>sort</code>, expand search scope. No new endpoint.</td>
+</tr>
+<tr>
+<td>Detail page structure</td>
+<td>Restructure into Tabs (Overview + Raw Card)</td>
+<td>Current detail is a single scrollable card. Tabs provide clean separation for the new Raw Card view.</td>
+</tr>
+<tr>
+<td>Data fetching</td>
+<td>Add <code>@tanstack/react-query</code></td>
+<td>App currently uses plain fetch. react-query provides caching, dedup, background refetch, and cleaner hook patterns.</td>
+</tr>
+<tr>
+<td>Catalog UI approach</td>
+<td>Clean rewrite</td>
+<td>New route-based file structure under <code>routes/catalog/</code>. Old <code>CatalogList.tsx</code> and <code>EntryDetail.tsx</code> replaced.</td>
+</tr>
+<tr>
+<td>Syntax highlighting</td>
+<td><code>prismjs</code></td>
+<td>Lightweight (~15KB), supports JSON well, good enough for read-only display. No monaco-editor.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="scope-in">Scope (in)<a class="headerlink" href="#scope-in" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Unified catalog table showing A2A + MCP entries together, sorted by default by <code>lastSuccessAt DESC</code></li>
+<li>Protocol filter bar: <code>All</code> (default), <code>A2A</code>, <code>MCP</code> — single-select</li>
+<li>Full-text search across <code>displayName</code>, <code>description</code>, <code>capabilities.name</code>, <code>capabilities.description</code>, <code>categories</code>, <code>provider.organization</code></li>
+<li>Per-row display: protocol badge, provider, skill count, health badge, spec version badge, last seen relative time</li>
+<li>Drill-down detail view: tabbed layout with Overview + Raw Card tab (pretty-printed JSON)</li>
+<li>Search and filter state synced to URL query params (<code>?protocol=a2a&amp;q=translate</code>)</li>
+<li>Empty states and skeleton loaders</li>
+<li>RawCard plugin extracting raw definition storage from AgentType</li>
+</ol>
+<h2 id="scope-out">Scope (out)<a class="headerlink" href="#scope-out" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A2UI protocol rendering (no parser yet)</li>
+<li>Semantic/vector search (feature 3.3)</li>
+<li>Saved searches/bookmarks</li>
+<li>Server-side pagination redesign — keep existing limit/offset</li>
+<li>Bulk actions (delete, deprecate many)</li>
+<li>Column customization/show-hide/reordering</li>
+<li>CSV/JSON export</li>
+<li>FTS5 or Postgres <code>tsvector</code> — <code>LIKE</code>/<code>ILIKE</code> is enough for MVP volumes</li>
+</ul>
+<hr />
+<h2 id="backend-changes">Backend Changes<a class="headerlink" href="#backend-changes" title="Permanent link">&para;</a></h2>
+<h3 id="1-rawcard-plugin-cardstoreplugin">1. RawCard Plugin (CardStorePlugin)<a class="headerlink" href="#1-rawcard-plugin-cardstoreplugin" title="Permanent link">&para;</a></h3>
+<h4 id="new-kernel-interface">New kernel interface<a class="headerlink" href="#new-kernel-interface" title="Permanent link">&para;</a></h4>
+<p>File: <code>internal/kernel/plugin.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">CardStorePlugin</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Plugin</span>
+<span class="w">    </span><span class="nx">StoreCard</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">agentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="nx">contentType</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">GetCard</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">agentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">RawCard</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>New plugin type constant: <code>PluginTypeCardStore = "cardstore"</code></p>
+<h4 id="new-model">New model<a class="headerlink" href="#new-model" title="Permanent link">&para;</a></h4>
+<p>File: <code>internal/model/raw_card.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">RawCard</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">AgentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="w">    </span><span class="s">`json:&quot;agent_type_id&quot;`</span>
+<span class="w">    </span><span class="nx">Data</span><span class="w">        </span><span class="p">[]</span><span class="kt">byte</span><span class="w">    </span><span class="s">`json:&quot;data&quot;`</span>
+<span class="w">    </span><span class="nx">ContentType</span><span class="w"> </span><span class="kt">string</span><span class="w">    </span><span class="s">`json:&quot;content_type&quot;`</span>
+<span class="w">    </span><span class="nx">FetchedAt</span><span class="w">   </span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="w"> </span><span class="s">`json:&quot;fetched_at&quot;`</span>
+<span class="w">    </span><span class="nx">Truncated</span><span class="w">   </span><span class="kt">bool</span><span class="w">      </span><span class="s">`json:&quot;truncated&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This is NOT a GORM model — it's a plain struct. The plugin owns the DB schema.</p>
+<h4 id="plugin-implementation">Plugin implementation<a class="headerlink" href="#plugin-implementation" title="Permanent link">&para;</a></h4>
+<p>Location: <code>plugins/cardstore/plugin.go</code></p>
+<ul>
+<li>Plugin name: <code>"card-store"</code></li>
+<li>Plugin type: <code>PluginTypeCardStore</code></li>
+<li>DB table: <code>raw_cards</code></li>
+<li><code>agent_type_id TEXT PRIMARY KEY</code> (FK to agent_types.id)</li>
+<li><code>data BLOB NOT NULL</code></li>
+<li><code>content_type TEXT NOT NULL DEFAULT 'application/json'</code></li>
+<li><code>fetched_at TIMESTAMP NOT NULL</code></li>
+<li><code>truncated BOOLEAN NOT NULL DEFAULT FALSE</code></li>
+<li><code>Init</code>: uses GORM AutoMigrate (idempotent — migration 006 creates the table first, AutoMigrate is a no-op safety net)</li>
+<li><code>StoreCard</code>: enforces 256 KiB cap (truncates and sets <code>truncated=true</code>), upserts by <code>agent_type_id</code></li>
+<li><code>GetCard</code>: returns <code>*model.RawCard</code> or error if not found</li>
+</ul>
+<h4 id="kernel-extension">Kernel extension<a class="headerlink" href="#kernel-extension" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>Core</code> gains <code>cardStore CardStorePlugin</code> field</li>
+<li><code>Core.CardStore() CardStorePlugin</code> method added to <code>Kernel</code> interface</li>
+<li><code>PluginManager.InitAll()</code> detects <code>CardStorePlugin</code> and registers via <code>core.RegisterCardStore()</code></li>
+<li>New method <code>Core.RegisterCardStore(p CardStorePlugin)</code> in <code>core_registry.go</code></li>
+</ul>
+<h4 id="migration-006-extract-raw_definition-from-agent_types">Migration 006: Extract raw_definition from agent_types<a class="headerlink" href="#migration-006-extract-raw_definition-from-agent_types" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Step 1</strong>: CREATE <code>raw_cards</code> table (the migration creates it, not the plugin — the plugin's AutoMigrate is idempotent and serves as a safety net)</li>
+<li><strong>Step 2</strong>: Copy existing <code>agent_types.raw_definition</code> data into <code>raw_cards</code> table (INSERT ... SELECT)</li>
+<li><strong>Step 3</strong>: Drop <code>raw_definition</code> column from <code>agent_types</code> (dialect-aware: SQLite 3.35+ supports DROP COLUMN, older SQLite requires table rebuild)</li>
+<li>Update <code>AgentType</code> model: remove <code>RawDefinition []byte</code> field and <code>RawDefJSON json.RawMessage</code> field</li>
+<li>Update <code>catalogEntryJSON</code>: remove <code>RawDef json.RawMessage</code> field (raw card is only served via <code>/catalog/{id}/card</code>, never embedded in list responses)</li>
+<li>Remove <code>SyncRawDefForJSON()</code> method from <code>AgentType</code></li>
+<li>Update archetype test <code>TestArchetype_AgentTypeHasRequiredFields</code>: remove <code>RawDefinition</code> from required fields</li>
+<li>Update archetype test <code>TestArchetype_CatalogEntryHasNoProductFields</code>: remove <code>RawDefinition</code> from product-only fields (it no longer exists on either)</li>
+</ul>
+<h4 id="ingestion-path-changes">Ingestion path changes<a class="headerlink" href="#ingestion-path-changes" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Discovery</strong> (<code>discovery/manager.go</code> <code>upsert()</code>): after parsing, call <code>kernel.CardStore().StoreCard(ctx, at.ID, rawBytes, "application/json")</code> with the raw bytes that were passed to the parser</li>
+<li><strong>API</strong> (<code>api/catalog_helpers.go</code> <code>registerAgentType()</code>): same — store card via plugin after creating the entry</li>
+<li><strong>Parser</strong> (<code>Parse(raw []byte) (*AgentType, error)</code>): signature unchanged. Parsers no longer set <code>RawDefinition</code> on the returned <code>AgentType</code>. The raw bytes are stored by the caller via the card store plugin.</li>
+</ul>
+<h4 id="api-endpoint-changes">API endpoint changes<a class="headerlink" href="#api-endpoint-changes" title="Permanent link">&para;</a></h4>
+<p><code>GET /api/v1/catalog/{id}/card</code> (existing in <code>handlers.go:232</code>):
+- Change from reading <code>entry.AgentType.RawDefinition</code> to calling <code>kernel.CardStore().GetCard(ctx, entry.AgentTypeID)</code>
+- Set <code>Content-Type</code> from <code>card.ContentType</code> (was hardcoded <code>application/json</code>)
+- Add <code>X-Raw-Card-Fetched-At</code> response header with ISO 8601 timestamp
+- Add <code>If-None-Match</code> / weak ETag support using <code>fetched_at</code>
+- Return 404 with <code>{"error": "no raw card stored"}</code> if card not found (legacy entries or plugin not loaded)</p>
+<h3 id="2-list-endpoint-extension">2. List Endpoint Extension<a class="headerlink" href="#2-list-endpoint-extension" title="Permanent link">&para;</a></h3>
+<p>Extend <code>GET /api/v1/catalog</code> handler (<code>handlers.go:42</code>):</p>
+<p><strong>New <code>sort</code> parameter</strong> added to <code>ListFilter</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">ListFilter</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing fields...</span>
+<span class="w">    </span><span class="nx">Sort</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="c1">// &quot;lastSuccessAt_desc&quot; (default), &quot;displayName_asc&quot;, &quot;createdAt_desc&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Handler validates <code>sort</code> values — unknown values return <code>400 Bad Request</code>.</p>
+<p><strong>Expanded <code>q</code> search</strong> in <code>sql_store_query.go</code>:
+- Current: <code>display_name LIKE ? OR description LIKE ?</code>
+- New: also searches <code>capabilities.name</code>, <code>capabilities.description</code>, <code>categories</code> JSON, <code>providers.organization</code>
+- Implementation: LEFT JOIN capabilities + LEFT JOIN providers, DISTINCT to avoid duplicates
+- Case-insensitive via <code>LOWER()</code> on both sides (works on SQLite and Postgres)</p>
+<p><strong>Sort implementation</strong> in <code>sql_store_query.go</code>:
+- <code>lastSuccessAt_desc</code>: <code>ORDER BY health_last_success_at DESC NULLS LAST</code>
+- <code>displayName_asc</code>: <code>ORDER BY display_name ASC</code> (current default)
+- <code>createdAt_desc</code>: <code>ORDER BY created_at DESC</code>
+- Default (empty): <code>lastSuccessAt_desc</code></p>
+<p><strong>Search highlighting</strong> (optional, low effort):
+When <code>q</code> is non-empty, compute <code>searchMatch</code> for each returned entry:
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;searchMatch&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;field&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;capabilities.name&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;snippet&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...supports translate between en and de...&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+Priority order: displayName &gt; description &gt; capabilities.name &gt; capabilities.description &gt; categories &gt; provider.organization. Computed server-side after the query, not in SQL.</p>
+<h3 id="3-handler-requires-cardstore">3. Handler requires CardStore<a class="headerlink" href="#3-handler-requires-cardstore" title="Permanent link">&para;</a></h3>
+<p><code>Handler</code> struct gains access to the card store:
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Handler</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">store</span><span class="w">       </span><span class="nx">store</span><span class="p">.</span><span class="nx">Store</span>
+<span class="w">    </span><span class="nx">parsers</span><span class="w">     </span><span class="nx">kernel</span><span class="p">.</span><span class="nx">Kernel</span>
+<span class="w">    </span><span class="nx">cardFetcher</span><span class="w"> </span><span class="nx">service</span><span class="p">.</span><span class="nx">Fetcher</span>
+<span class="w">    </span><span class="c1">// kernel reference for CardStore() access</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p>The handler already holds a <code>kernel.Kernel</code> reference via <code>parsers</code>. <code>CardStore()</code> is accessed via <code>h.parsers.CardStore()</code>.</p>
+<hr />
+<h2 id="frontend-changes">Frontend Changes<a class="headerlink" href="#frontend-changes" title="Permanent link">&para;</a></h2>
+<h3 id="file-layout">File Layout<a class="headerlink" href="#file-layout" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>web/src/
+  routes/catalog/
+    CatalogListPage.tsx        (new — replaces components/CatalogList.tsx)
+    CatalogDetailPage.tsx      (new — replaces components/EntryDetail.tsx)
+    components/
+      ProtocolFilter.tsx       (new)
+      UnifiedSearchBox.tsx     (new)
+      CatalogRow.tsx           (new)
+      RawCardTab.tsx           (new)
+      SearchHighlight.tsx      (new)
+      SpecVersionBadge.tsx     (new — extracted reusable component)
+  hooks/
+    useCatalogQuery.ts         (new — react-query hook with URL sync)
+  lib/
+    catalogApi.ts              (new — extended API client for catalog)
+</code></pre></div>
+<p><strong>Old files removed</strong>: <code>components/CatalogList.tsx</code>, <code>components/EntryDetail.tsx</code></p>
+<h3 id="new-dependencies">New Dependencies<a class="headerlink" href="#new-dependencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>@tanstack/react-query</code> — data fetching, caching, background refetch</li>
+<li><code>@radix-ui/react-toggle-group</code> — for shadcn ToggleGroup component</li>
+<li><code>@radix-ui/react-hover-card</code> — for shadcn HoverCard component</li>
+<li><code>prismjs</code> + <code>@types/prismjs</code> — JSON syntax highlighting</li>
+</ul>
+<h3 id="react-query-setup">react-query Setup<a class="headerlink" href="#react-query-setup" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add <code>QueryClientProvider</code> wrapping <code>&lt;App&gt;</code> in <code>main.tsx</code> (or <code>App.tsx</code>)</li>
+<li>Default stale time: 30 seconds</li>
+<li><code>useCatalogQuery</code> hook:</li>
+<li>Reads URL params via <code>useSearchParams</code> (react-router-dom v6)</li>
+<li>Builds <code>ListFilter</code> from URL params</li>
+<li>Calls <code>listCatalog(filter)</code> via react-query <code>useQuery</code></li>
+<li>Query key: <code>['catalog', { protocol, q, sort, state, limit, offset }]</code></li>
+<li>Exposes <code>setProtocol()</code>, <code>setQuery()</code>, <code>setSort()</code> functions that update URL params</li>
+<li>URL changes trigger re-render → new query key → auto refetch</li>
+</ul>
+<h3 id="url-state-contract">URL State Contract<a class="headerlink" href="#url-state-contract" title="Permanent link">&para;</a></h3>
+<p>Single source of truth: the URL. Params:
+- <code>?protocol=a2a</code> | <code>?protocol=mcp</code> | absent (= all)
+- <code>?q=translate</code>
+- <code>?sort=lastSuccessAt_desc</code> | <code>?sort=displayName_asc</code> | <code>?sort=createdAt_desc</code>
+- <code>?state=active,degraded</code> (existing)
+- <code>?limit=</code> / <code>?offset=</code> (existing)</p>
+<h3 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h3>
+<p><strong>ProtocolFilter</strong>:
+- shadcn <code>ToggleGroup</code> (single-select)
+- Options: <code>All</code> (Boxes icon), <code>A2A</code> (Bot icon), <code>MCP</code> (Plug icon)
+- On change: updates <code>?protocol=</code> URL param</p>
+<p><strong>UnifiedSearchBox</strong>:
+- shadcn <code>Input</code> with <code>Search</code> lucide icon
+- 250ms debounce before URL push
+- Clear button (<code>X</code>) when non-empty
+- Enter bypasses debounce
+- Placeholder: <code>Search across A2A and MCP — name, description, skills, tags, provider...</code></p>
+<p><strong>CatalogRow</strong>:
+- shadcn <code>TableRow</code> + <code>TableCell</code>
+- Columns:
+  1. Protocol — <code>ProtocolBadge</code> (existing component, blue=A2A, green=MCP, purple=A2UI)
+  2. Name — <code>displayName</code> primary, truncated <code>description</code> (80 chars) muted underneath, tooltip for full
+  3. Provider — <code>provider.organization</code> (fallback <code>—</code>), link icon if <code>provider.url</code>
+  4. Skills — pill with count (<code>12 skills</code>), <code>HoverCard</code> showing first 8 names
+  5. Status — <code>StatusBadge</code> (existing component, reused)
+  6. Spec — <code>SpecVersionBadge</code> (new extracted component)
+  7. Last seen — relative time from <code>health.lastSuccessAt</code>, tooltip with absolute UTC
+- Row clickable → navigates to <code>/catalog/:id</code></p>
+<p><strong>SpecVersionBadge</strong>:
+- Extracted from inline <code>&lt;Badge variant="outline"&gt;Spec v{entry.spec_version}&lt;/Badge&gt;</code> in current EntryDetail
+- Renders nothing if <code>spec_version</code> is empty</p>
+<p><strong>SearchHighlight</strong>:
+- When <code>searchMatch.snippet</code> present, renders below description
+- Matched text wrapped in <code>&lt;mark&gt;</code> with <code>bg-yellow-200/40 dark:bg-yellow-500/20 rounded-sm</code></p>
+<p><strong>CatalogDetailPage</strong>:
+- Restructured into shadcn <code>Tabs</code>:
+  - <strong>Overview</strong> tab: header (title, description, badges, actions), fields grid, categories, capabilities, health — all current content minus raw definition
+  - <strong>Raw Card</strong> tab: <code>RawCardTab</code> component</p>
+<p><strong>RawCardTab</strong>:
+- Calls <code>GET /catalog/{id}/card</code>
+- Renders with prismjs syntax-highlighted JSON
+- Copy-to-clipboard button in tab header
+- Download button → browser download as <code>&lt;displayName&gt;.json</code>
+- Shows "Fetched at: <relative time>" from <code>X-Raw-Card-Fetched-At</code> header
+- If truncated (metadata flag): shadcn <code>Alert</code> warning</p>
+<h3 id="empty-loading-error-states">Empty / Loading / Error States<a class="headerlink" href="#empty-loading-error-states" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Skeleton</strong>: 8 shadcn <code>Skeleton</code> rows during initial load</li>
+<li><strong>Empty (no data)</strong>: shadcn <code>Card</code> with "No catalog entries yet" + <code>curl</code> command + copy button</li>
+<li><strong>Empty (filters exclude all)</strong>: shadcn <code>Alert</code> with "No entries match your filters" + Clear filters button</li>
+<li><strong>Error</strong>: shadcn <code>Alert variant="destructive"</code> with retry button</li>
+</ul>
+<h3 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>/</code> — focus search box</li>
+<li><code>Up/Down</code> — navigate rows</li>
+<li><code>Enter</code> — open selected row detail</li>
+<li><code>Escape</code> — leave search focus</li>
+</ul>
+<p>Implemented via <code>useEffect</code> + <code>keydown</code> listener on the list page.</p>
+<hr />
+<h2 id="route-changes">Route Changes<a class="headerlink" href="#route-changes" title="Permanent link">&para;</a></h2>
+<p><strong><code>App.tsx</code></strong> route updates:
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">Route</span><span class="w"> </span><span class="na">path</span><span class="o">=</span><span class="s">&quot;/&quot;</span><span class="w"> </span><span class="na">element</span><span class="o">=</span><span class="p">{&lt;</span><span class="nt">CatalogListPage</span><span class="w"> </span><span class="p">/&gt;}</span><span class="w"> </span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="nt">Route</span><span class="w"> </span><span class="na">path</span><span class="o">=</span><span class="s">&quot;/catalog/:id&quot;</span><span class="w"> </span><span class="na">element</span><span class="o">=</span><span class="p">{&lt;</span><span class="nt">CatalogDetailPage</span><span class="w"> </span><span class="p">/&gt;}</span><span class="w"> </span><span class="p">/&gt;</span>
+</code></pre></div></p>
+<h3 id="api-client-extension">API Client Extension<a class="headerlink" href="#api-client-extension" title="Permanent link">&para;</a></h3>
+<p>File: <code>web/src/lib/catalogApi.ts</code> (new, or extend existing <code>api.ts</code>)</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">ListFilter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">protocol?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w">    </span><span class="c1">// &#39;a2a&#39; | &#39;mcp&#39; | undefined (= all)</span>
+<span class="w">  </span><span class="nx">q?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">sort?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w">        </span><span class="c1">// &#39;lastSuccessAt_desc&#39; | &#39;displayName_asc&#39; | &#39;createdAt_desc&#39;</span>
+<span class="w">  </span><span class="nx">state?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w">       </span><span class="c1">// comma-separated lifecycle states</span>
+<span class="w">  </span><span class="nx">limit?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">  </span><span class="nx">offset?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">listCatalog</span><span class="p">(</span><span class="nx">filter</span><span class="o">:</span><span class="w"> </span><span class="kt">ListFilter</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">CatalogEntry</span><span class="p">[]</span><span class="o">&gt;</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">getEntry</span><span class="p">(</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">CatalogEntry</span><span class="o">&gt;</span>
+
+<span class="c1">// getRawCard reads the raw response body as text + extracts Content-Type</span>
+<span class="c1">// and X-Raw-Card-Fetched-At from response headers (the /card endpoint</span>
+<span class="c1">// returns raw bytes, not JSON — the frontend reads body + headers separately)</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">getRawCard</span><span class="p">(</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">contentType</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">fetchedAt</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span><span class="o">&gt;</span>
+</code></pre></div>
+<hr />
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<h3 id="backend-tests">Backend Tests<a class="headerlink" href="#backend-tests" title="Permanent link">&para;</a></h3>
+<p><strong>Card store plugin tests</strong> (both SQLite and Postgres):
+- Store card → GetCard returns identical bytes
+- GetCard for nonexistent entry → error
+- Card &gt; 256 KiB → stored truncated, <code>Truncated == true</code></p>
+<p><strong>Store query tests</strong>:
+- List with <code>protocol=A2A</code> returns only A2A entries
+- List with <code>q=translate</code> matches across all six text fields
+- List with <code>protocol=A2A&amp;q=mcp-thing</code> returns empty
+- Sort <code>lastSuccessAt_desc</code>: entries with NULL lastSuccessAt at bottom</p>
+<p><strong>Handler tests</strong>:
+- Unknown <code>protocol</code> → 400
+- Unknown <code>sort</code> → 400
+- <code>GET /catalog/{id}/card</code> → 200 with correct Content-Type
+- Same endpoint → 404 for entry without card
+- <code>If-None-Match</code> with matching ETag → 304
+- Viewer role can list, search, filter, and read card</p>
+<p><strong>Parser tests</strong>:
+- A2A/MCP parsers return valid <code>*AgentType</code> without <code>RawDefinition</code> field</p>
+<p><strong>Migration test</strong>:
+- Existing entries with raw_definition are migrated to raw_cards table
+- AgentType no longer has RawDefinition column</p>
+<h3 id="frontend-tests-vitest">Frontend Tests (Vitest)<a class="headerlink" href="#frontend-tests-vitest" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>useCatalogQuery</code>: URL ↔ state round-trip</li>
+<li>Each empty state snapshot test</li>
+<li><code>ProtocolFilter</code>: updates URL on toggle</li>
+<li><code>UnifiedSearchBox</code>: 250ms debounce behavior</li>
+<li><code>RawCardTab</code>: renders JSON, copy/download work</li>
+<li><code>SpecVersionBadge</code>: renders for known versions, renders nothing for empty</li>
+</ul>
+<h3 id="e2e-tests-playwright">E2E Tests (Playwright)<a class="headerlink" href="#e2e-tests-playwright" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Seed 2 A2A + 1 MCP entries</li>
+<li>Open <code>/</code> → see all 3 rows</li>
+<li>Click A2A filter → 2 rows, URL updates to <code>?protocol=a2a</code></li>
+<li>Reload → filter persists</li>
+<li>Type <code>translate</code> → matching rows only, <code>&lt;mark&gt;</code> visible</li>
+<li>Click row → detail page</li>
+<li>Click Raw Card tab → JSON visible, copy works</li>
+<li>Click All → 3 rows back</li>
+<li>Keyboard: <code>/</code> → search focused, <code>Escape</code> → leaves, <code>Up/Down/Enter</code> → navigation</li>
+</ol>
+<hr />
+<h2 id="known-traps">Known Traps<a class="headerlink" href="#known-traps" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Do NOT re-serialize the raw card. Store verbatim bytes. Reviewers must see exactly what the agent published.</li>
+<li>Do NOT rename <code>CatalogEntry</code> to <code>Agent</code>. The catalog is not just about agents.</li>
+<li>Do NOT build two separate list endpoints for A2A and MCP. One endpoint, one table.</li>
+<li>Do NOT use <code>DisallowUnknownFields</code> in parsers or DTOs.</li>
+<li>Do NOT add FTS5 or Postgres <code>tsvector</code>. <code>LIKE</code>/<code>ILIKE</code> for MVP.</li>
+<li>Do NOT embed raw card bytes in list responses. Only via <code>/catalog/{id}/card</code>.</li>
+<li>Do NOT pull in <code>monaco-editor</code>. prismjs is sufficient.</li>
+<li>Do NOT introduce a new router or state manager. Use <code>react-router-dom</code> v6 + react-query.</li>
+<li>Do NOT bypass existing <code>StatusBadge</code> / <code>ProtocolBadge</code> components. Import and reuse.</li>
+<li>Do NOT gate 2.2 behind enterprise license. Unified view is OSS Core.</li>
+<li>Do NOT store raw card in <code>Metadata map[string]string</code>. Card store plugin owns this.</li>
+<li>Do NOT block list queries on heavy JOINs. If skill search is slow, add denormalized <code>search_text</code> in follow-up.</li>
+<li>Do NOT add <code>RawDefinition</code> or equivalent to <code>CatalogEntry</code>. Archetype test enforces separation.</li>
+</ol>
+<hr />
+<h2 id="execution-order-suggested-commit-sequence">Execution Order (suggested commit sequence)<a class="headerlink" href="#execution-order-suggested-commit-sequence" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>RawCard</code> model struct + <code>CardStorePlugin</code> interface in kernel</li>
+<li>Card store plugin implementation in <code>plugins/cardstore/</code></li>
+<li>Migration 006: create <code>raw_cards</code> table, copy data, remove <code>raw_definition</code> from <code>agent_types</code></li>
+<li>Update <code>AgentType</code> model: remove <code>RawDefinition</code>, <code>RawDefJSON</code>, <code>SyncRawDefForJSON()</code></li>
+<li>Update <code>catalogEntryJSON</code>: remove <code>RawDef</code> field</li>
+<li>Update archetype tests</li>
+<li>Update parsers: stop setting <code>RawDefinition</code></li>
+<li>Update ingestion paths: store card via plugin after parsing</li>
+<li>Update <code>GET /catalog/{id}/card</code> to read from card store plugin</li>
+<li>Add <code>sort</code> param to <code>ListFilter</code> and store query</li>
+<li>Expand <code>q</code> search to include capabilities, categories, provider</li>
+<li>Add search highlighting metadata</li>
+<li>Install frontend dependencies (react-query, shadcn components, prismjs)</li>
+<li>Create <code>useCatalogQuery</code> hook with URL sync</li>
+<li>Build <code>ProtocolFilter</code> and <code>UnifiedSearchBox</code></li>
+<li>Build <code>CatalogRow</code> and <code>SpecVersionBadge</code></li>
+<li>Build <code>CatalogListPage</code> (clean rewrite)</li>
+<li>Build empty/loading/error states</li>
+<li>Build <code>RawCardTab</code></li>
+<li>Build <code>CatalogDetailPage</code> with Tabs (clean rewrite)</li>
+<li>Add keyboard shortcuts</li>
+<li>Wire up routes in <code>App.tsx</code>, remove old components</li>
+<li>Frontend unit tests</li>
+<li>E2E test extension in Playwright</li>
+<li>Wire card store plugin in <code>main.go</code></li>
+</ol>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 8, 2026 15:27:33 UTC"><span class="timeago" datetime="2026-04-08T15:27:33+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 8, 2026 15:27:33 UTC">2026-04-08</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 8, 2026 15:27:33 UTC"><span class="timeago" datetime="2026-04-08T15:27:33+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 8, 2026 15:27:33 UTC">2026-04-08</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../js/timeago.min.js"></script>
+      
+        <script src="../../../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>
