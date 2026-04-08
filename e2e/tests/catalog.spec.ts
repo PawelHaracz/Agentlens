@@ -123,12 +123,21 @@ test.describe('Catalog Management', () => {
     expect(res.status()).toBe(400);
   });
 
-  test('UI: dashboard shows catalog table', async ({ page }) => {
+  test('UI: dashboard shows catalog table', async ({ page, request }) => {
+    // Create an entry so the table renders (empty catalog shows empty state, not table headers).
+    const entry = await createCatalogEntry(request, token, {
+      display_name: 'Dashboard Table Agent',
+      endpoint: `http://dashboard-table-${Date.now()}.example.com`,
+    });
+
     await loginViaUI(page);
     // Stats bar should be visible
     await expect(page.getByText('Total').first()).toBeVisible();
-    // Table headers should be visible
+    // Table headers should be visible when there is at least one entry
     await expect(page.getByText(/Name|Protocol|Status/i).first()).toBeVisible();
+
+    // Cleanup
+    await deleteCatalogEntry(request, token, entry.id);
   });
 
   test('UI: catalog entry detail view', async ({ page, request }) => {
@@ -270,6 +279,9 @@ test.describe('Unified Catalog View', () => {
   test('search input focuses on "/" keypress', async ({ page }) => {
     await loginViaUI(page);
     await page.goto('/');
+    // Click the page body to ensure keyboard focus is within the document
+    // (not in the browser URL bar or address chrome).
+    await page.locator('body').click();
     await page.keyboard.press('/');
     const input = page.getByRole('textbox', { name: 'Search catalog' });
     await expect(input).toBeFocused();
@@ -278,8 +290,8 @@ test.describe('Unified Catalog View', () => {
   test('protocol filter updates URL param', async ({ page }) => {
     await loginViaUI(page);
     await page.goto('/');
-    // Click the A2A toggle button
-    await page.getByRole('button', { name: /A2A/i }).click();
+    // ToggleGroup renders items as role="radio" (Radix UI single-select group)
+    await page.getByRole('radio', { name: /A2A/i }).click();
     await expect(page).toHaveURL(/protocol=a2a/);
   });
 
