@@ -4,9 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import React from 'react'
 import CatalogListPage from './CatalogListPage'
-import * as api from '../../api'
+import * as api from '@/api'
 
-vi.mock('../../api', () => ({
+vi.mock('@/api', () => ({
   listCatalog: vi.fn(),
   getStats: vi.fn(),
 }))

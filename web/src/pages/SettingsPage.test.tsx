@@ -12,7 +12,7 @@ vi.mock('../contexts/ThemeContext', () => ({
   useTheme: vi.fn(),
 }))
 
-vi.mock('../api', () => ({
+vi.mock('@/api', () => ({
   getSettings: vi.fn(),
   updateSettings: vi.fn(),
   listUsers: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock('../api', () => ({
 
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
-import * as api from '../api'
+import * as api from '@/api'
 
 const mockUseAuth = useAuth as ReturnType<typeof vi.fn>
 const mockUseTheme = useTheme as ReturnType<typeof vi.fn>

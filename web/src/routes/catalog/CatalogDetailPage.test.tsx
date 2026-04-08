@@ -2,10 +2,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import CatalogDetailPage from './CatalogDetailPage'
-import * as api from '../../api'
+import * as api from '@/api'
 import type { CatalogEntry, Health } from '../../types'
 
-vi.mock('../../api', () => ({
+vi.mock('@/api', () => ({
   getEntry: vi.fn(),
   postProbe: vi.fn(),
   patchLifecycle: vi.fn(),

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { validateAgentCard, createAgentFromCard, importCardFromURL } from '../api'
+import { validateAgentCard, createAgentFromCard, importCardFromURL } from '@/api'
 import type { ValidationResult } from '../types'
 import CardPreview from './CardPreview'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'

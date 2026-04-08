@@ -3,10 +3,10 @@ import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { useCatalogQuery } from './useCatalogQuery'
-import * as api from '../api'
+import * as api from '@/api'
 import type { CatalogEntry } from '../types'
 
-vi.mock('../api', () => ({
+vi.mock('@/api', () => ({
   listCatalog: vi.fn(),
 }))
 

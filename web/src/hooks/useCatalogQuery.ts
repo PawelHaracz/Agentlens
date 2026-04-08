@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useCallback } from 'react'
-import { listCatalog } from '../api'
+import { listCatalog } from '@/api'
 import type { ListFilter, Protocol } from '../types'
 
 export function useCatalogQuery() {

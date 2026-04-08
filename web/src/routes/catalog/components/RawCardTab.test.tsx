@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { RawCardTab } from './RawCardTab'
-import * as api from '../../../api'
+import * as api from '@/api'
 
-vi.mock('../../../api', () => ({
+vi.mock('@/api', () => ({
   getRawCard: vi.fn(),
 }))
 

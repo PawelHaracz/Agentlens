@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-json'
-import { getRawCard } from '../../../api'
+import { getRawCard } from '@/api'
 import { Alert, AlertDescription } from '../../../components/ui/alert'
 import { Button } from '../../../components/ui/button'
 import { Skeleton } from '../../../components/ui/skeleton'

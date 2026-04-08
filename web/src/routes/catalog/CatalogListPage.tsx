@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AlertCircle, RefreshCw, SearchX, Inbox } from 'lucide-react'
 import type { Stats } from '../../types'
-import { getStats } from '../../api'
+import { getStats } from '@/api'
 import { useCatalogQuery } from '../../hooks/useCatalogQuery'
 import StatsBar from '../../components/StatsBar'
 import RegisterAgentDialog from '../../components/RegisterAgentDialog'
