@@ -202,6 +202,10 @@ func main() {
 	// Start discovery manager
 	if len(sources) > 0 {
 		mgr := discovery.NewManager(sources, catalogStore, cfg.PollInterval)
+		// Wire card store into discovery manager if plugin loaded.
+		if core.CardStore() != nil {
+			mgr.SetCardStore(core.CardStore())
+		}
 		go func() {
 			if err := mgr.Run(ctx); err != nil {
 				slog.Error("discovery manager error", "err", err)

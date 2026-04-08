@@ -79,6 +79,7 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 		SpecVersion:  specVersion,
 		Provider:     &provider,
 		Capabilities: capabilities,
+		RawBytes:     raw,
 	}, nil
 }
 

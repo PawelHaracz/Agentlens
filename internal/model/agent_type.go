@@ -20,6 +20,10 @@ type AgentType struct {
 
 	// Capabilities loaded separately, not via GORM auto-preload.
 	Capabilities []Capability `json:"capabilities,omitempty" gorm:"-"`
+
+	// RawBytes holds the original card bytes during discovery. Not persisted.
+	// Populated by crawlers/sources; consumed by ingestion path to call StoreCard.
+	RawBytes []byte `json:"-" gorm:"-"`
 }
 
 func (AgentType) TableName() string { return "agent_types" }

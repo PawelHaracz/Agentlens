@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
 )
@@ -24,6 +26,8 @@ type Manager struct {
 	store        store.Store
 	pollInterval time.Duration
 	log          *slog.Logger
+	cardStoreMu  sync.RWMutex
+	cardStore    kernel.CardStorePlugin // may be nil
 }
 
 // NewManager creates a new Manager.
@@ -34,6 +38,13 @@ func NewManager(sources []Source, s store.Store, pollInterval time.Duration) *Ma
 		pollInterval: pollInterval,
 		log:          slog.With("component", "discovery-manager"),
 	}
+}
+
+// SetCardStore injects the card store plugin (called after plugin init).
+func (m *Manager) SetCardStore(cs kernel.CardStorePlugin) {
+	m.cardStoreMu.Lock()
+	defer m.cardStoreMu.Unlock()
+	m.cardStore = cs
 }
 
 // Run starts the poll loop and blocks until ctx is cancelled.
@@ -101,6 +112,16 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 			existing.UpdatedAt = now
 			if err := m.store.Update(ctx, existing); err != nil {
 				m.log.Warn("failed to update entry", "id", existing.ID, "err", err)
+			} else {
+				// Store updated raw card only when update succeeded.
+				m.cardStoreMu.RLock()
+				cs := m.cardStore
+				m.cardStoreMu.RUnlock()
+				if cs != nil && len(at.RawBytes) > 0 && existing.AgentType != nil {
+					if err := cs.StoreCard(ctx, existing.AgentType.ID, at.RawBytes, "application/json"); err != nil {
+						m.log.Warn("failed to store raw card on update", "agent_type_id", existing.AgentType.ID, "err", err)
+					}
+				}
 			}
 			seen[existing.ID] = true
 		} else {
@@ -120,6 +141,14 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 			if err := m.store.Create(ctx, entry); err != nil {
 				m.log.Warn("failed to create entry", "endpoint", at.Endpoint, "err", err)
 			} else {
+				m.cardStoreMu.RLock()
+				cs := m.cardStore
+				m.cardStoreMu.RUnlock()
+				if cs != nil && len(at.RawBytes) > 0 {
+					if err := cs.StoreCard(ctx, at.ID, at.RawBytes, "application/json"); err != nil {
+						m.log.Warn("failed to store raw card", "agent_type_id", at.ID, "err", err)
+					}
+				}
 				seen[entry.ID] = true
 			}
 		}

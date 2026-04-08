@@ -121,5 +121,6 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 		Capabilities: caps,
 		AgentKey:     model.ComputeAgentKey(model.ProtocolMCP, card.Remotes[0].URL),
 		CreatedOn:    time.Now().UTC(),
+		RawBytes:     raw,
 	}, nil
 }
