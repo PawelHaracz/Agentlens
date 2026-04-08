@@ -27,16 +27,17 @@ List all catalog entries with optional filtering.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `q` | string | Full-text search on display name, description |
-| `protocol` | string | Filter by protocol: `a2a`, `mcp`, `a2ui` |
-| `status` | string | Filter by status: `healthy`, `degraded`, `down`, `unknown` |
-| `source` | string | Filter by source: `k8s`, `config`, `push`, `upstream` |
-| `team` | string | Filter by provider team name |
-| `categories` | string | Comma-separated category filter |
-| `limit` | int | Maximum results to return (default: no limit) |
-| `offset` | int | Pagination offset |
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `q` | string | — | Full-text search across `display_name`, `description`, `capabilities.name`, `capabilities.description`, `categories`, `provider.organization`. |
+| `sort` | string | `lastSuccessAt_desc` | Sort order. Values: `lastSuccessAt_desc`, `displayName_asc`, `createdAt_desc`. Unknown values return `400`. |
+| `protocol` | string | — | Filter by protocol: `a2a`, `mcp`, `a2ui` |
+| `status` | string | — | Filter by status: `healthy`, `degraded`, `down`, `unknown` |
+| `source` | string | — | Filter by source: `k8s`, `config`, `push`, `upstream` |
+| `team` | string | — | Filter by provider team name |
+| `categories` | string | — | Comma-separated category filter |
+| `limit` | int | — | Maximum results to return (default: no limit) |
+| `offset` | int | — | Pagination offset |
 
 **Response 200:**
 ```json
@@ -411,9 +412,21 @@ Delete an entry from the catalog.
 
 Get the raw protocol card JSON (A2A or MCP card fetched from the agent).
 
+**Response headers:**
+- `Content-Type` — MIME type as stored in the card store
+- `X-Raw-Card-Fetched-At` — ISO 8601 timestamp indicating when the card was last fetched
+- `ETag` — weak entity tag (e.g., `W/"abc123"`) for conditional GET support
+
+**Conditional GET:** include `If-None-Match` with a previously received `ETag` value; if the card has not changed, the server returns `304 Not Modified` with no body.
+
 **Response 200:** Raw JSON card (content varies by protocol).
 
-**Response 404:** Entry or card not found.
+**Response 304:** Not Modified (ETag matched — card unchanged since last fetch).
+
+**Response 404:** Entry not found, or entry exists but no card has been stored (e.g., manually created entries):
+```json
+{"error": "no raw card stored"}
+```
 
 ---
 
