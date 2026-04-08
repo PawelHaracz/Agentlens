@@ -47,6 +47,7 @@ type ListFilter struct {
 	Categories []string
 	Limit      int
 	Offset     int
+	Sort       string // "lastSuccessAt_desc" (default) | "displayName_asc" | "createdAt_desc"
 }
 
 // StoreStats holds aggregate statistics about stored catalog entries.

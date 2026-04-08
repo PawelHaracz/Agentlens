@@ -102,6 +102,18 @@ func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
 			filter.Offset = n
 		}
 	}
+	if v := q.Get("sort"); v != "" {
+		validSorts := map[string]bool{
+			"lastSuccessAt_desc": true,
+			"displayName_asc":    true,
+			"createdAt_desc":     true,
+		}
+		if !validSorts[v] {
+			ErrorResponse(w, http.StatusBadRequest, "invalid sort value: "+v)
+			return
+		}
+		filter.Sort = v
+	}
 
 	entries, err := h.store.List(r.Context(), filter)
 	if err != nil {
