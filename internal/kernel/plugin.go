@@ -19,6 +19,7 @@ const (
 	PluginTypeSource     PluginType = "source"
 	PluginTypeMiddleware PluginType = "middleware"
 	PluginTypeStore      PluginType = "store"
+	PluginTypeCardStore  PluginType = "cardstore"
 )
 
 // Plugin is the base interface all plugins implement.
@@ -61,6 +62,13 @@ type SourcePlugin interface {
 	Discover(ctx context.Context) ([]*model.AgentType, error)
 }
 
+// CardStorePlugin persists verbatim raw card bytes keyed by AgentTypeID.
+type CardStorePlugin interface {
+	Plugin
+	StoreCard(ctx context.Context, agentTypeID string, data []byte, contentType string) error
+	GetCard(ctx context.Context, agentTypeID string) (*model.RawCard, error)
+}
+
 // Kernel is what the core exposes to plugins.
 type Kernel interface {
 	Store() store.Store
@@ -70,4 +78,5 @@ type Kernel interface {
 	Parser(protocol model.Protocol) (ParserPlugin, bool)
 	RegisterRoutes(prefix string, handler http.Handler)
 	RegisterMiddleware(mw func(http.Handler) http.Handler)
+	CardStore() CardStorePlugin
 }
