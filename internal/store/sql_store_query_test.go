@@ -125,3 +125,23 @@ func TestList_ExpandedSearch_Categories(t *testing.T) {
 	require.Len(t, results, 1, "expected one entry matching category 'nlp'")
 	assert.Equal(t, "Category Agent", results[0].DisplayName)
 }
+
+func TestList_ExpandedSearch_Provider(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	entry := namedEntry("prov-search", "Provider Agent")
+	entry.AgentType.Provider = &model.Provider{
+		ID:           "prov-acme",
+		Organization: "Acme Corp",
+	}
+	require.NoError(t, s.Create(ctx, entry))
+
+	other := namedEntry("no-prov", "Other Agent")
+	require.NoError(t, s.Create(ctx, other))
+
+	results, err := s.List(ctx, store.ListFilter{Query: "acme"})
+	require.NoError(t, err)
+	require.Len(t, results, 1, "expected one entry matching provider organization 'acme'")
+	assert.Equal(t, "Provider Agent", results[0].DisplayName)
+}

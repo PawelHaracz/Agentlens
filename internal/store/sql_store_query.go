@@ -38,6 +38,11 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 	}
 	if filter.Query != "" {
 		q := "%" + strings.ToLower(filter.Query) + "%"
+		// Join capabilities for skill-level search.
+		// Join providers only when the Team filter hasn't already done so, to avoid a duplicate JOIN.
+		if filter.Team == "" {
+			query = query.Joins("LEFT JOIN providers ON providers.id = agent_types.provider_id")
+		}
 		query = query.
 			Joins("LEFT JOIN capabilities ON capabilities.agent_type_id = agent_types.id").
 			Where(
@@ -45,8 +50,9 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 					"LOWER(catalog_entries.description) LIKE ? OR "+
 					"LOWER(capabilities.name) LIKE ? OR "+
 					"LOWER(capabilities.description) LIKE ? OR "+
-					"LOWER(catalog_entries.categories) LIKE ?",
-				q, q, q, q, q,
+					"LOWER(catalog_entries.categories) LIKE ? OR "+
+					"LOWER(providers.organization) LIKE ?",
+				q, q, q, q, q, q,
 			).
 			Distinct("catalog_entries.*")
 	}
