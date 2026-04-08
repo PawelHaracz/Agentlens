@@ -24,6 +24,7 @@ export default function CatalogDetailPage() {
 
   const [probing, setProbing] = useState(false)
   const [lifecycleLoading, setLifecycleLoading] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const fetchEntry = useCallback(async () => {
     if (!id) return
@@ -59,11 +60,12 @@ export default function CatalogDetailPage() {
   const handleLifecycle = async (newState: LifecycleState) => {
     if (!id) return
     setLifecycleLoading(true)
+    setActionError(null)
     try {
       const updated = await patchLifecycle(id, newState)
       setEntry(updated)
-    } catch {
-      // silently ignore; state stays as-is
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update lifecycle state')
     } finally {
       setLifecycleLoading(false)
     }
@@ -161,6 +163,15 @@ export default function CatalogDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Lifecycle action error */}
+      {actionError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Action failed</AlertTitle>
+          <AlertDescription>{actionError}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Tabbed content */}
       <Tabs defaultValue="overview">

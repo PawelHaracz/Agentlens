@@ -416,6 +416,7 @@ Get the raw protocol card JSON (A2A or MCP card fetched from the agent).
 - `Content-Type` — MIME type as stored in the card store
 - `X-Raw-Card-Fetched-At` — ISO 8601 timestamp indicating when the card was last fetched
 - `ETag` — weak entity tag (e.g., `W/"abc123"`) for conditional GET support
+- `X-Raw-Card-Truncated: true` — present only when the card was truncated at the 256 KiB storage cap; the returned bytes are incomplete
 
 **Conditional GET:** include `If-None-Match` with a previously received `ETag` value; if the card has not changed, the server returns `304 Not Modified` with no body.
 
