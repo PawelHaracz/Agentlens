@@ -94,7 +94,6 @@ func (m *Manager) upsert(ctx context.Context, sourceName string, agentTypes []*m
 				existing.AgentType.Version = at.Version
 				existing.AgentType.SpecVersion = at.SpecVersion
 				existing.AgentType.Provider = at.Provider
-				existing.AgentType.RawDefinition = at.RawDefinition
 				existing.AgentType.Capabilities = at.Capabilities
 			}
 			// Update CatalogEntry timestamps.

@@ -24,13 +24,12 @@ func sampleEntry(id string) *model.CatalogEntry {
 	now := time.Now().UTC().Truncate(time.Second)
 	endpoint := "http://example.com/" + id
 	agentType := &model.AgentType{
-		ID:            "at-" + id,
-		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      endpoint,
-		Version:       "1.0.0",
-		RawDefinition: []byte("{}"),
-		CreatedOn:     now,
+		ID:        "at-" + id,
+		AgentKey:  model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol:  model.ProtocolA2A,
+		Endpoint:  endpoint,
+		Version:   "1.0.0",
+		CreatedOn: now,
 	}
 	return &model.CatalogEntry{
 		ID:          id,

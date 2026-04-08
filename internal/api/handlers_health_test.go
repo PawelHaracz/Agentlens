@@ -18,12 +18,11 @@ import (
 func makeTestCatalogEntry(id string, state model.LifecycleState) *model.CatalogEntry {
 	now := time.Now().UTC()
 	agentType := &model.AgentType{
-		ID:            id + "-type",
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      "http://test-" + id + ".example.com",
-		Version:       "1.0.0",
-		RawDefinition: []byte("{}"),
-		CreatedOn:     now,
+		ID:        id + "-type",
+		Protocol:  model.ProtocolA2A,
+		Endpoint:  "http://test-" + id + ".example.com",
+		Version:   "1.0.0",
+		CreatedOn: now,
 	}
 	agentType.AgentKey = model.ComputeAgentKey(agentType.Protocol, agentType.Endpoint)
 	e := &model.CatalogEntry{

@@ -35,7 +35,6 @@ func TestParseA2ACard_Valid(t *testing.T) {
 	assert.Equal(t, "Acme Corp", at.Provider.Organization)
 	assert.Equal(t, model.ProtocolA2A, at.Protocol)
 	assert.NotEmpty(t, at.Capabilities)
-	assert.NotEmpty(t, at.RawDefinition)
 
 	// Find skill capability
 	var skill *model.A2ASkill

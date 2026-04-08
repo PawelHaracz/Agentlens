@@ -72,14 +72,13 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 	agentKey := model.ComputeAgentKey(model.ProtocolA2A, endpoint)
 
 	return &model.AgentType{
-		AgentKey:      agentKey,
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      endpoint,
-		Version:       card.Version,
-		SpecVersion:   specVersion,
-		Provider:      &provider,
-		Capabilities:  capabilities,
-		RawDefinition: raw,
+		AgentKey:     agentKey,
+		Protocol:     model.ProtocolA2A,
+		Endpoint:     endpoint,
+		Version:      card.Version,
+		SpecVersion:  specVersion,
+		Provider:     &provider,
+		Capabilities: capabilities,
 	}, nil
 }
 

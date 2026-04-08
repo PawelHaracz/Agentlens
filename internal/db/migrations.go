@@ -268,40 +268,75 @@ func migration006RawCards() Migration {
 				return fmt.Errorf("creating raw_cards table: %w", err)
 			}
 
-			// Step 2: Copy existing raw_definition bytes into raw_cards.
-			// Only copy rows that have non-empty raw_definition.
-			var insertSQL string
-			if tx.Dialector.Name() == "postgres" {
-				insertSQL = `
-					INSERT INTO raw_cards (agent_type_id, data, content_type, fetched_at, truncated)
-					SELECT id, raw_definition, 'application/json', NOW(), FALSE
-					FROM agent_types
-					WHERE raw_definition IS NOT NULL AND octet_length(raw_definition) > 0
-					ON CONFLICT (agent_type_id) DO NOTHING`
-			} else {
-				insertSQL = `
-					INSERT OR IGNORE INTO raw_cards (agent_type_id, data, content_type, fetched_at, truncated)
-					SELECT id, raw_definition, 'application/json', CURRENT_TIMESTAMP, FALSE
-					FROM agent_types
-					WHERE raw_definition IS NOT NULL AND length(raw_definition) > 0`
+			// Step 2: Copy existing raw_definition bytes into raw_cards only if
+			// the raw_definition column still exists (it won't on fresh databases
+			// created after the column was removed from the AgentType struct).
+			colExists, err := columnExists(tx, "agent_types", "raw_definition")
+			if err != nil {
+				return fmt.Errorf("checking raw_definition column: %w", err)
 			}
-			if err := tx.Exec(insertSQL).Error; err != nil {
-				return fmt.Errorf("copying raw_definition to raw_cards: %w", err)
-			}
-
-			// Step 3: Drop raw_definition column from agent_types.
-			// Postgres supports DROP COLUMN IF EXISTS unconditionally.
-			// SQLite 3.35+ supports it; older SQLite versions do not.
-			if err := tx.Exec(`ALTER TABLE agent_types DROP COLUMN IF EXISTS raw_definition`).Error; err != nil {
-				if tx.Dialector.Name() != "postgres" {
-					// Old SQLite doesn't support DROP COLUMN — leave as dead column.
-					slog.Warn("could not drop raw_definition column (old SQLite?), leaving as dead column", "err", err)
+			if colExists {
+				var insertSQL string
+				if tx.Dialector.Name() == "postgres" {
+					insertSQL = `
+						INSERT INTO raw_cards (agent_type_id, data, content_type, fetched_at, truncated)
+						SELECT id, raw_definition, 'application/json', NOW(), FALSE
+						FROM agent_types
+						WHERE raw_definition IS NOT NULL AND octet_length(raw_definition) > 0
+						ON CONFLICT (agent_type_id) DO NOTHING`
 				} else {
-					return fmt.Errorf("dropping raw_definition column: %w", err)
+					insertSQL = `
+						INSERT OR IGNORE INTO raw_cards (agent_type_id, data, content_type, fetched_at, truncated)
+						SELECT id, raw_definition, 'application/json', CURRENT_TIMESTAMP, FALSE
+						FROM agent_types
+						WHERE raw_definition IS NOT NULL AND length(raw_definition) > 0`
+				}
+				if err := tx.Exec(insertSQL).Error; err != nil {
+					return fmt.Errorf("copying raw_definition to raw_cards: %w", err)
+				}
+
+				// Step 3: Drop raw_definition column from agent_types.
+				// Postgres supports DROP COLUMN IF EXISTS unconditionally.
+				// SQLite 3.35+ supports it; older SQLite versions do not.
+				if err := tx.Exec(`ALTER TABLE agent_types DROP COLUMN IF EXISTS raw_definition`).Error; err != nil {
+					if tx.Dialector.Name() != "postgres" {
+						// Old SQLite doesn't support DROP COLUMN — leave as dead column.
+						slog.Warn("could not drop raw_definition column (old SQLite?), leaving as dead column", "err", err)
+					} else {
+						return fmt.Errorf("dropping raw_definition column: %w", err)
+					}
 				}
 			}
 
 			return nil
 		},
+	}
+}
+
+// columnExists reports whether a column exists in a given table.
+func columnExists(db *gorm.DB, table, column string) (bool, error) {
+	switch db.Dialector.Name() {
+	case "postgres":
+		var count int64
+		err := db.Raw(
+			"SELECT COUNT(*) FROM information_schema.columns WHERE table_name = ? AND column_name = ?",
+			table, column,
+		).Scan(&count).Error
+		return count > 0, err
+	default:
+		// SQLite: use PRAGMA table_info
+		type colInfo struct {
+			Name string
+		}
+		var cols []colInfo
+		if err := db.Raw("PRAGMA table_info(" + table + ")").Scan(&cols).Error; err != nil {
+			return false, err
+		}
+		for _, c := range cols {
+			if c.Name == column {
+				return true, nil
+			}
+		}
+		return false, nil
 	}
 }

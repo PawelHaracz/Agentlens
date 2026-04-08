@@ -27,12 +27,11 @@ func insertEntry(t *testing.T, s store.Store, id, endpoint string) *model.Catalo
 	t.Helper()
 	now := time.Now().UTC()
 	agentType := &model.AgentType{
-		ID:            "at-" + id,
-		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, endpoint),
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      endpoint,
-		RawDefinition: []byte("{}"),
-		CreatedOn:     now,
+		ID:        "at-" + id,
+		AgentKey:  model.ComputeAgentKey(model.ProtocolA2A, endpoint),
+		Protocol:  model.ProtocolA2A,
+		Endpoint:  endpoint,
+		CreatedOn: now,
 	}
 	e := &model.CatalogEntry{
 		ID:          id,

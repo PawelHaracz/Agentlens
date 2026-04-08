@@ -99,12 +99,11 @@ func TestDeleteEntry(t *testing.T) {
 
 	now := time.Now().UTC()
 	agentType := &model.AgentType{
-		ID:            "at-del-1",
-		AgentKey:      model.ComputeAgentKey(model.ProtocolA2A, "http://del.example.com"),
-		Protocol:      model.ProtocolA2A,
-		Endpoint:      "http://del.example.com",
-		RawDefinition: []byte("{}"),
-		CreatedOn:     now,
+		ID:        "at-del-1",
+		AgentKey:  model.ComputeAgentKey(model.ProtocolA2A, "http://del.example.com"),
+		Protocol:  model.ProtocolA2A,
+		Endpoint:  "http://del.example.com",
+		CreatedOn: now,
 	}
 	e := &model.CatalogEntry{
 		ID:          "del-1",

@@ -3,7 +3,6 @@ package health
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -247,23 +246,12 @@ func (p *Plugin) noURLHealth(current model.Health) model.Health {
 }
 
 // resolveProbURL returns the URL to probe for a catalog entry.
-// For A2A: uses supportedInterfaces[0].url if present, falls back to Endpoint.
-// For all others: uses Endpoint directly.
+// Falls back to Endpoint for all protocols.
+// Note: A2A supportedInterfaces URL resolution via RawDefinition was removed
+// when RawDefinition was dropped from AgentType (superseded by CardStorePlugin).
 func resolveProbURL(entry *model.CatalogEntry) string {
 	if entry.AgentType == nil {
 		return ""
-	}
-	if entry.AgentType.Protocol == model.ProtocolA2A && len(entry.AgentType.RawDefinition) > 0 {
-		var card struct {
-			SupportedInterfaces []struct {
-				URL string `json:"url"`
-			} `json:"supportedInterfaces"`
-		}
-		if err := json.Unmarshal(entry.AgentType.RawDefinition, &card); err == nil {
-			if len(card.SupportedInterfaces) > 0 && card.SupportedInterfaces[0].URL != "" {
-				return card.SupportedInterfaces[0].URL
-			}
-		}
 	}
 	return entry.AgentType.Endpoint
 }

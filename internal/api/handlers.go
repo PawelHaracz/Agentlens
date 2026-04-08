@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -176,12 +175,11 @@ func (h *Handler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UTC()
 
 	agentType := &model.AgentType{
-		ID:            uuid.NewString(),
-		Protocol:      model.Protocol(req.Protocol),
-		Endpoint:      req.Endpoint,
-		Version:       req.Version,
-		RawDefinition: []byte("{}"),
-		CreatedOn:     now,
+		ID:        uuid.NewString(),
+		Protocol:  model.Protocol(req.Protocol),
+		Endpoint:  req.Endpoint,
+		Version:   req.Version,
+		CreatedOn: now,
 	}
 	agentType.AgentKey = model.ComputeAgentKey(agentType.Protocol, agentType.Endpoint)
 
@@ -230,27 +228,9 @@ func (h *Handler) DeleteEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetEntryCard handles GET /api/v1/catalog/{id}/card.
-// Returns the raw agent card definition stored in the AgentType.
+// Returns 404: raw card storage was removed; cards are now managed by CardStorePlugin.
 func (h *Handler) GetEntryCard(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	entry, err := h.store.Get(r.Context(), id)
-	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to get catalog entry")
-		return
-	}
-	if entry == nil {
-		ErrorResponse(w, http.StatusNotFound, "catalog entry not found")
-		return
-	}
-	if entry.AgentType == nil || len(entry.AgentType.RawDefinition) == 0 {
-		ErrorResponse(w, http.StatusNotFound, "no card available")
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(entry.AgentType.RawDefinition); err != nil {
-		slog.Error("failed to write card response", "err", err)
-	}
+	ErrorResponse(w, http.StatusNotFound, "raw card storage has been removed; use the card store plugin")
 }
 
 // SearchCapabilities handles GET /api/v1/skills.

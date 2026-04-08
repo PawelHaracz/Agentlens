@@ -21,7 +21,7 @@ func TestArchetype_AgentTypeHasNoCatalogFields(t *testing.T) {
 
 func TestArchetype_CatalogEntryHasNoProductFields(t *testing.T) {
 	productOnlyFields := []string{
-		"Protocol", "Endpoint", "RawDefinition",
+		"Protocol", "Endpoint",
 		"Capabilities", "Skills", "TypedMeta", "SpecVersion",
 	}
 	entryT := reflect.TypeOf(CatalogEntry{})
@@ -46,7 +46,7 @@ func TestArchetype_CatalogEntryReferencesAgentType(t *testing.T) {
 }
 
 func TestArchetype_AgentTypeHasRequiredFields(t *testing.T) {
-	required := []string{"ID", "AgentKey", "Protocol", "Endpoint", "RawDefinition", "CreatedOn"}
+	required := []string{"ID", "AgentKey", "Protocol", "Endpoint", "CreatedOn"}
 	agentTypeT := reflect.TypeOf(AgentType{})
 	for _, name := range required {
 		_, found := agentTypeT.FieldByName(name)

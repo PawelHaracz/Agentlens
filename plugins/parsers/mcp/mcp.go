@@ -115,12 +115,11 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 	}
 
 	return &model.AgentType{
-		Protocol:      model.ProtocolMCP,
-		Endpoint:      card.Remotes[0].URL,
-		Version:       card.Version,
-		Capabilities:  caps,
-		RawDefinition: raw,
-		AgentKey:      model.ComputeAgentKey(model.ProtocolMCP, card.Remotes[0].URL),
-		CreatedOn:     time.Now().UTC(),
+		Protocol:     model.ProtocolMCP,
+		Endpoint:     card.Remotes[0].URL,
+		Version:      card.Version,
+		Capabilities: caps,
+		AgentKey:     model.ComputeAgentKey(model.ProtocolMCP, card.Remotes[0].URL),
+		CreatedOn:    time.Now().UTC(),
 	}, nil
 }
