@@ -33,6 +33,15 @@ export function CatalogRow({ entry, searchSnippet }: Props) {
     <TableRow
       className="cursor-pointer"
       onClick={() => navigate(`/catalog/${entry.id}`)}
+      role="link"
+      tabIndex={0}
+      aria-label={`View details for ${entry.display_name}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          navigate(`/catalog/${entry.id}`)
+        }
+      }}
     >
       <TableCell>
         <ProtocolBadge protocol={entry.protocol} />
@@ -57,6 +66,7 @@ export function CatalogRow({ entry, searchSnippet }: Props) {
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground"
                 onClick={(e) => e.stopPropagation()}
+                aria-label={`Open ${entry.provider.organization} website`}
               >
                 <ExternalLink className="h-3 w-3" />
               </a>
