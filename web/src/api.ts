@@ -1,4 +1,4 @@
-import type { CatalogEntry, ListFilter, Stats, ValidationResult, LifecycleState, Health } from './types'
+import type { CatalogEntry, ListFilter, Stats, ValidationResult, LifecycleState, Health, CapabilityListResult, CapabilityDetailResponse } from './types'
 
 const BASE = '/api/v1'
 
@@ -255,4 +255,38 @@ export function getSettingsByCategory(category: string): Promise<Setting[]> {
 
 export function updateSettings(data: Record<string, string>): Promise<void> {
   return request<void>('/settings', { method: 'PUT', body: JSON.stringify(data) })
+}
+
+/* ─── Capabilities API ─── */
+
+export async function listCapabilities(filter: {
+  q?: string
+  kind?: string
+  limit?: number
+  offset?: number
+  sort?: string
+}): Promise<CapabilityListResult> {
+  const params = new URLSearchParams()
+  if (filter.q) params.set('q', filter.q)
+  if (filter.kind) params.set('kind', filter.kind)
+  if (filter.limit) params.set('limit', filter.limit.toString())
+  if (filter.offset) params.set('offset', filter.offset.toString())
+  if (filter.sort) params.set('sort', filter.sort)
+
+  const queryString = params.toString()
+  const url = `/capabilities${queryString ? '?' + queryString : ''}`
+
+  return request<CapabilityListResult>(url, {
+    method: 'GET',
+  })
+}
+
+export async function getCapabilityAgents(
+  kind: string,
+  name: string
+): Promise<CapabilityDetailResponse> {
+  const key = encodeURIComponent(`${kind}::${name}`)
+  return request<CapabilityDetailResponse>(`/capabilities/${key}`, {
+    method: 'GET',
+  })
 }
