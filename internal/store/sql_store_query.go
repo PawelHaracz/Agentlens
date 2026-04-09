@@ -208,15 +208,9 @@ func enrichA2ASkillFields(inst *model.CapabilityInstance, properties string) {
 	if err := json.Unmarshal([]byte(properties), &props); err != nil {
 		return
 	}
-	for _, tag := range anyStrings(props["tags"]) {
-		inst.Tags = append(inst.Tags, tag)
-	}
-	for _, m := range anyStrings(props["inputModes"]) {
-		inst.InputModes = append(inst.InputModes, m)
-	}
-	for _, m := range anyStrings(props["outputModes"]) {
-		inst.OutputModes = append(inst.OutputModes, m)
-	}
+	inst.Tags = append(inst.Tags, anyStrings(props["tags"])...)
+	inst.InputModes = append(inst.InputModes, anyStrings(props["inputModes"])...)
+	inst.OutputModes = append(inst.OutputModes, anyStrings(props["outputModes"])...)
 }
 
 // anyStrings safely casts a []any to []string, skipping non-string elements.

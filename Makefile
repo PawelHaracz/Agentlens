@@ -26,7 +26,8 @@ help:
 	@sed -n 's/^## //p' $(MAKEFILE_LIST) | column -t -s ':' | sed 's/^/  /'
 
 ## all: Run format, lint, test, arch-test, and build
-all: format lint test arch-test build
+all: format lint test arch-test build web-lint web-test web-build web-test-coverage
+	@echo "All checks passed and build successful!"
 
 ## check: Run all static analysis — format, vet, lint (Go + frontend)
 check: format vet lint web-lint
