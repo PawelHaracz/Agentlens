@@ -2,11 +2,13 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
+	"gorm.io/gorm"
 )
 
 // List returns catalog entries matching the given filter.
@@ -89,32 +91,6 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 	return entries, nil
 }
 
-// SearchCapabilities returns catalog entries whose capabilities match the query string.
-func (s *SQLStore) SearchCapabilities(ctx context.Context, query string) ([]model.CatalogEntry, error) {
-	like := "%" + query + "%"
-
-	var entries []model.CatalogEntry
-	err := s.gdb.WithContext(ctx).
-		Model(&model.CatalogEntry{}).
-		Preload("AgentType").
-		Preload("AgentType.Provider").
-		Joins("JOIN agent_types ON agent_types.id = catalog_entries.agent_type_id").
-		Joins("JOIN capabilities ON capabilities.agent_type_id = agent_types.id").
-		Where("capabilities.name LIKE ? OR capabilities.description LIKE ?", like, like).
-		Distinct("catalog_entries.*").
-		Find(&entries).Error
-	if err != nil {
-		return nil, fmt.Errorf("searching capabilities: %w", err)
-	}
-	for i := range entries {
-		if err := s.loadCapabilities(ctx, entries[i].AgentType); err != nil {
-			return nil, err
-		}
-		entries[i].SyncFromDB()
-	}
-	return entries, nil
-}
-
 // ListForProbing returns entries due for a health probe. Entries are excluded
 // if deprecated or if last probed after olderThan. Results are ordered with
 // never-probed entries first, capped by limit.
@@ -180,4 +156,171 @@ func (s *SQLStore) Stats(ctx context.Context) (*StoreStats, error) {
 	}
 
 	return stats, nil
+}
+
+// capabilityInstanceRow is a flat scan target for the ListCapabilities query.
+type capabilityInstanceRow struct {
+	Kind        string
+	Name        string
+	Description string
+	Properties  string
+	AgentID     string
+	AgentName   string
+	Protocol    string
+	SpecVersion string
+	Status      string
+	ProviderOrg *string
+	ProviderURL *string
+	LatencyMs   int64
+	HealthState string
+}
+
+// toCapabilityInstance converts a raw DB row to a CapabilityInstance,
+// including parsing skill-specific fields from the properties JSON column.
+func toCapabilityInstance(row capabilityInstanceRow) model.CapabilityInstance {
+	inst := model.CapabilityInstance{
+		Kind:        row.Kind,
+		Name:        row.Name,
+		Description: row.Description,
+		AgentID:     row.AgentID,
+		AgentName:   row.AgentName,
+		Protocol:    model.Protocol(row.Protocol),
+		Status:      model.LifecycleState(row.Status),
+		SpecVersion: row.SpecVersion,
+		HealthState: model.LifecycleState(row.HealthState),
+		LatencyMs:   row.LatencyMs,
+	}
+	if row.ProviderOrg != nil {
+		inst.ProviderOrg = *row.ProviderOrg
+	}
+	if row.ProviderURL != nil {
+		inst.ProviderURL = *row.ProviderURL
+	}
+	if row.Kind == "a2a.skill" && row.Properties != "" {
+		enrichA2ASkillFields(&inst, row.Properties)
+	}
+	return inst
+}
+
+// enrichA2ASkillFields parses tags, inputModes, outputModes from a JSON properties string.
+func enrichA2ASkillFields(inst *model.CapabilityInstance, properties string) {
+	var props map[string]any
+	if err := json.Unmarshal([]byte(properties), &props); err != nil {
+		return
+	}
+	for _, tag := range anyStrings(props["tags"]) {
+		inst.Tags = append(inst.Tags, tag)
+	}
+	for _, m := range anyStrings(props["inputModes"]) {
+		inst.InputModes = append(inst.InputModes, m)
+	}
+	for _, m := range anyStrings(props["outputModes"]) {
+		inst.OutputModes = append(inst.OutputModes, m)
+	}
+}
+
+// anyStrings safely casts a []any to []string, skipping non-string elements.
+func anyStrings(v any) []string {
+	slice, ok := v.([]any)
+	if !ok {
+		return nil
+	}
+	result := make([]string, 0, len(slice))
+	for _, el := range slice {
+		if s, ok := el.(string); ok {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
+// ListCapabilities returns a flat list of capability instances with agent metadata.
+// Only active + degraded catalog entries are included.
+// Only discoverable (user-facing) capability kinds are returned.
+func (s *SQLStore) ListCapabilities(ctx context.Context, filter CapabilityFilter) (*model.CapabilityListResult, error) {
+	discoverableKinds := model.DiscoverableKinds()
+	if len(discoverableKinds) == 0 {
+		return &model.CapabilityListResult{Total: 0, Items: []model.CapabilityInstance{}}, nil
+	}
+
+	query := s.gdb.WithContext(ctx).
+		Table("capabilities c").
+		Select(`c.kind, c.name, c.description, c.properties,
+			ce.id AS agent_id, ce.display_name AS agent_name,
+			at.protocol, at.spec_version,
+			ce.status,
+			p.organization AS provider_org, p.url AS provider_url,
+			ce.health_latency_ms, ce.status AS health_state`).
+		Joins("JOIN agent_types at ON c.agent_type_id = at.id").
+		Joins("JOIN catalog_entries ce ON ce.agent_type_id = at.id").
+		Joins("LEFT JOIN providers p ON at.provider_id = p.id").
+		Where("c.kind IN ?", discoverableKinds).
+		Where("ce.status IN ?", []string{string(model.LifecycleActive), string(model.LifecycleDegraded)})
+
+	if filter.Query != "" {
+		lq := "%" + strings.ToLower(filter.Query) + "%"
+		query = query.Where(
+			"LOWER(c.name) LIKE ? OR LOWER(c.description) LIKE ? OR LOWER(c.properties) LIKE ?",
+			lq, lq, lq,
+		)
+	}
+	if filter.Kind != "" {
+		query = query.Where("c.kind = ?", filter.Kind)
+	}
+
+	var total int64
+	if err := query.Session(&gorm.Session{}).Count(&total).Error; err != nil {
+		return nil, fmt.Errorf("count capabilities: %w", err)
+	}
+
+	orderClause := "LOWER(c.name) ASC, LOWER(ce.display_name) ASC"
+	if filter.Sort == "agentName_asc" {
+		orderClause = "LOWER(ce.display_name) ASC, LOWER(c.name) ASC"
+	}
+	query = query.Order(orderClause)
+	if filter.Limit > 0 {
+		query = query.Limit(filter.Limit)
+	}
+	if filter.Offset > 0 {
+		query = query.Offset(filter.Offset)
+	}
+
+	var rows []capabilityInstanceRow
+	if err := query.Find(&rows).Error; err != nil {
+		return nil, fmt.Errorf("query capabilities: %w", err)
+	}
+
+	items := make([]model.CapabilityInstance, len(rows))
+	for i, row := range rows {
+		items[i] = toCapabilityInstance(row)
+	}
+	return &model.CapabilityListResult{Total: int(total), Items: items}, nil
+}
+
+// ListAgentsByCapability returns catalog entries offering a specific capability
+// identified by (kind, name). Returns all lifecycle states.
+func (s *SQLStore) ListAgentsByCapability(ctx context.Context, kind, name string) ([]model.CatalogEntry, error) {
+	var entries []model.CatalogEntry
+
+	err := s.gdb.WithContext(ctx).
+		Joins("JOIN agent_types ON catalog_entries.agent_type_id = agent_types.id").
+		Joins("JOIN capabilities ON capabilities.agent_type_id = agent_types.id").
+		Where("capabilities.kind = ? AND capabilities.name = ?", kind, name).
+		Preload("AgentType").
+		Preload("AgentType.Provider").
+		Find(&entries).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("query agents by capability: %w", err)
+	}
+
+	// Load capabilities for each entry
+	for i := range entries {
+		if err := s.loadCapabilities(ctx, entries[i].AgentType); err != nil {
+			return nil, fmt.Errorf("load capabilities for agent %s: %w", entries[i].ID, err)
+		}
+		entries[i].SyncFromDB()
+	}
+
+	return entries, nil
 }

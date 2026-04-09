@@ -320,15 +320,16 @@ func (h *Handler) GetEntryCard(w http.ResponseWriter, r *http.Request) {
 // SearchCapabilities handles GET /api/v1/skills.
 func (h *Handler) SearchCapabilities(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
-	entries, err := h.store.SearchCapabilities(r.Context(), q)
+	result, err := h.store.ListCapabilities(r.Context(), store.CapabilityFilter{
+		Query: q,
+		Limit: 100,
+		Sort:  "name_asc",
+	})
 	if err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "failed to search capabilities")
 		return
 	}
-	if entries == nil {
-		entries = []model.CatalogEntry{}
-	}
-	JSONResponse(w, http.StatusOK, entries)
+	JSONResponse(w, http.StatusOK, result)
 }
 
 // GetStats handles GET /api/v1/stats.
