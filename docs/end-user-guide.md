@@ -285,6 +285,47 @@ confirm dialog asks for confirmation. After deletion you are returned to the cat
 
 ---
 
+## Capabilities
+
+The Capabilities tab provides a capability-first view of your agent catalog. Instead of browsing individual agents, you can search for capabilities (skills, tools, resources, prompts) and see all agents that offer each one.
+
+### Discovering Capabilities
+
+1. Click **Capabilities** in the main navigation
+2. Browse the accordion groups showing capability names and agent counts
+3. Use the search box to filter by name, description, or tags (for A2A skills)
+4. Use the kind filter to narrow results: All / A2A Skill / MCP Tool / MCP Resource / MCP Prompt
+
+### Viewing Agents by Capability
+
+1. Click an accordion group to expand and see the list of agents offering that capability
+2. Each agent shows: protocol, name, status, provider, and latency
+3. Click **View all** to open the full capability detail page with a table of all agents
+
+### Capability Detail Page
+
+The detail page shows:
+- Capability kind badge and name
+- Total agent count (including offline/deprecated agents)
+- Table with columns: Protocol, Agent, Provider, Status, Version, Description (agent-specific snippet), Latency
+- Click any agent name to navigate to the agent detail page
+
+### Cross-linking from Agent Detail
+
+On the agent detail page, discoverable capability names (A2A skills, MCP tools/resources/prompts) are now clickable links. Click a capability name to see all other agents offering the same capability.
+
+Technical capability kinds (extensions, security schemes, interfaces, signatures) are not linked — they are configuration details, not user-facing capabilities.
+
+### URL Sharing
+
+Capability views support shareable URLs:
+- `/catalog/capabilities?q=translate&kind=a2a.skill` — filtered list view
+- `/catalog/capabilities/a2a.skill::Translate%20EN-DE` — specific capability detail
+
+Copy and share these URLs to point teammates directly to specific capabilities or search results.
+
+---
+
 ## Registering an Agent
 
 ![The Register Agent button on the catalog page](images/register-menu.png)
