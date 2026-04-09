@@ -94,13 +94,16 @@ test.describe('Catalog Management', () => {
     expect(stats).toHaveProperty('total');
   });
 
-  test('API: search skills', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/v1/skills?q=test`, {
+  test('capabilities API returns capability instances', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/v1/capabilities`, {
       headers: authHeader(token),
-    });
-    expect(res.ok()).toBeTruthy();
-    const results = await res.json();
-    expect(Array.isArray(results)).toBeTruthy();
+    })
+
+    expect(response.status()).toBe(200)
+    const data = await response.json()
+    expect(data).toHaveProperty('total')
+    expect(data).toHaveProperty('items')
+    expect(Array.isArray(data.items)).toBe(true)
   });
 
   test('API: invalid protocol returns 400', async ({ request }) => {
@@ -322,3 +325,102 @@ test.describe('Unified Catalog View', () => {
     await deleteCatalogEntry(request, token, entry.id);
   });
 });
+
+test.describe('Capability Discovery', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginViaUI(page)
+  })
+
+  test('capability list page shows accordion groups', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+
+    await page.waitForLoadState('networkidle')
+
+    // Should show header
+    await expect(page.getByRole('heading', { name: 'Capabilities' })).toBeVisible()
+
+    // Should show search box
+    await expect(page.getByPlaceholder('Search across A2A and MCP — name, description, skills, tags, provider…')).toBeVisible()
+
+    // Should show kind filter
+    await expect(page.getByText('All')).toBeVisible()
+    await expect(page.getByText('A2A Skill')).toBeVisible()
+  })
+
+  test('search filters capabilities', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Type in search
+    const searchBox = page.getByPlaceholder('Search across A2A and MCP — name, description, skills, tags, provider…')
+    await searchBox.fill('translate')
+
+    // URL should update
+    await page.waitForURL(/q=translate/)
+  })
+
+  test('kind filter works', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Click A2A Skill filter
+    await page.getByText('A2A Skill').click()
+
+    // URL should update
+    await page.waitForURL(/kind=a2a\.skill/)
+  })
+
+  test('accordion expands and shows agents', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Find first accordion group and click to expand
+    const firstGroup = page.locator('.border.rounded-lg').first()
+    await firstGroup.click()
+
+    // Should show agent list (wait for expanded content)
+    await expect(firstGroup.getByText(/agent/)).toBeVisible({ timeout: 5000 })
+  })
+
+  test('capability detail page shows agents', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Expand first group
+    const firstGroup = page.locator('.border.rounded-lg').first()
+    await firstGroup.click()
+
+    // Click "View all" link
+    await firstGroup.getByText('View all').click()
+
+    // Should navigate to detail page
+    await expect(page).toHaveURL(/\/catalog\/capabilities\//)
+
+    // Should show table headers
+    await expect(page.getByText('Protocol')).toBeVisible()
+    await expect(page.getByText('Agent')).toBeVisible()
+    await expect(page.getByText('Provider')).toBeVisible()
+  })
+
+  test('capability link from agent detail navigates correctly', async ({ page }) => {
+    // Navigate to catalog
+    await page.goto('/catalog')
+    await page.waitForLoadState('networkidle')
+
+    // Click first agent
+    const firstAgent = page.getByRole('link', { name: /agent/i }).first()
+    await firstAgent.click()
+
+    // Wait for detail page
+    await page.waitForSelector('h1')
+
+    // Find and click a capability link (discoverable capability)
+    const capabilityLink = page.locator('a[href*="/catalog/capabilities/"]').first()
+    if (await capabilityLink.isVisible()) {
+      await capabilityLink.click()
+
+      // Should navigate to capability detail
+      await expect(page).toHaveURL(/\/catalog\/capabilities\//)
+    }
+  })
+})
