@@ -317,21 +317,6 @@ func (h *Handler) GetEntryCard(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SearchCapabilities handles GET /api/v1/skills.
-func (h *Handler) SearchCapabilities(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query().Get("q")
-	result, err := h.store.ListCapabilities(r.Context(), store.CapabilityFilter{
-		Query: q,
-		Limit: 100,
-		Sort:  "name_asc",
-	})
-	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to search capabilities")
-		return
-	}
-	JSONResponse(w, http.StatusOK, result)
-}
-
 // GetStats handles GET /api/v1/stats.
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.store.Stats(r.Context())
