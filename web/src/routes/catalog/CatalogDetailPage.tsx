@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 import type { CatalogEntry, LifecycleState } from '../../types'
 import { getEntry, postProbe, patchLifecycle } from '@/api'
@@ -231,14 +231,27 @@ export default function CatalogDetailPage() {
                 Capabilities ({entry.capabilities.length})
               </p>
               <ul className="space-y-2">
-                {entry.capabilities.map((cap, i) => (
-                  <li key={`${cap.kind}-${cap.name}-${i}`} className="rounded-md border px-3 py-2">
-                    <p className="text-sm font-medium">{cap.name}</p>
-                    {cap.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{cap.description}</p>
-                    )}
-                  </li>
-                ))}
+                {entry.capabilities.map((cap, i) => {
+                  const isDiscoverable = ['a2a.skill', 'mcp.tool', 'mcp.resource', 'mcp.prompt'].includes(cap.kind)
+                  const capURL = `/catalog/capabilities/${encodeURIComponent(cap.kind + '::' + cap.name)}`
+                  return (
+                    <li key={`${cap.kind}-${cap.name}-${i}`} className="rounded-md border px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{cap.kind}</span>
+                        {isDiscoverable ? (
+                          <Link to={capURL} className="text-sm font-medium hover:underline">
+                            {cap.name}
+                          </Link>
+                        ) : (
+                          <span className="text-sm font-medium">{cap.name}</span>
+                        )}
+                      </div>
+                      {cap.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{cap.description}</p>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           )}
