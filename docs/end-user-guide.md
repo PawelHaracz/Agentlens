@@ -135,6 +135,7 @@ After signing in the top navigation bar is always visible:
 |---------|-------------|
 | **AgentLens** (logo) | Click to return to the catalog from anywhere |
 | **Catalog** | Direct link to the agent catalog |
+| **Capabilities** | Link to the capability discovery view at `/catalog/capabilities` |
 | **Settings** | Link to the settings page; only visible to users with `settings:read` |
 | **User avatar** | Initials badge — click to open the user dropdown |
 
@@ -291,18 +292,33 @@ The Capabilities tab provides a capability-first view of your agent catalog. Ins
 
 ### Discovering Capabilities
 
+![Capabilities list page showing accordion groups of skills and tools](images/capabilities-list.png)
+*The Capabilities page — each accordion group represents one unique capability shared across agents.*
+
 1. Click **Capabilities** in the main navigation
 2. Browse the accordion groups showing capability names and agent counts
 3. Use the search box to filter by name, description, or tags (for A2A skills)
 4. Use the kind filter to narrow results: All / A2A Skill / MCP Tool / MCP Resource / MCP Prompt
 
+![Capabilities list with the A2A Skill kind filter active](images/capabilities-kind-filter.png)
+*The kind filter narrows the list to a specific capability type.*
+
+![Capabilities search results filtered by query](images/capabilities-search.png)
+*Typing in the search box filters capabilities by name, description, or tags.*
+
 ### Viewing Agents by Capability
+
+![Capabilities list with one accordion group expanded showing agents](images/capabilities-list-expanded.png)
+*An expanded group shows every agent offering that capability, with protocol, status, and provider.*
 
 1. Click an accordion group to expand and see the list of agents offering that capability
 2. Each agent shows: protocol, name, status, provider, and latency
 3. Click **View all** to open the full capability detail page with a table of all agents
 
 ### Capability Detail Page
+
+![Capability detail page showing a table of agents offering the selected capability](images/capabilities-detail.png)
+*The detail page lists every agent offering the capability with full metadata columns.*
 
 The detail page shows:
 - Capability kind badge and name
@@ -311,6 +327,9 @@ The detail page shows:
 - Click any agent name to navigate to the agent detail page
 
 ### Cross-linking from Agent Detail
+
+![Agent detail page showing clickable capability name links](images/capabilities-crosslink.png)
+*Capability names in the agent detail view are clickable links — click one to see all agents offering that capability.*
 
 On the agent detail page, discoverable capability names (A2A skills, MCP tools/resources/prompts) are now clickable links. Click a capability name to see all other agents offering the same capability.
 
