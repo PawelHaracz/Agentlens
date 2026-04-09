@@ -149,6 +149,7 @@ func registerSettingsRoutes(r chi.Router, deps RouterDeps) {
 // registerUnauthenticatedCatalogRoutes mounts catalog endpoints without authentication.
 func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler, deps RouterDeps) {
 	hh := NewHealthHandler(h.store, deps.HealthProber)
+	ch := NewCapabilityHandler(h.store)
 	r.Get("/catalog", h.ListCatalog)
 	r.Post("/catalog", h.CreateEntry)
 	r.Post("/catalog/validate", h.ValidateAgentCard)
@@ -161,6 +162,8 @@ func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler, deps RouterD
 	r.Post("/catalog/{id}/probe", hh.ProbeEntry)
 	r.Get("/skills", h.SearchCapabilities)
 	r.Get("/stats", h.GetStats)
+	r.Get("/capabilities", ch.ListCapabilities)
+	r.Get("/capabilities/{key}", ch.GetCapabilityAgents)
 }
 
 // spaHandler serves static files and falls back to index.html for client-side routing.
