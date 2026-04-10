@@ -103,6 +103,8 @@ func capabilityToRow(agentTypeID string, cap model.Capability) (capabilityRow, e
 	// For capabilities that carry a "schemes" map (e.g. a2a.security_requirement),
 	// derive a stable name from the sorted scheme names so that multiple
 	// same-kind capabilities on the same agent_type satisfy the unique constraint.
+	// Include skill_ref (when present) so that per-skill requirements with identical
+	// scheme sets get distinct names.
 	if name == "" {
 		if schemesRaw, ok := m["schemes"]; ok {
 			if schemesMap, ok := schemesRaw.(map[string]any); ok && len(schemesMap) > 0 {
@@ -112,6 +114,9 @@ func capabilityToRow(agentTypeID string, cap model.Capability) (capabilityRow, e
 				}
 				sort.Strings(keys)
 				name = strings.Join(keys, "+")
+				if skillRef, ok := m["skill_ref"].(string); ok && skillRef != "" {
+					name = "skill:" + skillRef + ":" + name
+				}
 			}
 		}
 	}

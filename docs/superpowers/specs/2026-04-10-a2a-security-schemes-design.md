@@ -1,5 +1,20 @@
 # Feature 2.5 — A2A Security Schemes: Parsing, Storage, and Dashboard Display
 
+> **⚠ SUPERSEDED BY ADR-001**
+>
+> The design in this document (Hybrid: capability rows + `SecurityStorePlugin` + `security_details` table) was
+> revised during implementation to comply with [ADR-001 (Product Archetype Principles)](../../adr/001-product-archetype-principles.md).
+>
+> **Implemented design (authoritative):**
+> - Security data is stored **exclusively** in the `capabilities` table as two capability kinds:
+>   `a2a.security_scheme` and `a2a.security_requirement`.
+> - No `SecurityStorePlugin`, no `security_details` table, no new plugins.
+> - `auth_summary` and `security_detail` are **computed at serialization time** from capabilities in
+>   `buildAuthSummary()` / `buildSecurityDetail()` in `internal/model/agent.go`.
+>
+> See `docs/architecture.md` (Security Capabilities and Computed Views section) for the authoritative
+> architecture description.
+
 **Tier:** 2 — SHOULD HAVE
 **Effort:** M (3-4 days)
 **Date:** 2026-04-10

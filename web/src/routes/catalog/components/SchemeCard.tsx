@@ -34,6 +34,8 @@ export function SchemeCard({ scheme }: SchemeCardProps) {
     badgeLabel = 'OIDC'
   } else if (type === 'mutualTls') {
     badgeLabel = 'mTLS'
+  } else {
+    badgeLabel = type || 'Unknown'
   }
 
   return (
@@ -49,7 +51,9 @@ export function SchemeCard({ scheme }: SchemeCardProps) {
       <CardContent>
         {type === 'http' && scheme.http_scheme === 'Bearer' && (
           <p className="text-sm text-muted-foreground">
-            Expects a JWT in the Authorization header
+            {scheme.bearer_format === 'JWT'
+              ? 'Expects a JWT in the Authorization header'
+              : 'Expects a Bearer token in the Authorization header'}
           </p>
         )}
 

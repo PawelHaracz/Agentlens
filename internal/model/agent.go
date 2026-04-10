@@ -3,6 +3,7 @@ package model
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
 	"time"
 )
@@ -195,6 +196,7 @@ type authSummaryJSON struct {
 // buildAuthSummary computes an auth summary from capabilities at serialization
 // time. Returns nil when no security schemes are declared (omitempty hides it).
 func buildAuthSummary(capabilities []Capability) *authSummaryJSON {
+	seen := map[string]bool{}
 	var schemes []string
 	hasRequirement := false
 
@@ -205,7 +207,10 @@ func buildAuthSummary(capabilities []Capability) *authSummaryJSON {
 			if c.Type == "http" && c.HTTPScheme != "" {
 				typeStr = "http:" + c.HTTPScheme
 			}
-			schemes = append(schemes, typeStr)
+			if !seen[typeStr] {
+				seen[typeStr] = true
+				schemes = append(schemes, typeStr)
+			}
 		case *A2ASecurityRequirement:
 			if c.SkillRef == "" {
 				hasRequirement = true
@@ -216,6 +221,8 @@ func buildAuthSummary(capabilities []Capability) *authSummaryJSON {
 	if len(schemes) == 0 {
 		return nil
 	}
+
+	sort.Strings(schemes)
 
 	return &authSummaryJSON{
 		Types:    schemes,
@@ -267,24 +274,45 @@ type securityDetailJSON struct {
 // buildSecurityDetail constructs a security_detail view from capabilities.
 // Returns nil when no security capabilities exist.
 func buildSecurityDetail(capabilities []Capability) *securityDetailJSON {
-	var schemes []json.RawMessage
-	var requirements []json.RawMessage
+	var schemeCaps []*A2ASecurityScheme
+	var reqCaps []*A2ASecurityRequirement
 
 	for _, cap := range capabilities {
 		switch c := cap.(type) {
 		case *A2ASecurityScheme:
-			if b, err := json.Marshal(c); err == nil {
-				schemes = append(schemes, b)
-			}
+			schemeCaps = append(schemeCaps, c)
 		case *A2ASecurityRequirement:
-			if b, err := json.Marshal(c); err == nil {
-				requirements = append(requirements, b)
-			}
+			reqCaps = append(reqCaps, c)
 		}
 	}
 
-	if len(schemes) == 0 && len(requirements) == 0 {
+	if len(schemeCaps) == 0 && len(reqCaps) == 0 {
 		return nil
+	}
+
+	// Sort schemes by scheme_name for deterministic output.
+	sort.Slice(schemeCaps, func(i, j int) bool {
+		return schemeCaps[i].SchemeName < schemeCaps[j].SchemeName
+	})
+
+	var schemes []json.RawMessage
+	for _, c := range schemeCaps {
+		if b, err := json.Marshal(c); err == nil {
+			schemes = append(schemes, b)
+		}
+	}
+
+	// Sort requirements by their derived name (SkillRef+sorted scheme keys) for
+	// deterministic output.
+	sort.Slice(reqCaps, func(i, j int) bool {
+		return reqCaps[i].derivedName() < reqCaps[j].derivedName()
+	})
+
+	var requirements []json.RawMessage
+	for _, c := range reqCaps {
+		if b, err := json.Marshal(c); err == nil {
+			requirements = append(requirements, b)
+		}
 	}
 
 	return &securityDetailJSON{

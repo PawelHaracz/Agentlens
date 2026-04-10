@@ -1,4 +1,12 @@
 // Types matching the A2ASecurityScheme capability JSON shape.
+// These are the single source of truth — re-exported from @/types for convenience.
+
+export interface AuthSummary {
+  types: string[]
+  label: string
+  required: boolean
+}
+
 export interface SecurityScheme {
   kind?: string
   scheme_name: string
@@ -88,8 +96,11 @@ export function generateCurlRecipe(
     }
   }
 
-  const headerStr = headers.join(' ')
-  return `curl ${headerStr} ${endpoint}`.trim()
+  const headerStr = headers.join(' \\\n  ')
+  if (headers.length === 0) {
+    return `curl ${endpoint}`
+  }
+  return `curl ${headerStr} \\\n  ${endpoint}`
 }
 
 export function formatScopesLabel(scopes: string[]): string {

@@ -35,8 +35,7 @@ export function AuthenticationSection({
 
   if (
     !securityDetail ||
-    !securityDetail.security_schemes ||
-    securityDetail.security_schemes.length === 0
+    (!securityDetail.security_schemes?.length && !securityDetail.security_requirements?.length)
   ) {
     return (
       <Card data-testid="authentication-section">

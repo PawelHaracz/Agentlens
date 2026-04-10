@@ -526,7 +526,7 @@ Present when an A2A entry has security schemes. Contains the full scheme and req
 
 | Field | Type | Description |
 |---|---|---|
-| `flow_type` | `string` | `authorizationCode` · `clientCredentials` · `deviceCode` |
+| `flow_type` | `string` | `authorizationCode` · `clientCredentials` · `deviceCode` · `implicit` · `password` (last two have `deprecated: true` and are filtered from the UI) |
 | `authorization_url` | `string` | Authorization endpoint (authorizationCode). |
 | `token_url` | `string` | Token endpoint. |
 | `device_auth_url` | `string` | Device authorization endpoint (deviceCode). |

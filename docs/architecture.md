@@ -132,7 +132,7 @@ Security information is stored exclusively in the `capabilities` table — no se
 
 **Computed views:**
 
-- `auth_summary` — computed by `buildAuthSummary()` from all `a2a.security_scheme` capabilities. Returns `nil` for agents with no security schemes (open agents). Contains `label`, `types` (deduplicated list of scheme types), and `is_authenticated`.
+- `auth_summary` — computed by `buildAuthSummary()` from all `a2a.security_scheme` capabilities. Returns `nil` for agents with no security schemes (open agents). Contains `label` (human-readable string), `types` (sorted, deduplicated list of scheme type strings), and `required` (boolean — true when at least one top-level `a2a.security_requirement` exists).
 - `security_detail` — computed by `buildSecurityDetail()` from all `a2a.security_scheme` and `a2a.security_requirement` capabilities. Groups them into `security_schemes[]` and `security_requirements[]`.
 
 ```mermaid

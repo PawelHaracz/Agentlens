@@ -5,45 +5,22 @@ export interface Capability {
   [key: string]: unknown  // protocol-specific properties
 }
 
-export interface AuthSummary {
-  types: string[]
-  label: string
-  required: boolean
-}
+// Security types are defined in securityUtils.ts (single source of truth).
+// Imported here for use in CatalogEntry and re-exported for consumers of @/types.
+import type {
+  AuthSummary,
+  OAuthFlow,
+  SecurityScheme,
+  SecurityRequirement,
+  SecurityDetailView,
+} from '@/lib/securityUtils'
 
-export interface OAuthFlow {
-  flow_type: string
-  authorization_url?: string
-  token_url?: string
-  refresh_url?: string
-  device_auth_url?: string
-  scopes?: Record<string, string>
-  deprecated?: boolean
-}
-
-export interface SecurityScheme {
-  kind?: string
-  scheme_name: string
-  type: string
-  description?: string
-  http_scheme?: string
-  bearer_format?: string
-  api_key_location?: string
-  api_key_name?: string
-  oauth_flows?: OAuthFlow[]
-  oauth2_metadata_url?: string
-  openid_connect_url?: string
-}
-
-export interface SecurityRequirement {
-  kind?: string
-  schemes: Record<string, string[]>
-  skill_ref?: string
-}
-
-export interface SecurityDetailView {
-  security_schemes: SecurityScheme[]
-  security_requirements: SecurityRequirement[]
+export type {
+  AuthSummary,
+  OAuthFlow,
+  SecurityScheme,
+  SecurityRequirement,
+  SecurityDetailView,
 }
 
 export type Protocol = 'a2a' | 'mcp' | 'a2ui'

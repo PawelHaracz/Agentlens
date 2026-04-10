@@ -3,6 +3,8 @@ package model
 import (
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 )
 
 func init() {
@@ -125,6 +127,22 @@ func (a *A2ASecurityRequirement) Validate() error {
 		return errors.New("a2a.security_requirement: schemes is required")
 	}
 	return nil
+}
+
+// derivedName returns a stable string that uniquely identifies this requirement
+// within an agent type, matching the name derivation logic in capabilityToRow.
+// Format: ["skill:<skillRef>:"]<sortedSchemeKeys joined with "+">
+func (a *A2ASecurityRequirement) derivedName() string {
+	keys := make([]string, 0, len(a.Schemes))
+	for k := range a.Schemes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	name := strings.Join(keys, "+")
+	if a.SkillRef != "" {
+		name = "skill:" + a.SkillRef + ":" + name
+	}
+	return name
 }
 
 // A2AInterface represents an A2A agent interface binding capability.

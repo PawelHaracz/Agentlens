@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sort"
 
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
@@ -182,8 +183,14 @@ func buildSecurityCaps(card *fullCard) ([]model.Capability, error) {
 	// Try v1.0 map format first.
 	var v10Schemes map[string]json.RawMessage
 	if err := json.Unmarshal(card.SecuritySchemes, &v10Schemes); err == nil {
-		for schemeName, schemeData := range v10Schemes {
-			scheme, err := parseSecurityScheme(schemeName, schemeData)
+		// Sort scheme names for deterministic capability ordering.
+		schemeNames := make([]string, 0, len(v10Schemes))
+		for schemeName := range v10Schemes {
+			schemeNames = append(schemeNames, schemeName)
+		}
+		sort.Strings(schemeNames)
+		for _, schemeName := range schemeNames {
+			scheme, err := parseSecurityScheme(schemeName, v10Schemes[schemeName])
 			if err != nil {
 				slog.Warn("Failed to parse security scheme", "scheme", schemeName, "error", err)
 				continue
@@ -204,7 +211,9 @@ func buildSecurityCaps(card *fullCard) ([]model.Capability, error) {
 				slog.Warn("Failed to extract type from v0.3 scheme", "index", i, "error", err)
 				continue
 			}
-			schemeName := typeHolder.Type + "Auth"
+			// Include the index to prevent name collisions when multiple schemes
+			// share the same type (e.g., two "http" variants in the same card).
+			schemeName := fmt.Sprintf("%sAuth%d", typeHolder.Type, i)
 			scheme, err := parseSecuritySchemeV03(schemeName, schemeData)
 			if err != nil {
 				slog.Warn("Failed to parse v0.3 security scheme", "index", i, "error", err)
@@ -279,7 +288,14 @@ func applyOAuthFlows(schemeName string, raw map[string]interface{}, scheme *mode
 	if !ok {
 		return
 	}
-	for flowType, flowData := range flowsRaw {
+	// Sort flow type names for deterministic ordering.
+	flowTypes := make([]string, 0, len(flowsRaw))
+	for ft := range flowsRaw {
+		flowTypes = append(flowTypes, ft)
+	}
+	sort.Strings(flowTypes)
+	for _, flowType := range flowTypes {
+		flowData := flowsRaw[flowType]
 		flowMap, ok := flowData.(map[string]interface{})
 		if !ok {
 			continue

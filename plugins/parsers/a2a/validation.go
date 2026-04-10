@@ -1,6 +1,9 @@
 package a2a
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"sort"
+)
 
 // ValidationError represents a single field-level validation error.
 type ValidationError struct {
@@ -232,6 +235,7 @@ func buildSecurityPreviewNames(raw json.RawMessage) []string {
 		for name := range v10 {
 			names = append(names, name)
 		}
+		sort.Strings(names)
 		return names
 	}
 
