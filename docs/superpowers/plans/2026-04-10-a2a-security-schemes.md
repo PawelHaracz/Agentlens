@@ -4,7 +4,7 @@
 
 **Goal:** Parse, store, and display A2A security schemes and requirements from Agent Cards, providing platform engineers with clear authentication documentation directly in the AgentLens UI.
 
-**Architecture:** Hybrid storage using capability rows for indexing (`a2a.security_scheme`, `a2a.security_requirement`) + new `SecurityStorePlugin` for rich structured detail. Follows the Product Archetype pattern (security belongs to `AgentType`, not `CatalogEntry`) and microkernel design (plugin-based storage).
+**Architecture:** Pure capability storage per ADR-001. Security schemes (`a2a.security_scheme`) and requirements (`a2a.security_requirement`) are stored in the existing `capabilities` table via `capabilityToRow`/`rowToCapability`. No new tables, no new plugins, no parallel storage. The enriched `A2ASecurityScheme` struct carries all OAuth flows, scopes, and URLs in the `properties` JSON column. `auth_summary` is computed at serialization time from the capabilities slice. Detail views read security data from `AgentType.Capabilities` filtered by kind.
 
 **Tech Stack:** Go 1.26.1, GORM, chi router, React 18, shadcn/ui, Playwright
 
@@ -14,20 +14,9 @@
 
 ### Backend - Foundation Layer
 - **Modify:** `internal/model/a2a_capabilities.go` — enrich `A2ASecurityScheme`, add `A2AOAuthFlow`, add `A2ASecurityRequirement`
-- **Modify:** `internal/model/agent_type.go` — add transient `SecurityDetail` field to `AgentType`
-- **Modify:** `internal/model/agent.go` — add `authSummaryJSON`, `SecurityDetail` to `catalogEntryJSON`, add `buildAuthSummary()`
-- **Create:** `internal/model/security_detail.go` — transport models (`SecurityDetail`, `SecuritySchemeDetail`, `OAuthFlowDetail`, `SecurityRequirementDetail`)
+- **Modify:** `internal/model/agent.go` — add `authSummaryJSON` to `catalogEntryJSON`, add `buildAuthSummary()`
 
-### Backend - Core Layer
-- **Modify:** `internal/kernel/plugin.go` — add `PluginTypeSecurityStore` constant and `SecurityStorePlugin` interface
-- **Modify:** `internal/kernel/kernel.go` — add `securityStore` field and `SecurityStore()` accessor
-- **Modify:** `internal/kernel/core_registry.go` — add `RegisterSecurityStore()` method
-- **Modify:** `internal/kernel/plugin_manager.go` — add auto-registration type assertion in `InitAll()`
-
-### Backend - Plugin Layer
-- **Create:** `plugins/securitystore/plugin.go` — SecurityStore plugin implementation
-- **Create:** `plugins/securitystore/migrate.go` — schema migration for `security_details` table
-- **Create:** `plugins/securitystore/plugin_test.go` — round-trip and error tests
+### Backend - Parser Layer
 - **Modify:** `plugins/parsers/a2a/validation.go` — update `fullCard` and `fullSkill` for dual-format parsing
 - **Modify:** `plugins/parsers/a2a/a2a.go` — add `buildSecurityCaps()` and `buildSecurityRequirements()`, extend `Parse()`
 - **Create:** `plugins/parsers/a2a/testdata/v10_bearer_only.json` — test fixture
@@ -44,11 +33,7 @@
 - **Create:** `plugins/parsers/a2a/testdata/v03_security_array.json` — test fixture
 
 ### Backend - API Layer
-- **Modify:** `internal/api/handlers.go` — extend `GetEntry()` for security detail, extend `ListCatalog()` for `authSummary`
-- **Modify:** `internal/model/agent.go` — extend `catalogEntryJSON` with `SecurityDetail` and `AuthSummary`
-
-### Backend - Entrypoint
-- **Modify:** `cmd/agentlens/main.go` — register SecurityStore plugin
+- **Modify:** `internal/model/agent.go` — extend `catalogEntryJSON` with `AuthSummary` and `SecurityDetail` computed views
 
 ### Frontend
 - **Create:** `web/src/routes/catalog/detail/AuthenticationSection.tsx` — main authentication section
@@ -64,10 +49,9 @@
 - **Create:** `e2e/tests/a2a-security-display.spec.ts` — E2E tests for security display
 
 ### Documentation
-- **Modify:** `docs/api.md` — document new response fields (`auth_summary`, `security_detail`)
+- **Modify:** `docs/api.md` — document new response fields (`auth_summary`, security capabilities)
 - **Modify:** `docs/end-user-guide.md` — document Authentication section with screenshots
-- **Modify:** `docs/architecture.md` — document SecurityStorePlugin, new capability kinds
-- **Modify:** `docs/settings.md` — note SecurityStore uses existing database config
+- **Modify:** `docs/architecture.md` — document new capability kinds
 - **Create:** `docs/images/security-detail-bearer.png` — screenshot from E2E
 - **Create:** `docs/images/security-detail-oauth2.png` — screenshot from E2E
 - **Create:** `docs/images/security-detail-no-auth.png` — screenshot from E2E
@@ -457,758 +441,12 @@ rtk git commit -m "feat(model): add A2ASecurityRequirement capability kind"
 
 ---
 
-## Task 3: Foundation — Add SecurityDetail Transport Models
-
-**Files:**
-- Create: `internal/model/security_detail.go`
-
-- [ ] **Step 1: Write test for SecurityDetail JSON round-trip**
-
-```go
-// Create internal/model/security_detail_test.go
-
-package model
-
-import (
-	"encoding/json"
-	"testing"
-)
-
-func TestSecurityDetail_JSONRoundTrip(t *testing.T) {
-	detail := &SecurityDetail{
-		AgentTypeID: "agent-123",
-		Protocol:    "a2a",
-		Schemes: map[string]SecuritySchemeDetail{
-			"oauth2Auth": {
-				Type:        "oauth2",
-				Description: "OAuth 2.0",
-				OAuthFlows: []OAuthFlowDetail{
-					{
-						FlowType:         "authorizationCode",
-						AuthorizationURL: "https://auth.example.com/authorize",
-						TokenURL:         "https://auth.example.com/token",
-						Scopes: map[string]string{
-							"read": "Read access",
-						},
-						Deprecated: false,
-					},
-				},
-			},
-			"apiKeyAuth": {
-				Type:           "apiKey",
-				APIKeyLocation: "header",
-				APIKeyName:     "X-API-Key",
-			},
-		},
-		Requirements: []SecurityRequirementDetail{
-			{
-				Schemes: map[string][]string{
-					"oauth2Auth": {"read"},
-				},
-			},
-		},
-		SkillRequirements: map[string][]SecurityRequirementDetail{
-			"createDocument": {
-				{
-					Schemes: map[string][]string{
-						"apiKeyAuth": {},
-					},
-				},
-			},
-		},
-	}
-
-	data, err := json.Marshal(detail)
-	if err != nil {
-		t.Fatalf("Failed to marshal: %v", err)
-	}
-
-	var decoded SecurityDetail
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatalf("Failed to unmarshal: %v", err)
-	}
-
-	if decoded.AgentTypeID != "agent-123" {
-		t.Errorf("Expected AgentTypeID 'agent-123', got '%s'", decoded.AgentTypeID)
-	}
-	if decoded.Protocol != "a2a" {
-		t.Errorf("Expected Protocol 'a2a', got '%s'", decoded.Protocol)
-	}
-	if len(decoded.Schemes) != 2 {
-		t.Errorf("Expected 2 schemes, got %d", len(decoded.Schemes))
-	}
-	if len(decoded.Requirements) != 1 {
-		t.Errorf("Expected 1 requirement, got %d", len(decoded.Requirements))
-	}
-	if len(decoded.SkillRequirements) != 1 {
-		t.Errorf("Expected 1 skill requirement, got %d", len(decoded.SkillRequirements))
-	}
-
-	oauth2Scheme := decoded.Schemes["oauth2Auth"]
-	if oauth2Scheme.Type != "oauth2" {
-		t.Errorf("Expected type 'oauth2', got '%s'", oauth2Scheme.Type)
-	}
-	if len(oauth2Scheme.OAuthFlows) != 1 {
-		t.Errorf("Expected 1 OAuth flow, got %d", len(oauth2Scheme.OAuthFlows))
-	}
-}
-
-func TestSecuritySchemeDetail_AllTypes(t *testing.T) {
-	tests := []struct {
-		name   string
-		scheme SecuritySchemeDetail
-	}{
-		{
-			name: "apiKey",
-			scheme: SecuritySchemeDetail{
-				Type:           "apiKey",
-				APIKeyLocation: "header",
-				APIKeyName:     "X-API-Key",
-			},
-		},
-		{
-			name: "http Bearer",
-			scheme: SecuritySchemeDetail{
-				Type:         "http",
-				HTTPScheme:   "Bearer",
-				BearerFormat: "JWT",
-			},
-		},
-		{
-			name: "oauth2",
-			scheme: SecuritySchemeDetail{
-				Type: "oauth2",
-				OAuthFlows: []OAuthFlowDetail{
-					{FlowType: "clientCredentials", TokenURL: "https://token.example.com"},
-				},
-			},
-		},
-		{
-			name: "openIdConnect",
-			scheme: SecuritySchemeDetail{
-				Type:             "openIdConnect",
-				OpenIDConnectURL: "https://oidc.example.com/.well-known/openid-configuration",
-			},
-		},
-		{
-			name: "mutualTls",
-			scheme: SecuritySchemeDetail{
-				Type: "mutualTls",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			data, err := json.Marshal(tt.scheme)
-			if err != nil {
-				t.Fatalf("Failed to marshal: %v", err)
-			}
-
-			var decoded SecuritySchemeDetail
-			if err := json.Unmarshal(data, &decoded); err != nil {
-				t.Fatalf("Failed to unmarshal: %v", err)
-			}
-
-			if decoded.Type != tt.scheme.Type {
-				t.Errorf("Expected type '%s', got '%s'", tt.scheme.Type, decoded.Type)
-			}
-		})
-	}
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `rtk go test ./internal/model/... -run TestSecurityDetail -v`
-
-Expected: FAIL with "undefined: SecurityDetail"
-
-- [ ] **Step 3: Create security_detail.go with all transport models**
-
-```go
-// Create internal/model/security_detail.go
-
-package model
-
-// SecurityDetail holds the full structured security metadata for an AgentType.
-// It is a pure transport struct returned by SecurityStorePlugin — NOT a GORM
-// model and has no database tags. Persistence is handled by the plugin's
-// internal row struct.
-type SecurityDetail struct {
-	AgentTypeID string `json:"agent_type_id"`
-	Protocol    string `json:"protocol"`
-
-	// Full structured security schemes keyed by scheme name.
-	// For A2A v0.3 (array format), keys are auto-generated from type field.
-	Schemes map[string]SecuritySchemeDetail `json:"schemes"`
-
-	// Top-level security requirements.
-	// Multiple entries are OR'd (client must satisfy at least one).
-	// Schemes within a single entry are AND'd.
-	Requirements []SecurityRequirementDetail `json:"requirements,omitempty"`
-
-	// Per-skill security overrides. Key = skill name.
-	SkillRequirements map[string][]SecurityRequirementDetail `json:"skill_requirements,omitempty"`
-}
-
-// SecuritySchemeDetail is the rich representation of one security scheme.
-// Protocol-agnostic wrapper — the fields cover A2A scheme types.
-// Future MCP/A2UI security will extend this or use the same fields.
-type SecuritySchemeDetail struct {
-	Type        string `json:"type"`
-	Description string `json:"description,omitempty"`
-
-	// apiKey
-	APIKeyLocation string `json:"api_key_location,omitempty"`
-	APIKeyName     string `json:"api_key_name,omitempty"`
-
-	// http
-	HTTPScheme   string `json:"http_scheme,omitempty"`
-	BearerFormat string `json:"bearer_format,omitempty"`
-
-	// oauth2
-	OAuthFlows        []OAuthFlowDetail `json:"oauth_flows,omitempty"`
-	OAuth2MetadataURL string            `json:"oauth2_metadata_url,omitempty"`
-
-	// openIdConnect
-	OpenIDConnectURL string `json:"openid_connect_url,omitempty"`
-
-	// mutualTls — no additional fields
-}
-
-// OAuthFlowDetail holds one OAuth 2.0 flow variant.
-type OAuthFlowDetail struct {
-	FlowType         string            `json:"flow_type"`
-	AuthorizationURL string            `json:"authorization_url,omitempty"`
-	TokenURL         string            `json:"token_url,omitempty"`
-	RefreshURL       string            `json:"refresh_url,omitempty"`
-	DeviceAuthURL    string            `json:"device_auth_url,omitempty"`
-	Scopes           map[string]string `json:"scopes,omitempty"`
-	Deprecated       bool              `json:"deprecated,omitempty"`
-}
-
-// SecurityRequirementDetail declares which schemes a client must satisfy.
-type SecurityRequirementDetail struct {
-	Schemes map[string][]string `json:"schemes"`
-}
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `rtk go test ./internal/model/... -run TestSecurityDetail -v`
-
-Expected: PASS
-
-- [ ] **Step 5: Add transient SecurityDetail field to AgentType**
-
-```go
-// Add to AgentType in internal/model/agent.go
-
-type AgentType struct {
-	// ...existing fields...
-	SecurityDetail *SecurityDetail `json:"-" gorm:"-"` // transient, not persisted by GORM
-}
-```
-
-- [ ] **Step 6: Run all model tests**
-
-Run: `rtk go test ./internal/model/... -v`
-
-Expected: PASS
-
-- [ ] **Step 7: Commit**
-
-```bash
-rtk git add internal/model/security_detail.go internal/model/security_detail_test.go internal/model/agent.go
-rtk git commit -m "feat(model): add SecurityDetail transport models"
-```
-
----
-
-## Task 4: Kernel — Add SecurityStorePlugin Interface
-
-**Files:**
-- Modify: `internal/kernel/plugin.go`
-- Modify: `internal/kernel/kernel.go`
-- Modify: `internal/kernel/core_registry.go`
-- Modify: `internal/kernel/plugin_manager.go`
-
-- [ ] **Step 1: Write test for kernel SecurityStore accessor**
-
-```go
-// Add to internal/kernel/core_test.go (or create if doesn't exist)
-
-package kernel
-
-import (
-	"context"
-	"testing"
-
-	"github.com/PawelHaracz/agentlens/internal/model"
-)
-
-type mockSecurityStorePlugin struct {
-	detail *model.SecurityDetail
-}
-
-func (m *mockSecurityStorePlugin) Name() string    { return "mock-security-store" }
-func (m *mockSecurityStorePlugin) Version() string { return "1.0.0" }
-func (m *mockSecurityStorePlugin) Type() PluginType { return PluginTypeSecurityStore }
-func (m *mockSecurityStorePlugin) Init(_ Kernel) error { return nil }
-func (m *mockSecurityStorePlugin) Start(_ context.Context) error { return nil }
-func (m *mockSecurityStorePlugin) Stop(_ context.Context) error { return nil }
-
-func (m *mockSecurityStorePlugin) StoreSecurityDetail(_ context.Context, _ string, detail *model.SecurityDetail) error {
-	m.detail = detail
-	return nil
-}
-
-func (m *mockSecurityStorePlugin) GetSecurityDetail(_ context.Context, _ string) (*model.SecurityDetail, error) {
-	return m.detail, nil
-}
-
-func TestCore_RegisterSecurityStore(t *testing.T) {
-	core := &Core{}
-	mock := &mockSecurityStorePlugin{}
-
-	core.RegisterSecurityStore(mock)
-
-	if core.SecurityStore() == nil {
-		t.Error("Expected SecurityStore to be registered")
-	}
-
-	if core.SecurityStore().Name() != "mock-security-store" {
-		t.Errorf("Expected name 'mock-security-store', got '%s'", core.SecurityStore().Name())
-	}
-}
-
-func TestCore_SecurityStore_Nil(t *testing.T) {
-	core := &Core{}
-
-	if core.SecurityStore() != nil {
-		t.Error("Expected SecurityStore to be nil when not registered")
-	}
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `rtk go test ./internal/kernel/... -run TestCore_RegisterSecurityStore -v`
-
-Expected: FAIL with "undefined: PluginTypeSecurityStore" and missing methods
-
-- [ ] **Step 3: Add PluginTypeSecurityStore constant**
-
-```go
-// Add to internal/kernel/plugin.go
-
-PluginTypeSecurityStore PluginType = "securitystore"
-```
-
-- [ ] **Step 4: Add SecurityStorePlugin interface**
-
-```go
-// Add to internal/kernel/plugin.go
-
-// SecurityStorePlugin persists structured security detail keyed by AgentTypeID.
-// Protocol-agnostic — works for A2A, MCP, and A2UI.
-type SecurityStorePlugin interface {
-	Plugin
-	StoreSecurityDetail(ctx context.Context, agentTypeID string, detail *model.SecurityDetail) error
-	GetSecurityDetail(ctx context.Context, agentTypeID string) (*model.SecurityDetail, error)
-}
-```
-
-- [ ] **Step 5: Add securityStore field to Core**
-
-```go
-// Add to internal/kernel/kernel.go Core struct
-
-type Core struct {
-	// ...existing fields...
-	securityStore SecurityStorePlugin
-}
-```
-
-- [ ] **Step 6: Add SecurityStore accessor to Core**
-
-```go
-// Add to internal/kernel/kernel.go
-
-// SecurityStore returns the registered security store plugin, or nil if not loaded.
-func (c *Core) SecurityStore() SecurityStorePlugin { return c.securityStore }
-```
-
-- [ ] **Step 7: Add SecurityStore to Kernel interface**
-
-```go
-// Add to internal/kernel/plugin.go Kernel interface
-
-type Kernel interface {
-	// ...existing methods...
-	SecurityStore() SecurityStorePlugin
-}
-```
-
-- [ ] **Step 8: Add RegisterSecurityStore to Core**
-
-```go
-// Add to internal/kernel/core_registry.go
-
-// RegisterSecurityStore registers the security store plugin.
-func (c *Core) RegisterSecurityStore(p SecurityStorePlugin) {
-	c.securityStore = p
-}
-```
-
-- [ ] **Step 9: Add auto-registration in InitAll**
-
-```go
-// Add to internal/kernel/plugin_manager.go InitAll() method
-// After the existing cardstore type assertion
-
-// Register security store plugins with the kernel
-if ssp, ok := p.(SecurityStorePlugin); ok {
-	pm.core.RegisterSecurityStore(ssp)
-}
-```
-
-- [ ] **Step 10: Run test to verify it passes**
-
-Run: `rtk go test ./internal/kernel/... -run TestCore_RegisterSecurityStore -v`
-
-Expected: PASS
-
-- [ ] **Step 11: Commit**
-
-```bash
-rtk git add internal/kernel/plugin.go internal/kernel/kernel.go internal/kernel/core_registry.go internal/kernel/plugin_manager.go internal/kernel/core_test.go
-rtk git commit -m "feat(kernel): add SecurityStorePlugin interface and registration"
-```
-
----
-
-## Task 5: Plugin — Implement SecurityStore Plugin
-
-**Files:**
-- Create: `plugins/securitystore/plugin.go`
-- Create: `plugins/securitystore/migrate.go`
-- Create: `plugins/securitystore/plugin_test.go`
-
-- [ ] **Step 1: Write test for SecurityStore round-trip**
-
-```go
-// Create plugins/securitystore/plugin_test.go
-
-package securitystore
-
-import (
-	"context"
-	"testing"
-
-	"github.com/PawelHaracz/agentlens/internal/db"
-	"github.com/PawelHaracz/agentlens/internal/model"
-	"gorm.io/gorm"
-)
-
-func TestPlugin_RoundTrip(t *testing.T) {
-	database, err := db.OpenMemory()
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
-	}
-
-	plugin := New(database)
-	ctx := context.Background()
-
-	// Init to create schema
-	if err := plugin.Init(nil); err != nil {
-		t.Fatalf("Failed to init plugin: %v", err)
-	}
-
-	detail := &model.SecurityDetail{
-		AgentTypeID: "agent-123",
-		Protocol:    "a2a",
-		Schemes: map[string]model.SecuritySchemeDetail{
-			"oauth2Auth": {
-				Type:        "oauth2",
-				Description: "OAuth 2.0",
-				OAuthFlows: []model.OAuthFlowDetail{
-					{
-						FlowType: "authorizationCode",
-						TokenURL: "https://token.example.com",
-					},
-				},
-			},
-		},
-		Requirements: []model.SecurityRequirementDetail{
-			{
-				Schemes: map[string][]string{"oauth2Auth": {"read"}},
-			},
-		},
-	}
-
-	// Store
-	if err := plugin.StoreSecurityDetail(ctx, "agent-123", detail); err != nil {
-		t.Fatalf("Failed to store: %v", err)
-	}
-
-	// Retrieve
-	retrieved, err := plugin.GetSecurityDetail(ctx, "agent-123")
-	if err != nil {
-		t.Fatalf("Failed to get: %v", err)
-	}
-
-	if retrieved.AgentTypeID != "agent-123" {
-		t.Errorf("Expected AgentTypeID 'agent-123', got '%s'", retrieved.AgentTypeID)
-	}
-	if retrieved.Protocol != "a2a" {
-		t.Errorf("Expected Protocol 'a2a', got '%s'", retrieved.Protocol)
-	}
-	if len(retrieved.Schemes) != 1 {
-		t.Errorf("Expected 1 scheme, got %d", len(retrieved.Schemes))
-	}
-}
-
-func TestPlugin_GetSecurityDetail_NotFound(t *testing.T) {
-	database, err := db.OpenMemory()
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
-	}
-
-	plugin := New(database)
-	ctx := context.Background()
-
-	if err := plugin.Init(nil); err != nil {
-		t.Fatalf("Failed to init plugin: %v", err)
-	}
-
-	_, err = plugin.GetSecurityDetail(ctx, "nonexistent")
-	if err != gorm.ErrRecordNotFound {
-		t.Errorf("Expected ErrRecordNotFound, got %v", err)
-	}
-}
-
-func TestPlugin_Upsert(t *testing.T) {
-	database, err := db.OpenMemory()
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
-	}
-
-	plugin := New(database)
-	ctx := context.Background()
-
-	if err := plugin.Init(nil); err != nil {
-		t.Fatalf("Failed to init plugin: %v", err)
-	}
-
-	detail1 := &model.SecurityDetail{
-		AgentTypeID: "agent-123",
-		Protocol:    "a2a",
-		Schemes: map[string]model.SecuritySchemeDetail{
-			"apiKeyAuth": {Type: "apiKey"},
-		},
-	}
-
-	detail2 := &model.SecurityDetail{
-		AgentTypeID: "agent-123",
-		Protocol:    "a2a",
-		Schemes: map[string]model.SecuritySchemeDetail{
-			"oauth2Auth": {Type: "oauth2"},
-		},
-	}
-
-	// Store first
-	if err := plugin.StoreSecurityDetail(ctx, "agent-123", detail1); err != nil {
-		t.Fatalf("Failed to store first: %v", err)
-	}
-
-	// Store second (upsert)
-	if err := plugin.StoreSecurityDetail(ctx, "agent-123", detail2); err != nil {
-		t.Fatalf("Failed to store second: %v", err)
-	}
-
-	// Retrieve
-	retrieved, err := plugin.GetSecurityDetail(ctx, "agent-123")
-	if err != nil {
-		t.Fatalf("Failed to get: %v", err)
-	}
-
-	// Should have oauth2Auth, not apiKeyAuth
-	if _, ok := retrieved.Schemes["oauth2Auth"]; !ok {
-		t.Error("Expected oauth2Auth scheme after upsert")
-	}
-	if _, ok := retrieved.Schemes["apiKeyAuth"]; ok {
-		t.Error("Expected apiKeyAuth to be replaced after upsert")
-	}
-}
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `rtk go test ./plugins/securitystore/... -v`
-
-Expected: FAIL with "no such file or directory" or "undefined: New"
-
-- [ ] **Step 3: Create plugin.go with Plugin struct and GORM model**
-
-```go
-// Create plugins/securitystore/plugin.go
-
-package securitystore
-
-import (
-	"context"
-	"encoding/json"
-	"time"
-
-	"github.com/PawelHaracz/agentlens/internal/db"
-	"github.com/PawelHaracz/agentlens/internal/kernel"
-	"github.com/PawelHaracz/agentlens/internal/model"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
-)
-
-// Plugin implements kernel.SecurityStorePlugin.
-type Plugin struct {
-	database *db.DB
-}
-
-// securityDetailRow is the GORM model for the security_details table.
-type securityDetailRow struct {
-	AgentTypeID string    `gorm:"primaryKey;type:text"`
-	Data        string    `gorm:"not null;type:text;default:'{}'"`  // JSON TEXT
-	UpdatedAt   time.Time `gorm:"not null"`
-}
-
-func (securityDetailRow) TableName() string { return "security_details" }
-
-// New creates a new SecurityStore plugin.
-func New(database *db.DB) *Plugin {
-	return &Plugin{database: database}
-}
-
-func (p *Plugin) Name() string             { return "security-store" }
-func (p *Plugin) Version() string          { return "1.0.0" }
-func (p *Plugin) Type() kernel.PluginType  { return kernel.PluginTypeSecurityStore }
-func (p *Plugin) Start(_ context.Context) error { return nil }
-func (p *Plugin) Stop(_ context.Context) error  { return nil }
-
-func (p *Plugin) Init(_ kernel.Kernel) error {
-	return p.MigrateSchema(context.Background())
-}
-```
-
-- [ ] **Step 4: Create migrate.go with schema migration**
-
-```go
-// Create plugins/securitystore/migrate.go
-
-package securitystore
-
-import "context"
-
-func (p *Plugin) MigrateSchema(_ context.Context) error {
-	return p.database.AutoMigrate(&securityDetailRow{})
-}
-```
-
-- [ ] **Step 5: Implement StoreSecurityDetail**
-
-```go
-// Add to plugins/securitystore/plugin.go
-
-func (p *Plugin) StoreSecurityDetail(ctx context.Context, agentTypeID string, detail *model.SecurityDetail) error {
-	data, err := json.Marshal(detail)
-	if err != nil {
-		return err
-	}
-
-	row := &securityDetailRow{
-		AgentTypeID: agentTypeID,
-		Data:        string(data),
-		UpdatedAt:   time.Now(),
-	}
-
-	return p.database.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "agent_type_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"data", "updated_at"}),
-	}).Create(row).Error
-}
-```
-
-- [ ] **Step 6: Implement GetSecurityDetail**
-
-```go
-// Add to plugins/securitystore/plugin.go
-
-func (p *Plugin) GetSecurityDetail(ctx context.Context, agentTypeID string) (*model.SecurityDetail, error) {
-	var row securityDetailRow
-	if err := p.database.WithContext(ctx).Where("agent_type_id = ?", agentTypeID).First(&row).Error; err != nil {
-		return nil, err
-	}
-
-	var detail model.SecurityDetail
-	if err := json.Unmarshal([]byte(row.Data), &detail); err != nil {
-		return nil, err
-	}
-
-	return &detail, nil
-}
-```
-
-- [ ] **Step 7: Run test to verify it passes**
-
-Run: `rtk go test ./plugins/securitystore/... -v`
-
-Expected: PASS
-
-- [ ] **Step 8: Commit**
-
-```bash
-rtk git add plugins/securitystore/
-rtk git commit -m "feat(plugin): implement SecurityStore plugin with SQLite storage"
-```
-
----
-
-## Task 6: Wiring — Register SecurityStore Plugin in main.go
-
-**Files:**
-- Modify: `cmd/agentlens/main.go`
-
-- [ ] **Step 1: Add import for securitystore plugin**
-
-```go
-// Add to imports in cmd/agentlens/main.go
-
-securitystorePlugin "github.com/PawelHaracz/agentlens/plugins/securitystore"
-```
-
-- [ ] **Step 2: Register plugin after cardstore**
-
-```go
-// Add to cmd/agentlens/main.go after cardstorePlugin registration
-
-pm.Register(securitystorePlugin.New(database))
-```
-
-- [ ] **Step 3: Run build to verify no errors**
-
-Run: `rtk make build`
-
-Expected: Build succeeds
-
-- [ ] **Step 4: Commit**
-
-```bash
-rtk git add cmd/agentlens/main.go
-rtk git commit -m "feat(wiring): register SecurityStore plugin in main"
-```
-
----
-
-## Task 7: Parser — Test Fixtures for Security Schemes
+## Task 3: Parser — Test Fixtures for Security Schemes
+
+> **Note:** Old Tasks 3-6 (SecurityDetail transport models, SecurityStorePlugin interface,
+> plugin implementation, main.go wiring) have been REMOVED per ADR-001. Security data is
+> stored entirely through the existing `capabilities` table. No new tables, plugins, or
+> kernel interfaces are needed.
 
 **Files:**
 - Create: `plugins/parsers/a2a/testdata/v10_bearer_only.json`
@@ -1572,7 +810,7 @@ rtk git commit -m "test(parser): add security scheme test fixtures"
 
 ---
 
-## Task 8: Parser — Dual-Format Security Schemes Parsing
+## Task 4: Parser — Dual-Format Security Schemes Parsing
 
 **Files:**
 - Modify: `plugins/parsers/a2a/validation.go`
@@ -1620,14 +858,6 @@ func TestParse_SecuritySchemes_V10_Bearer(t *testing.T) {
 	}
 	if scheme.BearerFormat != "JWT" {
 		t.Errorf("Expected BearerFormat 'JWT', got '%s'", scheme.BearerFormat)
-	}
-
-	// Check SecurityDetail is populated
-	if agentType.SecurityDetail == nil {
-		t.Fatal("Expected SecurityDetail to be populated")
-	}
-	if len(agentType.SecurityDetail.Schemes) != 1 {
-		t.Errorf("Expected 1 scheme in SecurityDetail, got %d", len(agentType.SecurityDetail.Schemes))
 	}
 }
 
@@ -1693,7 +923,6 @@ func TestParse_SecuritySchemes_V03_Array(t *testing.T) {
 	}
 
 	// v0.3 auto-generates SchemeName from type
-	// First scheme should be http
 	foundHTTP := false
 	for _, s := range schemes {
 		if s.Type == "http" {
@@ -1800,39 +1029,34 @@ func buildSecurityPreviewNames(raw json.RawMessage) []string {
 ```go
 // Add to plugins/parsers/a2a/a2a.go
 
-func buildSecurityCaps(card *fullCard) ([]model.Capability, *model.SecurityDetail, error) {
+// buildSecurityCaps parses security schemes from the card into capabilities.
+// Supports both v0.3 array format and v1.0 named map format.
+// Returns only []model.Capability — no parallel SecurityDetail.
+func buildSecurityCaps(card *fullCard) ([]model.Capability, error) {
 	var caps []model.Capability
-	detail := &model.SecurityDetail{
-		Protocol: "a2a",
-		Schemes:  make(map[string]model.SecuritySchemeDetail),
-	}
 
 	if len(card.SecuritySchemes) == 0 {
-		return caps, detail, nil
+		return caps, nil
 	}
 
 	// Try v1.0 map format first
 	var v10Schemes map[string]json.RawMessage
 	if err := json.Unmarshal(card.SecuritySchemes, &v10Schemes); err == nil {
-		// v1.0 format
 		for schemeName, schemeData := range v10Schemes {
-			scheme, schemeDetail, err := parseSecurityScheme(schemeName, schemeData)
+			scheme, err := parseSecurityScheme(schemeName, schemeData)
 			if err != nil {
 				slog.Warn("Failed to parse security scheme", "scheme", schemeName, "error", err)
 				continue
 			}
 			caps = append(caps, scheme)
-			detail.Schemes[schemeName] = schemeDetail
 		}
-		return caps, detail, nil
+		return caps, nil
 	}
 
 	// Try v0.3 array format
 	var v03Schemes []json.RawMessage
 	if err := json.Unmarshal(card.SecuritySchemes, &v03Schemes); err == nil {
-		// v0.3 format
 		for i, schemeData := range v03Schemes {
-			// Extract type to generate scheme name
 			var typeHolder struct {
 				Type string `json:"type"`
 			}
@@ -1840,70 +1064,56 @@ func buildSecurityCaps(card *fullCard) ([]model.Capability, *model.SecurityDetai
 				slog.Warn("Failed to extract type from v0.3 scheme", "index", i, "error", err)
 				continue
 			}
-
-			// Auto-generate name: "http" -> "httpAuth", "apiKey" -> "apiKeyAuth"
 			schemeName := typeHolder.Type + "Auth"
-
-			scheme, schemeDetail, err := parseSecuritySchemeV03(schemeName, schemeData)
+			scheme, err := parseSecuritySchemeV03(schemeName, schemeData)
 			if err != nil {
 				slog.Warn("Failed to parse v0.3 security scheme", "index", i, "error", err)
 				continue
 			}
 			caps = append(caps, scheme)
-			detail.Schemes[schemeName] = schemeDetail
 		}
-		return caps, detail, nil
+		return caps, nil
 	}
 
-	return caps, detail, fmt.Errorf("securitySchemes is neither v1.0 map nor v0.3 array")
+	return caps, fmt.Errorf("securitySchemes is neither v1.0 map nor v0.3 array")
 }
 
-func parseSecurityScheme(schemeName string, data json.RawMessage) (*model.A2ASecurityScheme, model.SecuritySchemeDetail, error) {
-	// Parse into a generic map to extract type
+func parseSecurityScheme(schemeName string, data json.RawMessage) (*model.A2ASecurityScheme, error) {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, model.SecuritySchemeDetail{}, err
+		return nil, err
 	}
 
 	schemeType, ok := raw["type"].(string)
 	if !ok || schemeType == "" {
-		return nil, model.SecuritySchemeDetail{}, fmt.Errorf("missing or invalid type")
+		return nil, fmt.Errorf("missing or invalid type")
 	}
 
 	scheme := &model.A2ASecurityScheme{
 		SchemeName: schemeName,
-		Name:       schemeName, // backward compat
+		Name:       schemeName, // backward compat — used by capabilityToRow for name column
 		Type:       schemeType,
-	}
-
-	detail := model.SecuritySchemeDetail{
-		Type: schemeType,
 	}
 
 	if desc, ok := raw["description"].(string); ok {
 		scheme.Description = desc
-		detail.Description = desc
 	}
 
 	switch schemeType {
 	case "apiKey":
 		if in, ok := raw["in"].(string); ok {
 			scheme.APIKeyLocation = in
-			detail.APIKeyLocation = in
 		}
 		if name, ok := raw["name"].(string); ok {
 			scheme.APIKeyName = name
-			detail.APIKeyName = name
 		}
 
 	case "http":
 		if httpScheme, ok := raw["scheme"].(string); ok {
 			scheme.HTTPScheme = httpScheme
-			detail.HTTPScheme = httpScheme
 		}
 		if bearerFormat, ok := raw["bearerFormat"].(string); ok {
 			scheme.BearerFormat = bearerFormat
-			detail.BearerFormat = bearerFormat
 		}
 
 	case "oauth2":
@@ -1917,32 +1127,24 @@ func parseSecurityScheme(schemeName string, data json.RawMessage) (*model.A2ASec
 				flow := model.A2AOAuthFlow{
 					FlowType: flowType,
 				}
-				flowDetail := model.OAuthFlowDetail{
-					FlowType: flowType,
-				}
 
 				// Mark deprecated flows
 				if flowType == "implicit" || flowType == "password" {
 					flow.Deprecated = true
-					flowDetail.Deprecated = true
 					slog.Warn("Deprecated OAuth flow detected", "flow", flowType, "scheme", schemeName)
 				}
 
 				if authURL, ok := flowMap["authorizationUrl"].(string); ok {
 					flow.AuthorizationURL = authURL
-					flowDetail.AuthorizationURL = authURL
 				}
 				if tokenURL, ok := flowMap["tokenUrl"].(string); ok {
 					flow.TokenURL = tokenURL
-					flowDetail.TokenURL = tokenURL
 				}
 				if refreshURL, ok := flowMap["refreshUrl"].(string); ok {
 					flow.RefreshURL = refreshURL
-					flowDetail.RefreshURL = refreshURL
 				}
 				if deviceAuthURL, ok := flowMap["deviceAuthorizationUrl"].(string); ok {
 					flow.DeviceAuthURL = deviceAuthURL
-					flowDetail.DeviceAuthURL = deviceAuthURL
 				}
 				if scopesRaw, ok := flowMap["scopes"].(map[string]interface{}); ok {
 					scopes := make(map[string]string)
@@ -1952,22 +1154,18 @@ func parseSecurityScheme(schemeName string, data json.RawMessage) (*model.A2ASec
 						}
 					}
 					flow.Scopes = scopes
-					flowDetail.Scopes = scopes
 				}
 
 				scheme.OAuthFlows = append(scheme.OAuthFlows, flow)
-				detail.OAuthFlows = append(detail.OAuthFlows, flowDetail)
 			}
 		}
 		if metadataURL, ok := raw["oauth2MetadataUrl"].(string); ok {
 			scheme.OAuth2MetadataURL = metadataURL
-			detail.OAuth2MetadataURL = metadataURL
 		}
 
 	case "openIdConnect":
 		if oidcURL, ok := raw["openIdConnectUrl"].(string); ok {
 			scheme.OpenIDConnectURL = oidcURL
-			detail.OpenIDConnectURL = oidcURL
 		}
 
 	case "mutualTls":
@@ -1977,18 +1175,18 @@ func parseSecurityScheme(schemeName string, data json.RawMessage) (*model.A2ASec
 		slog.Warn("Unknown security scheme type", "type", schemeType, "scheme", schemeName)
 	}
 
-	return scheme, detail, nil
+	return scheme, nil
 }
 
-func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2ASecurityScheme, model.SecuritySchemeDetail, error) {
+func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2ASecurityScheme, error) {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, model.SecuritySchemeDetail{}, err
+		return nil, err
 	}
 
 	schemeType, ok := raw["type"].(string)
 	if !ok {
-		return nil, model.SecuritySchemeDetail{}, fmt.Errorf("missing type in v0.3 scheme")
+		return nil, fmt.Errorf("missing type in v0.3 scheme")
 	}
 
 	scheme := &model.A2ASecurityScheme{
@@ -1997,22 +1195,15 @@ func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2A
 		Type:       schemeType,
 	}
 
-	detail := model.SecuritySchemeDetail{
-		Type: schemeType,
-	}
-
 	if desc, ok := raw["description"].(string); ok {
 		scheme.Description = desc
-		detail.Description = desc
 	}
 
 	// v0.3 uses "method" instead of "scheme"
 	if method, ok := raw["method"].(string); ok {
 		scheme.Method = method
-		// Map to v1.0 fields for backward compat
 		if schemeType == "http" {
 			scheme.HTTPScheme = method
-			detail.HTTPScheme = method
 		}
 	}
 
@@ -2021,11 +1212,10 @@ func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2A
 		scheme.Name = name
 		if schemeType == "apiKey" {
 			scheme.APIKeyName = name
-			detail.APIKeyName = name
 		}
 	}
 
-	return scheme, detail, nil
+	return scheme, nil
 }
 ```
 
@@ -2034,12 +1224,11 @@ func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2A
 ```go
 // In plugins/parsers/a2a/a2a.go Parse function, after buildA2AMetaCaps
 
-securityCaps, securityDetail, err := buildSecurityCaps(&card)
+securityCaps, err := buildSecurityCaps(&card)
 if err != nil {
 	slog.Warn("Failed to parse security schemes", "error", err)
 } else {
 	capabilities = append(capabilities, securityCaps...)
-	agentType.SecurityDetail = securityDetail
 }
 ```
 
@@ -2058,12 +1247,30 @@ rtk git commit -m "feat(parser): implement dual-format security schemes parsing 
 
 ---
 
-## Task 9: Parser — Security Requirements Parsing
+## Task 5: Parser — Security Requirements Parsing
 
 **Files:**
 - Modify: `plugins/parsers/a2a/a2a.go`
+- Modify: `plugins/parsers/a2a/validation.go`
 
-- [ ] **Step 1: Write test for parsing security requirements**
+> **ADR-001 note:** Security requirements are stored ONLY as `A2ASecurityRequirement`
+> capabilities in the `capabilities` table. No `SecurityDetail`, no `SecurityRequirementDetail`,
+> no dual-write. The `fullCard.SecurityRequirements` field must accept `json.RawMessage`
+> to handle the raw JSON array-of-objects format from the A2A spec.
+
+- [ ] **Step 1: Add SecurityRequirements field to fullCard**
+
+```go
+// In plugins/parsers/a2a/validation.go
+// Add field to fullCard struct:
+
+type fullCard struct {
+	// ...existing fields...
+	SecurityRequirements []json.RawMessage `json:"securityRequirements,omitempty"`
+}
+```
+
+- [ ] **Step 2: Write test for parsing security requirements**
 
 ```go
 // Add to plugins/parsers/a2a/a2a_test.go
@@ -2102,14 +1309,6 @@ func TestParse_SecurityRequirements(t *testing.T) {
 	if req.SkillRef != "" {
 		t.Errorf("Expected empty SkillRef for top-level requirement, got '%s'", req.SkillRef)
 	}
-
-	// Check SecurityDetail requirements
-	if agentType.SecurityDetail == nil {
-		t.Fatal("Expected SecurityDetail to be populated")
-	}
-	if len(agentType.SecurityDetail.Requirements) != 1 {
-		t.Errorf("Expected 1 requirement in SecurityDetail, got %d", len(agentType.SecurityDetail.Requirements))
-	}
 }
 
 func TestParse_SecurityRequirements_MultipleSchemes(t *testing.T) {
@@ -2137,20 +1336,22 @@ func TestParse_SecurityRequirements_MultipleSchemes(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 3: Run test to verify it fails**
 
 Run: `rtk go test ./plugins/parsers/a2a/... -run TestParse_SecurityRequirements -v`
 
 Expected: FAIL with missing requirements parsing
 
-- [ ] **Step 3: Add buildSecurityRequirements function**
+- [ ] **Step 4: Add buildSecurityRequirements function**
 
 ```go
 // Add to plugins/parsers/a2a/a2a.go
 
-func buildSecurityRequirements(card *fullCard) ([]model.Capability, []model.SecurityRequirementDetail, error) {
+// buildSecurityRequirements parses the top-level securityRequirements array
+// from the A2A card. Each entry is an OR'd alternative; within each entry,
+// scheme keys are AND'd. Returns only capabilities — no parallel storage.
+func buildSecurityRequirements(card *fullCard) ([]model.Capability, error) {
 	var caps []model.Capability
-	var details []model.SecurityRequirementDetail
 
 	for _, reqData := range card.SecurityRequirements {
 		var schemes map[string][]string
@@ -2164,54 +1365,50 @@ func buildSecurityRequirements(card *fullCard) ([]model.Capability, []model.Secu
 			SkillRef: "", // top-level
 		}
 
-		detail := model.SecurityRequirementDetail{
-			Schemes: schemes,
-		}
-
 		caps = append(caps, req)
-		details = append(details, detail)
 	}
 
-	return caps, details, nil
+	return caps, nil
 }
 ```
 
-- [ ] **Step 4: Call buildSecurityRequirements in Parse**
+- [ ] **Step 5: Call buildSecurityRequirements in Parse**
 
 ```go
 // In plugins/parsers/a2a/a2a.go Parse function, after buildSecurityCaps
 
-reqCaps, reqDetails, err := buildSecurityRequirements(&card)
+reqCaps, err := buildSecurityRequirements(&card)
 if err != nil {
 	slog.Warn("Failed to parse security requirements", "error", err)
 } else {
 	capabilities = append(capabilities, reqCaps...)
-	if agentType.SecurityDetail != nil {
-		agentType.SecurityDetail.Requirements = reqDetails
-	}
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Step 6: Run test to verify it passes**
 
 Run: `rtk go test ./plugins/parsers/a2a/... -run TestParse_SecurityRequirements -v`
 
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 rtk git add plugins/parsers/a2a/
-rtk git commit -m "feat(parser): parse top-level security requirements"
+rtk git commit -m "feat(parser): parse top-level security requirements as capabilities"
 ```
 
 ---
 
-## Task 10: Parser — Per-Skill Security Requirements
+## Task 6: Parser — Per-Skill Security Requirements
 
 **Files:**
 - Modify: `plugins/parsers/a2a/validation.go`
 - Modify: `plugins/parsers/a2a/a2a.go`
+
+> **ADR-001 note:** Per-skill security requirements are stored as `A2ASecurityRequirement`
+> capabilities with `SkillRef` set to the skill name. No `SecurityDetail.SkillRequirements`
+> map — that was parallel storage. The capabilities table is the single source of truth.
 
 - [ ] **Step 1: Write test for per-skill security**
 
@@ -2260,17 +1457,6 @@ func TestParse_SkillSecurityRequirements(t *testing.T) {
 	if _, ok := skillReq.Schemes["apiKeyAuth"]; !ok {
 		t.Error("Expected 'apiKeyAuth' in skill requirement")
 	}
-
-	// Check SecurityDetail skill requirements
-	if agentType.SecurityDetail == nil {
-		t.Fatal("Expected SecurityDetail to be populated")
-	}
-	if len(agentType.SecurityDetail.SkillRequirements) != 1 {
-		t.Errorf("Expected 1 entry in SkillRequirements, got %d", len(agentType.SecurityDetail.SkillRequirements))
-	}
-	if reqs, ok := agentType.SecurityDetail.SkillRequirements["createDocument"]; !ok || len(reqs) != 1 {
-		t.Error("Expected 'createDocument' skill requirements in SecurityDetail")
-	}
 }
 ```
 
@@ -2296,9 +1482,11 @@ type fullSkill struct {
 ```go
 // Add to plugins/parsers/a2a/a2a.go
 
-func parseSkillSecurityRequirements(skillName string, skill *fullSkill) ([]model.Capability, []model.SecurityRequirementDetail) {
+// parseSkillSecurityRequirements creates A2ASecurityRequirement capabilities
+// with SkillRef set, so per-skill auth requirements are discoverable from
+// the capabilities table. Returns only capabilities — no parallel storage.
+func parseSkillSecurityRequirements(skillName string, skill *fullSkill) []model.Capability {
 	var caps []model.Capability
-	var details []model.SecurityRequirementDetail
 
 	for _, reqData := range skill.SecurityRequirements {
 		var schemes map[string][]string
@@ -2312,15 +1500,10 @@ func parseSkillSecurityRequirements(skillName string, skill *fullSkill) ([]model
 			SkillRef: skillName,
 		}
 
-		detail := model.SecurityRequirementDetail{
-			Schemes: schemes,
-		}
-
 		caps = append(caps, req)
-		details = append(details, detail)
 	}
 
-	return caps, details
+	return caps
 }
 ```
 
@@ -2330,16 +1513,8 @@ func parseSkillSecurityRequirements(skillName string, skill *fullSkill) ([]model
 // In plugins/parsers/a2a/a2a.go, inside the skills loop after creating A2ASkill
 
 if len(skill.SecurityRequirements) > 0 {
-	skillSecCaps, skillSecDetails := parseSkillSecurityRequirements(skill.Name, &skill)
+	skillSecCaps := parseSkillSecurityRequirements(skill.Name, &skill)
 	capabilities = append(capabilities, skillSecCaps...)
-
-	// Add to SecurityDetail
-	if agentType.SecurityDetail != nil {
-		if agentType.SecurityDetail.SkillRequirements == nil {
-			agentType.SecurityDetail.SkillRequirements = make(map[string][]model.SecurityRequirementDetail)
-		}
-		agentType.SecurityDetail.SkillRequirements[skill.Name] = skillSecDetails
-	}
 }
 ```
 
@@ -2359,45 +1534,30 @@ Expected: All PASS
 
 ```bash
 rtk git add plugins/parsers/a2a/
-rtk git commit -m "feat(parser): parse per-skill security requirements"
+rtk git commit -m "feat(parser): parse per-skill security requirements as capabilities"
 ```
 
 ---
 
-## Task 11: API — Extend List Endpoint with authSummary
+## Task 7: API — Extend List Endpoint with authSummary
 
 **Files:**
 - Modify: `internal/model/agent.go`
-- Modify: `internal/model/agent_type.go`
-- Modify: `internal/api/handlers.go`
 
-> **Design note:** Instead of the brittle marshal→unmarshal→map→inject pattern,
-> we add `AuthSummary` and `SecurityDetail` as typed fields on `catalogEntryJSON`.
-> The `toCatalogEntryJSON()` method populates `AuthSummary` from capabilities.
-> The existing response shape (bare array) is preserved — no `{"entries": [...]}` wrapper.
-> The `Handler` struct already has a `parsers kernel.Kernel` field that IS the kernel.
-> Tests use the existing `newTestRouter(t)` pattern (package `api_test`), NOT direct Handler construction.
+> **ADR-001 note:** `authSummary` is a computed view field derived at serialization time
+> from the capabilities slice. No `SecurityDetail` transient field on `AgentType`, no
+> `SecurityStorePlugin` accessor, no handler changes. The existing `toCatalogEntryJSON()`
+> method already reads `AgentType.Capabilities` — we add `buildAuthSummary()` to compute
+> the summary from that same slice. The response shape (bare array) is preserved.
+>
+> **Design note:** The `Handler` struct has `parsers kernel.Kernel` which IS the kernel.
+> Tests use the existing `newTestRouter(t)` pattern (package `api_test`), NOT direct
+> Handler construction.
 
-- [ ] **Step 1: Add SecurityDetail transient field to AgentType**
-
-```go
-// In internal/model/agent_type.go, add a transient field for SecurityDetail
-// This is populated by the parser during Parse() and consumed by the API layer.
-// NOT persisted — stored separately by SecurityStorePlugin.
-
-type AgentType struct {
-	// ...existing fields...
-
-	// SecurityDetail holds parsed security metadata. Not persisted via GORM;
-	// stored separately by SecurityStorePlugin.
-	SecurityDetail *SecurityDetail `json:"-" gorm:"-"`
-}
-```
-
-- [ ] **Step 2: Add authSummaryJSON and SecurityDetail to catalogEntryJSON**
+- [ ] **Step 1: Add authSummaryJSON struct and buildAuthSummary function**
 
 ```go
-// In internal/model/agent.go
+// Add to internal/model/agent.go
 
 type authSummaryJSON struct {
 	Types    []string `json:"types"`
@@ -2405,20 +1565,8 @@ type authSummaryJSON struct {
 	Required bool     `json:"required"`
 }
 
-// Add fields to catalogEntryJSON:
-type catalogEntryJSON struct {
-	// ...existing fields...
-	AuthSummary    *authSummaryJSON `json:"auth_summary,omitempty"`
-	SecurityDetail *SecurityDetail  `json:"security_detail,omitempty"`
-}
-```
-
-- [ ] **Step 3: Add buildAuthSummary function in model package**
-
-```go
-// Add to internal/model/agent.go (or a new file internal/model/auth_summary.go)
-// This is in model because toCatalogEntryJSON is unexported and lives in model.
-
+// buildAuthSummary computes an auth summary from capabilities at serialization
+// time. Returns nil when no security schemes are declared (omitempty hides it).
 func buildAuthSummary(capabilities []Capability) *authSummaryJSON {
 	var schemes []string
 	hasRequirement := false
@@ -2435,7 +1583,9 @@ func buildAuthSummary(capabilities []Capability) *authSummaryJSON {
 			schemes = append(schemes, typeStr)
 
 		case *A2ASecurityRequirement:
-			hasRequirement = true
+			if c.SkillRef == "" { // only top-level requirements indicate "required"
+				hasRequirement = true
+			}
 		}
 	}
 
@@ -2484,18 +1634,24 @@ func buildAuthLabel(schemes []string) string {
 }
 ```
 
-- [ ] **Step 4: Populate AuthSummary in toCatalogEntryJSON**
+- [ ] **Step 2: Add AuthSummary to catalogEntryJSON and populate in toCatalogEntryJSON**
 
 ```go
-// In internal/model/agent.go toCatalogEntryJSON()
-// After building capJSON, add:
+// In internal/model/agent.go
 
+// Add field to catalogEntryJSON:
+type catalogEntryJSON struct {
+	// ...existing fields...
+	AuthSummary *authSummaryJSON `json:"auth_summary,omitempty"`
+}
+
+// In toCatalogEntryJSON(), after building capJSON:
 var authSummary *authSummaryJSON
 if len(capabilities) > 0 {
 	authSummary = buildAuthSummary(capabilities)
 }
 
-// Then include in the return struct:
+// Include in return:
 return catalogEntryJSON{
 	// ...existing fields...
 	AuthSummary: authSummary,
@@ -2508,7 +1664,7 @@ return catalogEntryJSON{
 > The existing `JSONResponse(w, http.StatusOK, entries)` call serializes the bare array
 > and each entry's `MarshalJSON()` now includes `auth_summary` automatically.
 
-- [ ] **Step 5: Write test for authSummary in list response**
+- [ ] **Step 3: Write test for authSummary in list response**
 
 ```go
 // Add to internal/api/handlers_test.go
@@ -2580,98 +1736,138 @@ func TestListCatalog_AuthSummary(t *testing.T) {
 }
 ```
 
-- [ ] **Step 6: Run test to verify it fails, then passes after implementation**
+- [ ] **Step 4: Run test to verify it fails, then passes after implementation**
 
 Run: `rtk go test ./internal/api/... -run TestListCatalog_AuthSummary -v`
 
-Expected: PASS after Steps 1-4 are implemented
+Expected: PASS after Steps 1-2 are implemented
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-rtk git add internal/model/agent.go internal/model/agent_type.go internal/api/handlers_test.go
-rtk git commit -m "feat(api): add authSummary to catalog list endpoint"
+rtk git add internal/model/agent.go internal/api/handlers_test.go
+rtk git commit -m "feat(api): add authSummary computed from capabilities to catalog list"
 ```
 
 ---
 
-## Task 12: API — Extend Detail Endpoint with SecurityDetail
+## Task 8: API — Extend Detail Endpoint with Security View
 
 **Files:**
-- Modify: `internal/api/handlers.go`
 - Modify: `internal/model/agent.go`
 
-> **Design note:** For the detail endpoint, SecurityDetail is fetched from the
-> SecurityStore plugin and injected into `catalogEntryJSON.SecurityDetail` before
-> serialization. The `Handler` already has `parsers kernel.Kernel` — we use
-> `h.parsers.SecurityStore()` to access it. No constructor changes needed.
-> Tests follow the existing `newTestRouterWithSecurityStore` pattern.
+> **ADR-001 note:** The detail endpoint does NOT have a separate `security_detail` field
+> fetched from a SecurityStorePlugin. There is no SecurityStore, no `mockSecurityStore`,
+> no `newTestRouterWithSecurityStore`, no handler changes. Security schemes and
+> requirements are already in `AgentType.Capabilities` and appear in the `capabilities`
+> JSON array in every response. The only addition is a convenience `security_detail`
+> computed view field in `catalogEntryJSON` that extracts security capabilities into
+> a structured object for easier frontend consumption. This is computed at serialization
+> time in `toCatalogEntryJSON()`, just like `auth_summary`.
 
-- [ ] **Step 1: Add newTestRouterWithSecurityStore helper**
+- [ ] **Step 1: Add buildSecurityDetail function**
 
 ```go
-// Add to internal/api/handlers_test.go
+// Add to internal/model/agent.go
 
-// mockSecurityStore is a simple in-memory SecurityStorePlugin for tests.
-type mockSecurityStore struct {
-	details map[string]*model.SecurityDetail
+// securityDetailJSON is a convenience view for the detail endpoint that groups
+// security capabilities into a structured object. Computed at serialization time,
+// not stored.
+type securityDetailJSON struct {
+	SecuritySchemes      []json.RawMessage `json:"security_schemes,omitempty"`
+	SecurityRequirements []json.RawMessage `json:"security_requirements,omitempty"`
 }
 
-func (m *mockSecurityStore) Name() string                  { return "mock-security-store" }
-func (m *mockSecurityStore) Version() string               { return "0.0.1" }
-func (m *mockSecurityStore) Type() kernel.PluginType       { return kernel.PluginTypeSecurityStore }
-func (m *mockSecurityStore) Init(_ kernel.Kernel) error    { return nil }
-func (m *mockSecurityStore) Start(_ context.Context) error { return nil }
-func (m *mockSecurityStore) Stop(_ context.Context) error  { return nil }
+// buildSecurityDetail constructs a security_detail view from capabilities.
+// Returns nil when no security capabilities exist (omitempty hides it).
+func buildSecurityDetail(capabilities []Capability) *securityDetailJSON {
+	var schemes []json.RawMessage
+	var requirements []json.RawMessage
 
-func (m *mockSecurityStore) StoreSecurityDetail(_ context.Context, agentTypeID string, detail *model.SecurityDetail) error {
-	m.details[agentTypeID] = detail
-	return nil
-}
-
-func (m *mockSecurityStore) GetSecurityDetail(_ context.Context, agentTypeID string) (*model.SecurityDetail, error) {
-	d, ok := m.details[agentTypeID]
-	if !ok {
-		return nil, gorm.ErrRecordNotFound
+	for _, cap := range capabilities {
+		switch c := cap.(type) {
+		case *A2ASecurityScheme:
+			if b, err := json.Marshal(c); err == nil {
+				schemes = append(schemes, b)
+			}
+		case *A2ASecurityRequirement:
+			if b, err := json.Marshal(c); err == nil {
+				requirements = append(requirements, b)
+			}
+		}
 	}
-	return d, nil
-}
 
-func newTestRouterWithSecurityStore(t *testing.T, ss kernel.SecurityStorePlugin) (http.Handler, store.Store) {
-	t.Helper()
-	s, err := store.NewSQLiteStore(":memory:")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = s.Close() })
+	if len(schemes) == 0 && len(requirements) == 0 {
+		return nil
+	}
 
-	core := kernel.NewCore(s, nil, slog.Default(), kernel.LicenseInfo{})
-	a2aParser := a2aplugin.New()
-	_ = a2aParser.Init(core)
-	core.RegisterParser(a2aParser)
-	mcpParser := mcpplugin.New()
-	_ = mcpParser.Init(core)
-	core.RegisterParser(mcpParser)
-	core.RegisterSecurityStore(ss)
-
-	return api.NewRouter(api.RouterDeps{Kernel: core}), s
+	return &securityDetailJSON{
+		SecuritySchemes:      schemes,
+		SecurityRequirements: requirements,
+	}
 }
 ```
 
-- [ ] **Step 2: Write test for security_detail in detail response**
+- [ ] **Step 2: Add SecurityDetail to catalogEntryJSON and populate in toCatalogEntryJSON**
+
+```go
+// In internal/model/agent.go
+
+// Add field to catalogEntryJSON:
+type catalogEntryJSON struct {
+	// ...existing fields...
+	AuthSummary    *authSummaryJSON    `json:"auth_summary,omitempty"`
+	SecurityDetail *securityDetailJSON `json:"security_detail,omitempty"`
+}
+
+// In toCatalogEntryJSON(), after building authSummary:
+var secDetail *securityDetailJSON
+if len(capabilities) > 0 {
+	secDetail = buildSecurityDetail(capabilities)
+}
+
+// Include in return:
+return catalogEntryJSON{
+	// ...existing fields...
+	AuthSummary:    authSummary,
+	SecurityDetail: secDetail,
+}
+```
+
+> **Key insight:** `security_detail` appears on BOTH list and detail responses because
+> it's computed from capabilities that are always loaded. This is intentional — the
+> frontend uses `auth_summary` for the compact list badge and `security_detail` for
+> the full detail view. No handler changes needed.
+
+- [ ] **Step 3: Write test for security_detail in detail response**
 
 ```go
 // Add to internal/api/handlers_test.go
+// Uses the existing newTestRouter pattern — NO mockSecurityStore
 
 func TestGetEntry_SecurityDetail(t *testing.T) {
-	secStore := &mockSecurityStore{details: make(map[string]*model.SecurityDetail)}
-	router, s := newTestRouterWithSecurityStore(t, secStore)
+	router, s := newTestRouter(t)
 
-	// Create agent via store
+	// Create agent with security capabilities
 	agentType := &model.AgentType{
 		ID:       "at-sec-detail",
 		AgentKey: model.ComputeAgentKey(model.ProtocolA2A, "https://agent.example.com"),
 		Protocol: model.ProtocolA2A,
 		Endpoint: "https://agent.example.com",
 		Version:  "1.0",
+		Capabilities: []model.Capability{
+			&model.A2ASecurityScheme{
+				SchemeName:  "httpAuth",
+				Name:        "httpAuth",
+				Type:        "http",
+				HTTPScheme:  "Bearer",
+				BearerFormat: "JWT",
+				Description: "JWT Bearer token",
+			},
+			&model.A2ASecurityRequirement{
+				Schemes: map[string][]string{"httpAuth": {}},
+			},
+		},
 	}
 	entry := &model.CatalogEntry{
 		ID:          "ce-sec-detail",
@@ -2682,19 +1878,6 @@ func TestGetEntry_SecurityDetail(t *testing.T) {
 		Status:      model.LifecycleRegistered,
 	}
 	require.NoError(t, s.Create(context.Background(), entry))
-
-	// Store security detail in mock
-	detail := &model.SecurityDetail{
-		AgentTypeID: agentType.ID,
-		Protocol:    "a2a",
-		Schemes: map[string]model.SecuritySchemeDetail{
-			"httpAuth": {
-				Type:       "http",
-				HTTPScheme: "Bearer",
-			},
-		},
-	}
-	require.NoError(t, secStore.StoreSecurityDetail(context.Background(), agentType.ID, detail))
 
 	// Request detail
 	req := httptest.NewRequest("GET", "/api/v1/catalog/ce-sec-detail", nil)
@@ -2709,104 +1892,55 @@ func TestGetEntry_SecurityDetail(t *testing.T) {
 	securityDetail, ok := response["security_detail"].(map[string]interface{})
 	require.True(t, ok, "Expected security_detail in response")
 
-	schemes, ok := securityDetail["schemes"].(map[string]interface{})
-	require.True(t, ok, "Expected schemes map")
-	assert.Equal(t, 1, len(schemes))
+	schemes, ok := securityDetail["security_schemes"].([]interface{})
+	require.True(t, ok, "Expected security_schemes array")
+	assert.Len(t, schemes, 1)
+
+	scheme := schemes[0].(map[string]interface{})
+	assert.Equal(t, "http", scheme["type"])
+	assert.Equal(t, "Bearer", scheme["http_scheme"])
+
+	reqs, ok := securityDetail["security_requirements"].([]interface{})
+	require.True(t, ok, "Expected security_requirements array")
+	assert.Len(t, reqs, 1)
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **Step 4: Run test to verify it passes**
 
 Run: `rtk go test ./internal/api/... -run TestGetEntry_SecurityDetail -v`
 
-Expected: FAIL with missing security_detail field
+Expected: PASS after Steps 1-2 are implemented
 
-- [ ] **Step 4: Extend GetEntry handler to fetch and include SecurityDetail**
-
-```go
-// In internal/api/handlers.go GetEntry handler
-// The Handler already has `parsers kernel.Kernel`. Use it to access SecurityStore.
-// After fetching the entry, before JSONResponse:
-
-func (h *Handler) GetEntry(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	entry, err := h.store.Get(r.Context(), id)
-	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to get catalog entry")
-		return
-	}
-	if entry == nil {
-		ErrorResponse(w, http.StatusNotFound, "catalog entry not found")
-		return
-	}
-
-	// Enrich with SecurityDetail from SecurityStore if available
-	if ss := h.parsers.SecurityStore(); ss != nil {
-		detail, err := ss.GetSecurityDetail(r.Context(), entry.AgentTypeID)
-		if err == nil {
-			// Inject into AgentType so toCatalogEntryJSON can serialize it
-			if entry.AgentType != nil {
-				entry.AgentType.SecurityDetail = detail
-			}
-		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			slog.WarnContext(r.Context(), "failed to fetch security detail", "err", err)
-		}
-	}
-
-	JSONResponse(w, http.StatusOK, entry)
-}
-```
-
-- [ ] **Step 5: Populate SecurityDetail in toCatalogEntryJSON**
-
-```go
-// In internal/model/agent.go toCatalogEntryJSON()
-// Add SecurityDetail extraction from AgentType:
-
-var securityDetail *SecurityDetail
-if e.AgentType != nil {
-	securityDetail = e.AgentType.SecurityDetail
-}
-
-// Include in return:
-return catalogEntryJSON{
-	// ...existing fields...
-	AuthSummary:    authSummary,
-	SecurityDetail: securityDetail,
-}
-```
-
-> **Note:** `SecurityDetail` only appears when the handler explicitly loads it
-> (detail endpoint). On the list endpoint, `AgentType.SecurityDetail` is nil
-> so `security_detail` is omitted via `omitempty`. This is intentional — the list
-> endpoint shows the lightweight `auth_summary`, the detail endpoint shows full `security_detail`.
-
-- [ ] **Step 6: Run test to verify it passes**
-
-Run: `rtk go test ./internal/api/... -run TestGetEntry_SecurityDetail -v`
-
-Expected: PASS
-
-- [ ] **Step 7: Run all API tests**
+- [ ] **Step 5: Run all API tests**
 
 Run: `rtk go test ./internal/api/... -v`
 
-Expected: All PASS (existing tests unaffected — SecurityDetail is nil/omitempty for them)
+Expected: All PASS (existing tests unaffected — SecurityDetail is nil/omitempty for agents without security capabilities)
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-rtk git add internal/api/handlers.go internal/model/agent.go internal/api/handlers_test.go
-rtk git commit -m "feat(api): add security_detail to catalog detail endpoint"
+rtk git add internal/model/agent.go internal/api/handlers_test.go
+rtk git commit -m "feat(api): add security_detail computed view to catalog responses
+
+security_detail is computed at serialization time from capabilities,
+not fetched from a separate store. Conforms to ADR-001."
 ```
 
 ---
 
-## Task 13: Frontend — Security Utilities
+## Task 9: Frontend — Security Utilities
 
 **Files:**
 - Create: `web/src/lib/securityUtils.ts`
 - Create: `web/src/lib/securityUtils.test.ts`
+
+> **ADR-001 note:** TypeScript types match the `security_detail` computed view from
+> the API response, which contains `security_schemes` and `security_requirements`
+> arrays built from capabilities. The types mirror the Go `A2ASecurityScheme` and
+> `A2ASecurityRequirement` JSON shapes. There is no `SecurityDetail` Go struct to
+> match — the frontend types are derived from the serialized capability shapes.
 
 - [ ] **Step 1: Write tests for security utilities**
 
@@ -2814,34 +1948,34 @@ rtk git commit -m "feat(api): add security_detail to catalog detail endpoint"
 // Create web/src/lib/securityUtils.test.ts
 
 import { describe, it, expect } from 'vitest'
-import { buildAuthSummary, generateCurlRecipe, formatScopesLabel } from './securityUtils'
+import { buildAuthSummaryLabel, generateCurlRecipe, formatScopesLabel } from './securityUtils'
 
-describe('buildAuthSummary', () => {
-	it('returns "Open (no auth)" for empty schemes', () => {
-		const summary = buildAuthSummary([])
-		expect(summary).toBe('Open (no auth)')
+describe('buildAuthSummaryLabel', () => {
+	it('returns "Open (no auth)" for empty types', () => {
+		const label = buildAuthSummaryLabel([])
+		expect(label).toBe('Open (no auth)')
 	})
 
 	it('returns "Bearer JWT" for http:Bearer', () => {
-		const summary = buildAuthSummary(['http:Bearer'])
-		expect(summary).toBe('Bearer JWT')
+		const label = buildAuthSummaryLabel(['http:Bearer'])
+		expect(label).toBe('Bearer JWT')
 	})
 
-	it('joins multiple schemes with " + "', () => {
-		const summary = buildAuthSummary(['http:Bearer', 'apiKey'])
-		expect(summary).toBe('Bearer JWT + API Key')
+	it('joins multiple types with " + "', () => {
+		const label = buildAuthSummaryLabel(['http:Bearer', 'apiKey'])
+		expect(label).toBe('Bearer JWT + API Key')
 	})
 
 	it('truncates long labels', () => {
-		const summary = buildAuthSummary([
+		const label = buildAuthSummaryLabel([
 			'http:Bearer',
 			'apiKey',
 			'oauth2',
 			'openIdConnect',
 			'mutualTls'
 		])
-		expect(summary.length).toBeLessThanOrEqual(40)
-		expect(summary).toContain('...')
+		expect(label.length).toBeLessThanOrEqual(40)
+		expect(label).toContain('...')
 	})
 })
 
@@ -2849,10 +1983,8 @@ describe('generateCurlRecipe', () => {
 	it('generates Bearer token curl', () => {
 		const curl = generateCurlRecipe(
 			'https://agent.example.com/api',
-			[{ httpAuth: [] }],
-			{
-				httpAuth: { type: 'http', http_scheme: 'Bearer' }
-			}
+			[{ schemes: { httpAuth: [] } }],
+			[{ type: 'http', scheme_name: 'httpAuth', http_scheme: 'Bearer' }]
 		)
 		expect(curl).toContain('curl')
 		expect(curl).toContain('-H "Authorization: Bearer <token>"')
@@ -2862,10 +1994,8 @@ describe('generateCurlRecipe', () => {
 	it('generates API Key curl', () => {
 		const curl = generateCurlRecipe(
 			'https://agent.example.com/api',
-			[{ apiKeyAuth: [] }],
-			{
-				apiKeyAuth: { type: 'apiKey', api_key_location: 'header', api_key_name: 'X-API-Key' }
-			}
+			[{ schemes: { apiKeyAuth: [] } }],
+			[{ type: 'apiKey', scheme_name: 'apiKeyAuth', api_key_location: 'header', api_key_name: 'X-API-Key' }]
 		)
 		expect(curl).toContain('-H "X-API-Key: <key>"')
 	})
@@ -2897,19 +2027,27 @@ Expected: FAIL with "Cannot find module"
 ```typescript
 // Create web/src/lib/securityUtils.ts
 
-export interface SecuritySchemeDetail {
+// Types matching the A2ASecurityScheme capability JSON shape.
+// These mirror the Go struct fields after JSON serialization.
+export interface SecurityScheme {
+	kind?: string // "a2a.security_scheme" — injected by MarshalCapabilitiesJSON
+	scheme_name: string
 	type: string
 	description?: string
-	api_key_location?: string
-	api_key_name?: string
+	// http fields
 	http_scheme?: string
 	bearer_format?: string
-	oauth_flows?: OAuthFlowDetail[]
+	// apiKey fields
+	api_key_location?: string
+	api_key_name?: string
+	// oauth2 fields
+	oauth_flows?: OAuthFlow[]
 	oauth2_metadata_url?: string
+	// openIdConnect fields
 	openid_connect_url?: string
 }
 
-export interface OAuthFlowDetail {
+export interface OAuthFlow {
 	flow_type: string
 	authorization_url?: string
 	token_url?: string
@@ -2919,20 +2057,20 @@ export interface OAuthFlowDetail {
 	deprecated?: boolean
 }
 
-export interface SecurityRequirementDetail {
+// Type matching A2ASecurityRequirement capability JSON shape.
+export interface SecurityRequirement {
+	kind?: string // "a2a.security_requirement"
 	schemes: Record<string, string[]>
+	skill_ref?: string
 }
 
-// Composite type matching the Go SecurityDetail struct from the API response
-export interface SecurityDetail {
-	agent_type_id: string
-	protocol: string
-	schemes: Record<string, SecuritySchemeDetail>
-	requirements?: SecurityRequirementDetail[]
-	skill_requirements?: Record<string, SecurityRequirementDetail[]>
+// The security_detail computed view from the API response.
+export interface SecurityDetailView {
+	security_schemes: SecurityScheme[]
+	security_requirements: SecurityRequirement[]
 }
 
-export function buildAuthSummary(types: string[]): string {
+export function buildAuthSummaryLabel(types: string[]): string {
 	if (types.length === 0) {
 		return 'Open (no auth)'
 	}
@@ -2957,8 +2095,8 @@ export function buildAuthSummary(types: string[]): string {
 
 export function generateCurlRecipe(
 	endpoint: string,
-	requirements: SecurityRequirementDetail[],
-	schemes: Record<string, SecuritySchemeDetail>
+	requirements: SecurityRequirement[],
+	schemes: SecurityScheme[]
 ): string {
 	if (requirements.length === 0) {
 		return `curl ${endpoint}`
@@ -2968,10 +2106,13 @@ export function generateCurlRecipe(
 	const firstReq = requirements[0]
 	const schemeNames = Object.keys(firstReq.schemes)
 
-	let headers: string[] = []
+	// Build a lookup by scheme_name for quick access
+	const schemeMap = new Map(schemes.map((s) => [s.scheme_name, s]))
+
+	const headers: string[] = []
 
 	for (const schemeName of schemeNames) {
-		const scheme = schemes[schemeName]
+		const scheme = schemeMap.get(schemeName)
 		if (!scheme) continue
 
 		if (scheme.type === 'http' && scheme.http_scheme === 'Bearer') {
@@ -3002,16 +2143,20 @@ Expected: PASS
 
 ```bash
 rtk git add web/src/lib/securityUtils.ts web/src/lib/securityUtils.test.ts
-rtk git commit -m "feat(frontend): add security utility functions"
+rtk git commit -m "feat(frontend): add security utility functions matching capability shapes"
 ```
 
 ---
 
-## Task 14: Frontend — SchemeCard Component
+## Task 10: Frontend — SchemeCard Component
 
 **Files:**
 - Create: `web/src/routes/catalog/detail/SchemeCard.tsx`
 - Create: `web/src/routes/catalog/detail/SchemeCard.test.tsx`
+
+> **ADR-001 note:** `SchemeCard` receives a `SecurityScheme` object (matching the
+> capability JSON shape from the `security_detail.security_schemes` array), not a
+> `SecuritySchemeDetail` from a parallel store.
 
 - [ ] **Step 1: Write snapshot tests for SchemeCard**
 
@@ -3021,34 +2166,38 @@ rtk git commit -m "feat(frontend): add security utility functions"
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { SchemeCard } from './SchemeCard'
+import type { SecurityScheme } from '@/lib/securityUtils'
 
 describe('SchemeCard', () => {
 	it('renders HTTP Bearer scheme', () => {
-		const scheme = {
+		const scheme: SecurityScheme = {
+			scheme_name: 'httpAuth',
 			type: 'http',
 			http_scheme: 'Bearer',
 			bearer_format: 'JWT',
 			description: 'JWT authentication'
 		}
 
-		const { container } = render(<SchemeCard name="httpAuth" scheme={scheme} />)
+		const { container } = render(<SchemeCard scheme={scheme} />)
 		expect(container).toMatchSnapshot()
 	})
 
 	it('renders API Key scheme', () => {
-		const scheme = {
+		const scheme: SecurityScheme = {
+			scheme_name: 'apiKeyAuth',
 			type: 'apiKey',
 			api_key_location: 'header',
 			api_key_name: 'X-API-Key',
 			description: 'API Key in header'
 		}
 
-		const { container } = render(<SchemeCard name="apiKeyAuth" scheme={scheme} />)
+		const { container } = render(<SchemeCard scheme={scheme} />)
 		expect(container).toMatchSnapshot()
 	})
 
 	it('renders OAuth2 scheme with flows', () => {
-		const scheme = {
+		const scheme: SecurityScheme = {
+			scheme_name: 'oauth2Auth',
 			type: 'oauth2',
 			oauth_flows: [
 				{
@@ -3060,12 +2209,13 @@ describe('SchemeCard', () => {
 			]
 		}
 
-		const { container } = render(<SchemeCard name="oauth2Auth" scheme={scheme} />)
+		const { container } = render(<SchemeCard scheme={scheme} />)
 		expect(container).toMatchSnapshot()
 	})
 
 	it('does not render deprecated OAuth flows', () => {
-		const scheme = {
+		const scheme: SecurityScheme = {
+			scheme_name: 'oauth2Auth',
 			type: 'oauth2',
 			oauth_flows: [
 				{
@@ -3080,9 +2230,7 @@ describe('SchemeCard', () => {
 			]
 		}
 
-		const { container, queryByText } = render(
-			<SchemeCard name="oauth2Auth" scheme={scheme} />
-		)
+		const { container, queryByText } = render(<SchemeCard scheme={scheme} />)
 		expect(queryByText(/implicit/i)).toBeNull()
 		expect(container.textContent).toContain('Client Credentials')
 	})
@@ -3103,15 +2251,14 @@ Expected: FAIL with "Cannot find module"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { KeyRound, Key, ShieldCheck, Fingerprint, Lock } from 'lucide-react'
-import { SecuritySchemeDetail } from '@/lib/securityUtils'
+import type { SecurityScheme } from '@/lib/securityUtils'
 
 interface SchemeCardProps {
-	name: string
-	scheme: SecuritySchemeDetail
+	scheme: SecurityScheme
 }
 
-export function SchemeCard({ name, scheme }: SchemeCardProps) {
-	const { type } = scheme
+export function SchemeCard({ scheme }: SchemeCardProps) {
+	const { type, scheme_name } = scheme
 
 	// Select icon based on type
 	const Icon =
@@ -3146,7 +2293,7 @@ export function SchemeCard({ name, scheme }: SchemeCardProps) {
 			<CardHeader>
 				<div className="flex items-center gap-2">
 					<Icon className="h-5 w-5" />
-					<CardTitle>{name}</CardTitle>
+					<CardTitle>{scheme_name}</CardTitle>
 					<Badge variant="outline">{badgeLabel}</Badge>
 				</div>
 				{scheme.description && <CardDescription>{scheme.description}</CardDescription>}
@@ -3288,18 +2435,24 @@ Expected: PASS (snapshots created)
 
 ```bash
 rtk git add web/src/routes/catalog/detail/SchemeCard.tsx web/src/routes/catalog/detail/SchemeCard.test.tsx
-rtk git commit -m "feat(frontend): add SchemeCard component"
+rtk git commit -m "feat(frontend): add SchemeCard component using capability types"
 ```
 
 ---
 
-## Task 15: Frontend — AuthenticationSection Component
+## Task 11: Frontend — AuthenticationSection Component
 
 **Files:**
 - Create: `web/src/routes/catalog/detail/AuthenticationSection.tsx`
 - Create: `web/src/routes/catalog/detail/ConnectionRecipe.tsx`
 - Create: `web/src/routes/catalog/detail/SecurityRequirementsBanner.tsx`
 - Modify: `web/src/routes/catalog/detail/page.tsx`
+
+> **ADR-001 note:** `AuthenticationSection` receives the `SecurityDetailView` computed
+> by the backend from capabilities. It does NOT receive a `SecurityDetail` from a
+> parallel store. The `security_detail` field in the API response contains
+> `security_schemes` (array of capability objects) and `security_requirements`
+> (array of capability objects). The frontend reads these directly.
 
 - [ ] **Step 1: Implement ConnectionRecipe component**
 
@@ -3309,12 +2462,13 @@ rtk git commit -m "feat(frontend): add SchemeCard component"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Copy } from 'lucide-react'
-import { SecuritySchemeDetail, SecurityRequirementDetail, generateCurlRecipe } from '@/lib/securityUtils'
+import type { SecurityScheme, SecurityRequirement } from '@/lib/securityUtils'
+import { generateCurlRecipe } from '@/lib/securityUtils'
 
 interface ConnectionRecipeProps {
 	endpoint: string
-	requirements: SecurityRequirementDetail[]
-	schemes: Record<string, SecuritySchemeDetail>
+	requirements: SecurityRequirement[]
+	schemes: SecurityScheme[]
 }
 
 export function ConnectionRecipe({ endpoint, requirements, schemes }: ConnectionRecipeProps) {
@@ -3325,7 +2479,7 @@ export function ConnectionRecipe({ endpoint, requirements, schemes }: Connection
 	}
 
 	return (
-		<Card>
+		<Card data-testid="connection-recipe">
 			<CardHeader>
 				<CardTitle>Connection Example</CardTitle>
 			</CardHeader>
@@ -3356,27 +2510,29 @@ export function ConnectionRecipe({ endpoint, requirements, schemes }: Connection
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ShieldCheck } from 'lucide-react'
-import { SecurityRequirementDetail } from '@/lib/securityUtils'
+import type { SecurityRequirement } from '@/lib/securityUtils'
 
 interface SecurityRequirementsBannerProps {
-	requirements: SecurityRequirementDetail[]
+	requirements: SecurityRequirement[]
 }
 
 export function SecurityRequirementsBanner({ requirements }: SecurityRequirementsBannerProps) {
-	if (requirements.length === 0) {
+	// Only show top-level requirements (no skill_ref)
+	const topLevel = requirements.filter((r) => !r.skill_ref)
+	if (topLevel.length === 0) {
 		return null
 	}
 
-	const isMultiple = requirements.length > 1
+	const isMultiple = topLevel.length > 1
 
 	return (
-		<Alert>
+		<Alert data-testid="security-requirements-banner">
 			<ShieldCheck className="h-4 w-4" />
 			<AlertTitle>Required to connect</AlertTitle>
 			<AlertDescription>
 				{isMultiple && <p className="mb-2">Any of the following combinations:</p>}
 				<ul className="list-disc pl-5 space-y-1">
-					{requirements.map((req, i) => (
+					{topLevel.map((req, i) => (
 						<li key={i}>
 							{Object.entries(req.schemes).map(([schemeName, scopes], j) => (
 								<span key={j}>
@@ -3404,11 +2560,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { SchemeCard } from './SchemeCard'
 import { SecurityRequirementsBanner } from './SecurityRequirementsBanner'
 import { ConnectionRecipe } from './ConnectionRecipe'
-import { SecurityDetail } from '@/lib/securityUtils'
+import type { SecurityDetailView } from '@/lib/securityUtils'
 
 interface AuthenticationSectionProps {
 	protocol: string
-	securityDetail?: SecurityDetail
+	securityDetail?: SecurityDetailView
 	endpoint?: string
 }
 
@@ -3420,7 +2576,7 @@ export function AuthenticationSection({
 	// MCP-specific message
 	if (protocol === 'mcp') {
 		return (
-			<Card>
+			<Card data-testid="authentication-section">
 				<CardHeader>
 					<CardTitle>Authentication</CardTitle>
 				</CardHeader>
@@ -3437,9 +2593,13 @@ export function AuthenticationSection({
 	}
 
 	// No security declared
-	if (!securityDetail || Object.keys(securityDetail.schemes).length === 0) {
+	if (
+		!securityDetail ||
+		!securityDetail.security_schemes ||
+		securityDetail.security_schemes.length === 0
+	) {
 		return (
-			<Card>
+			<Card data-testid="authentication-section">
 				<CardHeader>
 					<CardTitle>Authentication</CardTitle>
 				</CardHeader>
@@ -3454,27 +2614,29 @@ export function AuthenticationSection({
 		)
 	}
 
+	const { security_schemes, security_requirements } = securityDetail
+
 	return (
-		<Card>
+		<Card data-testid="authentication-section">
 			<CardHeader>
 				<CardTitle>Authentication</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4">
-				{securityDetail.requirements && securityDetail.requirements.length > 0 && (
-					<SecurityRequirementsBanner requirements={securityDetail.requirements} />
+				{security_requirements && security_requirements.length > 0 && (
+					<SecurityRequirementsBanner requirements={security_requirements} />
 				)}
 
 				<div className="space-y-3">
-					{Object.entries(securityDetail.schemes).map(([name, scheme]) => (
-						<SchemeCard key={name} name={name} scheme={scheme} />
+					{security_schemes.map((scheme) => (
+						<SchemeCard key={scheme.scheme_name} scheme={scheme} />
 					))}
 				</div>
 
-				{endpoint && securityDetail.requirements && securityDetail.requirements.length > 0 && (
+				{endpoint && security_requirements && security_requirements.length > 0 && (
 					<ConnectionRecipe
 						endpoint={endpoint}
-						requirements={securityDetail.requirements}
-						schemes={securityDetail.schemes}
+						requirements={security_requirements}
+						schemes={security_schemes}
 					/>
 				)}
 			</CardContent>
@@ -3510,16 +2672,20 @@ Expected: Build succeeds
 
 ```bash
 rtk git add web/src/routes/catalog/detail/
-rtk git commit -m "feat(frontend): add AuthenticationSection to agent detail view"
+rtk git commit -m "feat(frontend): add AuthenticationSection reading from capabilities"
 ```
 
 ---
 
-## Task 16: Frontend — Auth Badge for List View
+## Task 12: Frontend — Auth Badge for List View
 
 **Files:**
 - Create: `web/src/components/AuthBadge.tsx`
 - Modify: `web/src/routes/catalog/list/page.tsx`
+
+> **ADR-001 note:** The `auth_summary` field is computed from capabilities at
+> serialization time (see Task 7). The frontend simply reads it — no separate
+> store lookup needed.
 
 - [ ] **Step 1: Implement AuthBadge component**
 
@@ -3593,10 +2759,15 @@ rtk git commit -m "feat(frontend): add auth badge to catalog list view"
 
 ---
 
-## Task 17: E2E Tests — Security Display
+## Task 13: E2E Tests — Security Display
 
 **Files:**
 - Create: `e2e/tests/a2a-security-display.spec.ts`
+
+> **ADR-001 note:** E2E tests seed agents via the register endpoint (which runs the
+> parser to create capabilities). Security data flows through the capabilities table
+> and appears in the API response via the `security_detail` computed view. No separate
+> SecurityStore seeding is needed.
 
 - [ ] **Step 1: Write E2E test for security section display**
 
@@ -3618,7 +2789,7 @@ test.describe('A2A Security Display', () => {
 
 	test('displays security schemes on agent detail', async ({ page, request }) => {
 		// Seed agent with Bearer + API Key via register endpoint
-		// POST /api/v1/catalog/register expects raw agent card JSON as body
+		// Parser creates capabilities automatically — no separate store seeding
 		const agentCard = {
 			version: '1.0',
 			name: 'Security Test Agent',
@@ -3711,8 +2882,6 @@ test.describe('A2A Security Display', () => {
 	})
 
 	test('displays MCP auth message for MCP servers', async ({ page, request }) => {
-		// Seed MCP server via POST /api/v1/catalog (create entry directly)
-		// MCP servers don't use the register endpoint — use the simple create endpoint
 		const token = await loginViaAPI(request)
 		const response = await request.post('/api/v1/catalog', {
 			headers: {
@@ -3738,7 +2907,6 @@ test.describe('A2A Security Display', () => {
 	})
 
 	test('displays auth badge in catalog list', async ({ page, request }) => {
-		// Seed multiple agents via register endpoint
 		const token = await loginViaAPI(request)
 
 		await request.post('/api/v1/catalog/register', {
@@ -3799,7 +2967,7 @@ rtk git commit -m "test(e2e): add security display E2E tests"
 
 ---
 
-## Task 18: Documentation Updates
+## Task 14: Documentation — API and End-User Guide
 
 **Files:**
 - Modify: `docs/api.md`
@@ -3814,12 +2982,16 @@ rtk git commit -m "test(e2e): add security display E2E tests"
 
 Each catalog entry now includes:
 
-- `auth_summary` (object, optional) - Authentication summary
+- `auth_summary` (object, optional) - Authentication summary computed from capabilities
   - `types` (array of strings) - Security scheme types (e.g., `["http:Bearer", "apiKey"]`)
   - `label` (string) - Human-readable auth summary (e.g., "Bearer JWT + API Key")
-  - `required` (boolean) - Whether authentication is required
+  - `required` (boolean) - Whether authentication is required (true if top-level security requirements exist)
 
-### Example Response
+- `security_detail` (object, optional) - Structured security view computed from capabilities
+  - `security_schemes` (array) - Security scheme objects from `a2a.security_scheme` capabilities
+  - `security_requirements` (array) - Security requirement objects from `a2a.security_requirement` capabilities
+
+### Example List Response
 
 ```json
 [
@@ -3831,66 +3003,44 @@ Each catalog entry now includes:
 			"types": ["http:Bearer"],
 			"label": "Bearer JWT",
 			"required": true
-		}
+		},
+		"capabilities": [
+			{ "kind": "a2a.security_scheme", "scheme_name": "httpAuth", "type": "http", "http_scheme": "Bearer" },
+			{ "kind": "a2a.security_requirement", "schemes": { "httpAuth": [] } }
+		]
 	}
 ]
 ```
 
----
-
-<!-- Add to docs/api.md under GET /api/v1/catalog/{id} -->
-
-### Response Fields (Extended)
-
-The detail response now includes:
-
-- `security_detail` (object, optional) - Full security metadata
-  - `agent_type_id` (string) - Agent type ID
-  - `protocol` (string) - Protocol (e.g., "a2a")
-  - `schemes` (object) - Map of scheme name to `SecuritySchemeDetail`
-  - `requirements` (array) - Top-level security requirements
-  - `skill_requirements` (object, optional) - Per-skill security requirements
-
-### SecuritySchemeDetail
-
-- `type` (string) - Scheme type: "apiKey" | "http" | "oauth2" | "openIdConnect" | "mutualTls"
-- `description` (string, optional)
-- For `apiKey`:
-  - `api_key_location` (string) - "header" | "query" | "cookie"
-  - `api_key_name` (string) - Header/query param name
-- For `http`:
-  - `http_scheme` (string) - "Bearer" | "Basic" | "Digest"
-  - `bearer_format` (string, optional) - e.g., "JWT"
-- For `oauth2`:
-  - `oauth_flows` (array of `OAuthFlowDetail`)
-  - `oauth2_metadata_url` (string, optional)
-- For `openIdConnect`:
-  - `openid_connect_url` (string) - OIDC discovery URL
-
-### Example Response
+### Example Detail Response
 
 ```json
 {
 	"id": "550e8400-e29b-41d4-a716-446655440000",
+	"display_name": "Example Agent",
+	"protocol": "a2a",
+	"auth_summary": {
+		"types": ["http:Bearer"],
+		"label": "Bearer JWT",
+		"required": true
+	},
 	"security_detail": {
-		"agent_type_id": "abc123",
-		"protocol": "a2a",
-		"schemes": {
-			"httpAuth": {
+		"security_schemes": [
+			{
+				"scheme_name": "httpAuth",
 				"type": "http",
 				"http_scheme": "Bearer",
 				"bearer_format": "JWT",
 				"description": "JWT Bearer token"
 			}
-		},
-		"requirements": [
+		],
+		"security_requirements": [
 			{
-				"schemes": {
-					"httpAuth": []
-				}
+				"schemes": { "httpAuth": [] }
 			}
 		]
-	}
+	},
+	"capabilities": [...]
 }
 ```
 ```
@@ -3986,93 +3136,73 @@ rtk git commit -m "docs: document security scheme API and UI features"
 
 ---
 
-## Task 19: Documentation — Architecture, Settings, and Comprehensive Updates
+## Task 15: Documentation — Architecture Updates
 
 **Files:**
 - Modify: `docs/architecture.md`
-- Modify: `docs/settings.md`
-- Modify: `docs/api.md` (verify Task 18 additions are complete)
-- Modify: `docs/end-user-guide.md` (verify Task 18 additions are complete)
 
-> **Design note:** Per AGENTS.md feature checklist, every PR must update `docs/architecture.md`
-> if the design changed, `docs/settings.md` if config keys changed, and `docs/api.md` for
-> new/changed endpoints. This task ensures comprehensive coverage beyond Task 18's basic additions.
+> **ADR-001 note:** No SecurityStorePlugin, no `security_details` table, no new plugin
+> types. Documentation updates focus on the new capability kinds and the computed view
+> fields (`auth_summary`, `security_detail`). No `settings.md` update needed — no new
+> config keys were added.
 
-- [ ] **Step 1: Update architecture.md with SecurityStorePlugin**
+- [ ] **Step 1: Update architecture.md with new capability kinds**
 
 ```markdown
-<!-- Add to docs/architecture.md -->
+<!-- Add to the Capability Registry section in docs/architecture.md -->
 
-<!-- In the Plugin Types section, add SecurityStorePlugin alongside CardStorePlugin -->
+### Security Capability Kinds
 
-### SecurityStorePlugin
+Two new capability kinds store A2A security metadata in the existing `capabilities` table:
 
-The `SecurityStorePlugin` stores rich, structured security metadata (schemes, requirements,
-OAuth flows) for each `AgentType`. It follows the same pattern as `CardStorePlugin`:
+- `a2a.security_scheme` — Enriched with `SchemeName`, `HTTPScheme`, `BearerFormat`,
+  `APIKeyLocation`, `APIKeyName`, `OAuthFlows`, `OAuth2MetadataURL`, `OpenIDConnectURL`.
+  Non-discoverable (not shown in Capability Discovery).
+- `a2a.security_requirement` — New non-discoverable kind with `Schemes` map and `SkillRef`
+  for per-skill security requirements.
 
-- **Interface:** `SecurityStorePlugin` in `internal/kernel/plugin.go`
-- **Default implementation:** `plugins/securitystore/` (SQLite, built-in)
-- **Storage:** Single `security_details` table with JSON `data` column
-- **Protocol-agnostic:** Works for A2A, MCP, and A2UI agents
+### Computed View Fields
+
+The API response includes computed fields derived at serialization time from capabilities:
+
+- `auth_summary` — Compact authentication summary (types, label, required)
+- `security_detail` — Structured view grouping security schemes and requirements
+
+These are NOT stored — they are computed in `toCatalogEntryJSON()` from the `AgentType.Capabilities`
+slice each time a response is serialized.
 
 ```mermaid
 graph TD
-    Parser -->|produces| SecurityDetail
-    SecurityDetail -->|stored by| SecurityStorePlugin
-    SecurityStorePlugin -->|retrieved by| GetEntry["API: GET /catalog/{id}"]
-    Capabilities -->|computed to| AuthSummary
-    AuthSummary -->|included in| ListCatalog["API: GET /catalog"]
+    Parser["A2A Parser"] -->|produces| Capabilities["Capabilities[]"]
+    Capabilities -->|stored in| CapTable["capabilities table"]
+    CapTable -->|loaded into| AgentType["AgentType.Capabilities"]
+    AgentType -->|serialized by| MarshalJSON["toCatalogEntryJSON()"]
+    MarshalJSON -->|computes| AuthSummary["auth_summary"]
+    MarshalJSON -->|computes| SecDetail["security_detail"]
+    MarshalJSON -->|includes| CapJSON["capabilities JSON array"]
+```
 ```
 
-<!-- Update the data flow diagram to include SecurityStorePlugin -->
-```
-
-- [ ] **Step 2: Update architecture.md with new capability kinds**
-
-```markdown
-<!-- Add to the Capability Registry section -->
-
-### New Capability Kinds
-
-- `a2a.security_scheme` — Enriched with `SchemeName`, `HTTPScheme`, `BearerFormat`,
-  `APIKeyLocation`, `APIKeyName`, `OAuthFlows`, `OAuth2MetadataURL`, `OpenIDConnectURL`
-- `a2a.security_requirement` — New non-discoverable kind with `Schemes` map and `SkillRef`
-  for per-skill security requirements
-```
-
-- [ ] **Step 3: Update settings.md if any new config keys were added**
-
-```markdown
-<!-- Review: This feature adds no new config keys. SecurityStore uses the existing
-     database.dialect / AGENTLENS_DB_DIALECT setting. Document this explicitly: -->
-
-### SecurityStore
-
-The SecurityStore plugin uses the same database connection as the core store.
-No additional configuration is required. The `security_details` table is created
-automatically via AutoMigrate on plugin Init.
-```
-
-- [ ] **Step 4: Verify all doc sections are accurate**
+- [ ] **Step 2: Verify all doc sections are accurate**
 
 Run through the following checklist:
 - [ ] `docs/api.md` has `auth_summary` field documented for `GET /api/v1/catalog`
 - [ ] `docs/api.md` has `security_detail` field documented for `GET /api/v1/catalog/{id}`
 - [ ] `docs/api.md` example responses match actual API shape (bare array, not wrapped)
 - [ ] `docs/architecture.md` has Mermaid diagrams (no PlantUML, no ASCII — per AGENTS.md)
+- [ ] `docs/architecture.md` does NOT reference SecurityStorePlugin or security_details table
 - [ ] `docs/end-user-guide.md` documents Authentication section, Auth Badge, Connection Recipe
-- [ ] `docs/settings.md` notes that SecurityStore uses existing database config
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-rtk git add docs/architecture.md docs/settings.md
-rtk git commit -m "docs: update architecture and settings for SecurityStore plugin"
+rtk git add docs/architecture.md
+rtk git commit -m "docs: update architecture with security capability kinds and computed views"
 ```
 
 ---
 
-## Task 20: E2E Screenshots and End-User Guide Images
+## Task 16: E2E Screenshots and End-User Guide Images
 
 **Files:**
 - Create: `e2e/tests/screenshots/` directory
@@ -4124,20 +3254,7 @@ await captureScreenshot(page, 'connection-recipe', '[data-testid="connection-rec
 await captureScreenshot(page, 'security-detail-no-auth', '[data-testid="authentication-section"]')
 ```
 
-- [ ] **Step 3: Add data-testid attributes to components**
-
-```typescript
-// In AuthenticationSection.tsx, add to the outermost Card:
-<Card data-testid="authentication-section">
-
-// In SecurityRequirementsBanner.tsx:
-<Alert data-testid="security-requirements-banner">
-
-// In ConnectionRecipe.tsx:
-<Card data-testid="connection-recipe">
-```
-
-- [ ] **Step 4: Add OAuth2 screenshot test**
+- [ ] **Step 3: Add OAuth2 screenshot test**
 
 ```typescript
 // Add to e2e/tests/a2a-security-display.spec.ts
@@ -4168,11 +3285,14 @@ test('captures OAuth2 security screenshot', async ({ page, request }) => {
 		skills: []
 	}
 
-	// Seed via register endpoint
+	// Seed via register endpoint — parser creates capabilities automatically
 	const token = await loginViaAPI(request)
-	const response = await request.post('/api/v1/register', {
-		headers: authHeader(token),
-		data: { protocol: 'a2a', endpoint: 'https://oauth2-agent.example.com', raw_card: JSON.stringify(agentCard) }
+	const response = await request.post('/api/v1/catalog/register', {
+		headers: {
+			...authHeader(token),
+			'Content-Type': 'application/json'
+		},
+		data: agentCard
 	})
 	expect(response.status()).toBe(201)
 	const data = await response.json()
@@ -4184,38 +3304,35 @@ test('captures OAuth2 security screenshot', async ({ page, request }) => {
 })
 ```
 
-- [ ] **Step 5: Add catalog list screenshot test**
+- [ ] **Step 4: Add catalog list screenshot test**
 
 ```typescript
 // Add to e2e/tests/a2a-security-display.spec.ts
 
 test('captures catalog list auth badges screenshot', async ({ page, request }) => {
-	// Seed agents (Bearer + Open) — reuse from 'displays auth badge in catalog list' test
 	const token = await loginViaAPI(request)
 
-	await request.post('/api/v1/register', {
-		headers: authHeader(token),
+	await request.post('/api/v1/catalog/register', {
+		headers: {
+			...authHeader(token),
+			'Content-Type': 'application/json'
+		},
 		data: {
-			protocol: 'a2a',
-			endpoint: 'https://bearer-screenshot.example.com',
-			raw_card: JSON.stringify({
-				version: '1.0', name: 'Bearer Agent', description: 'Agent with Bearer',
-				url: 'https://bearer-screenshot.example.com',
-				securitySchemes: { httpAuth: { type: 'http', scheme: 'Bearer', bearerFormat: 'JWT' } },
-				securityRequirements: [{ httpAuth: [] }], skills: []
-			})
+			version: '1.0', name: 'Bearer Agent', description: 'Agent with Bearer',
+			url: 'https://bearer-screenshot.example.com',
+			securitySchemes: { httpAuth: { type: 'http', scheme: 'Bearer', bearerFormat: 'JWT' } },
+			securityRequirements: [{ httpAuth: [] }], skills: []
 		}
 	})
 
-	await request.post('/api/v1/register', {
-		headers: authHeader(token),
+	await request.post('/api/v1/catalog/register', {
+		headers: {
+			...authHeader(token),
+			'Content-Type': 'application/json'
+		},
 		data: {
-			protocol: 'a2a',
-			endpoint: 'https://open-screenshot.example.com',
-			raw_card: JSON.stringify({
-				version: '1.0', name: 'Open Agent', description: 'No auth agent',
-				url: 'https://open-screenshot.example.com', skills: []
-			})
+			version: '1.0', name: 'Open Agent', description: 'No auth agent',
+			url: 'https://open-screenshot.example.com', skills: []
 		}
 	})
 
@@ -4226,13 +3343,13 @@ test('captures catalog list auth badges screenshot', async ({ page, request }) =
 })
 ```
 
-- [ ] **Step 6: Run E2E tests to generate screenshots**
+- [ ] **Step 5: Run E2E tests to generate screenshots**
 
 Run: `rtk make e2e-test`
 
 Expected: All tests PASS and screenshots are saved to `docs/images/`
 
-- [ ] **Step 7: Update end-user-guide.md with images**
+- [ ] **Step 6: Update end-user-guide.md with images**
 
 ```markdown
 <!-- In docs/end-user-guide.md, update the Authentication Section -->
@@ -4269,11 +3386,11 @@ The catalog list table includes an **Auth** column with compact badges:
 ![Auth badges in catalog list](images/catalog-list-auth-badges.png)
 ```
 
-- [ ] **Step 8: Verify images render correctly**
+- [ ] **Step 7: Verify images render correctly**
 
 Open `docs/end-user-guide.md` in a Markdown previewer and verify all images load.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 rtk git add docs/images/ docs/end-user-guide.md e2e/tests/a2a-security-display.spec.ts
@@ -4299,9 +3416,18 @@ The following items from the spec are **not implemented** in this plan and are d
 
 ## Execution Handoff
 
-**Plan complete and saved to `docs/superpowers/plans/2026-04-10-a2a-security-schemes.md`. Two execution options:**
+**Plan complete (16 tasks). Conforms to ADR-001 — no parallel storage.**
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+Architecture summary:
+1. Security stored ONLY as capabilities (`a2a.security_scheme`, `a2a.security_requirement`)
+2. `auth_summary` and `security_detail` computed at serialization time from capabilities
+3. No SecurityStorePlugin, no `security_details` table, no `SecurityDetail` transport models
+4. Single write path: Parser → capabilities table
+5. `AgentType` owns security; `CatalogEntry` is display-only wrapper
+
+**Two execution options:**
+
+**1. Subagent-Driven (recommended)** - Dispatch a fresh subagent per task, review between tasks, fast iteration
 
 **2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
 
