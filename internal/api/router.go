@@ -83,6 +83,7 @@ func registerAuthRoutes(r chi.Router, deps RouterDeps, authHandler *AuthHandler)
 // registerCatalogRoutes mounts catalog endpoints behind auth middleware.
 func registerCatalogRoutes(r chi.Router, h *Handler, deps RouterDeps) {
 	hh := NewHealthHandler(deps.Kernel.Store(), deps.HealthProber)
+	capHandler := NewCapabilityHandler(deps.Kernel.Store())
 	r.Group(func(r chi.Router) {
 		r.Use(RequireAuth(deps.JWTService))
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog", h.ListCatalog)
@@ -95,7 +96,8 @@ func registerCatalogRoutes(r chi.Router, h *Handler, deps RouterDeps) {
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/catalog/{id}/card", h.GetEntryCard)
 		r.With(RequirePermission(auth.PermCatalogWrite)).Patch("/catalog/{id}/lifecycle", hh.PatchLifecycle)
 		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/catalog/{id}/probe", hh.ProbeEntry)
-		r.With(RequirePermission(auth.PermCatalogRead)).Get("/skills", h.SearchCapabilities)
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/capabilities", capHandler.ListCapabilities)
+		r.With(RequirePermission(auth.PermCatalogRead)).Get("/capabilities/{key}", capHandler.GetCapabilityAgents)
 		r.With(RequirePermission(auth.PermCatalogRead)).Get("/stats", h.GetStats)
 	})
 }
@@ -149,6 +151,7 @@ func registerSettingsRoutes(r chi.Router, deps RouterDeps) {
 // registerUnauthenticatedCatalogRoutes mounts catalog endpoints without authentication.
 func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler, deps RouterDeps) {
 	hh := NewHealthHandler(h.store, deps.HealthProber)
+	ch := NewCapabilityHandler(h.store)
 	r.Get("/catalog", h.ListCatalog)
 	r.Post("/catalog", h.CreateEntry)
 	r.Post("/catalog/validate", h.ValidateAgentCard)
@@ -159,8 +162,9 @@ func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler, deps RouterD
 	r.Get("/catalog/{id}/card", h.GetEntryCard)
 	r.Patch("/catalog/{id}/lifecycle", hh.PatchLifecycle)
 	r.Post("/catalog/{id}/probe", hh.ProbeEntry)
-	r.Get("/skills", h.SearchCapabilities)
 	r.Get("/stats", h.GetStats)
+	r.Get("/capabilities", ch.ListCapabilities)
+	r.Get("/capabilities/{key}", ch.GetCapabilityAgents)
 }
 
 // spaHandler serves static files and falls back to index.html for client-side routing.

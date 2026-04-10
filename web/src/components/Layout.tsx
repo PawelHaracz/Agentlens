@@ -57,6 +57,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-4">
             <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Catalog</Link>
+            <Link to="/catalog/capabilities" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Capabilities</Link>
             {showSettings && (
               <Link to="/settings" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Settings</Link>
             )}
@@ -107,6 +108,9 @@ export default function Layout({ children }: { children: ReactNode }) {
           <nav className="md:hidden border-t px-4 py-3 space-y-2 bg-background">
             <Link to="/" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
               Catalog
+            </Link>
+            <Link to="/catalog/capabilities" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Capabilities
             </Link>
             {showSettings && (
               <Link to="/settings" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">

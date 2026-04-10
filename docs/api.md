@@ -498,19 +498,101 @@ Returns 503 if health monitoring is disabled.
 
 ---
 
-## Skills
+## Capabilities
 
-### `GET /api/v1/skills`
+### GET /api/v1/capabilities
 
-Search catalog entries by skill name.
+List capability instances (one per agent per capability) with agent metadata.
 
 **Query Parameters:**
+- `q` (string, optional): Case-insensitive substring search on capability name, description, and properties
+- `kind` (string, optional): Filter by capability kind (e.g., `a2a.skill`, `mcp.tool`). Must be a discoverable kind.
+- `limit` (integer, optional, default 50): Max results per page
+- `offset` (integer, optional, default 0): Pagination offset
+- `sort` (string, optional, default `name_asc`): Sort order. Values: `name_asc`, `agentName_asc`
 
-| Parameter | Type | Description |
-|---|---|---|
-| `q` | string | Skill name search query |
+**Permission:** `catalog:read`
 
-**Response 200:** Array of CatalogEntry objects whose capabilities match the query.
+**Response:** 200 OK
+
+```json
+{
+  "total": 3,
+  "items": [
+    {
+      "kind": "a2a.skill",
+      "name": "Translate EN-DE",
+      "description": "Bidirectional translation",
+      "tags": ["translation", "german"],
+      "input_modes": ["text/plain"],
+      "output_modes": ["text/plain"],
+      "agent_id": "entry-uuid-1",
+      "agent_name": "Translation Agent",
+      "protocol": "a2a",
+      "status": "active",
+      "spec_version": "1.0",
+      "provider_org": "Acme",
+      "provider_url": "https://acme.io",
+      "health_state": "active",
+      "latency_ms": 142
+    }
+  ]
+}
+```
+
+**Error Responses:**
+- 400 Bad Request: Invalid `kind` or `sort` parameter
+
+---
+
+### GET /api/v1/capabilities/{key}
+
+Get all agents offering a specific capability.
+
+**Path Parameters:**
+- `key` (string, required): Capability identifier in format `kind::name` (URL-encoded). Example: `a2a.skill::Translate%20EN-DE`
+
+**Permission:** `catalog:read`
+
+**Response:** 200 OK
+
+```json
+{
+  "capability": {
+    "kind": "a2a.skill",
+    "name": "Translate EN-DE"
+  },
+  "agents": [
+    {
+      "id": "entry-uuid-1",
+      "display_name": "Translation Agent",
+      "protocol": "a2a",
+      "provider": { "organization": "Acme", "url": "https://acme.io" },
+      "health": { "state": "active", "latencyMs": 142 },
+      "spec_version": "1.0",
+      "status": "active",
+      "capability_snippet": {
+        "kind": "a2a.skill",
+        "name": "Translate EN-DE",
+        "description": "Bidirectional translation",
+        "tags": ["translation"],
+        "inputModes": ["text/plain"],
+        "outputModes": ["text/plain"]
+      }
+    }
+  ]
+}
+```
+
+**Error Responses:**
+- 400 Bad Request: Malformed key (missing `::` separator)
+- 404 Not Found: No agents offer this capability
+
+---
+
+### ~~GET /api/v1/skills~~ (REMOVED)
+
+**Breaking Change:** This endpoint has been removed in favor of `/api/v1/capabilities`. See CHANGELOG.
 
 ---
 

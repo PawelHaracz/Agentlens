@@ -94,13 +94,16 @@ test.describe('Catalog Management', () => {
     expect(stats).toHaveProperty('total');
   });
 
-  test('API: search skills', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/v1/skills?q=test`, {
+  test('capabilities API returns capability instances', async ({ request }) => {
+    const response = await request.get(`${BASE}/api/v1/capabilities`, {
       headers: authHeader(token),
-    });
-    expect(res.ok()).toBeTruthy();
-    const results = await res.json();
-    expect(Array.isArray(results)).toBeTruthy();
+    })
+
+    expect(response.status()).toBe(200)
+    const data = await response.json()
+    expect(data).toHaveProperty('total')
+    expect(data).toHaveProperty('items')
+    expect(Array.isArray(data.items)).toBe(true)
   });
 
   test('API: invalid protocol returns 400', async ({ request }) => {
@@ -322,3 +325,159 @@ test.describe('Unified Catalog View', () => {
     await deleteCatalogEntry(request, token, entry.id);
   });
 });
+
+test.describe('Capability Discovery', () => {
+  let token: string
+  let capEntryId: string
+
+  const CAP_CARD = JSON.stringify({
+    name: 'E2E Capability Agent',
+    description: 'Agent with capabilities for E2E tests.',
+    version: '1.0.0',
+    url: 'https://e2e-cap-agent.example.com',
+    provider: { organization: 'E2E Org', url: 'https://e2e.example.com' },
+    skills: [
+      {
+        id: 'e2e-skill',
+        name: 'E2E Skill',
+        description: 'A skill for E2E testing.',
+        tags: ['e2e', 'test'],
+      },
+    ],
+  })
+
+  test.beforeAll(async ({ request }) => {
+    token = await loginViaAPI(request)
+
+    // Register agent via the register endpoint so capabilities are parsed and stored.
+    const res = await request.post(`${BASE}/api/v1/catalog/register`, {
+      headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+      data: CAP_CARD,
+    })
+    if (res.ok()) {
+      const entry = await res.json()
+      capEntryId = entry.id as string
+    } else if (res.status() === 409) {
+      // Already exists — find by endpoint or display_name.
+      const allRes = await request.get(`${BASE}/api/v1/catalog`, { headers: authHeader(token) })
+      const all: Array<{ id: string; endpoint: string; display_name: string }> = await allRes.json()
+      const existing =
+        all.find(e => e.endpoint === 'https://e2e-cap-agent.example.com') ??
+        all.find(e => e.display_name === 'E2E Capability Agent')
+      if (existing) capEntryId = existing.id
+    } else {
+      throw new Error(`registerFromCard failed: ${res.status()} ${await res.text()}`)
+    }
+
+    if (!capEntryId) throw new Error('capEntryId not set after register')
+
+    // Activate so it appears in the capabilities list (ListCapabilities filters to active/degraded).
+    await request.patch(`${BASE}/api/v1/catalog/${capEntryId}/lifecycle`, {
+      headers: authHeader(token),
+      data: { state: 'active' },
+    })
+  })
+
+  test.afterAll(async ({ request }) => {
+    if (capEntryId) {
+      await deleteCatalogEntry(request, token, capEntryId)
+    }
+  })
+
+  test.beforeEach(async ({ page }) => {
+    await loginViaUI(page)
+  })
+
+  test('capability list page shows accordion groups', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+
+    await page.waitForLoadState('networkidle')
+
+    // Should show header
+    await expect(page.getByRole('heading', { name: 'Capabilities' })).toBeVisible()
+
+    // Should show search box
+    await expect(page.getByPlaceholder('Search across A2A and MCP — name, description, skills, tags, provider…')).toBeVisible()
+
+    // Should show kind filter
+    await expect(page.getByText('All').first()).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'A2A Skill' })).toBeVisible()
+  })
+
+  test('search filters capabilities', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Type in search
+    const searchBox = page.getByPlaceholder('Search across A2A and MCP — name, description, skills, tags, provider…')
+    await searchBox.fill('translate')
+
+    // URL should update
+    await page.waitForURL(/q=translate/)
+  })
+
+  test('kind filter works', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Click A2A Skill filter
+    await page.getByRole('radio', { name: 'A2A Skill' }).click()
+
+    // URL should update
+    await page.waitForURL(/kind=a2a\.skill/)
+  })
+
+  test('accordion expands and shows agents', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for at least one accordion group to appear
+    const firstGroup = page.locator('.border.rounded-lg').first()
+    await expect(firstGroup).toBeVisible({ timeout: 10000 })
+
+    // Click to expand
+    await firstGroup.click()
+
+    // Should show agent list (wait for expanded content)
+    await expect(firstGroup.getByText(/agent/)).toBeVisible({ timeout: 5000 })
+  })
+
+  test('capability detail page shows agents', async ({ page }) => {
+    await page.goto('/catalog/capabilities')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for at least one accordion group to appear
+    const firstGroup = page.locator('.border.rounded-lg').first()
+    await expect(firstGroup).toBeVisible({ timeout: 10000 })
+
+    // Expand first group
+    await firstGroup.click()
+
+    // Click "View all" link
+    await firstGroup.getByText('View all').click()
+
+    // Should navigate to detail page
+    await expect(page).toHaveURL(/\/catalog\/capabilities\//)
+
+    // Should show table headers
+    await expect(page.getByRole('columnheader', { name: 'Protocol' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Agent' })).toBeVisible()
+    await expect(page.getByRole('columnheader', { name: 'Provider' })).toBeVisible()
+  })
+
+  test('capability link from agent detail navigates correctly', async ({ page }) => {
+    // Navigate directly to the seeded entry detail page (has capabilities).
+    await page.goto(`/catalog/${capEntryId}`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('h1')
+
+    // Find and click a capability link (discoverable capability)
+    const capabilityLink = page.locator('a[href*="/catalog/capabilities/"]').first()
+    if (await capabilityLink.isVisible()) {
+      await capabilityLink.click()
+
+      // Should navigate to capability detail
+      await expect(page).toHaveURL(/\/catalog\/capabilities\//)
+    }
+  })
+})

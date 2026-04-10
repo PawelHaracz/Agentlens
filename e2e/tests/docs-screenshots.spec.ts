@@ -29,7 +29,7 @@ const __dirname = path.dirname(__filename);
 
 const DOCS_IMAGES = path.resolve(__dirname, '../../docs/images');
 
-const VIEWPORT = { width: 1440, height: 900 };
+const VIEWPORT = { width: 1680, height: 1050 };
 
 /** Timeout for error/validation elements to become visible. */
 const ERROR_DISPLAY_TIMEOUT_MS = 10_000;
@@ -93,7 +93,7 @@ async function seedOrFind(
   throw new Error(`seedOrFind failed: ${res.status()} ${body2}`);
 }
 
-// A2A entry with skills
+// A2A entry with skills — used for paste-JSON screenshots
 const A2A_CARD = JSON.stringify({
   name: 'Demo Translator Agent',
   description: 'Translates text between languages using neural machine translation.',
@@ -105,11 +105,80 @@ const A2A_CARD = JSON.stringify({
   ],
 });
 
+/**
+ * Full A2A card with skills and a valid endpoint URL, used to seed capability data
+ * via POST /api/v1/catalog/register (which runs the parser and stores capabilities).
+ * Uses a distinct endpoint to avoid conflict with the seedOrFind-seeded a2a entry.
+ */
+const A2A_CARD_WITH_ENDPOINT = JSON.stringify({
+  name: 'Demo Translator Agent',
+  description: 'Translates text between languages using neural machine translation.',
+  version: '1.2.0',
+  url: 'https://demo-translator-cap.example.com',
+  provider: {
+    organization: 'LangTech Demo',
+    url: 'https://langtech-demo.example.com',
+  },
+  skills: [
+    {
+      id: 'translate',
+      name: 'Translate',
+      description: 'Translate text from one language to another.',
+      tags: ['translation', 'text'],
+    },
+    {
+      id: 'detect-language',
+      name: 'Detect Language',
+      description: 'Detect the language of a given text.',
+      tags: ['detection', 'nlp'],
+    },
+  ],
+});
+
+/**
+ * Register an agent from a raw card JSON via POST /api/v1/catalog/register.
+ * Returns the created entry's ID. Uses seedOrFind-style idempotency: if the
+ * endpoint already exists (409), look up and return the existing entry's ID.
+ */
+async function registerFromCard(
+  request: import('@playwright/test').APIRequestContext,
+  token: string,
+  cardJson: string,
+): Promise<string> {
+  const res = await request.post(`${BASE}/api/v1/catalog/register`, {
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+    data: cardJson,
+  });
+  if (res.ok()) {
+    const entry = await res.json();
+    return entry.id as string;
+  }
+  if (res.status() === 409) {
+    // Entry already exists — look up by endpoint (parsed from card JSON).
+    const card = JSON.parse(cardJson) as { url?: string; name?: string };
+    const endpoint = card.url ?? '';
+    const displayName = card.name ?? '';
+    const allRes = await request.get(`${BASE}/api/v1/catalog`, {
+      headers: authHeader(token),
+    });
+    if (allRes.ok()) {
+      const all: Array<{ id: string; endpoint: string; display_name: string }> = await allRes.json();
+      const existing =
+        all.find(e => endpoint && e.endpoint === endpoint) ??
+        all.find(e => displayName && e.display_name === displayName);
+      if (existing) return existing.id;
+    }
+  }
+  const body = await res.text().catch(() => '(body unreadable)');
+  throw new Error(`registerFromCard failed: ${res.status()} ${body}`);
+}
+
 
 test.describe('Documentation Screenshots', () => {
   let token: string;
   let a2aEntryId: string;
   let mcpEntryId: string;
+  let a2aCapEntryId: string; // Entry seeded via register (has capabilities)
   let viewerUserId: string;
 
   test.beforeAll(async ({ request }) => {
@@ -131,6 +200,18 @@ test.describe('Documentation Screenshots', () => {
       protocol: 'mcp',
       endpoint: 'https://demo-fs-mcp.example.com',
       version: '0.8.0',
+    });
+
+    // Seed A2A entry WITH capabilities via the register endpoint (full card parse).
+    // This is required for capability screenshots — the simple CreateEntry endpoint
+    // does not process skills/capabilities from the card.
+    a2aCapEntryId = await registerFromCard(request, token, A2A_CARD_WITH_ENDPOINT);
+
+    // Activate the cap entry so it appears in the capabilities list.
+    // ListCapabilities only returns active/degraded entries (registered entries are excluded).
+    await request.patch(`${BASE}/api/v1/catalog/${a2aCapEntryId}/lifecycle`, {
+      headers: authHeader(token),
+      data: { state: 'active' },
     });
 
     // Seed viewer user for settings screenshots
@@ -159,6 +240,9 @@ test.describe('Documentation Screenshots', () => {
     }
     if (mcpEntryId) {
       await deleteCatalogEntry(request, token, mcpEntryId).catch(ignoreCleanupError('delete mcp entry'));
+    }
+    if (a2aCapEntryId && a2aCapEntryId !== a2aEntryId) {
+      await deleteCatalogEntry(request, token, a2aCapEntryId).catch(ignoreCleanupError('delete a2a-cap entry'));
     }
     if (viewerUserId) {
       await request.delete(`${BASE}/api/v1/users/${viewerUserId}`, {
@@ -641,6 +725,84 @@ test.describe('Documentation Screenshots', () => {
     await page.locator('header button').filter({ has: page.locator('.rounded-full') }).click();
     await page.waitForSelector('[role="menu"]');
     await page.screenshot({ path: `${DOCS_IMAGES}/user-dropdown.png`, fullPage: false });
+  });
+
+  // ───────── Capabilities screenshots ─────────
+
+  test('capabilities-list', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/catalog/capabilities');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-list.png`, fullPage: false });
+  });
+
+  test('capabilities-list-expanded', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/catalog/capabilities');
+    await page.waitForLoadState('networkidle');
+    // Each capability group is a div.border.rounded-lg; its first child is the toggle button.
+    // Click the first group's header button to expand it.
+    const groupButton = page.locator('div.border.rounded-lg > button').first();
+    await groupButton.click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-list-expanded.png`, fullPage: false });
+  });
+
+  test('capabilities-kind-filter', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/catalog/capabilities');
+    await page.waitForLoadState('networkidle');
+    // Click "A2A Skill" in the KindFilter (ToggleGroup renders items as role="radio")
+    await page.getByRole('radio', { name: 'A2A Skill' }).click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-kind-filter.png`, fullPage: false });
+  });
+
+  test('capabilities-search', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/catalog/capabilities');
+    await page.waitForLoadState('networkidle');
+    // Type a search query
+    await page.getByPlaceholder(/search/i).first().fill('Translate');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-search.png`, fullPage: false });
+  });
+
+  test('capabilities-detail', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Navigate directly to the Translate capability detail page
+    const key = encodeURIComponent('a2a.skill::Translate');
+    await page.goto(`/catalog/capabilities/${key}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-detail.png`, fullPage: false });
+  });
+
+  test('capabilities-crosslink', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Navigate to the A2A entry that was registered with capabilities
+    await page.goto(`/catalog/${a2aCapEntryId}`);
+    await page.waitForLoadState('networkidle');
+    // Scroll to the capabilities / skills section to show the clickable links
+    await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h2, h3'));
+      const capHeading = headings.find(h =>
+        /capabilities|skills/i.test(h.textContent ?? '')
+      );
+      capHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-crosslink.png`, fullPage: false });
   });
 });
 

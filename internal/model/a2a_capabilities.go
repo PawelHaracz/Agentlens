@@ -6,11 +6,11 @@ import (
 )
 
 func init() {
-	RegisterCapability("a2a.skill", func() Capability { return &A2ASkill{} })
-	RegisterCapability("a2a.interface", func() Capability { return &A2AInterface{} })
-	RegisterCapability("a2a.security_scheme", func() Capability { return &A2ASecurityScheme{} })
-	RegisterCapability("a2a.extension", func() Capability { return &A2AExtension{} })
-	RegisterCapability("a2a.signature", func() Capability { return &A2ASignature{} })
+	RegisterCapability("a2a.skill", func() Capability { return &A2ASkill{} }, true)
+	RegisterCapability("a2a.interface", func() Capability { return &A2AInterface{} }, false)
+	RegisterCapability("a2a.security_scheme", func() Capability { return &A2ASecurityScheme{} }, false)
+	RegisterCapability("a2a.extension", func() Capability { return &A2AExtension{} }, false)
+	RegisterCapability("a2a.signature", func() Capability { return &A2ASignature{} }, false)
 }
 
 // A2ASkill represents an A2A protocol skill capability.

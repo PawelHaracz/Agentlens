@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -64,53 +65,14 @@ func parseListFilter(r *http.Request) (store.ListFilter, error) {
 	filter := store.ListFilter{}
 	q := r.URL.Query()
 
-	validProtocols := map[string]bool{
-		string(model.ProtocolA2A):  true,
-		string(model.ProtocolMCP):  true,
-		string(model.ProtocolA2UI): true,
+	if err := applyProtocolFilter(q, &filter); err != nil {
+		return filter, err
 	}
-	if v := q.Get("protocol"); v != "" {
-		if !validProtocols[v] {
-			return filter, fmt.Errorf("invalid protocol value: %s", v)
-		}
-		p := model.Protocol(v)
-		filter.Protocol = &p
+	if err := applyStateFilter(q, &filter); err != nil {
+		return filter, err
 	}
-
-	validStates := map[string]bool{
-		"registered": true, "active": true, "degraded": true,
-		"offline": true, "deprecated": true,
-	}
-	if v := q.Get("state"); v != "" {
-		parts := strings.Split(v, ",")
-		states := make([]model.LifecycleState, 0, len(parts))
-		for _, p := range parts {
-			p = strings.TrimSpace(p)
-			if !validStates[p] {
-				return filter, fmt.Errorf("invalid state value: %s", p)
-			}
-			states = append(states, model.LifecycleState(p))
-		}
-		filter.States = states
-	} else if v := q.Get("status"); v != "" {
-		if !validStates[v] {
-			return filter, fmt.Errorf("invalid status value: %s", v)
-		}
-		filter.States = []model.LifecycleState{model.LifecycleState(v)}
-	}
-
-	validSources := map[string]bool{
-		string(model.SourceK8s):      true,
-		string(model.SourceConfig):   true,
-		string(model.SourcePush):     true,
-		string(model.SourceUpstream): true,
-	}
-	if v := q.Get("source"); v != "" {
-		if !validSources[v] {
-			return filter, fmt.Errorf("invalid source value: %s", v)
-		}
-		s := model.SourceType(v)
-		filter.Source = &s
+	if err := applySourceFilter(q, &filter); err != nil {
+		return filter, err
 	}
 	if v := q.Get("team"); v != "" {
 		filter.Team = v
@@ -141,6 +103,68 @@ func parseListFilter(r *http.Request) (store.ListFilter, error) {
 		filter.Sort = v
 	}
 	return filter, nil
+}
+
+func applyProtocolFilter(q url.Values, filter *store.ListFilter) error {
+	v := q.Get("protocol")
+	if v == "" {
+		return nil
+	}
+	valid := map[string]bool{
+		string(model.ProtocolA2A):  true,
+		string(model.ProtocolMCP):  true,
+		string(model.ProtocolA2UI): true,
+	}
+	if !valid[v] {
+		return fmt.Errorf("invalid protocol value: %s", v)
+	}
+	p := model.Protocol(v)
+	filter.Protocol = &p
+	return nil
+}
+
+func applyStateFilter(q url.Values, filter *store.ListFilter) error {
+	validStates := map[string]bool{
+		"registered": true, "active": true, "degraded": true,
+		"offline": true, "deprecated": true,
+	}
+	if v := q.Get("state"); v != "" {
+		parts := strings.Split(v, ",")
+		states := make([]model.LifecycleState, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if !validStates[p] {
+				return fmt.Errorf("invalid state value: %s", p)
+			}
+			states = append(states, model.LifecycleState(p))
+		}
+		filter.States = states
+	} else if v := q.Get("status"); v != "" {
+		if !validStates[v] {
+			return fmt.Errorf("invalid status value: %s", v)
+		}
+		filter.States = []model.LifecycleState{model.LifecycleState(v)}
+	}
+	return nil
+}
+
+func applySourceFilter(q url.Values, filter *store.ListFilter) error {
+	v := q.Get("source")
+	if v == "" {
+		return nil
+	}
+	valid := map[string]bool{
+		string(model.SourceK8s):      true,
+		string(model.SourceConfig):   true,
+		string(model.SourcePush):     true,
+		string(model.SourceUpstream): true,
+	}
+	if !valid[v] {
+		return fmt.Errorf("invalid source value: %s", v)
+	}
+	s := model.SourceType(v)
+	filter.Source = &s
+	return nil
 }
 
 // GetEntry handles GET /api/v1/catalog/{id}.
@@ -315,20 +339,6 @@ func (h *Handler) GetEntryCard(w http.ResponseWriter, r *http.Request) {
 	if _, err := w.Write(card.Data); err != nil {
 		slog.Error("failed to write card response", "err", err)
 	}
-}
-
-// SearchCapabilities handles GET /api/v1/skills.
-func (h *Handler) SearchCapabilities(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query().Get("q")
-	entries, err := h.store.SearchCapabilities(r.Context(), q)
-	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, "failed to search capabilities")
-		return
-	}
-	if entries == nil {
-		entries = []model.CatalogEntry{}
-	}
-	JSONResponse(w, http.StatusOK, entries)
 }
 
 // GetStats handles GET /api/v1/stats.

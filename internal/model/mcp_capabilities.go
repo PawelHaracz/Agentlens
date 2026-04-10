@@ -3,9 +3,9 @@ package model
 import "fmt"
 
 func init() {
-	RegisterCapability("mcp.tool", func() Capability { return &MCPTool{} })
-	RegisterCapability("mcp.resource", func() Capability { return &MCPResource{} })
-	RegisterCapability("mcp.prompt", func() Capability { return &MCPPrompt{} })
+	RegisterCapability("mcp.tool", func() Capability { return &MCPTool{} }, true)
+	RegisterCapability("mcp.resource", func() Capability { return &MCPResource{} }, true)
+	RegisterCapability("mcp.prompt", func() Capability { return &MCPPrompt{} }, true)
 }
 
 // MCPTool represents an MCP tool capability (kind "mcp.tool").

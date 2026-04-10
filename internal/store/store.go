@@ -8,6 +8,15 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/model"
 )
 
+// CapabilityFilter holds filtering parameters for listing capability instances.
+type CapabilityFilter struct {
+	Query  string // case-insensitive substring match against name, description, properties
+	Kind   string // filter by capability kind (e.g., "a2a.skill", "mcp.tool")
+	Limit  int
+	Offset int
+	Sort   string // "name_asc" (default) | "agentName_asc"
+}
+
 // Store defines the interface for catalog entry persistence.
 type Store interface {
 	// Provider
@@ -20,7 +29,16 @@ type Store interface {
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, filter ListFilter) ([]model.CatalogEntry, error)
 	FindByEndpoint(ctx context.Context, endpoint string) (*model.CatalogEntry, error)
-	SearchCapabilities(ctx context.Context, query string) ([]model.CatalogEntry, error)
+
+	// ListCapabilities returns a flat list of capability instances (one per
+	// agent per capability) with agent metadata. Only active + degraded entries
+	// are included. Only user-facing capability kinds are returned.
+	ListCapabilities(ctx context.Context, filter CapabilityFilter) (*model.CapabilityListResult, error)
+
+	// ListAgentsByCapability returns catalog entries offering a specific
+	// capability identified by (kind, name). Returns all lifecycle states.
+	ListAgentsByCapability(ctx context.Context, kind, name string) ([]model.CatalogEntry, error)
+
 	Stats(ctx context.Context) (*StoreStats, error)
 
 	// UpdateHealth persists health check results for a single entry.

@@ -98,3 +98,45 @@ export interface ValidationResult {
   warnings: string[]
   preview?: ValidationPreview
 }
+
+export interface CapabilityInstance {
+  kind: string
+  name: string
+  description: string
+  tags: string[] | null
+  input_modes: string[] | null
+  output_modes: string[] | null
+  agent_id: string
+  agent_name: string
+  protocol: string
+  status: string
+  spec_version: string
+  provider_org: string | null
+  provider_url: string | null
+  health_state: string
+  latency_ms: number
+}
+
+export interface CapabilityListResult {
+  total: number
+  items: CapabilityInstance[]
+}
+
+export interface CapabilityDetailResponse {
+  capability: {
+    kind: string
+    name: string
+  }
+  agents: CapabilityAgentDTO[]
+}
+
+export interface CapabilityAgentDTO {
+  id: string
+  display_name: string
+  protocol: string
+  provider: { organization: string; url: string } | null
+  health: { state: string; latencyMs: number; [key: string]: unknown }
+  spec_version: string
+  status: string
+  capability_snippet: Record<string, unknown>
+}
