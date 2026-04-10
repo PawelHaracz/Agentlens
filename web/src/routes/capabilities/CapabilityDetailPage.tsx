@@ -23,8 +23,7 @@ export default function CapabilityDetailPage() {
     return <div className="text-center py-12">Invalid capability key</div>
   }
 
-  const decoded = decodeURIComponent(key)
-  const [kind, name] = decoded.split('::', 2)
+  const [kind, name] = key.split('::', 2)
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['capability-agents', kind, name],

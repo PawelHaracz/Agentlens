@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -91,7 +91,8 @@ func (h *CapabilityHandler) ListCapabilities(w http.ResponseWriter, r *http.Requ
 		Sort:   sort,
 	})
 	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, fmt.Sprintf("query capabilities: %v", err))
+		slog.ErrorContext(ctx, "failed to list capabilities", "err", err)
+		ErrorResponse(w, http.StatusInternalServerError, "failed to list capabilities")
 		return
 	}
 
@@ -104,7 +105,7 @@ func (h *CapabilityHandler) GetCapabilityAgents(w http.ResponseWriter, r *http.R
 
 	// Extract key from URL
 	key := chi.URLParam(r, "key")
-	keyDecoded, err := url.QueryUnescape(key)
+	keyDecoded, err := url.PathUnescape(key)
 	if err != nil {
 		ErrorResponse(w, http.StatusBadRequest, "invalid key encoding")
 		return
@@ -123,7 +124,8 @@ func (h *CapabilityHandler) GetCapabilityAgents(w http.ResponseWriter, r *http.R
 	// Query store
 	entries, err := h.store.ListAgentsByCapability(ctx, kind, name)
 	if err != nil {
-		ErrorResponse(w, http.StatusInternalServerError, fmt.Sprintf("query agents: %v", err))
+		slog.ErrorContext(ctx, "failed to query agents for capability", "kind", kind, "name", name, "err", err)
+		ErrorResponse(w, http.StatusInternalServerError, "failed to query agents")
 		return
 	}
 
@@ -150,11 +152,16 @@ func (h *CapabilityHandler) GetCapabilityAgents(w http.ResponseWriter, r *http.R
 			specVersion = entry.AgentType.SpecVersion
 		}
 
+		var protocol string
+		if entry.AgentType != nil {
+			protocol = string(entry.AgentType.Protocol)
+		}
+
 		entry.SyncFromDB()
 		agents[i] = capabilityAgentDTO{
 			ID:                entry.ID,
 			DisplayName:       entry.DisplayName,
-			Protocol:          string(entry.AgentType.Protocol),
+			Protocol:          protocol,
 			Provider:          provider,
 			Health:            buildHealthJSON(entry),
 			SpecVersion:       specVersion,
@@ -190,9 +197,9 @@ type capabilityAgentDTO struct {
 	ID                string          `json:"id"`
 	DisplayName       string          `json:"display_name"`
 	Protocol          string          `json:"protocol"`
-	Provider          *model.Provider `json:"provider,omitempty"`
+	Provider          *model.Provider `json:"provider"`
 	Health            map[string]any  `json:"health"`
-	SpecVersion       string          `json:"spec_version,omitempty"`
+	SpecVersion       string          `json:"spec_version"`
 	Status            string          `json:"status"`
 	CapabilitySnippet json.RawMessage `json:"capability_snippet"`
 }

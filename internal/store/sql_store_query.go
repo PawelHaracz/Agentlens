@@ -191,10 +191,10 @@ func toCapabilityInstance(row capabilityInstanceRow) model.CapabilityInstance {
 		LatencyMs:   row.LatencyMs,
 	}
 	if row.ProviderOrg != nil {
-		inst.ProviderOrg = *row.ProviderOrg
+		inst.ProviderOrg = row.ProviderOrg
 	}
 	if row.ProviderURL != nil {
-		inst.ProviderURL = *row.ProviderURL
+		inst.ProviderURL = row.ProviderURL
 	}
 	if row.Kind == "a2a.skill" && row.Properties != "" {
 		enrichA2ASkillFields(&inst, row.Properties)
@@ -244,7 +244,7 @@ func (s *SQLStore) ListCapabilities(ctx context.Context, filter CapabilityFilter
 			at.protocol, at.spec_version,
 			ce.status,
 			p.organization AS provider_org, p.url AS provider_url,
-			ce.health_latency_ms, ce.status AS health_state`).
+			ce.health_latency_ms AS latency_ms, ce.status AS health_state`).
 		Joins("JOIN agent_types at ON c.agent_type_id = at.id").
 		Joins("JOIN catalog_entries ce ON ce.agent_type_id = at.id").
 		Joins("LEFT JOIN providers p ON at.provider_id = p.id").

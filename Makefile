@@ -25,7 +25,7 @@ help:
 	@echo ""
 	@sed -n 's/^## //p' $(MAKEFILE_LIST) | column -t -s ':' | sed 's/^/  /'
 
-## all: Run format, lint, test, arch-test, and build
+## all: Run format, lint, test, arch-test, web-lint, web-test, web-build, web-test-coverage, and build
 all: format lint test arch-test build web-lint web-test web-build web-test-coverage
 	@echo "All checks passed and build successful!"
 

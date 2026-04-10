@@ -7,20 +7,20 @@ type CapabilityInstance struct {
 	Kind        string   `json:"kind"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
-	Tags        []string `json:"tags,omitempty"`
-	InputModes  []string `json:"input_modes,omitempty"`
-	OutputModes []string `json:"output_modes,omitempty"`
+	Tags        []string `json:"tags"`
+	InputModes  []string `json:"input_modes"`
+	OutputModes []string `json:"output_modes"`
 
 	// Parent agent fields (subset — not the full CatalogEntry)
 	AgentID     string         `json:"agent_id"`
 	AgentName   string         `json:"agent_name"`
 	Protocol    Protocol       `json:"protocol"`
 	Status      LifecycleState `json:"status"`
-	SpecVersion string         `json:"spec_version,omitempty"`
+	SpecVersion string         `json:"spec_version"`
 
 	// Provider (flattened)
-	ProviderOrg string `json:"provider_org,omitempty"`
-	ProviderURL string `json:"provider_url,omitempty"`
+	ProviderOrg *string `json:"provider_org"`
+	ProviderURL *string `json:"provider_url"`
 
 	// Health (subset)
 	HealthState LifecycleState `json:"health_state"`
