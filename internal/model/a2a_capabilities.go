@@ -52,6 +52,7 @@ func (a *A2AExtension) Validate() error {
 
 // A2AOAuthFlow represents a single OAuth 2.0 flow variant.
 type A2AOAuthFlow struct {
+	// TODO: validate flow_type enum (authorizationCode|clientCredentials|deviceCode|implicit|password)
 	FlowType         string            `json:"flow_type"` // "authorizationCode" | "clientCredentials" | "deviceCode" | "implicit" | "password"
 	AuthorizationURL string            `json:"authorization_url,omitempty"`
 	TokenURL         string            `json:"token_url,omitempty"`
@@ -96,8 +97,11 @@ type A2ASecurityScheme struct {
 func (a *A2ASecurityScheme) Kind() string { return "a2a.security_scheme" }
 
 func (a *A2ASecurityScheme) Validate() error {
+	if a.SchemeName == "" {
+		return errors.New("a2a.security_scheme: scheme_name is required")
+	}
 	if a.Type == "" {
-		return errors.New("a2a.security_scheme: type must not be empty")
+		return errors.New("a2a.security_scheme: type is required")
 	}
 	return nil
 }
@@ -118,7 +122,7 @@ func (a *A2ASecurityRequirement) Kind() string { return "a2a.security_requiremen
 
 func (a *A2ASecurityRequirement) Validate() error {
 	if len(a.Schemes) == 0 {
-		return errors.New("a2a.security_requirement: schemes must not be empty")
+		return errors.New("a2a.security_requirement: schemes is required")
 	}
 	return nil
 }

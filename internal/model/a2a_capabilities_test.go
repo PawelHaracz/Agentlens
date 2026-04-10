@@ -115,6 +115,17 @@ func TestA2ASecurityScheme_Validate_EmptyType(t *testing.T) {
 	}
 }
 
+func TestA2ASecurityScheme_Validate_EmptySchemeName(t *testing.T) {
+	scheme := &A2ASecurityScheme{
+		SchemeName: "",
+		Type:       "http",
+	}
+	err := scheme.Validate()
+	if err == nil {
+		t.Error("Expected validation error for empty scheme_name")
+	}
+}
+
 func TestA2ASecurityRequirement_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
