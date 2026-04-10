@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
@@ -67,6 +68,21 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 
 	capabilities := buildSkills(&card)
 	capabilities = append(capabilities, buildA2AMetaCaps(&card)...)
+
+	securityCaps, err := buildSecurityCaps(&card)
+	if err != nil {
+		slog.Warn("Failed to parse security schemes", "error", err)
+	} else {
+		capabilities = append(capabilities, securityCaps...)
+	}
+
+	reqCaps, err := buildSecurityRequirements(&card)
+	if err != nil {
+		slog.Warn("Failed to parse security requirements", "error", err)
+	} else {
+		capabilities = append(capabilities, reqCaps...)
+	}
+
 	provider := buildProvider(&card)
 	specVersion := detectSpecVersion(&card)
 	agentKey := model.ComputeAgentKey(model.ProtocolA2A, endpoint)
@@ -96,7 +112,8 @@ func resolveEndpoint(card *fullCard) (string, error) {
 	return endpoint, nil
 }
 
-// buildSkills converts raw card skills into []model.Capability with *model.A2ASkill entries.
+// buildSkills converts raw card skills into []model.Capability with *model.A2ASkill entries
+// and includes per-skill A2ASecurityRequirement capabilities when present.
 func buildSkills(card *fullCard) []model.Capability {
 	caps := make([]model.Capability, 0, len(card.Skills))
 	for _, s := range card.Skills {
@@ -107,6 +124,10 @@ func buildSkills(card *fullCard) []model.Capability {
 			InputModes:  s.InputModes,
 			OutputModes: s.OutputModes,
 		})
+		if len(s.SecurityRequirements) > 0 {
+			skillSecCaps := parseSkillSecurityRequirements(s.Name, &s)
+			caps = append(caps, skillSecCaps...)
+		}
 	}
 	return caps
 }
@@ -122,8 +143,9 @@ func buildProvider(card *fullCard) model.Provider {
 	return provider
 }
 
-// buildA2AMetaCaps assembles typed capabilities from extensions, security schemes,
+// buildA2AMetaCaps assembles typed capabilities from extensions,
 // interfaces, and signatures declared in the card.
+// Security schemes are handled separately by buildSecurityCaps.
 func buildA2AMetaCaps(card *fullCard) []model.Capability {
 	var caps []model.Capability
 
@@ -134,14 +156,6 @@ func buildA2AMetaCaps(card *fullCard) []model.Capability {
 				Required: ext.Required,
 			})
 		}
-	}
-
-	for _, sec := range card.SecuritySchemes {
-		caps = append(caps, &model.A2ASecurityScheme{
-			Type:   sec.Type,
-			Method: sec.Method,
-			Name:   sec.Name,
-		})
 	}
 
 	for _, iface := range card.SupportedInterfaces {
@@ -156,6 +170,235 @@ func buildA2AMetaCaps(card *fullCard) []model.Capability {
 			Algorithm: sig.Algorithm,
 			KeyID:     sig.KeyID,
 		})
+	}
+
+	return caps
+}
+
+// buildSecurityCaps parses security schemes from the card into capabilities.
+// Supports both v0.3 array format and v1.0 named map format.
+func buildSecurityCaps(card *fullCard) ([]model.Capability, error) {
+	var caps []model.Capability
+
+	if len(card.SecuritySchemes) == 0 {
+		return caps, nil
+	}
+
+	// Try v1.0 map format first.
+	var v10Schemes map[string]json.RawMessage
+	if err := json.Unmarshal(card.SecuritySchemes, &v10Schemes); err == nil {
+		for schemeName, schemeData := range v10Schemes {
+			scheme, err := parseSecurityScheme(schemeName, schemeData)
+			if err != nil {
+				slog.Warn("Failed to parse security scheme", "scheme", schemeName, "error", err)
+				continue
+			}
+			caps = append(caps, scheme)
+		}
+		return caps, nil
+	}
+
+	// Try v0.3 array format.
+	var v03Schemes []json.RawMessage
+	if err := json.Unmarshal(card.SecuritySchemes, &v03Schemes); err == nil {
+		for i, schemeData := range v03Schemes {
+			var typeHolder struct {
+				Type string `json:"type"`
+			}
+			if err := json.Unmarshal(schemeData, &typeHolder); err != nil {
+				slog.Warn("Failed to extract type from v0.3 scheme", "index", i, "error", err)
+				continue
+			}
+			schemeName := typeHolder.Type + "Auth"
+			scheme, err := parseSecuritySchemeV03(schemeName, schemeData)
+			if err != nil {
+				slog.Warn("Failed to parse v0.3 security scheme", "index", i, "error", err)
+				continue
+			}
+			caps = append(caps, scheme)
+		}
+		return caps, nil
+	}
+
+	return caps, fmt.Errorf("securitySchemes is neither v1.0 map nor v0.3 array")
+}
+
+// parseSecurityScheme parses a single v1.0 security scheme entry from a named map.
+func parseSecurityScheme(schemeName string, data json.RawMessage) (*model.A2ASecurityScheme, error) {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+
+	schemeType, ok := raw["type"].(string)
+	if !ok || schemeType == "" {
+		return nil, fmt.Errorf("missing or invalid type")
+	}
+
+	scheme := &model.A2ASecurityScheme{
+		SchemeName: schemeName,
+		Name:       schemeName,
+		Type:       schemeType,
+	}
+
+	if desc, ok := raw["description"].(string); ok {
+		scheme.Description = desc
+	}
+
+	switch schemeType {
+	case "apiKey":
+		if in, ok := raw["in"].(string); ok {
+			scheme.APIKeyLocation = in
+		}
+		if name, ok := raw["name"].(string); ok {
+			scheme.APIKeyName = name
+		}
+	case "http":
+		if httpScheme, ok := raw["scheme"].(string); ok {
+			scheme.HTTPScheme = httpScheme
+		}
+		if bearerFormat, ok := raw["bearerFormat"].(string); ok {
+			scheme.BearerFormat = bearerFormat
+		}
+	case "oauth2":
+		applyOAuthFlows(schemeName, raw, scheme)
+		if metadataURL, ok := raw["oauth2MetadataUrl"].(string); ok {
+			scheme.OAuth2MetadataURL = metadataURL
+		}
+	case "openIdConnect":
+		if oidcURL, ok := raw["openIdConnectUrl"].(string); ok {
+			scheme.OpenIDConnectURL = oidcURL
+		}
+	case "mutualTls":
+		// No additional fields.
+	default:
+		slog.Warn("Unknown security scheme type", "type", schemeType, "scheme", schemeName)
+	}
+
+	return scheme, nil
+}
+
+// applyOAuthFlows populates oauth flow details on a scheme from the raw map.
+func applyOAuthFlows(schemeName string, raw map[string]interface{}, scheme *model.A2ASecurityScheme) {
+	flowsRaw, ok := raw["flows"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	for flowType, flowData := range flowsRaw {
+		flowMap, ok := flowData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		flow := model.A2AOAuthFlow{FlowType: flowType}
+		if flowType == "implicit" || flowType == "password" {
+			flow.Deprecated = true
+			slog.Warn("Deprecated OAuth flow detected", "flow", flowType, "scheme", schemeName)
+		}
+		if authURL, ok := flowMap["authorizationUrl"].(string); ok {
+			flow.AuthorizationURL = authURL
+		}
+		if tokenURL, ok := flowMap["tokenUrl"].(string); ok {
+			flow.TokenURL = tokenURL
+		}
+		if refreshURL, ok := flowMap["refreshUrl"].(string); ok {
+			flow.RefreshURL = refreshURL
+		}
+		if deviceAuthURL, ok := flowMap["deviceAuthorizationUrl"].(string); ok {
+			flow.DeviceAuthURL = deviceAuthURL
+		}
+		if scopesRaw, ok := flowMap["scopes"].(map[string]interface{}); ok {
+			scopes := make(map[string]string)
+			for k, v := range scopesRaw {
+				if vStr, ok := v.(string); ok {
+					scopes[k] = vStr
+				}
+			}
+			flow.Scopes = scopes
+		}
+		scheme.OAuthFlows = append(scheme.OAuthFlows, flow)
+	}
+}
+
+// parseSecuritySchemeV03 parses a single v0.3 security scheme entry from an array.
+func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2ASecurityScheme, error) {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+
+	schemeType, ok := raw["type"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing type in v0.3 scheme")
+	}
+
+	scheme := &model.A2ASecurityScheme{
+		SchemeName: schemeName,
+		Name:       schemeName,
+		Type:       schemeType,
+	}
+
+	if desc, ok := raw["description"].(string); ok {
+		scheme.Description = desc
+	}
+
+	if method, ok := raw["method"].(string); ok {
+		scheme.Method = method
+		if schemeType == "http" {
+			scheme.HTTPScheme = method
+		}
+	}
+
+	if name, ok := raw["name"].(string); ok {
+		scheme.Name = name
+		if schemeType == "apiKey" {
+			scheme.APIKeyName = name
+		}
+	}
+
+	return scheme, nil
+}
+
+// buildSecurityRequirements parses the top-level securityRequirements array
+// from the A2A card. Each entry is an OR'd alternative.
+func buildSecurityRequirements(card *fullCard) ([]model.Capability, error) {
+	var caps []model.Capability
+
+	for _, reqData := range card.SecurityRequirements {
+		var schemes map[string][]string
+		if err := json.Unmarshal(reqData, &schemes); err != nil {
+			slog.Warn("Failed to parse security requirement", "error", err)
+			continue
+		}
+
+		req := &model.A2ASecurityRequirement{
+			Schemes:  schemes,
+			SkillRef: "",
+		}
+
+		caps = append(caps, req)
+	}
+
+	return caps, nil
+}
+
+// parseSkillSecurityRequirements creates A2ASecurityRequirement capabilities
+// with SkillRef set for per-skill auth requirements.
+func parseSkillSecurityRequirements(skillName string, skill *fullSkill) []model.Capability {
+	var caps []model.Capability
+
+	for _, reqData := range skill.SecurityRequirements {
+		var schemes map[string][]string
+		if err := json.Unmarshal(reqData, &schemes); err != nil {
+			slog.Warn("Failed to parse skill security requirement", "skill", skillName, "error", err)
+			continue
+		}
+
+		req := &model.A2ASecurityRequirement{
+			Schemes:  schemes,
+			SkillRef: skillName,
+		}
+
+		caps = append(caps, req)
 	}
 
 	return caps
