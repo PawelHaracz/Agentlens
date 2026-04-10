@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "name": "Skill Security Agent",
+  "description": "Agent with per-skill security",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "httpAuth": {
+      "type": "http",
+      "scheme": "Bearer"
+    },
+    "apiKeyAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key"
+    }
+  },
+  "securityRequirements": [
+    {
+      "httpAuth": []
+    }
+  ],
+  "skills": [
+    {
+      "id": "createDocument",
+      "name": "createDocument",
+      "description": "Create a new document",
+      "securityRequirements": [
+        {
+          "apiKeyAuth": []
+        }
+      ]
+    },
+    {
+      "id": "readDocument",
+      "name": "readDocument",
+      "description": "Read a document"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "name": "Multiple Schemes Agent",
+  "description": "Agent with multiple auth schemes",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "httpAuth": {
+      "type": "http",
+      "scheme": "Bearer",
+      "bearerFormat": "JWT"
+    },
+    "apiKeyAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key"
+    },
+    "oauth2Auth": {
+      "type": "oauth2",
+      "flows": {
+        "clientCredentials": {
+          "tokenUrl": "https://auth.example.com/token",
+          "scopes": {
+            "read": "Read access"
+          }
+        }
+      }
+    }
+  },
+  "securityRequirements": [
+    {
+      "httpAuth": []
+    },
+    {
+      "apiKeyAuth": []
+    }
+  ],
+  "skills": []
+}

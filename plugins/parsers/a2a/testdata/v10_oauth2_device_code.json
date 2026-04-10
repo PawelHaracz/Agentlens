@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "name": "OAuth2 Device Code",
+  "description": "Agent with device code flow",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "oauth2Auth": {
+      "type": "oauth2",
+      "flows": {
+        "deviceCode": {
+          "deviceAuthorizationUrl": "https://auth.example.com/device",
+          "tokenUrl": "https://auth.example.com/token",
+          "scopes": {
+            "read": "Read access"
+          }
+        }
+      }
+    }
+  },
+  "skills": []
+}

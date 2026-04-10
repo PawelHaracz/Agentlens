@@ -1,0 +1,7 @@
+{
+  "version": "1.0",
+  "name": "Open Agent",
+  "description": "Agent with no security",
+  "url": "https://agent.example.com",
+  "skills": []
+}

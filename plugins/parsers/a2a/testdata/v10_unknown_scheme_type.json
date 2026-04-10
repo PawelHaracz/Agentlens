@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "name": "Unknown Scheme Agent",
+  "description": "Agent with unknown scheme type",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "customAuth": {
+      "type": "customAuth",
+      "description": "Custom authentication scheme"
+    }
+  },
+  "skills": []
+}

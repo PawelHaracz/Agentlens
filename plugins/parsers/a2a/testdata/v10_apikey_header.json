@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "name": "API Key Agent",
+  "description": "Agent with API Key in header",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "apiKeyAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key",
+      "description": "API Key authentication"
+    }
+  },
+  "securityRequirements": [
+    {
+      "apiKeyAuth": []
+    }
+  ],
+  "skills": []
+}
