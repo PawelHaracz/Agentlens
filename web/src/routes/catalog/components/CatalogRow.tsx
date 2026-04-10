@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react'
 import type { CatalogEntry } from '../../../types'
 import StatusBadge from '../../../components/StatusBadge'
 import ProtocolBadge from '../../../components/ProtocolBadge'
+import { AuthBadge } from '../../../components/AuthBadge'
 import { TableRow, TableCell } from '../../../components/ui/table'
 import { SpecVersionBadge } from './SpecVersionBadge'
 import { SearchHighlight } from './SearchHighlight'
@@ -91,6 +92,12 @@ export function CatalogRow({ entry, searchSnippet }: Props) {
 
       <TableCell>
         <SpecVersionBadge version={entry.spec_version} />
+      </TableCell>
+
+      <TableCell>
+        {entry.auth_summary && (
+          <AuthBadge label={entry.auth_summary.label} required={entry.auth_summary.required} />
+        )}
       </TableCell>
 
       <TableCell className="text-sm text-muted-foreground">

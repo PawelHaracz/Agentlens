@@ -11,6 +11,7 @@ import StatusBadge from '../../components/StatusBadge'
 import ProtocolBadge from '../../components/ProtocolBadge'
 import { SpecVersionBadge } from './components/SpecVersionBadge'
 import { RawCardTab } from './components/RawCardTab'
+import { AuthenticationSection } from './components/AuthenticationSection'
 
 type PageStatus = 'loading' | 'success' | 'error'
 
@@ -280,6 +281,13 @@ export default function CatalogDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Authentication */}
+          <AuthenticationSection
+            protocol={entry.protocol}
+            securityDetail={entry.security_detail}
+            endpoint={entry.endpoint}
+          />
         </TabsContent>
 
         {/* Raw Card tab */}
