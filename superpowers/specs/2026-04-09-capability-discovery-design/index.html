@@ -1,0 +1,2114 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://agentlens.cloudtown.io/superpowers/specs/2026-04-09-capability-discovery-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Feature 2.3 — Capability-based Discovery - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../css/timeago.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#feature-23-capability-based-discovery" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Feature 2.3 — Capability-based Discovery
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-made-during-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions Made During Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope (in)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope (out)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backend-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-extend-capability-registry-with-discoverability-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Extend capability registry with discoverability metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-new-model-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. New model types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-new-endpoint-get-apiv1capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. New endpoint — GET /api/v1/capabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-new-endpoint-get-apiv1capabilitieskey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. New endpoint — GET /api/v1/capabilities/{key}
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-store-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Store layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-store-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Store implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-handler-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Handler layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-router-wiring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Router wiring
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#route-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescript-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeScript types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-index-view-catalogcapabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability index view (/catalog/capabilities)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-detail-view-catalogcapabilitieskey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability detail view (/catalog/capabilities/:key)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-linking-from-agent-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-linking from agent detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#url-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        URL state
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#route-registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route registration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-traps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Traps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-order-suggested-commit-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution Order (suggested commit sequence)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architectural Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#product-archetype-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product Archetype alignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-facing-vs-technical-capability-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User-facing vs technical capability kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#microkernel-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microkernel boundaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#out-of-band-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out-of-band Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="feature-23-capability-based-discovery">Feature 2.3 — Capability-based Discovery<a class="headerlink" href="#feature-23-capability-based-discovery" title="Permanent link">&para;</a></h1>
+<p><strong>Tier:</strong> 2 — SHOULD HAVE
+<strong>Effort:</strong> S (2-3 days)
+<strong>Date:</strong> 2026-04-09</p>
+<hr />
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Give platform engineers a dedicated way to answer the question: "which agent in my catalog can do X?" — where X is a capability name, tag, or description phrase. Instead of browsing agents and opening each one to check their capabilities, a user lands on a Capabilities tab, searches for <code>translate</code>, and sees every agent that offers a translation capability, visually grouped by capability name.</p>
+<p>This feature covers <strong>discoverable</strong> capability kinds — initially A2A skills, MCP tools, MCP resources, MCP prompts. Technical kinds (<code>a2a.extension</code>, <code>a2a.security_scheme</code>, <code>a2a.interface</code>, <code>a2a.signature</code>) are excluded — they are configuration details, not discoverable capabilities. Which kinds are discoverable is determined by metadata on the capability registry, not a hardcoded whitelist. Security schemes are handled separately in feature 2.5.</p>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p>Capability-centric discovery is the actual mental model of people integrating AI agents. They don't start from "I want to use agent Foo" — they start from "I need summarization in Polish". Today that question is unanswerable in AgentLens without opening each card. Competitors (a2aregistry.org, Apicurio) don't expose this either, so it's a cheap way to be visibly ahead.</p>
+<p>Second reason: the Product Archetype refactor (feature 1.4) created the polymorphic <code>Capability</code> interface and the relational <code>capabilities</code> table specifically to enable cross-protocol capability queries. Without 2.3, that investment looks like unused infrastructure.</p>
+<hr />
+<h2 id="decisions-made-during-design">Decisions Made During Design<a class="headerlink" href="#decisions-made-during-design" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Capability kinds in scope</td>
+<td>Only discoverable kinds (initially 4: <code>a2a.skill</code>, <code>mcp.tool</code>, <code>mcp.resource</code>, <code>mcp.prompt</code>)</td>
+<td>Technical kinds are excluded. Which kinds are discoverable is determined by the capability registry metadata, not a hardcoded whitelist.</td>
+</tr>
+<tr>
+<td>Discoverable flag</td>
+<td><strong>Extend <code>RegisterCapability</code> with <code>Discoverable bool</code></strong></td>
+<td>The existing <code>capabilityRegistry</code> is the single source of truth for capability kinds. Adding a <code>Discoverable</code> field to the registration metadata means new kinds declare their discoverability at registration time. No second source of truth (no DB table, no separate slice). Store queries filter by discoverable kinds via a helper function.</td>
+</tr>
+<tr>
+<td>Kind labels in UI</td>
+<td><strong>Frontend maps kind strings to display labels</strong></td>
+<td>Registry holds only <code>Factory</code> + <code>Discoverable</code>. Frontend maps <code>"a2a.skill"</code> -&gt; <code>"A2A Skill"</code> etc. Less Go code change, and frontend needs kind-specific rendering logic anyway (icons, colors).</td>
+</tr>
+<tr>
+<td>Backend data model</td>
+<td><strong>Flat list</strong> — no server-side aggregation</td>
+<td>Two agents with <code>a2a.skill</code> named "search" can do completely different things. Server-side GROUP BY <code>(kind, name)</code> creates false equivalence. Backend returns each capability instance with its parent agent. Frontend groups visually.</td>
+</tr>
+<tr>
+<td>Frontend grouping</td>
+<td><strong>Accordion-style</strong> grouping by <code>(kind, name)</code> with agent count in header</td>
+<td>Preserves the capability-first mental model ("find translate -&gt; see 4 agents") without backend making assumptions about capability identity. Groups are computed client-side from the flat list.</td>
+</tr>
+<tr>
+<td>Detail view</td>
+<td><strong>Separate page</strong> at <code>/catalog/capabilities/{key}</code></td>
+<td>Shareable URL for "all agents offering this capability". Needed for cross-linking from agent detail page.</td>
+</tr>
+<tr>
+<td>Detail URL routing</td>
+<td><strong>Single path param</strong> with <code>::</code> separator: <code>/capabilities/{key}</code> where <code>key = kind::name</code></td>
+<td>Chi router can't reliably split two path params when <code>kind</code> contains dots and <code>name</code> may contain slashes. Single param with <code>::</code> separator is unambiguous — capability names don't contain <code>::</code>.</td>
+</tr>
+<tr>
+<td>Breaking change <code>/skills</code></td>
+<td><strong>Remove immediately</strong></td>
+<td>AgentLens is pre-1.0, API is not stable. Document in CHANGELOG.</td>
+</tr>
+<tr>
+<td>Paginacja</td>
+<td><strong>Flat pagination</strong> (limit/offset on capability instances)</td>
+<td>Groups may be split across pages. This is acceptable — frontend shows "continued from previous page" indicator. Simple REST pagination.</td>
+</tr>
+<tr>
+<td>Offline agents</td>
+<td><strong>Show in detail with badge</strong>, exclude from index counts</td>
+<td>Users want reachability counts in index. Detail view shows full picture including offline/deprecated agents with status badges.</td>
+</tr>
+<tr>
+<td>Query implementation</td>
+<td>SQL JOINs on the relational <code>capabilities</code> table</td>
+<td>Capabilities are NOT in a JSON column. They live in a <code>capabilities</code> table with <code>(agent_type_id, kind, name)</code> unique index. Standard SQL JOINs apply.</td>
+</tr>
+<tr>
+<td>Dialect handling</td>
+<td>GORM-portable queries, no dialect branching needed</td>
+<td>Flat list query needs no <code>GROUP_CONCAT</code>/<code>STRING_AGG</code>. Simple SELECT + JOIN + WHERE + ORDER BY — fully portable.</td>
+</tr>
+<tr>
+<td><code>examples</code> field</td>
+<td>Not included</td>
+<td><code>A2ASkill</code> has no <code>examples</code> field. The struct has: <code>Name</code>, <code>Description</code>, <code>Tags</code>, <code>InputModes</code>, <code>OutputModes</code>. Nothing else.</td>
+</tr>
+<tr>
+<td>Handler placement</td>
+<td>New <code>CapabilityHandler</code> struct in <code>internal/api/</code></td>
+<td>Follows the pattern of <code>HealthHandler</code>, <code>UserHandler</code>, <code>RoleHandler</code>.</td>
+</tr>
+<tr>
+<td>Tags</td>
+<td><strong>Shown in index view</strong></td>
+<td>Tags help quickly assess what a capability does without clicking. Requires parsing <code>properties</code> JSON for <code>a2a.skill</code> rows, but <code>rowToCapability()</code> already does this.</td>
+</tr>
+<tr>
+<td>Case sensitivity</td>
+<td><strong>Case-insensitive</strong> search using <code>LOWER()</code></td>
+<td>The existing <code>SearchCapabilities</code> is case-sensitive (inconsistent with <code>List</code>). New endpoint fixes this.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="scope-in">Scope (in)<a class="headerlink" href="#scope-in" title="Permanent link">&para;</a></h2>
+<ul>
+<li>New route <code>/catalog/capabilities</code> — dedicated "Capabilities" tab in the main navigation</li>
+<li>Capability index view: flat list of capability instances, visually grouped by <code>(kind, name)</code> in accordion-style layout, with agent count in each group header</li>
+<li>Capability search box filtering by name, tags (A2A skills only), description — case-insensitive, 250ms debounce</li>
+<li>Kind filter: All + one option per discoverable kind (initially: A2A Skill, MCP Tool, MCP Resource, MCP Prompt)</li>
+<li>Capability detail page: all agents offering a specific capability, with health, status, provider, and agent-specific capability snippet</li>
+<li>Cross-link from agent detail page: clicking a capability navigates to the capability detail page</li>
+<li>Backend: flat list endpoint + detail endpoint</li>
+<li>URL state: <code>?q=translate&amp;kind=a2a.skill</code>, shareable</li>
+</ul>
+<h2 id="scope-out">Scope (out)<a class="headerlink" href="#scope-out" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Technical capability kinds (<code>a2a.extension</code>, <code>a2a.security_scheme</code>, <code>a2a.interface</code>, <code>a2a.signature</code>) — not discoverable</li>
+<li>Capability versioning / compatibility ranges — backlog</li>
+<li>Capability "similarity" or semantic matching — feature 3.3</li>
+<li>Capability-level health (only agent-level health matters today)</li>
+<li>Capability ratings, reviews, usage stats — backlog</li>
+<li>Per-capability security requirements display — feature 2.5 handles security</li>
+<li>Server-side aggregation / GROUP BY — frontend groups, not backend</li>
+<li>Dedicated capabilities aggregation table — capabilities stay in the existing <code>capabilities</code> table</li>
+<li>Capability kind registry in database — kinds are registered in Go code via <code>RegisterCapability</code>, not in a DB table</li>
+</ul>
+<hr />
+<h2 id="backend-changes">Backend Changes<a class="headerlink" href="#backend-changes" title="Permanent link">&para;</a></h2>
+<h3 id="1-extend-capability-registry-with-discoverability-metadata">1. Extend capability registry with discoverability metadata<a class="headerlink" href="#1-extend-capability-registry-with-discoverability-metadata" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/model/capability.go</code></p>
+<p>The existing registry maps kind strings to factory functions. Extend it to carry metadata:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// CapabilityMeta holds registration metadata for a capability kind.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">CapabilityMeta</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Factory</span><span class="w">      </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span>
+<span class="w">    </span><span class="nx">Discoverable</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="c1">// true = user-facing, shown in capability discovery UI</span>
+<span class="p">}</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="nx">capabilityRegistry</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">CapabilityMeta</span><span class="p">{}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">RegisterCapability</span><span class="p">(</span><span class="nx">kind</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">factory</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="p">,</span><span class="w"> </span><span class="nx">discoverable</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">capabilityRegistry</span><span class="p">[</span><span class="nx">kind</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">CapabilityMeta</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">Factory</span><span class="p">:</span><span class="w">      </span><span class="nx">factory</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">Discoverable</span><span class="p">:</span><span class="w"> </span><span class="nx">discoverable</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// GetCapabilityFactory returns the factory for a given kind (unchanged behavior).</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">GetCapabilityFactory</span><span class="p">(</span><span class="nx">kind</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">m</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">capabilityRegistry</span><span class="p">[</span><span class="nx">kind</span><span class="p">]</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">m</span><span class="p">.</span><span class="nx">Factory</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span>
+<span class="p">}</span>
+
+<span class="c1">// DiscoverableKinds returns the kind strings where Discoverable == true.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">DiscoverableKinds</span><span class="p">()</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">kinds</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">kind</span><span class="p">,</span><span class="w"> </span><span class="nx">meta</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">capabilityRegistry</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">meta</span><span class="p">.</span><span class="nx">Discoverable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">kinds</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">kinds</span><span class="p">,</span><span class="w"> </span><span class="nx">kind</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">sort</span><span class="p">.</span><span class="nx">Strings</span><span class="p">(</span><span class="nx">kinds</span><span class="p">)</span><span class="w"> </span><span class="c1">// deterministic order</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">kinds</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Update all <code>RegisterCapability</code> call sites with the <code>discoverable</code> parameter:</p>
+<p>File: <code>internal/model/a2a_capabilities.go</code> — <code>init()</code>:
+<div class="highlight"><pre><span></span><code><span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;a2a.skill&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">A2ASkill</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;a2a.interface&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">A2AInterface</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;a2a.security_scheme&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">A2ASecurityScheme</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;a2a.extension&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">A2AExtension</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;a2a.signature&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">A2ASignature</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+</code></pre></div></p>
+<p>File: <code>internal/model/mcp_capabilities.go</code> — <code>init()</code>:
+<div class="highlight"><pre><span></span><code><span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;mcp.tool&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">MCPTool</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;mcp.resource&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">MCPResource</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;mcp.prompt&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">MCPPrompt</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Why this approach:</strong>
+- Adding a new discoverable capability kind = add struct + <code>RegisterCapability("new.kind", factory, true)</code> in <code>init()</code>. One place, one line change.
+- The store query calls <code>model.DiscoverableKinds()</code> to get the WHERE IN list — no hardcoded kind strings in the store layer.
+- No database migration needed. No second source of truth.
+- The existing <code>GetCapabilityFactory</code> behavior is unchanged — deserialization still works.
+- <code>DiscoverableKinds()</code> returns a sorted slice for deterministic SQL generation.</p>
+<h3 id="2-new-model-types">2. New model types<a class="headerlink" href="#2-new-model-types" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/model/capability_instance.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// CapabilityInstance represents a single capability from a single agent,</span>
+<span class="c1">// enriched with agent metadata for the discovery view.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">CapabilityInstance</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Capability fields</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w">        </span><span class="kt">string</span><span class="w">   </span><span class="s">`json:&quot;kind&quot;`</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">        </span><span class="kt">string</span><span class="w">   </span><span class="s">`json:&quot;name&quot;`</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span><span class="w">   </span><span class="s">`json:&quot;description&quot;`</span>
+<span class="w">    </span><span class="nx">Tags</span><span class="w">        </span><span class="p">[]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;tags,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">InputModes</span><span class="w">  </span><span class="p">[]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;input_modes,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">OutputModes</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;output_modes,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// Parent agent fields (subset — not the full CatalogEntry)</span>
+<span class="w">    </span><span class="nx">AgentID</span><span class="w">     </span><span class="kt">string</span><span class="w">         </span><span class="s">`json:&quot;agent_id&quot;`</span>
+<span class="w">    </span><span class="nx">AgentName</span><span class="w">   </span><span class="kt">string</span><span class="w">         </span><span class="s">`json:&quot;agent_name&quot;`</span>
+<span class="w">    </span><span class="nx">Protocol</span><span class="w">    </span><span class="nx">Protocol</span><span class="w">       </span><span class="s">`json:&quot;protocol&quot;`</span>
+<span class="w">    </span><span class="nx">Status</span><span class="w">      </span><span class="nx">LifecycleState</span><span class="w"> </span><span class="s">`json:&quot;status&quot;`</span>
+<span class="w">    </span><span class="nx">SpecVersion</span><span class="w"> </span><span class="kt">string</span><span class="w">         </span><span class="s">`json:&quot;spec_version,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// Provider (flattened)</span>
+<span class="w">    </span><span class="nx">ProviderOrg</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;provider_org,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">ProviderURL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;provider_url,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// Health (subset)</span>
+<span class="w">    </span><span class="nx">HealthState</span><span class="w"> </span><span class="nx">LifecycleState</span><span class="w"> </span><span class="s">`json:&quot;health_state&quot;`</span>
+<span class="w">    </span><span class="nx">LatencyMs</span><span class="w">   </span><span class="kt">int64</span><span class="w">          </span><span class="s">`json:&quot;latency_ms&quot;`</span>
+<span class="p">}</span>
+
+<span class="c1">// CapabilityListResult wraps a paginated list of capability instances.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">CapabilityListResult</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Total</span><span class="w"> </span><span class="kt">int</span><span class="w">                   </span><span class="s">`json:&quot;total&quot;`</span>
+<span class="w">    </span><span class="nx">Items</span><span class="w"> </span><span class="p">[]</span><span class="nx">CapabilityInstance</span><span class="w">  </span><span class="s">`json:&quot;items&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Notes:
+- <code>CapabilityInstance</code> is a <strong>flat DTO</strong> combining capability fields with agent metadata. It is not a GORM model — it is built in the store layer from JOIN query results.
+- <code>Tags</code>, <code>InputModes</code>, <code>OutputModes</code> are populated only for <code>a2a.skill</code> kind by parsing the <code>properties</code> JSON column. For MCP kinds, these are nil.
+- Agent fields are a curated subset — not the full <code>CatalogEntry</code> with all its JSON columns. This keeps response sizes small.
+- <code>Protocol</code> uses <code>model.Protocol</code>, <code>Status</code> and <code>HealthState</code> use <code>model.LifecycleState</code> — reuse existing domain types instead of raw strings. This ensures compile-time safety and consistency with the rest of the codebase where <code>CatalogEntry.Status</code>, <code>Health.State</code>, <code>AgentType.Protocol</code>, <code>catalogEntryJSON.Status</code>, and <code>catalogEntryJSON.Protocol</code> all use their typed aliases.</p>
+<h3 id="3-new-endpoint-get-apiv1capabilities">3. New endpoint — GET /api/v1/capabilities<a class="headerlink" href="#3-new-endpoint-get-apiv1capabilities" title="Permanent link">&para;</a></h3>
+<p>Replaces the existing <code>GET /api/v1/skills</code> endpoint.</p>
+<p>Query params:</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Default</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>q</code></td>
+<td>string</td>
+<td>empty</td>
+<td>Case-insensitive substring match against <code>capabilities.name</code>, <code>capabilities.description</code>, and <code>capabilities.properties</code> (for tags in A2A skills). Uses <code>LOWER()</code> on both sides.</td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td>string</td>
+<td>empty</td>
+<td>Filter by capability kind. Allowed values: any discoverable kind (validated against <code>model.DiscoverableKinds()</code>), or empty (all discoverable kinds). Unknown values return 400.</td>
+</tr>
+<tr>
+<td><code>limit</code></td>
+<td>int</td>
+<td>50</td>
+<td>Max items returned</td>
+</tr>
+<tr>
+<td><code>offset</code></td>
+<td>int</td>
+<td>0</td>
+<td>Pagination offset</td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td>enum</td>
+<td><code>name_asc</code></td>
+<td>Allowed: <code>name_asc</code>, <code>agentName_asc</code></td>
+</tr>
+</tbody>
+</table>
+<p>Response shape:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">342</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a.skill&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translate EN-DE&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Bidirectional translation between English and German&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;translation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;german&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;english&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;input_modes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;output_modes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;agent_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;entry-uuid-1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;agent_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translation Agent&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;protocol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;spec_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider_org&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Acme&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://acme.io&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;health_state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;latency_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">142</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a.skill&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translate EN-DE&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translation between English and German with context&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;translation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;german&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;input_modes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;output_modes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;agent_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;entry-uuid-2&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;agent_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Polyglot Agent&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;protocol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;spec_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider_org&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;LangCorp&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;health_state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;latency_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">89</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp.tool&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;search_documents&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Full-text search across indexed documents&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;input_modes&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;output_modes&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;agent_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;entry-uuid-3&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;agent_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DocSearch Server&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;protocol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mcp&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;spec_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider_org&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SearchInc&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://searchinc.dev&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;health_state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;latency_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Notes:
+- Each item is one capability from one agent — <strong>no aggregation</strong>. Two agents offering <code>a2a.skill</code> "Translate EN-DE" produce two separate items.
+- The <code>sort=name_asc</code> default groups items by capability name naturally, making frontend grouping straightforward.
+- Only capabilities from <strong>active + degraded</strong> agents are returned. Offline and deprecated agents are excluded from the list endpoint. (The detail endpoint shows all lifecycle states.)
+- Only capabilities with discoverable kinds (per <code>model.DiscoverableKinds()</code>) are returned. Technical kinds are filtered out at the store level via a <code>WHERE kind IN (...)</code> clause using the registry.
+- <code>total</code> is the count of matching capability instances (not unique capability names).</p>
+<h3 id="4-new-endpoint-get-apiv1capabilitieskey">4. New endpoint — GET /api/v1/capabilities/{key}<a class="headerlink" href="#4-new-endpoint-get-apiv1capabilitieskey" title="Permanent link">&para;</a></h3>
+<p>Returns all agents offering a specific capability. The <code>key</code> path parameter uses the format <code>kind::name</code> (URL-encoded). Examples:
+- <code>/api/v1/capabilities/a2a.skill::Translate%20EN-DE</code>
+- <code>/api/v1/capabilities/mcp.tool::search_documents</code></p>
+<p>The backend splits <code>key</code> on the first <code>::</code> occurrence to extract <code>kind</code> and <code>name</code>. If the key does not contain <code>::</code>, return 400.</p>
+<p>Response:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;capability&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a.skill&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translate EN-DE&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;agents&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;entry-uuid-1&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;display_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translation Agent&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;protocol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;organization&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Acme&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://acme.io&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;latencyMs&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">142</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;spec_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;capability_snippet&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a.skill&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translate EN-DE&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Bidirectional translation between English and German&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;translation&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;german&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;english&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;inputModes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;outputModes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">]</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;entry-uuid-4&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;display_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Legacy Translator&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;protocol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;offline&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;latencyMs&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;spec_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.9&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;offline&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;capability_snippet&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;kind&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a2a.skill&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Translate EN-DE&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EN/DE translation (legacy)&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;translation&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;inputModes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="nt">&quot;outputModes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text/plain&quot;</span><span class="p">]</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Notes:
+- <code>capability_snippet</code> contains the <strong>full capability instance</strong> for that specific agent, because two agents may offer the same capability name with different descriptions, inputModes, or outputModes. The snippet is built by finding the matching <code>(kind, name)</code> capability in the agent's <code>AgentType.Capabilities</code> slice and marshaling it via the existing <code>MarshalCapabilitiesJSON</code> pattern (which injects the <code>kind</code> field).
+- The response includes agents in <strong>all lifecycle states</strong> (active, degraded, offline, deprecated). Offline/deprecated agents are shown with their status so users can see "this capability used to be offered by Foo, but Foo is currently down".
+- If no agents offer the requested capability, return <strong>404</strong> via <code>ErrorResponse</code> — the resource does not exist. Not 200 with empty array.
+- The <code>health</code> sub-object reuses the <code>healthJSON</code> shape from <code>CatalogEntry.MarshalJSON()</code> (camelCase keys: <code>latencyMs</code>, <code>lastProbedAt</code>, etc.).</p>
+<p>Permission: any authenticated user with <code>catalog:read</code> permission (viewer and up).</p>
+<h3 id="5-store-layer">5. Store layer<a class="headerlink" href="#5-store-layer" title="Permanent link">&para;</a></h3>
+<p>No migration needed. Both queries are answered from the existing <code>capabilities</code> table joined to <code>agent_types</code> and <code>catalog_entries</code>.</p>
+<p>Add two methods and one filter type to the Store interface:</p>
+<p>File: <code>internal/store/store.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// CapabilityFilter holds filtering parameters for listing capability instances.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">CapabilityFilter</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Query</span><span class="w">  </span><span class="kt">string</span><span class="w"> </span><span class="c1">// case-insensitive substring match against name, description, properties</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="c1">// filter by capability kind (e.g., &quot;a2a.skill&quot;, &quot;mcp.tool&quot;)</span>
+<span class="w">    </span><span class="nx">Limit</span><span class="w">  </span><span class="kt">int</span>
+<span class="w">    </span><span class="nx">Offset</span><span class="w"> </span><span class="kt">int</span>
+<span class="w">    </span><span class="nx">Sort</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="c1">// &quot;name_asc&quot; (default) | &quot;agentName_asc&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Add to <code>Store</code> interface:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Store</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing methods...</span>
+
+<span class="w">    </span><span class="c1">// ListCapabilities returns a flat list of capability instances (one per</span>
+<span class="w">    </span><span class="c1">// agent per capability) with agent metadata. Only active + degraded entries</span>
+<span class="w">    </span><span class="c1">// are included. Only user-facing capability kinds are returned.</span>
+<span class="w">    </span><span class="nx">ListCapabilities</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="nx">CapabilityFilter</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">CapabilityListResult</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// ListAgentsByCapability returns catalog entries offering a specific</span>
+<span class="w">    </span><span class="c1">// capability identified by (kind, name). Returns all lifecycle states.</span>
+<span class="w">    </span><span class="nx">ListAgentsByCapability</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">kind</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="nx">model</span><span class="p">.</span><span class="nx">CatalogEntry</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Remove existing method:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// SearchCapabilities is REMOVED — replaced by ListCapabilities.</span>
+<span class="c1">// SearchCapabilities(ctx context.Context, query string) ([]model.CatalogEntry, error)</span>
+</code></pre></div>
+<h3 id="6-store-implementation">6. Store implementation<a class="headerlink" href="#6-store-implementation" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/store/sql_store_query.go</code> (extend existing file)</p>
+<p><strong><code>ListCapabilities</code> implementation:</strong></p>
+<p>The query is a flat SELECT + JOIN — no GROUP BY, no dialect branching needed:</p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span>
+<span class="w">    </span><span class="k">c</span><span class="p">.</span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">properties</span><span class="p">,</span>
+<span class="w">    </span><span class="n">ce</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">agent_id</span><span class="p">,</span><span class="w"> </span><span class="n">ce</span><span class="p">.</span><span class="n">display_name</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">agent_name</span><span class="p">,</span>
+<span class="w">    </span><span class="k">at</span><span class="p">.</span><span class="n">protocol</span><span class="p">,</span><span class="w"> </span><span class="k">at</span><span class="p">.</span><span class="n">spec_version</span><span class="p">,</span>
+<span class="w">    </span><span class="n">ce</span><span class="p">.</span><span class="n">status</span><span class="p">,</span>
+<span class="w">    </span><span class="n">p</span><span class="p">.</span><span class="n">organization</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">provider_org</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">url</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">provider_url</span><span class="p">,</span>
+<span class="w">    </span><span class="n">ce</span><span class="p">.</span><span class="n">health_latency_ms</span><span class="p">,</span><span class="w"> </span><span class="n">ce</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">health_state</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">capabilities</span><span class="w"> </span><span class="k">c</span>
+<span class="k">JOIN</span><span class="w"> </span><span class="n">agent_types</span><span class="w"> </span><span class="k">at</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">agent_type_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">at</span><span class="p">.</span><span class="n">id</span>
+<span class="k">JOIN</span><span class="w"> </span><span class="n">catalog_entries</span><span class="w"> </span><span class="n">ce</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ce</span><span class="p">.</span><span class="n">agent_type_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">at</span><span class="p">.</span><span class="n">id</span>
+<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">providers</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">at</span><span class="p">.</span><span class="n">provider_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">id</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">kind</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="o">?</span><span class="w">  </span><span class="c1">-- model.DiscoverableKinds()</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">ce</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;active&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;degraded&#39;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">[</span><span class="k">AND</span><span class="w"> </span><span class="k">LOWER</span><span class="p">(</span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">LOWER</span><span class="p">(</span><span class="k">c</span><span class="p">.</span><span class="n">description</span><span class="p">)</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">LOWER</span><span class="p">(</span><span class="k">c</span><span class="p">.</span><span class="n">properties</span><span class="p">)</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="o">?</span><span class="p">]</span>
+<span class="w">  </span><span class="p">[</span><span class="k">AND</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">kind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="p">]</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="k">ASC</span><span class="p">,</span><span class="w"> </span><span class="n">ce</span><span class="p">.</span><span class="n">display_name</span><span class="w"> </span><span class="k">ASC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">OFFSET</span><span class="w"> </span><span class="o">?</span>
+</code></pre></div>
+<p>Implementation notes:
+- Use GORM query builder, not raw SQL. The pseudo-SQL above illustrates the intent.
+- The <code>properties</code> column is searched via <code>LOWER(c.properties) LIKE ?</code> — this catches tags stored as JSON (e.g., <code>{"tags":["translation","german"]}</code>). Not ideal but sufficient for MVP volumes.
+- After the query, parse <code>properties</code> in Go to extract <code>tags</code>, <code>inputModes</code>, <code>outputModes</code> for <code>a2a.skill</code> rows. Use <code>json.Unmarshal</code> into a <code>map[string]any</code> and extract the fields. For non-<code>a2a.skill</code> kinds, leave these fields nil.
+- Total count: run a separate <code>COUNT(*)</code> query with the same WHERE filters (without LIMIT/OFFSET), following the <code>Stats()</code> pattern.
+- The query result is scanned into a struct that maps to <code>CapabilityInstance</code>. This avoids loading full <code>CatalogEntry</code> objects with all their JSON columns.</p>
+<p>Define a scan struct in <code>sql_store_query.go</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">capabilityInstanceRow</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w">        </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">        </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Properties</span><span class="w">  </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">AgentID</span><span class="w">     </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">AgentName</span><span class="w">   </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Protocol</span><span class="w">    </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">SpecVersion</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Status</span><span class="w">      </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">ProviderOrg</span><span class="w"> </span><span class="o">*</span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">ProviderURL</span><span class="w"> </span><span class="o">*</span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">LatencyMs</span><span class="w">   </span><span class="kt">int64</span>
+<span class="w">    </span><span class="nx">HealthState</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Convert to <code>model.CapabilityInstance</code> after scanning, extracting tags/inputModes/outputModes from <code>properties</code> for <code>a2a.skill</code> rows.</p>
+<p><strong><code>ListAgentsByCapability</code> implementation:</strong></p>
+<ol>
+<li>SELECT <code>catalog_entries.*</code> joined through <code>agent_types</code> and <code>capabilities</code></li>
+<li>WHERE <code>capabilities.kind = ? AND capabilities.name = ?</code></li>
+<li>Preload <code>AgentType</code>, <code>AgentType.Provider</code></li>
+<li>Load capabilities via <code>loadCapabilities()</code> for each entry</li>
+<li>Call <code>SyncFromDB()</code> for each entry</li>
+<li>Return all lifecycle states — the handler does not filter</li>
+</ol>
+<h3 id="7-handler-layer">7. Handler layer<a class="headerlink" href="#7-handler-layer" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/api/capability_handlers.go</code></p>
+<p>New handler struct following the project pattern:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">CapabilityHandler</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">store</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">Store</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">NewCapabilityHandler</span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">Store</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="nx">CapabilityHandler</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">CapabilityHandler</span><span class="p">{</span><span class="nx">store</span><span class="p">:</span><span class="w"> </span><span class="nx">s</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Two handler methods:</p>
+<p><strong><code>ListCapabilities(w, r)</code></strong> — handles <code>GET /api/v1/capabilities</code>:
+- Parses <code>q</code>, <code>kind</code>, <code>limit</code>, <code>offset</code>, <code>sort</code> from query params
+- Validates <code>kind</code> against <code>model.DiscoverableKinds()</code> — if non-empty and not in the discoverable set, returns 400
+- Validates <code>sort</code> against a whitelist: <code>name_asc</code>, <code>agentName_asc</code>
+- Returns 400 on unknown values
+- Calls <code>h.store.ListCapabilities(ctx, filter)</code>
+- Returns <code>model.CapabilityListResult</code> via <code>JSONResponse</code></p>
+<p><strong><code>GetCapabilityAgents(w, r)</code></strong> — handles <code>GET /api/v1/capabilities/{key}</code>:
+- Extracts <code>key</code> from URL path via <code>chi.URLParam(r, "key")</code>
+- URL-decodes <code>key</code>, splits on first <code>::</code> to get <code>kind</code> and <code>name</code>
+- If <code>key</code> does not contain <code>::</code>, returns 400
+- Calls <code>h.store.ListAgentsByCapability(ctx, kind, name)</code>
+- If no entries found, returns 404 via <code>ErrorResponse</code>
+- Builds the response DTO:
+  - <code>capability</code>: <code>{kind, name}</code> summary
+  - <code>agents</code>: for each <code>CatalogEntry</code>, build an unexported <code>capabilityAgentDTO</code> struct with the curated fields + <code>capability_snippet</code>
+  - The <code>capability_snippet</code> is extracted by iterating the agent's <code>AgentType.Capabilities</code> slice, finding the one where <code>Kind() == kind &amp;&amp; name matches</code>, and marshaling it to <code>json.RawMessage</code> via the existing marshal pattern</p>
+<p>Response DTO structs (unexported, in <code>capability_handlers.go</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">capabilityDetailResponse</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Capability</span><span class="w"> </span><span class="nx">capabilitySummary</span><span class="w">   </span><span class="s">`json:&quot;capability&quot;`</span>
+<span class="w">    </span><span class="nx">Agents</span><span class="w">     </span><span class="p">[]</span><span class="nx">capabilityAgentDTO</span><span class="w"> </span><span class="s">`json:&quot;agents&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">capabilitySummary</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;kind&quot;`</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;name&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">capabilityAgentDTO</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">               </span><span class="kt">string</span><span class="w">           </span><span class="s">`json:&quot;id&quot;`</span>
+<span class="w">    </span><span class="nx">DisplayName</span><span class="w">      </span><span class="kt">string</span><span class="w">           </span><span class="s">`json:&quot;display_name&quot;`</span>
+<span class="w">    </span><span class="nx">Protocol</span><span class="w">         </span><span class="kt">string</span><span class="w">           </span><span class="s">`json:&quot;protocol&quot;`</span>
+<span class="w">    </span><span class="nx">Provider</span><span class="w">         </span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Provider</span><span class="w">  </span><span class="s">`json:&quot;provider,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Health</span><span class="w">           </span><span class="nx">healthJSON</span><span class="w">       </span><span class="s">`json:&quot;health&quot;`</span>
+<span class="w">    </span><span class="nx">SpecVersion</span><span class="w">      </span><span class="kt">string</span><span class="w">           </span><span class="s">`json:&quot;spec_version,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Status</span><span class="w">           </span><span class="kt">string</span><span class="w">           </span><span class="s">`json:&quot;status&quot;`</span>
+<span class="w">    </span><span class="nx">CapabilitySnippet</span><span class="w"> </span><span class="nx">json</span><span class="p">.</span><span class="nx">RawMessage</span><span class="w"> </span><span class="s">`json:&quot;capability_snippet&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Note: <code>healthJSON</code> is already defined in <code>internal/model/agent.go</code> (lines 176-183) but is unexported. Either export it (rename to <code>HealthJSON</code>) or duplicate the struct in the handler file. Recommendation: export it in the model package since <code>health_handlers.go</code> already has a similar <code>healthToDTO()</code> function — consolidating avoids drift.</p>
+<h3 id="8-router-wiring">8. Router wiring<a class="headerlink" href="#8-router-wiring" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/api/router.go</code></p>
+<p>In <code>registerCatalogRoutes()</code>, replace the existing skills route and add the new capability routes:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Remove:</span>
+<span class="nx">r</span><span class="p">.</span><span class="nx">With</span><span class="p">(</span><span class="nx">RequirePermission</span><span class="p">(</span><span class="nx">auth</span><span class="p">.</span><span class="nx">PermCatalogRead</span><span class="p">)).</span><span class="nx">Get</span><span class="p">(</span><span class="s">&quot;/skills&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">h</span><span class="p">.</span><span class="nx">SearchCapabilities</span><span class="p">)</span>
+
+<span class="c1">// Add:</span>
+<span class="nx">capHandler</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">NewCapabilityHandler</span><span class="p">(</span><span class="nx">deps</span><span class="p">.</span><span class="nx">Kernel</span><span class="p">.</span><span class="nx">Store</span><span class="p">())</span>
+<span class="nx">r</span><span class="p">.</span><span class="nx">With</span><span class="p">(</span><span class="nx">RequirePermission</span><span class="p">(</span><span class="nx">auth</span><span class="p">.</span><span class="nx">PermCatalogRead</span><span class="p">)).</span><span class="nx">Get</span><span class="p">(</span><span class="s">&quot;/capabilities&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">capHandler</span><span class="p">.</span><span class="nx">ListCapabilities</span><span class="p">)</span>
+<span class="nx">r</span><span class="p">.</span><span class="nx">With</span><span class="p">(</span><span class="nx">RequirePermission</span><span class="p">(</span><span class="nx">auth</span><span class="p">.</span><span class="nx">PermCatalogRead</span><span class="p">)).</span><span class="nx">Get</span><span class="p">(</span><span class="s">&quot;/capabilities/{key}&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">capHandler</span><span class="p">.</span><span class="nx">GetCapabilityAgents</span><span class="p">)</span>
+</code></pre></div>
+<p>Same changes in <code>registerUnauthenticatedCatalogRoutes()</code> for the unauthenticated mode.</p>
+<p>Remove the <code>SearchCapabilities</code> method from <code>handlers.go</code> (lines 320-332) and <code>SearchCapabilities</code> from <code>sql_store_query.go</code> (lines 92-116).</p>
+<hr />
+<h2 id="frontend-changes">Frontend Changes<a class="headerlink" href="#frontend-changes" title="Permanent link">&para;</a></h2>
+<h3 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">&para;</a></h3>
+<p>Add a new top-level tab in the main nav (<code>Layout.tsx</code>), next to the existing "Catalog" tab: "Capabilities". Icon: <code>lucide-react</code> <code>Sparkles</code> or <code>Zap</code> (pick whichever matches the existing visual language — do not introduce a third icon pack).</p>
+<h3 id="route-layout">Route layout<a class="headerlink" href="#route-layout" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>web/src/routes/capabilities/
+  CapabilityListPage.tsx          (capability index — grouped list + search)
+  CapabilityDetailPage.tsx        (capability detail — list of agents)
+  components/
+    CapabilityGroup.tsx           (accordion group header + expanded agent list)
+    CapabilityInstanceCard.tsx    (one capability instance within a group)
+    KindFilter.tsx                (toggle group filter for capability kinds)
+    AgentForCapabilityRow.tsx     (table row in the detail view)
+web/src/hooks/
+  useCapabilitiesQuery.ts         (React Query hook with URL sync)
+</code></pre></div>
+<p>API client: extend <code>web/src/api.ts</code> with new functions:
+- <code>listCapabilities(filter)</code> — <code>GET /api/v1/capabilities?...</code>
+- <code>getCapabilityAgents(key)</code> — <code>GET /api/v1/capabilities/{key}</code></p>
+<p>Reuse <code>UnifiedSearchBox</code> from feature 2.2 — pass different placeholder text and <code>onChange</code>. If it is too coupled to the catalog, extract a base <code>DebouncedSearchBox</code> component and have both views use it. Do not duplicate the debounce + URL-sync logic.</p>
+<h3 id="typescript-types">TypeScript types<a class="headerlink" href="#typescript-types" title="Permanent link">&para;</a></h3>
+<p>Add to <code>web/src/types.ts</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">CapabilityInstance</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">tags</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nx">input_modes</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nx">output_modes</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nx">agent_id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">agent_name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">protocol</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">spec_version</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">provider_org</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nx">provider_url</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nx">health_state</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">latency_ms</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">CapabilityListResult</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">total</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">  </span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="kt">CapabilityInstance</span><span class="p">[]</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">CapabilityDetailResponse</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">capability</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">kind</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">agents</span><span class="o">:</span><span class="w"> </span><span class="kt">CapabilityAgentDTO</span><span class="p">[]</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">CapabilityAgentDTO</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">display_name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">protocol</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">provider</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">organization</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">url</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="nx">health</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">state</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">latencyMs</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span><span class="w"> </span><span class="p">[</span><span class="nx">key</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="nx">unknown</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">spec_version</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">  </span><span class="nx">capability_snippet</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">unknown</span><span class="o">&gt;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="capability-index-view-catalogcapabilities">Capability index view (<code>/catalog/capabilities</code>)<a class="headerlink" href="#capability-index-view-catalogcapabilities" title="Permanent link">&para;</a></h3>
+<p>Header: title "Capabilities" + subtitle "Discover agents by capability". Search box below, filter bar with <code>KindFilter</code> (All / A2A Skill / MCP Tool / MCP Resource / MCP Prompt). Uses shadcn <code>ToggleGroup</code> like <code>ProtocolFilter</code>.</p>
+<p><strong>Data flow:</strong>
+1. <code>useCapabilitiesQuery</code> hook fetches flat list from backend via React Query
+2. Frontend groups items by <code>(kind, name)</code> using a simple <code>reduce()</code> into a <code>Map&lt;string, CapabilityInstance[]&gt;</code>
+3. Groups are sorted by name (matching backend sort order)
+4. Each group is rendered as a <code>CapabilityGroup</code> accordion item</p>
+<p><strong><code>CapabilityGroup</code> component (accordion):</strong>
+- Header bar shows:
+  - Kind badge (e.g., "A2A Skill", "MCP Tool") using shadcn <code>Badge</code>
+  - Capability name as headline
+  - First line of description from the first instance (truncated)
+  - Tag pills (max 5 visible, "+N more") using shadcn <code>Badge</code> — only for <code>a2a.skill</code>
+  - Agent count: <code>N agents</code> on the right
+- Click header to expand/collapse (shadcn <code>Collapsible</code> or custom accordion)
+- Expanded state shows the list of agents offering this capability:
+  - Each agent: name, protocol badge (reuse <code>ProtocolBadge</code>), status badge (reuse <code>StatusBadge</code>), provider org, latency
+  - Click agent name -&gt; navigate to <code>/catalog/{agent_id}</code>
+  - Click "View all" link -&gt; navigate to detail page <code>/catalog/capabilities/{encodeURIComponent(kind + '::' + name)}</code></p>
+<p>Empty / loading / error states mirror 2.2: skeleton groups while loading, "No capabilities found" with clear filters button if filters exclude all, "No capabilities published yet" if the catalog has no user-facing capabilities.</p>
+<p>Pagination: "Load more" button at the bottom (offset-based). Loads next page and appends. If a group is split across pages, the new items merge into the existing group.</p>
+<h3 id="capability-detail-view-catalogcapabilitieskey">Capability detail view (<code>/catalog/capabilities/:key</code>)<a class="headerlink" href="#capability-detail-view-catalogcapabilitieskey" title="Permanent link">&para;</a></h3>
+<p>Route: <code>/catalog/capabilities/:key</code> where <code>key</code> is <code>kind::name</code> (URL-encoded).</p>
+<p>Breadcrumb: Catalog &gt; Capabilities &gt; <code>&lt;capability name&gt;</code>. Back button.</p>
+<p>Top section:
+- Kind badge
+- Capability name as h1
+- Agent count (total agents, including offline/deprecated since this is detail view)</p>
+<p>Bottom section: table of agents offering this capability. Columns:
+1. Protocol — <code>ProtocolBadge</code>
+2. Agent name — clickable, navigates to <code>/catalog/:id</code>
+3. Provider — organization name
+4. Status — <code>StatusBadge</code> (shows offline/deprecated badges clearly)
+5. Spec version
+6. This capability's details — agent-specific <code>capability_snippet.description</code> truncated to 100 chars with tooltip for full text
+7. Latency — from health data</p>
+<p>Clicking a row navigates to the agent detail page.</p>
+<h3 id="cross-linking-from-agent-detail">Cross-linking from agent detail<a class="headerlink" href="#cross-linking-from-agent-detail" title="Permanent link">&para;</a></h3>
+<p>On the existing agent detail page (<code>CatalogDetailPage.tsx</code>), capabilities are listed in a section titled "Capabilities (N)". Each capability name should now become a clickable link that navigates to <code>/catalog/capabilities/${encodeURIComponent(kind + '::' + name)}</code>. Use shadcn <code>Button variant="link"</code> or a plain anchor. Only link user-facing capability kinds — technical kinds remain plain text.</p>
+<h3 id="url-state">URL state<a class="headerlink" href="#url-state" title="Permanent link">&para;</a></h3>
+<p>Same contract as 2.2: URL is the source of truth. <code>?q=</code>, <code>?kind=</code>, <code>?sort=</code> all sync to <code>useSearchParams</code>. Shareable link is an acceptance test.</p>
+<h3 id="route-registration">Route registration<a class="headerlink" href="#route-registration" title="Permanent link">&para;</a></h3>
+<p>File: <code>web/src/App.tsx</code></p>
+<p>Add two new routes inside the protected layout:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">Route</span><span class="w"> </span><span class="na">path</span><span class="o">=</span><span class="s">&quot;/catalog/capabilities&quot;</span><span class="w"> </span><span class="na">element</span><span class="o">=</span><span class="p">{&lt;</span><span class="nt">CapabilityListPage</span><span class="w"> </span><span class="p">/&gt;}</span><span class="w"> </span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="nt">Route</span><span class="w"> </span><span class="na">path</span><span class="o">=</span><span class="s">&quot;/catalog/capabilities/:key&quot;</span><span class="w"> </span><span class="na">element</span><span class="o">=</span><span class="p">{&lt;</span><span class="nt">CapabilityDetailPage</span><span class="w"> </span><span class="p">/&gt;}</span><span class="w"> </span><span class="p">/&gt;</span>
+</code></pre></div>
+<hr />
+<h2 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h2>
+<h3 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h3>
+<p><strong>Registry tests</strong> (in <code>internal/model/</code>):
+- <code>DiscoverableKinds()</code> returns exactly the 4 discoverable kinds (sorted)
+- <code>DiscoverableKinds()</code> does not include technical kinds
+- <code>GetCapabilityFactory</code> still works for all 8 kinds (backward compatibility)</p>
+<p><strong>Store tests</strong> (using <code>store.NewSQLiteStore(":memory:")</code>):
+- Two entries each with <code>a2a.skill</code> named "Translate" -&gt; <code>ListCapabilities</code> returns two items (one per agent), not one aggregate
+- Same capability name but different kind (e.g., <code>a2a.skill</code> "search" vs <code>mcp.tool</code> "search") -&gt; both appear as separate items
+- <code>q="translate"</code> matches name, description, and properties (tags) — case-insensitive — separately verified
+- <code>kind="a2a.skill"</code> filters out MCP tools
+- Only active + degraded entries appear in <code>ListCapabilities</code> results — seed one active and one offline, verify offline absent
+- Technical capability kinds (registered with <code>discoverable=false</code>) never appear in <code>ListCapabilities</code> results
+- <code>ListAgentsByCapability</code> returns only entries with the exact <code>(kind, name)</code> match
+- <code>ListAgentsByCapability</code> includes all lifecycle states (including offline/deprecated)
+- <code>ListAgentsByCapability</code> for non-existent capability returns empty slice
+- <code>sort=name_asc</code> and <code>sort=agentName_asc</code> both produce correct ordering
+- Pagination: <code>limit=2&amp;offset=2</code> returns the correct window
+- Total count in <code>CapabilityListResult</code> reflects filters correctly
+- Tags, inputModes, outputModes populated for <code>a2a.skill</code> items, nil for MCP items</p>
+<p><strong>Handler tests</strong> (following existing handler test patterns):
+- <code>GET /api/v1/capabilities</code> with no params returns items sorted by name
+- Unknown <code>kind</code> -&gt; 400
+- Unknown <code>sort</code> -&gt; 400
+- <code>GET /api/v1/capabilities/{key}</code> with non-existent capability -&gt; 404
+- <code>GET /api/v1/capabilities/{key}</code> with malformed key (no <code>::</code>) -&gt; 400
+- Viewer role can list and read
+- Response includes correct <code>capability_snippet</code> per agent in detail endpoint
+- Detail endpoint includes offline agents (with offline status)</p>
+<h3 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h3>
+<p><strong>Unit (Vitest):</strong>
+- <code>useCapabilitiesQuery</code> hook: URL round-trip for <code>q</code>, <code>kind</code>, <code>sort</code>
+- <code>CapabilityGroup</code>: renders correct agent count in header, expands on click
+- <code>KindFilter</code>: updates URL on toggle
+- Grouping logic: correctly groups flat items by <code>(kind, name)</code>, handles split groups from pagination</p>
+<p><strong>Playwright E2E:</strong>
+1. Seed 3 A2A entries and 1 MCP entry, each with overlapping capabilities (at least one <code>a2a.skill</code> shared across three agents, at least one <code>mcp.tool</code> shared across two)
+2. Navigate to <code>/catalog/capabilities</code> -&gt; see accordion groups with correct agent counts
+3. Type <code>translate</code> in search -&gt; groups filter in real time
+4. Click kind filter "A2A Skill" -&gt; MCP tools disappear
+5. Clear filters -&gt; all capabilities return
+6. Expand an accordion group -&gt; see agents listed
+7. Click "View all" -&gt; detail view opens with correct URL
+8. Verify the agent list on detail shows agents offering that capability (including offline if seeded)
+9. Click an agent row -&gt; navigates to that agent's detail page
+10. From the agent detail page, click a capability name -&gt; navigates to <code>/catalog/capabilities/{key}</code>
+11. Reload the detail page -&gt; state persists via URL</p>
+<hr />
+<h2 id="acceptance-criteria">Acceptance Criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ul>
+<li>"Capabilities" tab visible in main navigation</li>
+<li><code>/catalog/capabilities</code> shows capability instances grouped by <code>(kind, name)</code> with agent counts in accordion headers</li>
+<li>Search box filters by name, tags, and description in real time (case-insensitive)</li>
+<li>Kind filter works, state survives reload via URL</li>
+<li>Capability detail page shows all agents offering the capability with health, status, provider, and agent-specific snippet</li>
+<li>Agent-specific <code>capability_snippet</code> shown per row (not a merged/aggregated description)</li>
+<li>Capability names on the agent detail page are clickable and navigate to capability detail</li>
+<li>Offline and deprecated agents excluded from index view, included in detail view with status badge</li>
+<li>Technical capability kinds (registered with <code>discoverable=false</code>) excluded from discovery</li>
+<li><code>RegisterCapability</code> accepts <code>discoverable</code> parameter; <code>DiscoverableKinds()</code> returns only discoverable kinds</li>
+<li>Adding a new discoverable kind requires only a <code>RegisterCapability</code> call change + frontend label mapping — no store/handler changes</li>
+<li>Shareable URL <code>?q=translate&amp;kind=a2a.skill</code> reproduces the exact view</li>
+<li>SQLite store tests pass (Postgres tests deferred until enterprise plugin is active)</li>
+<li>Playwright E2E green on CI</li>
+<li>Empty states present for: no capabilities at all, no capabilities matching filter, no agents offering a specific capability (404)</li>
+<li><code>docs/api.md</code> updated for new endpoints</li>
+<li><code>docs/end-user-guide.md</code> updated for the new Capabilities tab</li>
+<li><code>GET /api/v1/skills</code> endpoint removed</li>
+</ul>
+<hr />
+<h2 id="known-traps">Known Traps<a class="headerlink" href="#known-traps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Do NOT add a separate capabilities aggregation table.</strong> The flat list is queried from the existing <code>capabilities</code> table. No new tables.</li>
+<li><strong>Do NOT aggregate on the backend.</strong> GROUP BY <code>(kind, name)</code> creates false equivalence — two agents with skill "search" can do completely different things. Backend returns flat list, frontend groups visually.</li>
+<li><strong>Do NOT rename <code>CatalogEntry</code> to <code>Agent</code>.</strong> This rename trap has been avoided six features in a row. Keep the streak.</li>
+<li><strong>Do NOT merge <code>capability_snippet</code> into an aggregated capability.</strong> Each agent's instance is distinct. Show them separately.</li>
+<li><strong>Do NOT include technical capability kinds</strong> in discovery results. Use <code>model.DiscoverableKinds()</code> to filter — do not hardcode kind strings in the store or handler layer.</li>
+<li><strong>Do NOT hardcode kind strings in the store query.</strong> Use <code>model.DiscoverableKinds()</code> which reads from the capability registry. Adding a new discoverable kind should require only a <code>RegisterCapability</code> call change, not store/handler code changes. They are configuration details.</li>
+<li><strong>Do NOT include offline agents in the index view.</strong> Only active + degraded. Detail view shows all.</li>
+<li><strong>Do NOT fetch all capabilities on every keystroke.</strong> Reuse the 250ms debounce pattern from 2.2's search box.</li>
+<li><strong>Do NOT duplicate the <code>UnifiedSearchBox</code> component.</strong> Extract a base version if needed.</li>
+<li><strong>Do NOT introduce a new frontend library</strong> (e.g., fuse.js for fuzzy search). Server-side <code>LIKE</code> is enough, same as 2.2.</li>
+<li><strong>Do NOT embed full <code>CatalogEntry</code> objects in the flat list response.</strong> Use the curated <code>CapabilityInstance</code> DTO with minimal agent fields. Large responses kill performance.</li>
+<li><strong>Do NOT gate 2.3 behind the enterprise license.</strong> It is OSS Core.</li>
+<li><strong>Do NOT add capability-level health.</strong> Health lives on agents. This is an explicit scope boundary.</li>
+<li><strong>Do NOT use <code>json_each</code> or <code>jsonb_array_elements</code>.</strong> Capabilities are in a relational table. Standard SQL JOINs.</li>
+<li><strong>Do NOT put capabilities on <code>CatalogEntry</code>.</strong> Capabilities belong to <code>AgentType</code> (Product Archetype). Join path: <code>catalog_entries -&gt; agent_types -&gt; capabilities</code>.</li>
+<li><strong>Do NOT reference an <code>examples</code> field on <code>A2ASkill</code>.</strong> It does not exist.</li>
+<li><strong>Do NOT violate arch-go function limits:</strong> max 80 lines per function, 5 params, 3 return values, 10 public functions per file.</li>
+<li><strong>Do NOT use case-sensitive search.</strong> The existing <code>SearchCapabilities</code> is case-sensitive (bug). New endpoint must use <code>LOWER()</code> on both sides, matching the <code>List</code> query pattern.</li>
+<li><strong>Do NOT use two path params for the detail URL.</strong> Chi can't reliably split <code>{kind}/{name}</code> when kind contains dots. Use single <code>{key}</code> with <code>::</code> separator.</li>
+</ul>
+<hr />
+<h2 id="execution-order-suggested-commit-sequence">Execution Order (suggested commit sequence)<a class="headerlink" href="#execution-order-suggested-commit-sequence" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Extend capability registry:</strong> Change <code>RegisterCapability</code> signature to accept <code>discoverable bool</code>. Add <code>CapabilityMeta</code> struct and <code>DiscoverableKinds()</code> helper to <code>internal/model/capability.go</code>. Update all <code>init()</code> call sites in <code>a2a_capabilities.go</code> and <code>mcp_capabilities.go</code>. Update <code>archetype_test.go</code>. All existing tests pass.</li>
+<li><strong>Model types:</strong> Add <code>CapabilityInstance</code> and <code>CapabilityListResult</code> to <code>internal/model/capability_instance.go</code>.</li>
+<li><strong>Store interface extension:</strong> Add <code>CapabilityFilter</code>, <code>ListCapabilities</code>, <code>ListAgentsByCapability</code> to <code>Store</code> interface. Remove <code>SearchCapabilities</code>. Implement in <code>sql_store_query.go</code>. Store tests pass.</li>
+<li><strong>Handler:</strong> Add <code>CapabilityHandler</code> struct in <code>internal/api/capability_handlers.go</code> with <code>ListCapabilities</code> and <code>GetCapabilityAgents</code> methods + unexported DTO structs. Handler tests pass.</li>
+<li><strong>Router wiring:</strong> Replace <code>/skills</code> route with <code>/capabilities</code> routes in <code>router.go</code>. Remove <code>SearchCapabilities</code> handler method from <code>handlers.go</code>.</li>
+<li><strong>Frontend API client + types:</strong> Add <code>listCapabilities()</code> and <code>getCapabilityAgents()</code> to <code>web/src/api.ts</code>. Add TS types to <code>types.ts</code>. Add <code>useCapabilitiesQuery</code> hook with URL sync + hook tests.</li>
+<li><strong>Frontend index view:</strong> Route, <code>CapabilityGroup</code> accordion, <code>KindFilter</code>, search, filter, grouping logic, empty states.</li>
+<li><strong>Frontend detail view:</strong> Route, agent list table, <code>AgentForCapabilityRow</code>, capability snippet column.</li>
+<li><strong>Cross-linking:</strong> Make discoverable capability names on the agent detail page clickable.</li>
+<li><strong>Navigation:</strong> Add "Capabilities" tab to main nav in <code>Layout.tsx</code>.</li>
+<li><strong>E2E tests</strong> extension in Playwright.</li>
+<li><strong>Docs:</strong> Update <code>docs/api.md</code> for new/removed endpoints. Update <code>docs/end-user-guide.md</code> for the new Capabilities tab. Add entry to CHANGELOG for <code>/skills</code> removal.</li>
+</ol>
+<p>Each step is its own commit.</p>
+<hr />
+<h2 id="architectural-notes">Architectural Notes<a class="headerlink" href="#architectural-notes" title="Permanent link">&para;</a></h2>
+<h3 id="product-archetype-alignment">Product Archetype alignment<a class="headerlink" href="#product-archetype-alignment" title="Permanent link">&para;</a></h3>
+<p>The capability discovery feature follows the Product Archetype separation established in feature 1.4:</p>
+<ul>
+<li><code>AgentType</code> (= ProductType) owns the capabilities. Capabilities are loaded separately via <code>loadCapabilities()</code> and attached to <code>AgentType.Capabilities []Capability</code>.</li>
+<li><code>CatalogEntry</code> wraps the <code>AgentType</code> with catalog concerns (display name, status, health, source). It never directly holds capabilities.</li>
+<li>The <code>capabilities</code> table has a FK to <code>agent_types.id</code>, not to <code>catalog_entries.id</code>.</li>
+<li>The join path for capability-to-catalog queries is: <code>capabilities.agent_type_id -&gt; agent_types.id -&gt; catalog_entries.agent_type_id</code>.</li>
+</ul>
+<h3 id="user-facing-vs-technical-capability-kinds">User-facing vs technical capability kinds<a class="headerlink" href="#user-facing-vs-technical-capability-kinds" title="Permanent link">&para;</a></h3>
+<p>Discoverability is declared at registration time via <code>RegisterCapability(kind, factory, discoverable)</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Struct</th>
+<th>Discoverable</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a2a.skill</code></td>
+<td><code>A2ASkill</code></td>
+<td><code>true</code></td>
+<td>"What the agent can do"</td>
+</tr>
+<tr>
+<td><code>mcp.tool</code></td>
+<td><code>MCPTool</code></td>
+<td><code>true</code></td>
+<td>"What the server offers"</td>
+</tr>
+<tr>
+<td><code>mcp.resource</code></td>
+<td><code>MCPResource</code></td>
+<td><code>true</code></td>
+<td>"What data the server exposes"</td>
+</tr>
+<tr>
+<td><code>mcp.prompt</code></td>
+<td><code>MCPPrompt</code></td>
+<td><code>true</code></td>
+<td>"What prompts the server provides"</td>
+</tr>
+<tr>
+<td><code>a2a.extension</code></td>
+<td><code>A2AExtension</code></td>
+<td><code>false</code></td>
+<td>Protocol extension (configuration)</td>
+</tr>
+<tr>
+<td><code>a2a.security_scheme</code></td>
+<td><code>A2ASecurityScheme</code></td>
+<td><code>false</code></td>
+<td>Auth configuration (feature 2.5)</td>
+</tr>
+<tr>
+<td><code>a2a.interface</code></td>
+<td><code>A2AInterface</code></td>
+<td><code>false</code></td>
+<td>Binding configuration</td>
+</tr>
+<tr>
+<td><code>a2a.signature</code></td>
+<td><code>A2ASignature</code></td>
+<td><code>false</code></td>
+<td>Crypto configuration</td>
+</tr>
+</tbody>
+</table>
+<p>Adding a new discoverable capability kind requires:
+1. Define a new struct implementing <code>Capability</code> interface
+2. Call <code>RegisterCapability("new.kind", factory, true)</code> in an <code>init()</code> function
+3. Add parser logic to extract the capability from raw cards
+4. Add kind label mapping in the frontend <code>KindFilter</code> component</p>
+<p>No store, handler, or router changes needed — <code>DiscoverableKinds()</code> picks up the new kind automatically.</p>
+<h3 id="microkernel-boundaries">Microkernel boundaries<a class="headerlink" href="#microkernel-boundaries" title="Permanent link">&para;</a></h3>
+<p>The handler accesses the store via <code>kernel.Kernel.Store()</code>, following the existing pattern. No plugin interaction is needed — capability discovery is a pure store query feature.</p>
+<p>Per arch-go rules, the new code lives in:
+- <code>internal/model/</code> — Foundation layer, no internal deps
+- <code>internal/store/</code> — Infrastructure layer, depends on <code>model</code> only
+- <code>internal/api/</code> — API layer, depends on <code>store</code> and <code>model</code></p>
+<hr />
+<h2 id="out-of-band-notes">Out-of-band Notes<a class="headerlink" href="#out-of-band-notes" title="Permanent link">&para;</a></h2>
+<p>This feature is small on purpose. After 2.2 (unified catalog view) landed, most of the plumbing already exists. The real work is the flat list query, the frontend grouping logic, and the accordion UI. Resist the temptation to add ratings, reviews, or version ranges — those are separate features for a reason.</p>
+<p>The flat list + frontend grouping approach is intentionally simple. If MVP usage shows that server-side aggregation is needed (e.g., catalog grows beyond 10k capabilities and the flat list is too large), that's a follow-up optimization, not a v1 requirement.</p>
+<p>After 2.3 lands, 2.5 (A2A Security Schemes) becomes the next logical step: users discovering agents by capability will immediately ask "how do I authenticate to this one?". 2.5 answers that.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 10, 2026 08:52:19 UTC"><span class="timeago" datetime="2026-04-10T08:52:19+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 10, 2026 08:52:19 UTC">2026-04-10</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 10, 2026 08:52:19 UTC"><span class="timeago" datetime="2026-04-10T08:52:19+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 10, 2026 08:52:19 UTC">2026-04-10</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../js/timeago.min.js"></script>
+      
+        <script src="../../../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>
