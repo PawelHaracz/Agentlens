@@ -61,12 +61,6 @@ type fullInterface struct {
 	Binding string `json:"binding,omitempty"`
 }
 
-type fullSecurity struct {
-	Type   string `json:"type"`
-	Method string `json:"method,omitempty"`
-	Name   string `json:"name,omitempty"`
-}
-
 type fullSignature struct {
 	Algorithm string `json:"algorithm"`
 	KeyID     string `json:"keyId,omitempty"`

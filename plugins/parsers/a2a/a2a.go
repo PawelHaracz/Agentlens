@@ -76,12 +76,7 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 		capabilities = append(capabilities, securityCaps...)
 	}
 
-	reqCaps, err := buildSecurityRequirements(&card)
-	if err != nil {
-		slog.Warn("Failed to parse security requirements", "error", err)
-	} else {
-		capabilities = append(capabilities, reqCaps...)
-	}
+	capabilities = append(capabilities, buildSecurityRequirements(&card)...)
 
 	provider := buildProvider(&card)
 	specVersion := detectSpecVersion(&card)
@@ -360,7 +355,7 @@ func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2A
 
 // buildSecurityRequirements parses the top-level securityRequirements array
 // from the A2A card. Each entry is an OR'd alternative.
-func buildSecurityRequirements(card *fullCard) ([]model.Capability, error) {
+func buildSecurityRequirements(card *fullCard) []model.Capability {
 	var caps []model.Capability
 
 	for _, reqData := range card.SecurityRequirements {
@@ -378,7 +373,7 @@ func buildSecurityRequirements(card *fullCard) ([]model.Capability, error) {
 		caps = append(caps, req)
 	}
 
-	return caps, nil
+	return caps
 }
 
 // parseSkillSecurityRequirements creates A2ASecurityRequirement capabilities
