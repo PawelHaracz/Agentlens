@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -91,10 +93,25 @@ func capabilityToRow(agentTypeID string, cap model.Capability) (capabilityRow, e
 	// other identifying fields so the (agent_type_id, kind, name) uniqueness
 	// constraint is satisfied even when multiple same-kind caps are stored.
 	if name == "" {
-		for _, fallback := range []string{"uri", "url", "type", "algorithm"} {
+		for _, fallback := range []string{"scheme_name", "uri", "url", "type", "algorithm"} {
 			if v, ok := m[fallback].(string); ok && v != "" {
 				name = v
 				break
+			}
+		}
+	}
+	// For capabilities that carry a "schemes" map (e.g. a2a.security_requirement),
+	// derive a stable name from the sorted scheme names so that multiple
+	// same-kind capabilities on the same agent_type satisfy the unique constraint.
+	if name == "" {
+		if schemesRaw, ok := m["schemes"]; ok {
+			if schemesMap, ok := schemesRaw.(map[string]any); ok && len(schemesMap) > 0 {
+				keys := make([]string, 0, len(schemesMap))
+				for k := range schemesMap {
+					keys = append(keys, k)
+				}
+				sort.Strings(keys)
+				name = strings.Join(keys, "+")
 			}
 		}
 	}

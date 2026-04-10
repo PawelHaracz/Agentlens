@@ -180,7 +180,11 @@ Counts update automatically as health checks run in the background.
 | **Skills** | Number of capabilities (skills, tools, or resources) declared by the agent |
 | **Status** | Health status badge: `Active`, `Degraded`, `Offline`, `Pending`, or `Deprecated`; includes latency and last-seen timestamp |
 | **Spec** | Agent Card spec version (e.g. `A2A 1.0`) |
+| **Auth** | Authentication badge for A2A agents (e.g. `Bearer JWT`, `API Key`, `OAuth 2.0`). Empty for open agents and MCP servers. |
 | **Last seen** | Relative timestamp of the most recent successful health probe |
+
+![Catalog list showing Auth column with authentication badges](images/catalog-list-auth-badges.png)
+*Catalog list — the Auth column shows a badge for authenticated agents; open agents have an empty cell.*
 
 Rows are sorted by registration time (most recent first) by default. Click any column header to re-sort.
 
@@ -253,11 +257,64 @@ Each capability has a `kind` tag:
 | `a2a.skill` | A2A | A discrete task the agent can perform |
 | `a2a.interface` | A2A | Supported interface (e.g. `push`, `request`) |
 | `a2a.security_scheme` | A2A | Authentication scheme advertised by the card |
+| `a2a.security_requirement` | A2A | Which scheme(s) a client must use to connect |
 | `a2a.extension` | A2A | Custom extension declared in the card |
 | `a2a.signature` | A2A | Cryptographic signature entry |
 | `mcp.tool` | MCP | A callable tool exposed by the MCP server |
 | `mcp.resource` | MCP | A resource URI provided by the MCP server |
 | `mcp.prompt` | MCP | A prompt template offered by the MCP server |
+
+![Detail page for an MCP server entry](images/entry-detail-mcp.png)
+*MCP server detail — tools, resources, and prompts appear as capabilities.*
+
+### Authentication
+
+The **Authentication** card appears on the Overview tab for all agents.
+
+**A2A agents with security schemes:**
+
+The section shows:
+
+1. **Requirements banner** — lists which scheme(s) a client must present. Multiple entries are OR'd (any one combination is sufficient).
+2. **Scheme cards** — one card per declared security scheme with its type, format, and relevant URLs.
+3. **Connection Example** — a generated `curl` snippet showing the required headers for the first requirement.
+
+![Detail page showing bearer auth with requirements banner and connection recipe](images/security-detail-bearer.png)
+*Agent detail — Authentication section with requirements banner, scheme cards, and connection example.*
+
+**Scheme card fields by type:**
+
+| Type | Fields shown |
+|------|-------------|
+| `http` (Bearer) | Badge `Bearer JWT`; note about Authorization header |
+| `apiKey` | Location (`header`/`query`/`cookie`) and header/param name |
+| `oauth2` | Flow type badge(s), Authorization URL, Token URL, Scopes table |
+| `openIdConnect` | Link to OIDC discovery document |
+| `mutualTls` | Note about client certificate configuration |
+
+![Detail page showing OAuth2 authorization code flow](images/security-detail-oauth2.png)
+*OAuth2 scheme card — flow type, authorization and token URLs, and required scopes.*
+
+The **Requirements banner** summarises which scheme combinations a client must present:
+
+![Security requirements banner close-up](images/security-requirements-banner.png)
+*Requirements banner — each row is one valid authentication combination.*
+
+The **Connection Example** card generates a ready-to-use `curl` command:
+
+![Connection recipe close-up](images/connection-recipe.png)
+*Connection recipe — copy-paste curl snippet with the required authentication headers.*
+
+**A2A agents with no security (open agents):**
+
+The Authentication card shows: *"This agent does not declare any authentication requirements."*
+
+![Detail page showing no-auth state](images/security-detail-no-auth.png)
+*Open agent — Authentication section with no-auth message.*
+
+**MCP servers:**
+
+The Authentication card shows: *"MCP servers declare authentication at the transport level, not in the server card."*
 
 ![Detail page for an MCP server entry](images/entry-detail-mcp.png)
 *MCP server detail — tools, resources, and prompts appear as capabilities.*
