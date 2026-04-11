@@ -14,28 +14,28 @@ AgentLens is a self-hosted service discovery platform for AI agents. See [README
 ## Commands
 
 ```bash
-make build          # Compile Go binary (CGO_ENABLED=1 required for SQLite)
-make test           # Run Go tests (in-memory SQLite, no external DB needed)
-make lint           # golangci-lint
-make format         # gofmt + go fmt
-make arch-test      # Run arch-go architecture rules validation
-make all            # format → lint → test → arch-test → build
+rtk make build          # Compile Go binary (CGO_ENABLED=1 required for SQLite)
+rtk make test           # Run Go tests (in-memory SQLite, no external DB needed)
+rtk make lint           # golangci-lint
+rtk make format         # gofmt + go fmt
+rtk make arch-test      # Run arch-go architecture rules validation
+rtk make all            # format → lint → test → arch-test → build
 
 # Single test
-go test ./internal/auth/... -run TestFunctionName -v
+rtk go test ./internal/auth/... -run TestFunctionName -v
 
 # Frontend (uses bun)
 cd web && bun run dev     # Dev server
-make web-build            # Build to web/dist/ (required before make build if UI changed)
-make web-lint             # TypeScript type check
+rtk make web-build            # Build to web/dist/ (required before make build if UI changed)
+rtk make web-lint             # TypeScript type check
 
 # Docker / Helm
-make docker-build         # agentlens:local
-make helm-lint
-make e2e-test             # Playwright (via e2e/run-e2e.sh)
+rtk make docker-build         # agentlens:local
+rtk make helm-lint
+rtk make e2e-test             # Playwright (via e2e/run-e2e.sh)
 
 # Run locally
-go run ./cmd/agentlens --config agentlens.yaml
+rtk go run ./cmd/agentlens --config agentlens.yaml
 ```
 
 ## Architecture
@@ -375,3 +375,8 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 2. Use `detect_changes` for code review.
 3. Use `get_affected_flows` to understand impact.
 4. Use `query_graph` pattern="tests_for" to check coverage.
+
+## Skills
+
+Read and use the skill at `.claude/skills/architecture-decision-records/SKILL.md`
+when starting any brainstorming or design session.
