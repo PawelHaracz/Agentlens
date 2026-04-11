@@ -6,9 +6,10 @@ interface AuthBadgeProps {
   required: boolean
 }
 
-export function AuthBadge({ label, required: _required }: AuthBadgeProps) {
+export function AuthBadge({ label, required }: AuthBadgeProps) {
   const truncated = label.length > 25 ? label.substring(0, 22) + '...' : label
-  const variant = label === 'Open (no auth)' ? 'secondary' : 'outline'
+  // 'Open (no auth)' → secondary; declared but not required → secondary; required auth → outline
+  const variant = label === 'Open (no auth)' || !required ? 'secondary' : 'outline'
 
   if (label.length > 25) {
     return (

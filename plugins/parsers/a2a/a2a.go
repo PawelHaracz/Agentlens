@@ -360,7 +360,8 @@ func parseSecuritySchemeV03(schemeName string, data json.RawMessage) (*model.A2A
 	}
 
 	if name, ok := raw["name"].(string); ok {
-		scheme.Name = name
+		// Keep SchemeName as the generated index-based name for DB uniqueness.
+		// Store the raw v0.3 "name" field only for display/apiKey purposes.
 		if schemeType == "apiKey" {
 			scheme.APIKeyName = name
 		}

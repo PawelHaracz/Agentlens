@@ -255,8 +255,7 @@ test.describe('A2A Security Schemes Display', () => {
     // The auth badge text should NOT be the "no auth" placeholder
     await expect(row).not.toContainText('Open (no auth)');
     // The auth cell should contain some auth scheme text (API Key, Bearer JWT, etc.)
-    // The exact label depends on computed auth_summary; just verify it's non-empty and not "no auth"
-    const authCell = row.locator('td').nth(6); // Auth is the 7th column (0-indexed: 6)
+    const authCell = row.locator('[data-testid="auth-cell"]');
     await expect(authCell).not.toBeEmpty();
 
     // Open agent has no security schemes so auth_summary is null — Auth cell is empty
@@ -265,7 +264,7 @@ test.describe('A2A Security Schemes Display', () => {
     const openRow = page.locator('tr', { hasText: 'E2E Open Agent' });
     await expect(openRow).toBeVisible({ timeout: 5_000 });
     // Auth cell is empty — no badge rendered for open agents
-    const openAuthCell = openRow.locator('td').nth(6);
+    const openAuthCell = openRow.locator('[data-testid="auth-cell"]');
     await expect(openAuthCell).toBeEmpty();
   });
 })

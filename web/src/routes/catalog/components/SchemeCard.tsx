@@ -80,8 +80,8 @@ export function SchemeCard({ scheme }: SchemeCardProps) {
             )}
             {scheme.oauth_flows
               ?.filter((f) => !f.deprecated)
-              .map((flow, i) => (
-                <div key={i} className="border-l-2 pl-3">
+              .map((flow) => (
+                <div key={flow.flow_type} className="border-l-2 pl-3">
                   <Badge variant="secondary" className="mb-2">
                     {formatFlowType(flow.flow_type)}
                   </Badge>

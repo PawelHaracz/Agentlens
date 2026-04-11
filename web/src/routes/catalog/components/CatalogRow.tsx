@@ -94,7 +94,7 @@ export function CatalogRow({ entry, searchSnippet }: Props) {
         <SpecVersionBadge version={entry.spec_version} />
       </TableCell>
 
-      <TableCell>
+      <TableCell data-testid="auth-cell">
         {entry.auth_summary && (
           <AuthBadge label={entry.auth_summary.label} required={entry.auth_summary.required} />
         )}

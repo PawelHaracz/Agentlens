@@ -21,17 +21,21 @@ export function SecurityRequirementsBanner({ requirements }: SecurityRequirement
       <AlertDescription>
         {isMultiple && <p className="mb-2">Any of the following combinations:</p>}
         <ul className="list-disc pl-5 space-y-1">
-          {topLevel.map((req, i) => (
-            <li key={i}>
-              {Object.entries(req.schemes).map(([schemeName, scopes], j) => (
-                <span key={j}>
-                  {j > 0 && ' AND '}
-                  <strong>{schemeName}</strong>
-                  {scopes.length > 0 && ` (scopes: ${scopes.join(', ')})`}
-                </span>
-              ))}
-            </li>
-          ))}
+          {topLevel.map((req) => {
+            const sortedSchemes = Object.entries(req.schemes).sort(([a], [b]) => a.localeCompare(b))
+            const reqKey = sortedSchemes.map(([k]) => k).join('+') || (req.skill_ref ?? 'req')
+            return (
+              <li key={reqKey}>
+                {sortedSchemes.map(([schemeName, scopes], j) => (
+                  <span key={schemeName}>
+                    {j > 0 && ' AND '}
+                    <strong>{schemeName}</strong>
+                    {scopes.length > 0 && ` (scopes: ${scopes.join(', ')})`}
+                  </span>
+                ))}
+              </li>
+            )
+          })}
         </ul>
       </AlertDescription>
     </Alert>

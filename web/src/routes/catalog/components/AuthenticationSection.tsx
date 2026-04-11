@@ -54,6 +54,7 @@ export function AuthenticationSection({
   }
 
   const { security_schemes = [], security_requirements } = securityDetail
+  const topLevelRequirements = (security_requirements ?? []).filter((r) => !r.skill_ref)
 
   return (
     <Card data-testid="authentication-section">
@@ -71,10 +72,10 @@ export function AuthenticationSection({
           ))}
         </div>
 
-        {endpoint && security_requirements && security_requirements.length > 0 && (
+        {endpoint && topLevelRequirements.length > 0 && (
           <ConnectionRecipe
             endpoint={endpoint}
-            requirements={security_requirements}
+            requirements={topLevelRequirements}
             schemes={security_schemes}
           />
         )}

@@ -101,24 +101,12 @@ func capabilityToRow(agentTypeID string, cap model.Capability) (capabilityRow, e
 		}
 	}
 	// For capabilities that carry a "schemes" map (e.g. a2a.security_requirement),
-	// derive a stable name from the sorted scheme names so that multiple
+	// derive a stable name from the sorted scheme names + scopes so that multiple
 	// same-kind capabilities on the same agent_type satisfy the unique constraint.
 	// Include skill_ref (when present) so that per-skill requirements with identical
 	// scheme sets get distinct names.
 	if name == "" {
-		if schemesRaw, ok := m["schemes"]; ok {
-			if schemesMap, ok := schemesRaw.(map[string]any); ok && len(schemesMap) > 0 {
-				keys := make([]string, 0, len(schemesMap))
-				for k := range schemesMap {
-					keys = append(keys, k)
-				}
-				sort.Strings(keys)
-				name = strings.Join(keys, "+")
-				if skillRef, ok := m["skill_ref"].(string); ok && skillRef != "" {
-					name = "skill:" + skillRef + ":" + name
-				}
-			}
-		}
+		name = derivedNameFromSchemes(m)
 	}
 
 	// Remove common fields from properties so they are not duplicated.
@@ -138,6 +126,55 @@ func capabilityToRow(agentTypeID string, cap model.Capability) (capabilityRow, e
 		Description: desc,
 		Properties:  string(props),
 	}, nil
+}
+
+// derivedNameFromSchemes builds a stable unique name from the "schemes" map
+// inside a capability's JSON representation. Used for a2a.security_requirement
+// to satisfy the (agent_type_id, kind, name) uniqueness constraint when multiple
+// same-kind requirements with different scope sets exist.
+// Format: ["skill:<skillRef>:"]<schemeKey>:<sortedScopes>[+...]
+func derivedNameFromSchemes(m map[string]any) string {
+	schemesRaw, ok := m["schemes"]
+	if !ok {
+		return ""
+	}
+	schemesMap, ok := schemesRaw.(map[string]any)
+	if !ok || len(schemesMap) == 0 {
+		return ""
+	}
+	keys := make([]string, 0, len(schemesMap))
+	for k := range schemesMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		scopeStr := ""
+		if scopesRaw, ok := schemesMap[k]; ok {
+			switch sv := scopesRaw.(type) {
+			case []any:
+				scopes := make([]string, 0, len(sv))
+				for _, s := range sv {
+					if ss, ok := s.(string); ok {
+						scopes = append(scopes, ss)
+					}
+				}
+				sort.Strings(scopes)
+				scopeStr = strings.Join(scopes, ",")
+			case []string:
+				scopes := make([]string, len(sv))
+				copy(scopes, sv)
+				sort.Strings(scopes)
+				scopeStr = strings.Join(scopes, ",")
+			}
+		}
+		parts = append(parts, k+":"+scopeStr)
+	}
+	name := strings.Join(parts, "+")
+	if skillRef, ok := m["skill_ref"].(string); ok && skillRef != "" {
+		name = "skill:" + skillRef + ":" + name
+	}
+	return name
 }
 
 // rowToCapability reconstructs a model.Capability from a capabilityRow.

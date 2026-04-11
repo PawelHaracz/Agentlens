@@ -131,14 +131,21 @@ func (a *A2ASecurityRequirement) Validate() error {
 
 // derivedName returns a stable string that uniquely identifies this requirement
 // within an agent type, matching the name derivation logic in capabilityToRow.
-// Format: ["skill:<skillRef>:"]<sortedSchemeKeys joined with "+">
+// Format: ["skill:<skillRef>:"]<schemeName>:<sortedScopes>[+...] sorted by scheme key
 func (a *A2ASecurityRequirement) derivedName() string {
 	keys := make([]string, 0, len(a.Schemes))
 	for k := range a.Schemes {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	name := strings.Join(keys, "+")
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		scopes := make([]string, len(a.Schemes[k]))
+		copy(scopes, a.Schemes[k])
+		sort.Strings(scopes)
+		parts = append(parts, k+":"+strings.Join(scopes, ","))
+	}
+	name := strings.Join(parts, "+")
 	if a.SkillRef != "" {
 		name = "skill:" + a.SkillRef + ":" + name
 	}
