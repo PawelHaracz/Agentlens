@@ -238,18 +238,18 @@ func buildAuthLabel(schemes []string) string {
 
 	names := make([]string, 0, len(schemes))
 	for _, s := range schemes {
-		switch {
-		case s == "http:Bearer":
+		switch s {
+		case "http:Bearer":
 			names = append(names, "Bearer JWT")
-		case s == "http:Basic":
+		case "http:Basic":
 			names = append(names, "Basic Auth")
-		case s == "apiKey":
+		case "apiKey":
 			names = append(names, "API Key")
-		case s == "oauth2":
+		case "oauth2":
 			names = append(names, "OAuth 2.0")
-		case s == "openIdConnect":
+		case "openIdConnect":
 			names = append(names, "OIDC")
-		case s == "mutualTls":
+		case "mutualTls":
 			names = append(names, "mTLS")
 		default:
 			names = append(names, s)
