@@ -9,7 +9,6 @@
     "superpowers-lab@superpowers-marketplace": true,
     "cc-skills-golang@samber": false,
     "caveman@caveman": true
-
   },
   "deny": [
     "Bash(rtk git add *)",
@@ -17,17 +16,26 @@
     "Bash(rtk git push *)"
   ],
   "hooks": {
-    "PreToolUse": [
+    "PostToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Edit|Write|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/git-unsafe.sh"
-          },
+            "command": "code-review-graph update --skip-flows",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/git-safe.sh"
+            "command": "code-review-graph status",
+            "timeout": 3000
           }
         ]
       }

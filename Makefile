@@ -17,7 +17,7 @@ GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
         web-install web-build web-lint web-test \
         e2e-install e2e-test docs-screenshots \
         helm-lint docker-build docker-scan \
-        deps tools arch-test web-test-coverage
+        deps tools hooks arch-test web-test-coverage
 
 ## help: Show this help message
 help:
@@ -88,10 +88,16 @@ deps:
 	$(GO) mod download
 	$(GO) mod tidy
 
-## tools: Install development tools (golangci-lint, arch-go)
+## tools: Install development tools (golangci-lint, arch-go, lefthook)
 tools:
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 	go install -v github.com/arch-go/arch-go/v2@latest
+	go install github.com/evilmartians/lefthook@latest
+
+## hooks: Install git hooks via lefthook (run once after cloning)
+hooks:
+	go install github.com/evilmartians/lefthook@latest
+	$(shell go env GOPATH)/bin/lefthook install
 
 ## arch-test: Run architecture rules validation (arch-go)
 arch-test:

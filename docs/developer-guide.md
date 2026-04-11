@@ -13,6 +13,7 @@ This guide covers setting up a development environment, building, testing, and e
 - [Building](#building)
 - [Testing](#testing)
 - [Linting](#linting)
+- [Git Hooks](#git-hooks)
 - [Writing Plugins](#writing-plugins)
 - [Frontend Development](#frontend-development)
 - [Docker](#docker)
@@ -117,7 +118,8 @@ Run `make help` to see all available targets:
 | `make run` | Build and run the server |
 | `make clean` | Remove build artifacts |
 | `make deps` | Download and tidy Go dependencies |
-| `make tools` | Install golangci-lint |
+| `make tools` | Install golangci-lint, arch-go, lefthook |
+| `make hooks` | Install git hooks via lefthook (run once after cloning) |
 | `make web-install` | Install frontend dependencies (bun) |
 | `make web-build` | Build the frontend |
 | `make web-lint` | TypeScript type check |
@@ -242,6 +244,64 @@ make format     # gofmt
 
 ```bash
 make web-lint   # tsc --noEmit
+```
+
+---
+
+## Git Hooks
+
+AgentLens uses [lefthook](https://github.com/evilmartians/lefthook) to manage git hooks checked into the repo. Hooks provide a local quality gate that catches issues before they reach CI.
+
+### What each hook does
+
+| Hook | When | Jobs |
+|------|------|------|
+| **pre-commit** | On every `git commit` | `gofmt` check (parallel), `golangci-lint` (parallel), TypeScript type-check (parallel) |
+| **commit-msg** | After pre-commit | commitlint validates conventional commit format |
+| **pre-push** | On `git push` | `make test` + `make web-test` (parallel), then `make arch-test` |
+
+### Install hooks (once per clone)
+
+```bash
+make hooks
+```
+
+Run this once after cloning. It installs the lefthook binary and activates all hooks. It is **not** run automatically by `make all` to avoid surprising contributors.
+
+> **Note:** `make hooks` installs lefthook via `go install`, which places it in `$(go env GOPATH)/bin`. Ensure that directory is in your `PATH` (standard Go setup). If hooks appear to silently skip, add `$(go env GOPATH)/bin` to your `PATH`.
+
+### Verify hooks are installed
+
+```bash
+ls .git/hooks/pre-commit .git/hooks/commit-msg .git/hooks/pre-push
+```
+
+Expected: all three files exist.
+
+### Commit message format
+
+Hooks enforce [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>[(scope)]: <subject>
+```
+
+Allowed types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `build`, `perf`, `revert`
+
+Examples:
+```
+feat: add kubernetes source plugin
+feat(api): expose capabilities endpoint
+fix(auth): correct lockout timer reset
+chore: bump go version to 1.26.1
+```
+
+### Skipping hooks
+
+```bash
+git commit --no-verify -m "wip: ..."   # skip pre-commit + commit-msg
+git push --no-verify                    # skip pre-push
+LEFTHOOK=0 git commit ...              # disable lefthook entirely
 ```
 
 ---
