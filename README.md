@@ -1,6 +1,6 @@
 # AgentLens
 
-**Real-time AI agent catalog for Kubernetes — discover, track, and inspect A2A, MCP, and A2UI agents across your cluster.**
+**Real-time AI agent catalog — discover, track, and inspect A2A and MCP agents across Kubernetes clusters and static endpoints.**
 
 AgentLens automatically discovers AI agents running in Kubernetes (via Service annotations), polls static endpoints, and accepts push registrations. It exposes a REST API and a web dashboard for browsing the catalog, filtering by protocol/status, and inspecting agent cards and capabilities.
 
@@ -9,7 +9,7 @@ AgentLens automatically discovers AI agents running in Kubernetes (via Service a
 ## Features
 
 - **Discovery** — Automatically discover agents in Kubernetes (via Service annotations), static configuration, or push registration
-- **Multi-protocol support** — A2A, MCP, and A2UI agent protocols
+- **Multi-protocol support** — A2A and MCP agent protocols; A2UI agents can be push-registered via the API
 - **Real-time catalog** — Browse, filter, and inspect agent capabilities via REST API and web dashboard
 - **Health Monitoring** — AgentLens continuously probes registered endpoints and shows real-time status on the dashboard. Entries transition through lifecycle states (`registered → active → degraded → offline`) based on HTTP response codes and latency. Admins can manually deprecate entries and trigger on-demand probes from the UI.
 - **Authentication & Authorization** — JWT-based auth with role-based access control (admin, editor, viewer)
@@ -46,7 +46,7 @@ Annotate your Services to register agents automatically:
 
 | Annotation | Required | Description |
 |---|---|---|
-| `agentlens.io/type` | ✓ | One of `a2a`, `mcp`, `a2ui` |
+| `agentlens.io/type` | ✓ | One of `a2a`, `mcp` |
 | `agentlens.io/card-path` | | Custom card path (defaults: `/.well-known/agent-card.json` for A2A, `/.well-known/mcp/server.json` for MCP) |
 | `agentlens.io/team` | | Owning team label |
 | `agentlens.io/tags` | | Comma-separated categories |
@@ -92,7 +92,9 @@ health_check:
   enabled: true
   interval: 30s
   timeout: 5s
-  concurrency: 10
+  concurrency: 8
+  degraded_latency: 1500ms
+  failure_threshold: 3
 ```
 
 Run with:
@@ -206,7 +208,10 @@ To register with full agent capabilities (skills, interfaces, security schemes),
 | `GET` | `/api/v1/catalog/{id}` | Get entry by ID |
 | `DELETE` | `/api/v1/catalog/{id}` | Delete entry |
 | `GET` | `/api/v1/catalog/{id}/card` | Get raw protocol card JSON |
-| `GET` | `/api/v1/skills?q=` | Search entries by skill name |
+| `PATCH` | `/api/v1/catalog/{id}/lifecycle` | Change entry lifecycle state |
+| `POST` | `/api/v1/catalog/{id}/probe` | Trigger on-demand health probe |
+| `GET` | `/api/v1/capabilities` | List capabilities across all agents |
+| `GET` | `/api/v1/capabilities/{key}` | Get agents by capability key |
 | `GET` | `/api/v1/stats` | Aggregate stats |
 | `POST` | `/api/v1/auth/login` | Login and obtain JWT token |
 | `POST` | `/api/v1/auth/logout` | Logout (invalidate token) |
@@ -239,7 +244,7 @@ AgentLens uses a **microkernel plugin architecture**:
 - **Source plugins** — static config, Kubernetes discovery (extensible)
 - **Enterprise plugins** — SSO, RBAC, audit, PostgreSQL (license-gated)
 
-The domain model follows the **Product Archetype Pattern** where each discovered agent/server is a `CatalogEntry` wrapping a `ProductType` (protocol).
+The domain model follows the **Product Archetype Pattern** where each discovered agent is an `AgentType` (protocol + endpoint + capabilities) wrapped by a `CatalogEntry` (display metadata, lifecycle state, health).
 
 ---
 
@@ -270,7 +275,7 @@ database:
     user: agentlens
     password: secret
     dbname: agentlens
-    sslmode: prefer
+    sslmode: disable
 ```
 
 See [docs/database.md](docs/database.md) for full database documentation.
@@ -346,7 +351,10 @@ All permissions follow the `resource:action` format (e.g., `catalog:read`, `user
 | `AGENTLENS_HEALTH_CHECK_ENABLED` | `true` | Enable health checking |
 | `AGENTLENS_HEALTH_CHECK_INTERVAL` | `30s` | Health check interval |
 | `AGENTLENS_HEALTH_CHECK_TIMEOUT` | `5s` | Health check timeout |
-| `AGENTLENS_HEALTH_CHECK_CONCURRENCY` | `10` | Health check parallelism |
+| `AGENTLENS_HEALTH_CHECK_CONCURRENCY` | `8` | Health check parallelism |
+| `AGENTLENS_HEALTH_CHECK_DEGRADED_LATENCY` | `1500ms` | Latency threshold for degraded status |
+| `AGENTLENS_HEALTH_CHECK_FAILURE_THRESHOLD` | `3` | Consecutive failures before offline |
+| `AGENTLENS_LICENSE_KEY` | (none) | Enterprise license key |
 
 ---
 
@@ -363,6 +371,7 @@ All permissions follow the `resource:action` format (e.g., `catalog:read`, `user
 | [DevOps Guide](docs/devops-guide.md) | Docker, Helm, CI/CD, release pipeline, versioning, troubleshooting |
 | [End-User Guide](docs/end-user-guide.md) | UI walkthrough with screenshots — catalog, agents, filtering |
 | [User Guide](docs/user-guide.md) | Configuration, deployment modes, Kubernetes annotations |
+| [Architecture Decision Records](docs/adr/) | ADRs covering plugin architecture, product catalog, auth, database, frontend, and discovery |
 | [Contributing](CONTRIBUTING.md) | How to contribute, project structure, code style |
 
 ---

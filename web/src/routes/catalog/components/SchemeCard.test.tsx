@@ -12,8 +12,10 @@ describe('SchemeCard', () => {
       bearer_format: 'JWT',
       description: 'JWT authentication',
     }
-    const { container } = render(<SchemeCard scheme={scheme} />)
-    expect(container).toMatchSnapshot()
+    render(<SchemeCard scheme={scheme} />)
+    expect(screen.getByText('httpAuth')).toBeDefined()
+    expect(screen.getByText('Bearer JWT')).toBeDefined()
+    expect(screen.getByText('JWT authentication')).toBeDefined()
   })
 
   it('renders bearer message conditioned on JWT format', () => {
@@ -45,8 +47,11 @@ describe('SchemeCard', () => {
       api_key_name: 'X-API-Key',
       description: 'API Key in header',
     }
-    const { container } = render(<SchemeCard scheme={scheme} />)
-    expect(container).toMatchSnapshot()
+    render(<SchemeCard scheme={scheme} />)
+    expect(screen.getByText('apiKeyAuth')).toBeDefined()
+    expect(screen.getByText('API Key')).toBeDefined()
+    expect(screen.getByText('API Key in header')).toBeDefined()
+    expect(screen.getByText('X-API-Key')).toBeDefined()
   })
 
   it('renders OAuth2 scheme with flows', () => {
@@ -62,8 +67,14 @@ describe('SchemeCard', () => {
         },
       ],
     }
-    const { container } = render(<SchemeCard scheme={scheme} />)
-    expect(container).toMatchSnapshot()
+    render(<SchemeCard scheme={scheme} />)
+    expect(screen.getByText('oauth2Auth')).toBeDefined()
+    expect(screen.getByText('OAuth 2.0')).toBeDefined()
+    expect(screen.getByText('Authorization Code')).toBeDefined()
+    expect(screen.getByText('https://auth.example.com/authorize')).toBeDefined()
+    expect(screen.getByText('https://auth.example.com/token')).toBeDefined()
+    expect(screen.getByText('read')).toBeDefined()
+    expect(screen.getByText('Read access')).toBeDefined()
   })
 
   it('does not render deprecated OAuth flows', () => {
