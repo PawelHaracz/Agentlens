@@ -173,44 +173,22 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 3. Use `get_affected_flows` to understand impact.
 4. Use `query_graph` pattern="tests_for" to check coverage.
 
-<!-- code-review-graph MCP tools -->
-## MCP Tools: code-review-graph
+### Token-Efficiency Rules
 
-**IMPORTANT: This project has a knowledge graph. ALWAYS use the
-code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
-the codebase.** The graph is faster, cheaper (fewer tokens), and gives
-you structural context (callers, dependents, test coverage) that file
-scanning cannot.
+1. ALWAYS call `get_minimal_context` first with a task description.
+2. Use `detail_level="minimal"` on all tool calls unless the minimal output is insufficient.
+3. Only escalate to `detail_level="standard"` for the specific entities that need deeper inspection.
+4. Never request more than 3 tool calls per turn unless absolutely necessary.
+5. Prefer targeted queries (`query_graph` with a specific symbol) over broad scans (`list_communities` with full members).
+6. When reviewing changes: `detect_changes(detail_level="minimal")` → only expand on high-risk items.
 
-### When to use graph tools FIRST
+### Architecture Mapping Workflow
 
-- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
-- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
-- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
-- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
-- **Architecture questions**: `get_architecture_overview` + `list_communities`
-
-Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
-
-### Key Tools
-
-| Tool | Use when |
-|------|----------|
-| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
-| `get_review_context` | Need source snippets for review — token-efficient |
-| `get_impact_radius` | Understanding blast radius of a change |
-| `get_affected_flows` | Finding which execution paths are impacted |
-| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
-| `semantic_search_nodes` | Finding functions/classes by name or keyword |
-| `get_architecture_overview` | Understanding high-level codebase structure |
-| `refactor_tool` | Planning renames, finding dead code |
-
-### Workflow
-
-1. The graph auto-updates on file changes (via hooks).
-2. Use `detect_changes` for code review.
-3. Use `get_affected_flows` to understand impact.
-4. Use `query_graph` pattern="tests_for" to check coverage.
+1. Call `get_minimal_context(task="map architecture")`.
+2. Call `get_architecture_overview(detail_level="minimal")` for community coupling summary.
+3. Call `list_flows(detail_level="minimal")` for critical flow names + criticality scores.
+4. Only call `get_community(name=<X>, detail_level="standard")` for the 1-2 communities most relevant to the task.
+5. Produce a concise Mermaid diagram showing communities as boxes and key flows as arrows.
 
 ## Skills
 
