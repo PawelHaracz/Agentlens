@@ -11,8 +11,12 @@ pre-commit:
 
 commit-msg:
   commands:
+    strip-ai-coauthors:
+      run: perl -i -pe 's/^Co-Authored-By:.*?(claude|copilot|gemini|chatgpt|openai|cursor).*\n?//i' {1}
+      priority: 1
     commitlint:
       run: cd web && bunx commitlint --config commitlint.config.ts --edit {1}
+      priority: 2
 
 pre-push:
   commands:
