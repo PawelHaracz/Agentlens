@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "code-review-graph": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "code-review-graph",
+        "serve"
+      ]
+    }
+  }
+}
