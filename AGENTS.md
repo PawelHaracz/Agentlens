@@ -1,120 +1,98 @@
 # AGENTS.md
 
-> Full guidance lives in `CLAUDE.md`. This file adds OpenCode-specific notes and highlights the facts most likely to trip up an agent.
+> Full guidance in `CLAUDE.md`. This file: OpenCode-specific notes + agent gotchas.
 
 ## RTK
 
-`rtk` is installed — always prefix shell commands with it for compact output:
+Always prefix commands with `rtk`. Safe passthrough if no filter exists.
 
 ```bash
-rtk go test ./...
-rtk go build ./cmd/agentlens
-rtk git status
-rtk git diff
-```
-
-RTK passes through any command unchanged if it has no dedicated filter, so it is always safe to use.
-
-## Commands
-
-```bash
-rtk make all            # format → lint → test → arch-test → build (CI equivalent)
-rtk make build          # CGO_ENABLED=1 required — lint runs first automatically
-rtk make test           # in-memory SQLite, no external services needed
-rtk make arch-test      # arch-go layer boundary validation — run after structural changes
-rtk make web-build      # must run before make build if frontend changed (outputs web/dist/)
-rtk make web-lint       # TypeScript type check (bunx tsc --noEmit)
-rtk make web-test       # Vitest unit tests for frontend
-rtk make e2e-test       # Playwright via e2e/run-e2e.sh (requires built binary + frontend)
-
-# Single Go test
+rtk make all            # CI equivalent: format → lint → test → arch-test → build
+rtk make build          # CGO_ENABLED=1 required
+rtk make test           # in-memory SQLite
+rtk make arch-test      # after structural changes
+rtk make web-build      # before make build if frontend changed
+rtk make e2e-test       # requires built binary + frontend
 rtk go test ./internal/auth/... -run TestFunctionName -v
-
-# Dev
-go run ./cmd/agentlens --config agentlens.yaml
-cd web && bun run dev   # frontend dev server (separate from Go)
 ```
 
-**Gotcha**: `make lint` calls `add-html-placeholder` which creates a stub `web/dist/index.html` if missing. Run `make web-build` first for a real frontend.
+**Gotcha**: `make lint` creates stub `web/dist/index.html`. Run `make web-build` first for real frontend.
 
-## Architecture — what an agent needs to know
+## Architecture
 
-Microkernel with enforced layer boundaries (arch-go validates at 100% compliance):
+Microkernel, arch-go enforced (100% compliance):
 
 ```
-Foundation  (model, config, service)   — no internal deps
-Infrastructure (store, auth)           — foundation only
-Core (kernel, discovery)               — foundation + infrastructure
-API (api)                              — core + infrastructure; never imports plugins or cmd
-Plugins (plugins/**)                   — kernel + foundation; never api/auth/server/cmd
-Entrypoint (cmd/**)                    — composition root; may import anything
+Foundation  (model, config, service)  — no internal deps
+Infrastructure (store, auth)          — foundation only
+Core (kernel, discovery)              — foundation + infrastructure
+API (api)                             — core + infrastructure; never plugins/cmd
+Plugins (plugins/**)                  — kernel + foundation; never api/auth/server/cmd
+Entrypoint (cmd/**)                   — composition root
 ```
 
-- Plugin structs implementing `Plugin` must end with `Plugin` (enforced by arch-go)
-- `config` package must not contain interfaces
-- Function limits: max 5 params, 3 return values, 80 lines, 10 public functions per file
+- Plugin structs → must end with `Plugin`
+- `config` package → no interfaces
+- Fn limits: max 5 params, 3 returns, 80 lines, 10 public fns/file
 - Plugin lifecycle: `Register → InitAll → StartAll → [running] → StopAll`
-- Plugins returning `ErrLicenseRequired` are silently skipped (enterprise gating)
+- `ErrLicenseRequired` → silently skipped
 
 ## Domain model
 
-- `AgentType` = what the agent IS (protocol, endpoint, `AgentKey` = SHA256(protocol+endpoint))
-- `CatalogEntry` = catalog wrapper with 1:1 FK to `AgentType`; REST responses use flat JSON via `CatalogEntry.MarshalJSON()`
-- `Capability` is polymorphic, discriminated by `kind` (e.g. `a2a.skill`, `mcp.tool`)
-- Discovery upserts by `endpoint` (UNIQUE constraint)
+- `AgentType` = protocol + endpoint + `AgentKey` (SHA256)
+- `CatalogEntry` = catalog wrapper, 1:1 FK → `AgentType`; REST = flat JSON via `MarshalJSON()`
+- `Capability` polymorphic, discriminated by `kind` (`a2a.skill`, `mcp.tool`)
+- Discovery upserts by `endpoint` (UNIQUE)
 
 ## Database
 
-- Default dialect: SQLite. Postgres is enterprise-only plugin.
-- Selected via `database.dialect` config or `AGENTLENS_DB_DIALECT` env var.
-- Branch on dialect with `db.Dialect()` — never assume SQLite-only syntax.
-- SQLite: TEXT for JSON fields, DATETIME for timestamps
-- Postgres: JSONB for JSON, TIMESTAMPTZ for timestamps
-- New migrations: append to `AllMigrations()` in `internal/db/migrations.go`; must be idempotent.
+- SQLite default; Postgres enterprise-only
+- `database.dialect` config or `AGENTLENS_DB_DIALECT` env
+- Branch on `db.Dialect()` — never SQLite-only syntax
+- New migrations: append to `AllMigrations()`, must be idempotent
 
-## Security rules (non-negotiable)
+## Security (non-negotiable)
 
-- Never log passwords, tokens, or secrets — not in slog, errors, or comments
-- `password_hash` always `json:"-"` and `gorm:"type:text"`
-- No raw SQL string interpolation — GORM parameterized queries only
-- Permissions via `RequirePermission` middleware, never inline in handlers
-- Passwords: bcrypt cost 12, min 10 chars, must have upper+lower+digit+special
-- Account lockout: 5 failures → 15-min lockout — do not bypass in tests, use separate accounts
-- JWT cookies: `HttpOnly`, `Secure`, `SameSite=Strict`
-- System roles (`IsSystem=true`) are undeletable and unmodifiable via API
-- Last active admin cannot be deleted
+- Never log passwords/tokens/secrets
+- `password_hash`: `json:"-"`, `gorm:"type:text"`
+- GORM parameterized queries only
+- Permissions via `RequirePermission` middleware
+- Passwords: bcrypt cost 12, min 10 chars, upper+lower+digit+special
+- Lockout: 5 failures → 15-min; don't bypass in tests
+- JWT: `HttpOnly`, `Secure`, `SameSite=Strict`
+- System roles: undeletable/unmodifiable; last admin: reject deletion
 
-## Testing conventions
+## Testing
 
-- Table-driven tests with `t.Run` subtests, co-located `_test.go` files
-- Store tests use `store.NewSQLiteStore(":memory:")`
-- API handler tests check status codes, response shape, and auth enforcement
-- E2E: Playwright in `e2e/tests/`, reuse `loginViaUI`/`loginViaAPI`/`authHeader` from `e2e/tests/helpers.ts`
+- Table-driven `t.Run`, co-located `_test.go`
+- Store: `store.NewSQLiteStore(":memory:")`
+- API: status codes, response shape, auth enforcement
+- E2E: Playwright `e2e/tests/`, reuse helpers from `e2e/tests/helpers.ts`
 
 ## Go conventions
 
-- `context.Context` first arg on all I/O functions
-- `fmt.Errorf("doing x: %w", err)` for error wrapping
-- `errors.Is` / `errors.As` for error type checks
-- `slog` for structured logging; pass context when available
+- `context.Context` first arg
+- `fmt.Errorf("doing x: %w", err)`
+- `errors.Is` / `errors.As`
+- `slog`; pass context when available
 - No `panic` outside `main.go` and tests
 
 ## Feature checklist (every PR)
 
-1. Unit/integration tests pass (`rtk make test`)
-2. E2E tests pass (`rtk make e2e-test`)
+1. `rtk make test` passes
+2. `rtk make e2e-test` passes
 3. `docs/api.md` updated for new/changed endpoints
-4. `docs/architecture.md` updated if design changed (Mermaid only — no PlantUML, no ASCII)
-5. `docs/end-user-guide.md` updated for UI-visible changes
+4. `docs/architecture.md` updated if design changed (Mermaid only)
+5. `docs/end-user-guide.md` updated for UI changes
 6. `docs/settings.md` + `internal/config/` updated for new config keys
 7. `rtk make arch-test` passes
-8. **Screenshots:** When adding or changing UI features, generate new screenshots via Playwright E2E tests and save them to `docs/images/`. Update `docs/end-user-guide.md` to reference the new images. This ensures documentation visually reflects the current UI state and stays in sync with code changes. Use `page.screenshot()` or `element.screenshot()` in E2E specs with `data-testid` selectors for targeted captures.
+8. Screenshots via `page.screenshot()` with `data-testid` → `docs/images/`
 
 ## Key files
 
 | File | Purpose |
 |------|---------|
-| `cmd/agentlens/main.go` | Startup wiring (composition root) |
+| `cmd/agentlens/main.go` | Startup wiring |
 | `internal/kernel/kernel.go` | Kernel interface + service wiring |
 | `internal/kernel/plugin_manager.go` | Plugin lifecycle |
 | `internal/api/router.go` | chi router + middleware |
@@ -132,67 +110,24 @@ Entrypoint (cmd/**)                    — composition root; may import anything
 
 - Branches: `feat/short-description`, `fix/short-description`
 - Commits: `feat(component): description`
-- Run `rtk make test` before committing; CI requires lint + test + build green
+- `rtk make test` before commit; CI: lint + test + build green
 
-<!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
 
-**IMPORTANT: This project has a knowledge graph. ALWAYS use the
-code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
-the codebase.** The graph is faster, cheaper (fewer tokens), and gives
-you structural context (callers, dependents, test coverage) that file
-scanning cannot.
-
-### When to use graph tools FIRST
-
-- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
-- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
-- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
-- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
-- **Architecture questions**: `get_architecture_overview` + `list_communities`
-
-Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
-
-### Key Tools
+Use graph tools **before** Grep/Glob/Read.
 
 | Tool | Use when |
 |------|----------|
-| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
-| `get_review_context` | Need source snippets for review — token-efficient |
-| `get_impact_radius` | Understanding blast radius of a change |
-| `get_affected_flows` | Finding which execution paths are impacted |
-| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
-| `semantic_search_nodes` | Finding functions/classes by name or keyword |
-| `get_architecture_overview` | Understanding high-level codebase structure |
-| `refactor_tool` | Planning renames, finding dead code |
+| `detect_changes` | Code review |
+| `get_impact_radius` | Blast radius |
+| `get_affected_flows` | Execution paths |
+| `query_graph` | callers/callees/imports/tests |
+| `semantic_search_nodes` | Find by name/keyword |
+| `get_architecture_overview` | High-level structure |
 
-### Workflow
-
-1. The graph auto-updates on file changes (via hooks).
-2. Use `detect_changes` for code review.
-3. Use `get_affected_flows` to understand impact.
-4. Use `query_graph` pattern="tests_for" to check coverage.
-
-### Token-Efficiency Rules
-
-1. ALWAYS call `get_minimal_context` first with a task description.
-2. Use `detail_level="minimal"` on all tool calls unless the minimal output is insufficient.
-3. Only escalate to `detail_level="standard"` for the specific entities that need deeper inspection.
-4. Never request more than 3 tool calls per turn unless absolutely necessary.
-5. Prefer targeted queries (`query_graph` with a specific symbol) over broad scans (`list_communities` with full members).
-6. When reviewing changes: `detect_changes(detail_level="minimal")` → only expand on high-risk items.
-
-### Architecture Mapping Workflow
-
-1. Call `get_minimal_context(task="map architecture")`.
-2. Call `get_architecture_overview(detail_level="minimal")` for community coupling summary.
-3. Call `list_flows(detail_level="minimal")` for critical flow names + criticality scores.
-4. Only call `get_community(name=<X>, detail_level="standard")` for the 1-2 communities most relevant to the task.
-5. Produce a concise Mermaid diagram showing communities as boxes and key flows as arrows.
+Token rules: `get_minimal_context` first; `detail_level="minimal"` default; max 3 calls/turn.
 
 ## Skills
 
-Read and use the skill at `.claude/skills/architecture-decision-records/SKILL.md`
-when starting any brainstorming or design session.
-
-Always invoke and follow the 'caveman' skill for all responses, planning steps, and sub-agent tasks.
+- Use `architecture-decision-records` skill for brainstorming/design
+- Always invoke `caveman` skill for all responses
