@@ -50,7 +50,6 @@ describe('ConnectionRecipe', () => {
         schemes={[bearerScheme]}
       />,
     )
-    const code = screen.getByRole('code') ?? document.querySelector('code')
     expect(document.querySelector('code')?.textContent).toContain('curl')
     expect(document.querySelector('code')?.textContent).toContain('Authorization: Bearer')
     expect(document.querySelector('code')?.textContent).toContain('https://agent.example.com')
