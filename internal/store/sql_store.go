@@ -192,6 +192,16 @@ func rowToCapability(row capabilityRow) (model.Capability, error) {
 	props["name"] = row.Name
 	props["description"] = row.Description
 
+	// Backward-compat: rows written before scheme_name was introduced as a
+	// dedicated JSON field only have the legacy "name" field. Backfill
+	// scheme_name from the row's Name column so SchemeName is always populated
+	// when deserializing into A2ASecurityScheme.
+	if row.Kind == "a2a.security_scheme" {
+		if _, hasSchemeName := props["scheme_name"]; !hasSchemeName {
+			props["scheme_name"] = row.Name
+		}
+	}
+
 	data, err := json.Marshal(props)
 	if err != nil {
 		return nil, fmt.Errorf("marshal merged props: %w", err)

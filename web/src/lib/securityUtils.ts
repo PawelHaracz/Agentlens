@@ -91,7 +91,7 @@ export function generateCurlRecipe(
       headers.push('-H "Authorization: Bearer <token>"')
     } else if (scheme.type === 'http' && scheme.http_scheme === 'Basic') {
       headers.push('-H "Authorization: Basic <credentials>"')
-    } else if (scheme.type === 'apiKey' && scheme.api_key_location === 'header') {
+    } else if (scheme.type === 'apiKey' && scheme.api_key_location === 'header' && scheme.api_key_name) {
       headers.push(`-H "${scheme.api_key_name}: <key>"`)
     }
   }

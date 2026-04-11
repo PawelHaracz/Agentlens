@@ -128,12 +128,12 @@ Security information is stored exclusively in the `capabilities` table — no se
 **Storage model:**
 
 - Each `a2a.security_scheme` capability row stores one scheme. The `name` column holds the `scheme_name` value (used as the UNIQUE key alongside `agent_type_id` and `kind`).
-- Each `a2a.security_requirement` capability row stores one requirement. The `name` column is derived from the sorted keys of the `schemes` map joined with `+` (e.g., `"apiKeyAuth+httpAuth"`), ensuring uniqueness.
+- Each `a2a.security_requirement` capability row stores one requirement. The `name` column is derived from sorted scheme keys, each paired with their sorted scopes (e.g., `"apiKeyAuth:+httpAuth:read,write"`), plus an optional `skill:<skillRef>:` prefix for per-skill requirements. This format ensures uniqueness even when two requirements share the same scheme set but differ in required scopes.
 
 **Computed views:**
 
 - `auth_summary` — computed by `buildAuthSummary()` from all `a2a.security_scheme` capabilities. Returns `nil` for agents with no security schemes (open agents). Contains `label` (human-readable string), `types` (sorted, deduplicated list of scheme type strings), and `required` (boolean — true when at least one top-level `a2a.security_requirement` exists).
-- `security_detail` — computed by `buildSecurityDetail()` from all `a2a.security_scheme` and `a2a.security_requirement` capabilities. Groups them into `security_schemes[]` and `security_requirements[]`.
+- `security_detail` — computed by `buildSecurityDetail()` from all `a2a.security_scheme` and `a2a.security_requirement` capabilities. Groups them into `security_schemes[]` and `security_requirements[]`. Present in both list (`GET /catalog`) and detail (`GET /catalog/{id}`) responses.
 
 ```mermaid
 flowchart LR
@@ -143,9 +143,14 @@ flowchart LR
     SS --> DB[(capabilities table)]
     SR --> DB
 
+    DB --> LIST[GET /catalog]
     DB --> GET[GET /catalog/:id]
+    LIST --> BS2[buildAuthSummary]
+    LIST --> BSD2[buildSecurityDetail]
     GET --> BS[buildAuthSummary]
     GET --> BSD[buildSecurityDetail]
+    BS2 --> AS2[auth_summary field]
+    BSD2 --> SD2[security_detail field]
     BS --> AS[auth_summary field]
     BSD --> SD[security_detail field]
 ```

@@ -23,7 +23,10 @@ export function SecurityRequirementsBanner({ requirements }: SecurityRequirement
         <ul className="list-disc pl-5 space-y-1">
           {topLevel.map((req) => {
             const sortedSchemes = Object.entries(req.schemes).sort(([a], [b]) => a.localeCompare(b))
-            const reqKey = sortedSchemes.map(([k]) => k).join('+') || (req.skill_ref ?? 'req')
+            // Mirror backend derivedName: schemeKey:sortedScopes joined with +
+            const reqKey = sortedSchemes
+              .map(([k, scopes]) => `${k}:${[...scopes].sort().join(',')}`)
+              .join('+') || (req.skill_ref ?? 'req')
             return (
               <li key={reqKey}>
                 {sortedSchemes.map(([schemeName, scopes], j) => (
