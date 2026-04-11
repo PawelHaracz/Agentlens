@@ -3,6 +3,8 @@ package model
 
 import (
 	"encoding/json"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -152,24 +154,26 @@ func (e *CatalogEntry) SyncFromDB() {
 
 // catalogEntryJSON is the flat, backward-compatible JSON shape for CatalogEntry.
 type catalogEntryJSON struct {
-	ID           string            `json:"id"`
-	AgentTypeID  string            `json:"agent_type_id"`
-	DisplayName  string            `json:"display_name"`
-	Description  string            `json:"description"`
-	Protocol     Protocol          `json:"protocol,omitempty"`
-	Endpoint     string            `json:"endpoint,omitempty"`
-	Version      string            `json:"version,omitempty"`
-	SpecVersion  string            `json:"spec_version,omitempty"`
-	Status       LifecycleState    `json:"status"`
-	Source       SourceType        `json:"source"`
-	Provider     *Provider         `json:"provider,omitempty"`
-	Categories   []string          `json:"categories,omitempty"`
-	Capabilities json.RawMessage   `json:"capabilities,omitempty"`
-	Validity     Validity          `json:"validity"`
-	Metadata     map[string]string `json:"metadata,omitempty"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
-	Health       healthJSON        `json:"health"`
+	ID             string              `json:"id"`
+	AgentTypeID    string              `json:"agent_type_id"`
+	DisplayName    string              `json:"display_name"`
+	Description    string              `json:"description"`
+	Protocol       Protocol            `json:"protocol,omitempty"`
+	Endpoint       string              `json:"endpoint,omitempty"`
+	Version        string              `json:"version,omitempty"`
+	SpecVersion    string              `json:"spec_version,omitempty"`
+	Status         LifecycleState      `json:"status"`
+	Source         SourceType          `json:"source"`
+	Provider       *Provider           `json:"provider,omitempty"`
+	Categories     []string            `json:"categories,omitempty"`
+	Capabilities   json.RawMessage     `json:"capabilities,omitempty"`
+	Validity       Validity            `json:"validity"`
+	Metadata       map[string]string   `json:"metadata,omitempty"`
+	CreatedAt      time.Time           `json:"created_at"`
+	UpdatedAt      time.Time           `json:"updated_at"`
+	Health         healthJSON          `json:"health"`
+	AuthSummary    *authSummaryJSON    `json:"auth_summary,omitempty"`
+	SecurityDetail *securityDetailJSON `json:"security_detail,omitempty"`
 }
 
 // healthJSON is the JSON shape for the embedded Health object.
@@ -180,6 +184,141 @@ type healthJSON struct {
 	LatencyMs           int64      `json:"latencyMs"`
 	ConsecutiveFailures int        `json:"consecutiveFailures"`
 	LastError           string     `json:"lastError"`
+}
+
+// authSummaryJSON is a computed view of security schemes for catalog list responses.
+type authSummaryJSON struct {
+	Types    []string `json:"types"`
+	Label    string   `json:"label"`
+	Required bool     `json:"required"`
+}
+
+// buildAuthSummary computes an auth summary from capabilities at serialization
+// time. Returns nil when no security schemes are declared (omitempty hides it).
+func buildAuthSummary(capabilities []Capability) *authSummaryJSON {
+	seen := map[string]bool{}
+	var schemes []string
+	hasRequirement := false
+
+	for _, cap := range capabilities {
+		switch c := cap.(type) {
+		case *A2ASecurityScheme:
+			typeStr := c.Type
+			if c.Type == "http" && c.HTTPScheme != "" {
+				typeStr = "http:" + c.HTTPScheme
+			}
+			if !seen[typeStr] {
+				seen[typeStr] = true
+				schemes = append(schemes, typeStr)
+			}
+		case *A2ASecurityRequirement:
+			if c.SkillRef == "" {
+				hasRequirement = true
+			}
+		}
+	}
+
+	if len(schemes) == 0 {
+		return nil
+	}
+
+	sort.Strings(schemes)
+
+	return &authSummaryJSON{
+		Types:    schemes,
+		Label:    buildAuthLabel(schemes),
+		Required: hasRequirement,
+	}
+}
+
+func buildAuthLabel(schemes []string) string {
+	if len(schemes) == 0 {
+		return "Open (no auth)"
+	}
+
+	names := make([]string, 0, len(schemes))
+	for _, s := range schemes {
+		switch s {
+		case "http:Bearer":
+			names = append(names, "Bearer JWT")
+		case "http:Basic":
+			names = append(names, "Basic Auth")
+		case "apiKey":
+			names = append(names, "API Key")
+		case "oauth2":
+			names = append(names, "OAuth 2.0")
+		case "openIdConnect":
+			names = append(names, "OIDC")
+		case "mutualTls":
+			names = append(names, "mTLS")
+		default:
+			names = append(names, s)
+		}
+	}
+
+	label := strings.Join(names, " + ")
+	if len(label) > 40 {
+		label = label[:37] + "..."
+	}
+
+	return label
+}
+
+// securityDetailJSON is a convenience view for the detail endpoint that groups
+// security capabilities into a structured object. Computed at serialization time.
+type securityDetailJSON struct {
+	SecuritySchemes      []json.RawMessage `json:"security_schemes,omitempty"`
+	SecurityRequirements []json.RawMessage `json:"security_requirements,omitempty"`
+}
+
+// buildSecurityDetail constructs a security_detail view from capabilities.
+// Returns nil when no security capabilities exist.
+func buildSecurityDetail(capabilities []Capability) *securityDetailJSON {
+	var schemeCaps []*A2ASecurityScheme
+	var reqCaps []*A2ASecurityRequirement
+
+	for _, cap := range capabilities {
+		switch c := cap.(type) {
+		case *A2ASecurityScheme:
+			schemeCaps = append(schemeCaps, c)
+		case *A2ASecurityRequirement:
+			reqCaps = append(reqCaps, c)
+		}
+	}
+
+	if len(schemeCaps) == 0 && len(reqCaps) == 0 {
+		return nil
+	}
+
+	// Sort schemes by scheme_name for deterministic output.
+	sort.Slice(schemeCaps, func(i, j int) bool {
+		return schemeCaps[i].SchemeName < schemeCaps[j].SchemeName
+	})
+
+	var schemes []json.RawMessage
+	for _, c := range schemeCaps {
+		if b, err := json.Marshal(c); err == nil {
+			schemes = append(schemes, b)
+		}
+	}
+
+	// Sort requirements by their derived name (SkillRef+sorted scheme keys) for
+	// deterministic output.
+	sort.Slice(reqCaps, func(i, j int) bool {
+		return reqCaps[i].derivedName() < reqCaps[j].derivedName()
+	})
+
+	var requirements []json.RawMessage
+	for _, c := range reqCaps {
+		if b, err := json.Marshal(c); err == nil {
+			requirements = append(requirements, b)
+		}
+	}
+
+	return &securityDetailJSON{
+		SecuritySchemes:      schemes,
+		SecurityRequirements: requirements,
+	}
 }
 
 // MarshalJSON produces a flat, backward-compatible JSON representation that
@@ -212,6 +351,14 @@ func (e CatalogEntry) toCatalogEntryJSON() catalogEntryJSON {
 			capJSON = b
 		}
 	}
+	var authSummary *authSummaryJSON
+	if len(capabilities) > 0 {
+		authSummary = buildAuthSummary(capabilities)
+	}
+	var secDetail *securityDetailJSON
+	if len(capabilities) > 0 {
+		secDetail = buildSecurityDetail(capabilities)
+	}
 	return catalogEntryJSON{
 		ID: e.ID, AgentTypeID: e.AgentTypeID, DisplayName: e.DisplayName,
 		Description: e.Description, Protocol: protocol, Endpoint: endpoint,
@@ -224,5 +371,7 @@ func (e CatalogEntry) toCatalogEntryJSON() catalogEntryJSON {
 			LastSuccessAt: e.Health.LastSuccessAt, LatencyMs: e.Health.LatencyMs,
 			ConsecutiveFailures: e.Health.ConsecutiveFailures, LastError: e.Health.LastError,
 		},
+		AuthSummary:    authSummary,
+		SecurityDetail: secDetail,
 	}
 }

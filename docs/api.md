@@ -453,6 +453,95 @@ The `status` field is a backward-compatible alias for `health.state`.
 
 **Lifecycle states:** `registered` (not yet probed) · `active` · `degraded` · `offline` · `deprecated`
 
+### Authentication fields
+
+A2A catalog entries include two computed authentication fields derived from their stored capabilities at serialization time. These fields are never stored directly — they are always computed fresh from the `a2a.security_scheme` and `a2a.security_requirement` capabilities.
+
+#### `auth_summary` (list and detail responses)
+
+Present on all A2A entries that declare at least one security scheme. Absent (`omitempty`) for open agents and all MCP entries.
+
+```json
+{
+  "auth_summary": {
+    "types": ["http:Bearer", "apiKey"],
+    "label": "Bearer JWT + API Key",
+    "required": true
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `types` | `string[]` | Normalized scheme type strings. `http` schemes are qualified as `http:Bearer`, `http:Basic`, etc. |
+| `label` | `string` | Human-readable summary (max 40 chars, truncated with `…` if longer). |
+| `required` | `bool` | `true` when at least one top-level (non-skill) `a2a.security_requirement` exists. |
+
+#### `security_detail` (detail response only — `GET /api/v1/catalog/{id}`)
+
+Present when an A2A entry has security schemes. Contains the full scheme and requirement data for use in connection UIs.
+
+```json
+{
+  "security_detail": {
+    "security_schemes": [
+      {
+        "scheme_name": "httpAuth",
+        "type": "http",
+        "description": "JWT Bearer token",
+        "http_scheme": "Bearer",
+        "bearer_format": "JWT"
+      },
+      {
+        "scheme_name": "apiKeyAuth",
+        "type": "apiKey",
+        "api_key_location": "header",
+        "api_key_name": "X-API-Key"
+      }
+    ],
+    "security_requirements": [
+      { "schemes": { "httpAuth": [] } },
+      { "schemes": { "apiKeyAuth": [] } }
+    ]
+  }
+}
+```
+
+**`security_schemes` item fields:**
+
+| Field | Type | Scheme types | Description |
+|---|---|---|---|
+| `scheme_name` | `string` | all | Key from the agent card's `securitySchemes` map. |
+| `type` | `string` | all | `http` · `apiKey` · `oauth2` · `openIdConnect` · `mutualTls` |
+| `description` | `string` | all | Optional human-readable description. |
+| `http_scheme` | `string` | `http` | `Bearer` · `Basic` · `Digest` |
+| `bearer_format` | `string` | `http` | e.g. `JWT` |
+| `api_key_location` | `string` | `apiKey` | `header` · `query` · `cookie` |
+| `api_key_name` | `string` | `apiKey` | e.g. `X-API-Key` |
+| `oauth_flows` | `object[]` | `oauth2` | Array of flow objects (see below). |
+| `oauth2_metadata_url` | `string` | `oauth2` | OAuth 2.0 server metadata URL. |
+| `openid_connect_url` | `string` | `openIdConnect` | OIDC discovery document URL. |
+
+**`oauth_flows` item fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `flow_type` | `string` | `authorizationCode` · `clientCredentials` · `deviceCode` · `implicit` · `password` (last two have `deprecated: true` and are filtered from the UI) |
+| `authorization_url` | `string` | Authorization endpoint (authorizationCode). |
+| `token_url` | `string` | Token endpoint. |
+| `device_auth_url` | `string` | Device authorization endpoint (deviceCode). |
+| `scopes` | `object` | Map of scope name → description. |
+| `deprecated` | `bool` | `true` for legacy flows (implicit, password). |
+
+**`security_requirements` item fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `schemes` | `object` | Map of scheme name → required scopes (empty array = any scope). |
+| `skill_ref` | `string` | Non-empty when this requirement applies to a specific skill only. |
+
+Multiple `security_requirements` entries are OR'd: the client must satisfy at least one complete entry.
+
 ### GET /api/v1/catalog
 
 **New query parameter:** `?state=` — comma-separated lifecycle states filter. Example: `?state=active,degraded`

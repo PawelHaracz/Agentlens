@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "name": "Bearer Auth Agent",
+  "description": "Agent with Bearer JWT authentication",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "httpAuth": {
+      "type": "http",
+      "scheme": "Bearer",
+      "bearerFormat": "JWT",
+      "description": "JWT Bearer token"
+    }
+  },
+  "securityRequirements": [
+    {
+      "httpAuth": []
+    }
+  ],
+  "skills": []
+}

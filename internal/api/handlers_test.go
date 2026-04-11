@@ -284,3 +284,123 @@ func TestGetEntryCard_FromCardStore(t *testing.T) {
 		assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 	})
 }
+
+func TestListCatalog_AuthSummary(t *testing.T) {
+	router, s := newTestRouter(t)
+
+	agentType := &model.AgentType{
+		ID:       "at-auth-test",
+		AgentKey: model.ComputeAgentKey(model.ProtocolA2A, "https://agent.example.com"),
+		Protocol: model.ProtocolA2A,
+		Endpoint: "https://agent.example.com",
+		Version:  "1.0",
+		Capabilities: []model.Capability{
+			&model.A2ASecurityScheme{
+				SchemeName: "httpAuth",
+				Name:       "httpAuth",
+				Type:       "http",
+				HTTPScheme: "Bearer",
+			},
+			&model.A2ASecurityRequirement{
+				Schemes: map[string][]string{"httpAuth": {}},
+			},
+		},
+	}
+	entry := &model.CatalogEntry{
+		ID:          "ce-auth-test",
+		AgentTypeID: agentType.ID,
+		AgentType:   agentType,
+		DisplayName: "Auth Test Agent",
+		Source:      model.SourcePush,
+		Status:      model.LifecycleRegistered,
+	}
+
+	require.NoError(t, s.Create(context.Background(), entry))
+
+	req := httptest.NewRequest("GET", "/api/v1/catalog", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var entries []map[string]interface{}
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&entries))
+	require.NotEmpty(t, entries)
+
+	var found map[string]interface{}
+	for _, e := range entries {
+		if e["id"] == "ce-auth-test" {
+			found = e
+			break
+		}
+	}
+	require.NotNil(t, found, "Expected to find ce-auth-test in response")
+
+	authSummary, ok := found["auth_summary"].(map[string]interface{})
+	require.True(t, ok, "Expected auth_summary object")
+
+	types := authSummary["types"].([]interface{})
+	assert.Equal(t, 1, len(types))
+	assert.Equal(t, "http:Bearer", types[0])
+
+	assert.Equal(t, "Bearer JWT", authSummary["label"])
+	assert.Equal(t, true, authSummary["required"])
+}
+
+func TestGetEntry_SecurityDetail(t *testing.T) {
+	router, s := newTestRouter(t)
+
+	agentType := &model.AgentType{
+		ID:       "at-sec-detail",
+		AgentKey: model.ComputeAgentKey(model.ProtocolA2A, "https://agent.example.com"),
+		Protocol: model.ProtocolA2A,
+		Endpoint: "https://agent.example.com",
+		Version:  "1.0",
+		Capabilities: []model.Capability{
+			&model.A2ASecurityScheme{
+				SchemeName:   "httpAuth",
+				Name:         "httpAuth",
+				Type:         "http",
+				HTTPScheme:   "Bearer",
+				BearerFormat: "JWT",
+				Description:  "JWT Bearer token",
+			},
+			&model.A2ASecurityRequirement{
+				Schemes: map[string][]string{"httpAuth": {}},
+			},
+		},
+	}
+	entry := &model.CatalogEntry{
+		ID:          "ce-sec-detail",
+		AgentTypeID: agentType.ID,
+		AgentType:   agentType,
+		DisplayName: "Security Detail Agent",
+		Source:      model.SourcePush,
+		Status:      model.LifecycleRegistered,
+	}
+	require.NoError(t, s.Create(context.Background(), entry))
+
+	req := httptest.NewRequest("GET", "/api/v1/catalog/ce-sec-detail", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&response))
+
+	securityDetail, ok := response["security_detail"].(map[string]interface{})
+	require.True(t, ok, "Expected security_detail in response")
+
+	schemes, ok := securityDetail["security_schemes"].([]interface{})
+	require.True(t, ok, "Expected security_schemes array")
+	assert.Len(t, schemes, 1)
+
+	scheme := schemes[0].(map[string]interface{})
+	assert.Equal(t, "http", scheme["type"])
+	assert.Equal(t, "Bearer", scheme["http_scheme"])
+
+	reqs, ok := securityDetail["security_requirements"].([]interface{})
+	require.True(t, ok, "Expected security_requirements array")
+	assert.Len(t, reqs, 1)
+}

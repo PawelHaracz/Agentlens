@@ -9,6 +9,7 @@ func init() {
 	RegisterCapability("a2a.skill", func() Capability { return &A2ASkill{} }, true)
 	RegisterCapability("a2a.interface", func() Capability { return &A2AInterface{} }, false)
 	RegisterCapability("a2a.security_scheme", func() Capability { return &A2ASecurityScheme{} }, false)
+	RegisterCapability("a2a.security_requirement", func() Capability { return &A2ASecurityRequirement{} }, false)
 	RegisterCapability("a2a.extension", func() Capability { return &A2AExtension{} }, false)
 	RegisterCapability("a2a.signature", func() Capability { return &A2ASignature{} }, false)
 }
@@ -45,22 +46,6 @@ func (a *A2AExtension) Kind() string { return "a2a.extension" }
 func (a *A2AExtension) Validate() error {
 	if a.URI == "" {
 		return errors.New("a2a.extension: uri is required")
-	}
-	return nil
-}
-
-// A2ASecurityScheme represents a security scheme for A2A communication.
-// kind: "a2a.security_scheme"
-type A2ASecurityScheme struct {
-	Type   string `json:"type"`
-	Method string `json:"method,omitempty"`
-	Name   string `json:"name,omitempty"`
-}
-
-func (a *A2ASecurityScheme) Kind() string { return "a2a.security_scheme" }
-func (a *A2ASecurityScheme) Validate() error {
-	if a.Type == "" {
-		return errors.New("a2a.security_scheme: type is required")
 	}
 	return nil
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -91,12 +93,20 @@ func capabilityToRow(agentTypeID string, cap model.Capability) (capabilityRow, e
 	// other identifying fields so the (agent_type_id, kind, name) uniqueness
 	// constraint is satisfied even when multiple same-kind caps are stored.
 	if name == "" {
-		for _, fallback := range []string{"uri", "url", "type", "algorithm"} {
+		for _, fallback := range []string{"scheme_name", "uri", "url", "type", "algorithm"} {
 			if v, ok := m[fallback].(string); ok && v != "" {
 				name = v
 				break
 			}
 		}
+	}
+	// For capabilities that carry a "schemes" map (e.g. a2a.security_requirement),
+	// derive a stable name from the sorted scheme names + scopes so that multiple
+	// same-kind capabilities on the same agent_type satisfy the unique constraint.
+	// Include skill_ref (when present) so that per-skill requirements with identical
+	// scheme sets get distinct names.
+	if name == "" {
+		name = derivedNameFromSchemes(m)
 	}
 
 	// Remove common fields from properties so they are not duplicated.
@@ -118,6 +128,55 @@ func capabilityToRow(agentTypeID string, cap model.Capability) (capabilityRow, e
 	}, nil
 }
 
+// derivedNameFromSchemes builds a stable unique name from the "schemes" map
+// inside a capability's JSON representation. Used for a2a.security_requirement
+// to satisfy the (agent_type_id, kind, name) uniqueness constraint when multiple
+// same-kind requirements with different scope sets exist.
+// Format: ["skill:<skillRef>:"]<schemeKey>:<sortedScopes>[+...]
+func derivedNameFromSchemes(m map[string]any) string {
+	schemesRaw, ok := m["schemes"]
+	if !ok {
+		return ""
+	}
+	schemesMap, ok := schemesRaw.(map[string]any)
+	if !ok || len(schemesMap) == 0 {
+		return ""
+	}
+	keys := make([]string, 0, len(schemesMap))
+	for k := range schemesMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		scopeStr := ""
+		if scopesRaw, ok := schemesMap[k]; ok {
+			switch sv := scopesRaw.(type) {
+			case []any:
+				scopes := make([]string, 0, len(sv))
+				for _, s := range sv {
+					if ss, ok := s.(string); ok {
+						scopes = append(scopes, ss)
+					}
+				}
+				sort.Strings(scopes)
+				scopeStr = strings.Join(scopes, ",")
+			case []string:
+				scopes := make([]string, len(sv))
+				copy(scopes, sv)
+				sort.Strings(scopes)
+				scopeStr = strings.Join(scopes, ",")
+			}
+		}
+		parts = append(parts, k+":"+scopeStr)
+	}
+	name := strings.Join(parts, "+")
+	if skillRef, ok := m["skill_ref"].(string); ok && skillRef != "" {
+		name = "skill:" + skillRef + ":" + name
+	}
+	return name
+}
+
 // rowToCapability reconstructs a model.Capability from a capabilityRow.
 func rowToCapability(row capabilityRow) (model.Capability, error) {
 	factory, ok := model.GetCapabilityFactory(row.Kind)
@@ -132,6 +191,16 @@ func rowToCapability(row capabilityRow) (model.Capability, error) {
 	}
 	props["name"] = row.Name
 	props["description"] = row.Description
+
+	// Backward-compat: rows written before scheme_name was introduced as a
+	// dedicated JSON field only have the legacy "name" field. Backfill
+	// scheme_name from the row's Name column so SchemeName is always populated
+	// when deserializing into A2ASecurityScheme.
+	if row.Kind == "a2a.security_scheme" {
+		if _, hasSchemeName := props["scheme_name"]; !hasSchemeName {
+			props["scheme_name"] = row.Name
+		}
+	}
 
 	data, err := json.Marshal(props)
 	if err != nil {

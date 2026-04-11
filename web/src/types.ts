@@ -5,6 +5,24 @@ export interface Capability {
   [key: string]: unknown  // protocol-specific properties
 }
 
+// Security types are defined in securityUtils.ts (single source of truth).
+// Imported here for use in CatalogEntry and re-exported for consumers of @/types.
+import type {
+  AuthSummary,
+  OAuthFlow,
+  SecurityScheme,
+  SecurityRequirement,
+  SecurityDetailView,
+} from '@/lib/securityUtils'
+
+export type {
+  AuthSummary,
+  OAuthFlow,
+  SecurityScheme,
+  SecurityRequirement,
+  SecurityDetailView,
+}
+
 export type Protocol = 'a2a' | 'mcp' | 'a2ui'
 export type LifecycleState = 'registered' | 'active' | 'degraded' | 'offline' | 'deprecated'
 // Status is an alias for backward compatibility
@@ -50,6 +68,8 @@ export interface CatalogEntry {
   raw_definition?: unknown
   spec_version?: string
   metadata?: Record<string, string>
+  auth_summary?: AuthSummary
+  security_detail?: SecurityDetailView
   created_at: string
   updated_at: string
 }

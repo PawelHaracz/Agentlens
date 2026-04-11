@@ -169,4 +169,46 @@ describe('CatalogRow', () => {
     fireEvent.click(link)
     expect(navigate).not.toHaveBeenCalled()
   })
+
+  it('renders auth badge when auth_summary present', () => {
+    renderRow(mkEntry({
+      auth_summary: { types: ['http:Bearer'], label: 'Bearer JWT', required: true },
+    }))
+    expect(screen.getByText('Bearer JWT')).toBeInTheDocument()
+  })
+
+  it('renders no auth badge when auth_summary absent', () => {
+    renderRow(mkEntry({ auth_summary: undefined }))
+    expect(screen.queryByText('Bearer JWT')).not.toBeInTheDocument()
+  })
+
+  it('renders relative time in minutes', () => {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    renderRow(mkEntry({
+      health: { state: 'active', lastProbedAt: null, lastSuccessAt: fiveMinAgo, latencyMs: 0, consecutiveFailures: 0, lastError: '' },
+    }))
+    const cells = screen.getAllByRole('cell')
+    const lastSeenCell = cells[cells.length - 1]
+    expect(lastSeenCell.textContent).toMatch(/\dm ago/)
+  })
+
+  it('renders relative time in hours', () => {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+    renderRow(mkEntry({
+      health: { state: 'active', lastProbedAt: null, lastSuccessAt: twoHoursAgo, latencyMs: 0, consecutiveFailures: 0, lastError: '' },
+    }))
+    const cells = screen.getAllByRole('cell')
+    const lastSeenCell = cells[cells.length - 1]
+    expect(lastSeenCell.textContent).toMatch(/\dh ago/)
+  })
+
+  it('renders relative time in days', () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+    renderRow(mkEntry({
+      health: { state: 'active', lastProbedAt: null, lastSuccessAt: twoDaysAgo, latencyMs: 0, consecutiveFailures: 0, lastError: '' },
+    }))
+    const cells = screen.getAllByRole('cell')
+    const lastSeenCell = cells[cells.length - 1]
+    expect(lastSeenCell.textContent).toMatch(/\dd ago/)
+  })
 })

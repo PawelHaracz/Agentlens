@@ -45,7 +45,7 @@ AgentLens models each discovered agent or server using the **Product Archetype**
 | ---- | ----------- |
 | `AgentType` | The protocol-level identity of an agent: endpoint, protocol, version, `AgentKey` (SHA256 of protocol+endpoint), capabilities, raw definition, and provider. Maps to the `agent_types` table. |
 | `CatalogEntry` | The catalog wrapper around an `AgentType`: display name, description, status, source, validity, categories, and metadata. Maps to the `catalog_entries` table. |
-| `Capability` | Polymorphic agent feature (replaces `Skill`). Discriminated by `kind`: `a2a.skill`, `a2a.interface`, `a2a.security_scheme`, `a2a.extension`, `a2a.signature`, `mcp.tool`, `mcp.resource`, `mcp.prompt`. Stored in the `capabilities` table. |
+| `Capability` | Polymorphic agent feature (replaces `Skill`). Discriminated by `kind`: `a2a.skill`, `a2a.interface`, `a2a.security_scheme`, `a2a.security_requirement`, `a2a.extension`, `a2a.signature`, `mcp.tool`, `mcp.resource`, `mcp.prompt`. Stored in the `capabilities` table. |
 | `Provider` | Organization and team that owns the agent. Reusable across agents; stored in the `providers` table. |
 | `Protocol` | The agent communication protocol: `a2a` (Agent-to-Agent), `mcp` (Model Context Protocol), `a2ui` (Agent-to-UI). |
 | `Validity` | Time-bounded availability with `from`, `to`, and `last_seen` timestamps. |
@@ -113,12 +113,47 @@ erDiagram
 |------|----------|-------------------|
 | `a2a.skill` | A2A | `tags`, `input_modes`, `output_modes` |
 | `a2a.interface` | A2A | `url`, `binding` |
-| `a2a.security_scheme` | A2A | `type`, `method` |
+| `a2a.security_scheme` | A2A | `scheme_name`, `type`, `http_scheme`, `bearer_format`, `api_key_location`, `api_key_name`, `oauth_flows`, `openid_connect_url` |
+| `a2a.security_requirement` | A2A | `schemes` (map of scheme name → scope list), `skill_ref` (optional — scopes requirement to a skill) |
 | `a2a.extension` | A2A | `uri`, `required` |
 | `a2a.signature` | A2A | `algorithm`, `key_id` |
 | `mcp.tool` | MCP | `input_schema` |
 | `mcp.resource` | MCP | `uri` |
 | `mcp.prompt` | MCP | `arguments` |
+
+### Security Capabilities and Computed Views
+
+Security information is stored exclusively in the `capabilities` table — no separate security tables exist. Two computed fields (`auth_summary` and `security_detail`) are derived at serialization time from capabilities.
+
+**Storage model:**
+
+- Each `a2a.security_scheme` capability row stores one scheme. The `name` column holds the `scheme_name` value (used as the UNIQUE key alongside `agent_type_id` and `kind`).
+- Each `a2a.security_requirement` capability row stores one requirement. The `name` column is derived from sorted scheme keys, each paired with their sorted scopes (e.g., `"apiKeyAuth:+httpAuth:read,write"`), plus an optional `skill:<skillRef>:` prefix for per-skill requirements. This format ensures uniqueness even when two requirements share the same scheme set but differ in required scopes.
+
+**Computed views:**
+
+- `auth_summary` — computed by `buildAuthSummary()` from all `a2a.security_scheme` capabilities. Returns `nil` for agents with no security schemes (open agents). Contains `label` (human-readable string), `types` (sorted, deduplicated list of scheme type strings), and `required` (boolean — true when at least one top-level `a2a.security_requirement` exists).
+- `security_detail` — computed by `buildSecurityDetail()` from all `a2a.security_scheme` and `a2a.security_requirement` capabilities. Groups them into `security_schemes[]` and `security_requirements[]`. Present in both list (`GET /catalog`) and detail (`GET /catalog/{id}`) responses.
+
+```mermaid
+flowchart LR
+    AC[AgentCard JSON] --> P[A2A Parser]
+    P --> SS[a2a.security_scheme\ncapabilities]
+    P --> SR[a2a.security_requirement\ncapabilities]
+    SS --> DB[(capabilities table)]
+    SR --> DB
+
+    DB --> LIST[GET /catalog]
+    DB --> GET[GET /catalog/:id]
+    LIST --> BS2[buildAuthSummary]
+    LIST --> BSD2[buildSecurityDetail]
+    GET --> BS[buildAuthSummary]
+    GET --> BSD[buildSecurityDetail]
+    BS2 --> AS2[auth_summary field]
+    BSD2 --> SD2[security_detail field]
+    BS --> AS[auth_summary field]
+    BSD --> SD[security_detail field]
+```
 
 ---
 

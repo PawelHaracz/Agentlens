@@ -197,3 +197,152 @@ func TestParse_LegacyCard(t *testing.T) {
 	nonSkillCount := len(agent.Capabilities) - skillCount
 	assert.Equal(t, 0, nonSkillCount)
 }
+
+// --------------- Security Schemes parsing tests (Task 4) ---------------
+
+func TestParse_SecuritySchemes_V10_Bearer(t *testing.T) {
+	data := loadFixture(t, "v10_bearer_only.json")
+
+	p := a2a.New()
+	agentType, err := p.Parse(data)
+	require.NoError(t, err)
+
+	var schemes []*model.A2ASecurityScheme
+	for _, cap := range agentType.Capabilities {
+		if cap.Kind() == "a2a.security_scheme" {
+			schemes = append(schemes, cap.(*model.A2ASecurityScheme))
+		}
+	}
+
+	require.Len(t, schemes, 1, "Expected 1 security scheme")
+
+	scheme := schemes[0]
+	assert.Equal(t, "httpAuth", scheme.SchemeName, "Expected SchemeName 'httpAuth'")
+	assert.Equal(t, "http", scheme.Type, "Expected Type 'http'")
+	assert.Equal(t, "Bearer", scheme.HTTPScheme, "Expected HTTPScheme 'Bearer'")
+	assert.Equal(t, "JWT", scheme.BearerFormat, "Expected BearerFormat 'JWT'")
+}
+
+func TestParse_SecuritySchemes_V10_OAuth2(t *testing.T) {
+	data := loadFixture(t, "v10_oauth2_authcode.json")
+
+	p := a2a.New()
+	agentType, err := p.Parse(data)
+	require.NoError(t, err)
+
+	var schemes []*model.A2ASecurityScheme
+	for _, cap := range agentType.Capabilities {
+		if cap.Kind() == "a2a.security_scheme" {
+			schemes = append(schemes, cap.(*model.A2ASecurityScheme))
+		}
+	}
+
+	require.Len(t, schemes, 1, "Expected 1 security scheme")
+
+	scheme := schemes[0]
+	assert.Equal(t, "oauth2", scheme.Type, "Expected Type 'oauth2'")
+	require.Len(t, scheme.OAuthFlows, 1, "Expected 1 OAuth flow")
+	assert.Equal(t, "authorizationCode", scheme.OAuthFlows[0].FlowType)
+	assert.Len(t, scheme.OAuthFlows[0].Scopes, 3, "Expected 3 scopes")
+}
+
+func TestParse_SecuritySchemes_V03_Array(t *testing.T) {
+	data := loadFixture(t, "v03_security_array.json")
+
+	p := a2a.New()
+	agentType, err := p.Parse(data)
+	require.NoError(t, err)
+
+	var schemes []*model.A2ASecurityScheme
+	for _, cap := range agentType.Capabilities {
+		if cap.Kind() == "a2a.security_scheme" {
+			schemes = append(schemes, cap.(*model.A2ASecurityScheme))
+		}
+	}
+
+	require.Len(t, schemes, 2, "Expected 2 security schemes (v0.3 array format)")
+
+	foundHTTP := false
+	for _, s := range schemes {
+		if s.Type == "http" {
+			foundHTTP = true
+			assert.Equal(t, "Bearer", s.Method, "Expected Method 'Bearer'")
+		}
+	}
+	assert.True(t, foundHTTP, "Expected to find http scheme in v0.3 array")
+}
+
+// --------------- Security Requirements parsing tests (Task 5) ---------------
+
+func TestParse_SecurityRequirements(t *testing.T) {
+	data := loadFixture(t, "v10_bearer_only.json")
+
+	p := a2a.New()
+	agentType, err := p.Parse(data)
+	require.NoError(t, err)
+
+	var reqs []*model.A2ASecurityRequirement
+	for _, cap := range agentType.Capabilities {
+		if cap.Kind() == "a2a.security_requirement" {
+			reqs = append(reqs, cap.(*model.A2ASecurityRequirement))
+		}
+	}
+
+	require.Len(t, reqs, 1, "Expected 1 security requirement")
+
+	req := reqs[0]
+	require.Len(t, req.Schemes, 1, "Expected 1 scheme in requirement")
+	_, ok := req.Schemes["httpAuth"]
+	assert.True(t, ok, "Expected 'httpAuth' in requirement schemes")
+	assert.Equal(t, "", req.SkillRef, "Expected empty SkillRef for top-level requirement")
+}
+
+func TestParse_SecurityRequirements_MultipleSchemes(t *testing.T) {
+	data := loadFixture(t, "v10_multiple_schemes.json")
+
+	p := a2a.New()
+	agentType, err := p.Parse(data)
+	require.NoError(t, err)
+
+	var reqs []*model.A2ASecurityRequirement
+	for _, cap := range agentType.Capabilities {
+		if cap.Kind() == "a2a.security_requirement" {
+			reqs = append(reqs, cap.(*model.A2ASecurityRequirement))
+		}
+	}
+
+	require.Len(t, reqs, 2, "Expected 2 security requirements (OR'd)")
+}
+
+// --------------- Per-Skill Security Requirements tests (Task 6) ---------------
+
+func TestParse_SkillSecurityRequirements(t *testing.T) {
+	data := loadFixture(t, "v10_skill_security.json")
+
+	p := a2a.New()
+	agentType, err := p.Parse(data)
+	require.NoError(t, err)
+
+	var topLevel []*model.A2ASecurityRequirement
+	var skillLevel []*model.A2ASecurityRequirement
+
+	for _, cap := range agentType.Capabilities {
+		if cap.Kind() == "a2a.security_requirement" {
+			req := cap.(*model.A2ASecurityRequirement)
+			if req.SkillRef == "" {
+				topLevel = append(topLevel, req)
+			} else {
+				skillLevel = append(skillLevel, req)
+			}
+		}
+	}
+
+	assert.Len(t, topLevel, 1, "Expected 1 top-level requirement")
+
+	require.Len(t, skillLevel, 1, "Expected 1 skill-level requirement")
+
+	skillReq := skillLevel[0]
+	assert.Equal(t, "createDocument", skillReq.SkillRef)
+	_, ok := skillReq.Schemes["apiKeyAuth"]
+	assert.True(t, ok, "Expected 'apiKeyAuth' in skill requirement")
+}

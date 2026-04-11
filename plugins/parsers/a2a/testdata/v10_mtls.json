@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "name": "mTLS Agent",
+  "description": "Agent with mutual TLS",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "mtlsAuth": {
+      "type": "mutualTls",
+      "description": "Mutual TLS authentication"
+    }
+  },
+  "securityRequirements": [
+    {
+      "mtlsAuth": []
+    }
+  ],
+  "skills": []
+}

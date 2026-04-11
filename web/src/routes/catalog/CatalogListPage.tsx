@@ -117,6 +117,7 @@ export default function CatalogListPage() {
               <TableHead className="text-center">Skills</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Spec</TableHead>
+              <TableHead>Auth</TableHead>
               <TableHead>Last seen</TableHead>
             </TableRow>
           </TableHeader>

@@ -7,12 +7,14 @@
     "security-guidance@claude-plugins-official": true,
     "gopls-lsp@claude-plugins-official": true,
     "superpowers-lab@superpowers-marketplace": true,
-    "cc-skills-golang@samber": false
+    "cc-skills-golang@samber": false,
+    "caveman@caveman": true
+
   },
   "deny": [
-    "Bash(git add *)",
-    "Bash(git commit *)",
-    "Bash(git push *)"
+    "Bash(rtk git add *)",
+    "Bash(rtk git commit *)",
+    "Bash(rtk git push *)"
   ],
   "hooks": {
     "PreToolUse": [

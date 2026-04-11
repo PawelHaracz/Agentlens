@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "name": "OAuth2 Agent",
+  "description": "Agent with OAuth 2.0",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "oauth2Auth": {
+      "type": "oauth2",
+      "flows": {
+        "authorizationCode": {
+          "authorizationUrl": "https://auth.example.com/authorize",
+          "tokenUrl": "https://auth.example.com/token",
+          "refreshUrl": "https://auth.example.com/refresh",
+          "scopes": {
+            "read": "Read access",
+            "write": "Write access",
+            "admin": "Admin access"
+          }
+        }
+      },
+      "oauth2MetadataUrl": "https://auth.example.com/.well-known/oauth-authorization-server"
+    }
+  },
+  "securityRequirements": [
+    {
+      "oauth2Auth": ["read", "write"]
+    }
+  ],
+  "skills": []
+}

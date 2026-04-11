@@ -1,0 +1,22 @@
+{
+  "version": "0.3",
+  "name": "V0.3 Security Agent",
+  "description": "Agent with v0.3 array format security",
+  "url": "https://agent.example.com",
+  "supportsExtendedAgentCard": true,
+  "securitySchemes": [
+    {
+      "type": "http",
+      "method": "Bearer",
+      "name": "Authorization",
+      "description": "Bearer token"
+    },
+    {
+      "type": "apiKey",
+      "method": "header",
+      "name": "X-API-Key",
+      "description": "API Key"
+    }
+  ],
+  "skills": []
+}

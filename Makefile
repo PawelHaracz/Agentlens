@@ -61,6 +61,10 @@ test-race:
 lint: add-html-placeholder
 	golangci-lint run ./...
 
+## lint-fix: Run golangci-lint with auto-fix
+lint-fix:
+	golangci-lint run --fix ./...
+
 ## vet: Run go vet
 vet:
 	$(GO) vet ./...

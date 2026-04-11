@@ -108,6 +108,7 @@ Entrypoint (cmd/**)                    — composition root; may import anything
 5. `docs/end-user-guide.md` updated for UI-visible changes
 6. `docs/settings.md` + `internal/config/` updated for new config keys
 7. `rtk make arch-test` passes
+8. **Screenshots:** When adding or changing UI features, generate new screenshots via Playwright E2E tests and save them to `docs/images/`. Update `docs/end-user-guide.md` to reference the new images. This ensures documentation visually reflects the current UI state and stays in sync with code changes. Use `page.screenshot()` or `element.screenshot()` in E2E specs with `data-testid` selectors for targeted captures.
 
 ## Key files
 

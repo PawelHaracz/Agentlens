@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "name": "OIDC Agent",
+  "description": "Agent with OpenID Connect",
+  "url": "https://agent.example.com",
+  "securitySchemes": {
+    "oidcAuth": {
+      "type": "openIdConnect",
+      "openIdConnectUrl": "https://auth.example.com/.well-known/openid-configuration",
+      "description": "OpenID Connect authentication"
+    }
+  },
+  "securityRequirements": [
+    {
+      "oidcAuth": []
+    }
+  ],
+  "skills": []
+}

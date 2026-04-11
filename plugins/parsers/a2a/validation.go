@@ -1,6 +1,9 @@
 package a2a
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"sort"
+)
 
 // ValidationError represents a single field-level validation error.
 type ValidationError struct {
@@ -31,38 +34,34 @@ type ValidationResult struct {
 
 // fullCard represents the complete A2A agent card structure across spec versions.
 type fullCard struct {
-	Name                      string          `json:"name"`
-	Description               string          `json:"description"`
-	URL                       string          `json:"url"`
-	Version                   string          `json:"version"`
-	Provider                  *a2aProvider    `json:"provider,omitempty"`
-	Skills                    []fullSkill     `json:"skills,omitempty"`
-	SupportedInterfaces       []fullInterface `json:"supportedInterfaces,omitempty"`
-	SecuritySchemes           []fullSecurity  `json:"securitySchemes,omitempty"`
-	Signatures                []fullSignature `json:"signatures,omitempty"`
-	SupportsExtendedAgentCard *bool           `json:"supportsExtendedAgentCard,omitempty"`
-	Capabilities              *capabilities   `json:"capabilities,omitempty"`
-	StateTransitionHistory    *bool           `json:"stateTransitionHistory,omitempty"`
+	Name                      string            `json:"name"`
+	Description               string            `json:"description"`
+	URL                       string            `json:"url"`
+	Version                   string            `json:"version"`
+	Provider                  *a2aProvider      `json:"provider,omitempty"`
+	Skills                    []fullSkill       `json:"skills,omitempty"`
+	SupportedInterfaces       []fullInterface   `json:"supportedInterfaces,omitempty"`
+	SecuritySchemes           json.RawMessage   `json:"securitySchemes,omitempty"` // array (v0.3) OR map (v1.0)
+	SecurityRequirements      []json.RawMessage `json:"securityRequirements,omitempty"`
+	Signatures                []fullSignature   `json:"signatures,omitempty"`
+	SupportsExtendedAgentCard *bool             `json:"supportsExtendedAgentCard,omitempty"`
+	Capabilities              *capabilities     `json:"capabilities,omitempty"`
+	StateTransitionHistory    *bool             `json:"stateTransitionHistory,omitempty"`
 }
 
 type fullSkill struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags,omitempty"`
-	InputModes  []string `json:"inputModes,omitempty"`
-	OutputModes []string `json:"outputModes,omitempty"`
+	ID                   string            `json:"id"`
+	Name                 string            `json:"name"`
+	Description          string            `json:"description"`
+	Tags                 []string          `json:"tags,omitempty"`
+	InputModes           []string          `json:"inputModes,omitempty"`
+	OutputModes          []string          `json:"outputModes,omitempty"`
+	SecurityRequirements []json.RawMessage `json:"securityRequirements,omitempty"`
 }
 
 type fullInterface struct {
 	URL     string `json:"url"`
 	Binding string `json:"binding,omitempty"`
-}
-
-type fullSecurity struct {
-	Type   string `json:"type"`
-	Method string `json:"method,omitempty"`
-	Name   string `json:"name,omitempty"`
 }
 
 type fullSignature struct {
@@ -194,10 +193,7 @@ func collectWarnings(card *fullCard, specVersion string) []string {
 
 // buildPreview constructs a ValidationPreview summary from a valid card.
 func buildPreview(card *fullCard, specVersion string) *ValidationPreview {
-	schemeNames := make([]string, 0, len(card.SecuritySchemes))
-	for _, s := range card.SecuritySchemes {
-		schemeNames = append(schemeNames, s.Type)
-	}
+	schemeNames := buildSecurityPreviewNames(card.SecuritySchemes)
 
 	ifaceBindings := make([]string, 0, len(card.SupportedInterfaces))
 	for _, iface := range card.SupportedInterfaces {
@@ -223,6 +219,39 @@ func buildPreview(card *fullCard, specVersion string) *ValidationPreview {
 		SecuritySchemes: schemeNames,
 		Interfaces:      ifaceBindings,
 	}
+}
+
+// buildSecurityPreviewNames extracts scheme names/types from the raw
+// securitySchemes value, which may be a v1.0 named map or a v0.3 array.
+func buildSecurityPreviewNames(raw json.RawMessage) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	// Try v1.0 map format first.
+	var v10 map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &v10); err == nil {
+		names := make([]string, 0, len(v10))
+		for name := range v10 {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		return names
+	}
+
+	// Try v0.3 array format.
+	var v03 []struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(raw, &v03); err == nil {
+		names := make([]string, 0, len(v03))
+		for _, s := range v03 {
+			names = append(names, s.Type)
+		}
+		return names
+	}
+
+	return nil
 }
 
 // itoa is a simple int-to-string helper to avoid importing strconv.
