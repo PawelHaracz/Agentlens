@@ -268,13 +268,15 @@ make hooks
 
 Run this once after cloning. It installs the lefthook binary and activates all hooks. It is **not** run automatically by `make all` to avoid surprising contributors.
 
+> **Note:** `make hooks` installs lefthook via `go install`, which places it in `$(go env GOPATH)/bin`. Ensure that directory is in your `PATH` (standard Go setup). If hooks appear to silently skip, add `$(go env GOPATH)/bin` to your `PATH`.
+
 ### Verify hooks are installed
 
 ```bash
-lefthook list
+ls .git/hooks/pre-commit .git/hooks/commit-msg .git/hooks/pre-push
 ```
 
-Expected output lists `pre-commit`, `commit-msg`, and `pre-push`.
+Expected: all three files exist.
 
 ### Commit message format
 
