@@ -876,6 +876,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#git-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Git Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Git Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-each-hook-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What each hook does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-hooks-once-per-clone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install hooks (once per clone)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-hooks-are-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify hooks are installed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commit-message-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commit message format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skipping-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skipping hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#writing-plugins" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1495,6 +1567,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#git-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Git Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Git Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-each-hook-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What each hook does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-hooks-once-per-clone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install hooks (once per clone)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-hooks-are-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify hooks are installed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commit-message-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commit message format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skipping-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skipping hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#writing-plugins" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1787,6 +1931,7 @@
 <li><a href="#building">Building</a></li>
 <li><a href="#testing">Testing</a></li>
 <li><a href="#linting">Linting</a></li>
+<li><a href="#git-hooks">Git Hooks</a></li>
 <li><a href="#writing-plugins">Writing Plugins</a></li>
 <li><a href="#frontend-development">Frontend Development</a></li>
 <li><a href="#docker">Docker</a></li>
@@ -1922,7 +2067,11 @@ make<span class="w"> </span>run
 </tr>
 <tr>
 <td><code>make tools</code></td>
-<td>Install golangci-lint</td>
+<td>Install golangci-lint, arch-go, lefthook</td>
+</tr>
+<tr>
+<td><code>make hooks</code></td>
+<td>Install git hooks via lefthook (run once after cloning)</td>
 </tr>
 <tr>
 <td><code>make web-install</code></td>
@@ -2029,6 +2178,63 @@ make<span class="w"> </span>format<span class="w">     </span><span class="c1">#
 </code></pre></div>
 <h3 id="frontend-typescript">Frontend (TypeScript)<a class="headerlink" href="#frontend-typescript" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>web-lint<span class="w">   </span><span class="c1"># tsc --noEmit</span>
+</code></pre></div>
+<hr />
+<h2 id="git-hooks">Git Hooks<a class="headerlink" href="#git-hooks" title="Permanent link">&para;</a></h2>
+<p>AgentLens uses <a href="https://github.com/evilmartians/lefthook">lefthook</a> to manage git hooks checked into the repo. Hooks provide a local quality gate that catches issues before they reach CI.</p>
+<h3 id="what-each-hook-does">What each hook does<a class="headerlink" href="#what-each-hook-does" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>When</th>
+<th>Jobs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>pre-commit</strong></td>
+<td>On every <code>git commit</code></td>
+<td><code>gofmt</code> check (parallel), <code>golangci-lint</code> (parallel), TypeScript type-check (parallel)</td>
+</tr>
+<tr>
+<td><strong>commit-msg</strong></td>
+<td>After pre-commit</td>
+<td>commitlint validates conventional commit format</td>
+</tr>
+<tr>
+<td><strong>pre-push</strong></td>
+<td>On <code>git push</code></td>
+<td><code>make test</code> + <code>make web-test</code> (parallel), then <code>make arch-test</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="install-hooks-once-per-clone">Install hooks (once per clone)<a class="headerlink" href="#install-hooks-once-per-clone" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>hooks
+</code></pre></div>
+<p>Run this once after cloning. It installs the lefthook binary and activates all hooks. It is <strong>not</strong> run automatically by <code>make all</code> to avoid surprising contributors.</p>
+<blockquote>
+<p><strong>Note:</strong> <code>make hooks</code> installs lefthook via <code>go install</code>, which places it in <code>$(go env GOPATH)/bin</code>. Ensure that directory is in your <code>PATH</code> (standard Go setup). If hooks appear to silently skip, add <code>$(go env GOPATH)/bin</code> to your <code>PATH</code>.</p>
+</blockquote>
+<h3 id="verify-hooks-are-installed">Verify hooks are installed<a class="headerlink" href="#verify-hooks-are-installed" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>.git/hooks/pre-commit<span class="w"> </span>.git/hooks/commit-msg<span class="w"> </span>.git/hooks/pre-push
+</code></pre></div>
+<p>Expected: all three files exist.</p>
+<h3 id="commit-message-format">Commit message format<a class="headerlink" href="#commit-message-format" title="Permanent link">&para;</a></h3>
+<p>Hooks enforce <a href="https://www.conventionalcommits.org/">Conventional Commits</a>:</p>
+<div class="highlight"><pre><span></span><code>&lt;type&gt;[(scope)]: &lt;subject&gt;
+</code></pre></div>
+<p>Allowed types: <code>feat</code>, <code>fix</code>, <code>chore</code>, <code>docs</code>, <code>refactor</code>, <code>test</code>, <code>ci</code>, <code>build</code>, <code>perf</code>, <code>revert</code></p>
+<p>Examples:
+<div class="highlight"><pre><span></span><code>feat: add kubernetes source plugin
+feat(api): expose capabilities endpoint
+fix(auth): correct lockout timer reset
+chore: bump go version to 1.26.1
+</code></pre></div></p>
+<h3 id="skipping-hooks">Skipping hooks<a class="headerlink" href="#skipping-hooks" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>commit<span class="w"> </span>--no-verify<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;wip: ...&quot;</span><span class="w">   </span><span class="c1"># skip pre-commit + commit-msg</span>
+git<span class="w"> </span>push<span class="w"> </span>--no-verify<span class="w">                    </span><span class="c1"># skip pre-push</span>
+<span class="nv">LEFTHOOK</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>git<span class="w"> </span>commit<span class="w"> </span>...<span class="w">              </span><span class="c1"># disable lefthook entirely</span>
 </code></pre></div>
 <hr />
 <h2 id="writing-plugins">Writing Plugins<a class="headerlink" href="#writing-plugins" title="Permanent link">&para;</a></h2>
@@ -2354,7 +2560,7 @@ bun<span class="w"> </span>run<span class="w"> </span>dev
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 6, 2026 15:17:57 UTC"><span class="timeago" datetime="2026-04-06T15:17:57+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 6, 2026 15:17:57 UTC">2026-04-06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 18:42:47 UTC"><span class="timeago" datetime="2026-04-11T18:42:47+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 18:42:47 UTC">2026-04-11</span>
   </span>
 
     
