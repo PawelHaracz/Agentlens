@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-04-10
+**Related:** [ADR-003](003-microkernel-plugin-architecture.md) (plugin architecture), [ADR-004](004-product-catalog-pattern.md) (rationale for choosing this pattern)
 **Context:** AgentLens models agent discovery using the Product Archetype pattern from [softwarearchetypes/product](https://github.com/softwarearchetypes). This ADR documents the archetype's core principles, their Go translation, and how AgentLens applies them — with specific attention to where the current codebase conforms and where it drifts.
 
 ---
