@@ -789,6 +789,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#raw-card-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1205,7 +1216,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#authentication_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Authentication
@@ -1651,6 +1662,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#raw-card-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2067,7 +2089,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#authentication_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Authentication
@@ -2463,11 +2485,17 @@ account.</p>
 <td>Agent Card spec version (e.g. <code>A2A 1.0</code>)</td>
 </tr>
 <tr>
+<td><strong>Auth</strong></td>
+<td>Authentication badge for A2A agents (e.g. <code>Bearer JWT</code>, <code>API Key</code>, <code>OAuth 2.0</code>). Empty for open agents and MCP servers.</td>
+</tr>
+<tr>
 <td><strong>Last seen</strong></td>
 <td>Relative timestamp of the most recent successful health probe</td>
 </tr>
 </tbody>
 </table>
+<p><img alt="Catalog list showing Auth column with authentication badges" src="../images/catalog-list-auth-badges.png" />
+<em>Catalog list — the Auth column shows a badge for authenticated agents; open agents have an empty cell.</em></p>
 <p>Rows are sorted by registration time (most recent first) by default. Click any column header to re-sort.</p>
 <p><strong>Empty state:</strong> when no entries are registered, "No agents registered yet." is displayed. When
 filters are active but return no results, "No results match your filters." is shown with a
@@ -2579,6 +2607,11 @@ users with <code>catalog:write</code> permission. Lifecycle action errors are sh
 <td>Authentication scheme advertised by the card</td>
 </tr>
 <tr>
+<td><code>a2a.security_requirement</code></td>
+<td>A2A</td>
+<td>Which scheme(s) a client must use to connect</td>
+</tr>
+<tr>
 <td><code>a2a.extension</code></td>
 <td>A2A</td>
 <td>Custom extension declared in the card</td>
@@ -2605,6 +2638,64 @@ users with <code>catalog:write</code> permission. Lifecycle action errors are sh
 </tr>
 </tbody>
 </table>
+<p><img alt="Detail page for an MCP server entry" src="../images/entry-detail-mcp.png" />
+<em>MCP server detail — tools, resources, and prompts appear as capabilities.</em></p>
+<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
+<p>The <strong>Authentication</strong> card appears on the Overview tab for all agents.</p>
+<p><strong>A2A agents with security schemes:</strong></p>
+<p>The section shows:</p>
+<ol>
+<li><strong>Requirements banner</strong> — lists which scheme(s) a client must present. Multiple entries are OR'd (any one combination is sufficient).</li>
+<li><strong>Scheme cards</strong> — one card per declared security scheme with its type, format, and relevant URLs.</li>
+<li><strong>Connection Example</strong> — a generated <code>curl</code> snippet showing the required headers for the first requirement.</li>
+</ol>
+<p><img alt="Detail page showing bearer auth with requirements banner and connection recipe" src="../images/security-detail-bearer.png" />
+<em>Agent detail — Authentication section with requirements banner, scheme cards, and connection example.</em></p>
+<p><strong>Scheme card fields by type:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Fields shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>http</code> (Bearer)</td>
+<td>Badge <code>Bearer JWT</code>; note about Authorization header</td>
+</tr>
+<tr>
+<td><code>apiKey</code></td>
+<td>Location (<code>header</code>/<code>query</code>/<code>cookie</code>) and header/param name</td>
+</tr>
+<tr>
+<td><code>oauth2</code></td>
+<td>Flow type badge(s), Authorization URL, Token URL, Scopes table</td>
+</tr>
+<tr>
+<td><code>openIdConnect</code></td>
+<td>Link to OIDC discovery document</td>
+</tr>
+<tr>
+<td><code>mutualTls</code></td>
+<td>Note about client certificate configuration</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Detail page showing OAuth2 authorization code flow" src="../images/security-detail-oauth2.png" />
+<em>OAuth2 scheme card — flow type, authorization and token URLs, and required scopes.</em></p>
+<p>The <strong>Requirements banner</strong> summarises which scheme combinations a client must present:</p>
+<p><img alt="Security requirements banner close-up" src="../images/security-requirements-banner.png" />
+<em>Requirements banner — each row is one valid authentication combination.</em></p>
+<p>The <strong>Connection Example</strong> card generates a ready-to-use <code>curl</code> command:</p>
+<p><img alt="Connection recipe close-up" src="../images/connection-recipe.png" />
+<em>Connection recipe — copy-paste curl snippet with the required authentication headers.</em></p>
+<p><strong>A2A agents with no security (open agents):</strong></p>
+<p>The Authentication card shows: <em>"This agent does not declare any authentication requirements."</em></p>
+<p><img alt="Detail page showing no-auth state" src="../images/security-detail-no-auth.png" />
+<em>Open agent — Authentication section with no-auth message.</em></p>
+<p><strong>MCP servers:</strong></p>
+<p>The Authentication card shows: <em>"MCP servers declare authentication at the transport level, not in the server card."</em></p>
 <p><img alt="Detail page for an MCP server entry" src="../images/entry-detail-mcp.png" />
 <em>MCP server detail — tools, resources, and prompts appear as capabilities.</em></p>
 <h3 id="raw-card-tab">Raw Card Tab<a class="headerlink" href="#raw-card-tab" title="Permanent link">&para;</a></h3>
@@ -3078,7 +3169,7 @@ or a <strong>custom role</strong>.</p>
 <hr />
 <h2 id="using-the-rest-api">Using the REST API<a class="headerlink" href="#using-the-rest-api" title="Permanent link">&para;</a></h2>
 <p>AgentLens exposes a REST API at <code>/api/v1/</code>. Full reference: <a href="../api/">docs/api.md</a>.</p>
-<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
+<h3 id="authentication_1">Authentication<a class="headerlink" href="#authentication_1" title="Permanent link">&para;</a></h3>
 <p>Obtain a token:</p>
 <div class="highlight"><pre><span></span><code><span class="err">POST /api/v1/auth/login</span>
 <span class="err">Content-Type: application/json</span>
@@ -3275,7 +3366,7 @@ hostname.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 10, 2026 08:52:19 UTC"><span class="timeago" datetime="2026-04-10T08:52:19+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 10, 2026 08:52:19 UTC">2026-04-10</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 14:56:55 UTC"><span class="timeago" datetime="2026-04-11T14:56:55+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 14:56:55 UTC">2026-04-11</span>
   </span>
 
     

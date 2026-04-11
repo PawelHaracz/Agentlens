@@ -1,0 +1,2119 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://agentlens.cloudtown.io/superpowers/specs/2026-04-10-a2a-security-schemes-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Feature 2.5 — A2A Security Schemes: Parsing, Storage, and Dashboard Display - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../css/timeago.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#feature-25-a2a-security-schemes-parsing-storage-and-dashboard-display" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Feature 2.5 — A2A Security Schemes: Parsing, Storage, and Dashboard Display
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-made-during-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions Made During Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope (in)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope (out)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backend-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-enrich-a2asecurityscheme-capability-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Enrich A2ASecurityScheme capability model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-new-a2asecurityrequirement-capability-kind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. New A2ASecurityRequirement capability kind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-new-securitystoreplugin-kernel-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. New SecurityStorePlugin kernel interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-securitydetail-transport-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. SecurityDetail transport model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-built-in-securitystore-plugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Built-in SecurityStore plugin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-a2a-parser-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. A2A parser extension
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-api-changes-detail-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. API changes — detail endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-api-changes-list-endpoint-authsummary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. API changes — list endpoint authSummary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-wiring-in-maingo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Wiring in main.go
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agent-detail-view-authentication-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent detail view — "Authentication" section
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agent detail view — &#34;Authentication&#34; section">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scheme-cards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheme cards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-requirements-banner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security requirements banner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connection-recipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection recipe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-auth-declared-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No auth declared state
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-skill-security-in-agent-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-skill security in agent detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalog-list-view-auth-badge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Catalog list view — auth badge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilities-tab-auth-indicator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capabilities tab — auth indicator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-frontend-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New frontend files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend — parser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend-securitystoreplugin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend — SecurityStorePlugin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend — handler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-unit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend — unit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e2e-playwright" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E2E — Playwright
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-traps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Traps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-order-suggested-commit-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution Order (suggested commit sequence)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architectural Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#product-archetype-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product Archetype alignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#microkernel-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microkernel alignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-system-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability system alignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-boundaries-arch-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer boundaries (arch-go)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#out-of-band-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out-of-band Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="feature-25-a2a-security-schemes-parsing-storage-and-dashboard-display">Feature 2.5 — A2A Security Schemes: Parsing, Storage, and Dashboard Display<a class="headerlink" href="#feature-25-a2a-security-schemes-parsing-storage-and-dashboard-display" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>⚠ SUPERSEDED BY ADR-001</strong></p>
+<p>The design in this document (Hybrid: capability rows + <code>SecurityStorePlugin</code> + <code>security_details</code> table) was
+revised during implementation to comply with <a href="../../../adr/001-product-archetype-principles/">ADR-001 (Product Archetype Principles)</a>.</p>
+<p><strong>Implemented design (authoritative):</strong>
+- Security data is stored <strong>exclusively</strong> in the <code>capabilities</code> table as two capability kinds:
+  <code>a2a.security_scheme</code> and <code>a2a.security_requirement</code>.
+- No <code>SecurityStorePlugin</code>, no <code>security_details</code> table, no new plugins.
+- <code>auth_summary</code> and <code>security_detail</code> are <strong>computed at serialization time</strong> from capabilities in
+  <code>buildAuthSummary()</code> / <code>buildSecurityDetail()</code> in <code>internal/model/agent.go</code>.</p>
+<p>See <code>docs/architecture.md</code> (Security Capabilities and Computed Views section) for the authoritative
+architecture description.</p>
+</blockquote>
+<p><strong>Tier:</strong> 2 — SHOULD HAVE
+<strong>Effort:</strong> M (3-4 days)
+<strong>Date:</strong> 2026-04-10</p>
+<hr />
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>When a platform engineer discovers an agent via the catalog or the Capabilities tab, the immediate next question is: "How do I authenticate to this thing?" Today the answer is "go read the agent's documentation" — which is exactly the kind of friction AgentLens exists to eliminate.</p>
+<p>This feature parses the <code>securitySchemes</code> and <code>securityRequirements</code> blocks from A2A Agent Cards (spec v0.3 and v1.0), stores them via the existing capability system and a new <code>SecurityStorePlugin</code>, exposes them via the API, and renders a clear "Authentication" section in the agent detail view that tells the integrator everything they need to connect.</p>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Every A2A Agent Card can declare how clients must authenticate: API keys, Bearer tokens, OAuth 2.0 flows, OIDC, or mTLS. Today AgentLens stores only a minimal summary (<code>A2ASecurityScheme{Type, Method, Name}</code>) as non-discoverable capability rows.</li>
+<li>Without security scheme display, every integration starts with manual doc diving. Multiply that by 50 agents in a catalog and it becomes a real bottleneck for platform teams.</li>
+<li>Competing registries (a2aregistry.org, Apicurio) do not surface auth requirements in a structured, actionable way. This is a clear UX win.</li>
+<li>Feature 2.3 (Capability-based Discovery) just landed — users are now finding agents by capability. The natural follow-up is "I found the right agent, now show me how to connect."</li>
+</ul>
+<hr />
+<h2 id="decisions-made-during-design">Decisions Made During Design<a class="headerlink" href="#decisions-made-during-design" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rich security detail storage</td>
+<td><strong>Hybrid: capability rows + SecurityStorePlugin</strong></td>
+<td><code>a2a.security_scheme</code> capability rows provide indexing/summary (type, method, name). A new <code>SecurityStorePlugin</code> stores the rich structured detail (OAuth flows, scopes, URLs). This follows the same pattern as raw cards: capability table for discovery, plugin for full data.</td>
+</tr>
+<tr>
+<td>SecurityStorePlugin scope</td>
+<td><strong>Protocol-agnostic</strong> — works for A2A, MCP, A2UI</td>
+<td>The plugin interface accepts any protocol. A2A is the first consumer. MCP and A2UI parsers can use the same plugin when their specs define security.</td>
+</tr>
+<tr>
+<td>SecurityStorePlugin default impl</td>
+<td><strong>Built-in SQLite-compatible OSS implementation</strong> in <code>plugins/securitystore/</code></td>
+<td>Ships a <code>security_details</code> table with JSON TEXT storage, same as cardstore. Enterprise can swap in a Postgres-optimized version.</td>
+</tr>
+<tr>
+<td><code>securityRequirements</code> storage</td>
+<td><strong>New non-discoverable capability kind</strong> (<code>a2a.security_requirement</code>)</td>
+<td>Stores top-level security requirements as capability rows in the existing <code>capabilities</code> table. Consistent with the pattern used for <code>a2a.extension</code>, <code>a2a.interface</code>, <code>a2a.signature</code>.</td>
+</tr>
+<tr>
+<td>Per-skill security requirements</td>
+<td><strong>Separate <code>a2a.security_requirement</code> capability rows per skill</strong></td>
+<td>Per-skill security overrides are stored as distinct capability rows, not embedded in <code>A2ASkill</code> properties. Keeps capability rows normalized and queryable.</td>
+</tr>
+<tr>
+<td>A2A spec version handling</td>
+<td><strong>Support both v0.3 array + v1.0 named map</strong></td>
+<td>Current parser handles <code>securitySchemes</code> as <code>[]fullSecurity</code> (v0.3 array format). A2A v1.0 uses a named map <code>map[string]SecurityScheme</code>. Parser detects format and handles both. v0.3 entries get auto-generated names from type field.</td>
+</tr>
+<tr>
+<td><code>authSummary</code> in list response</td>
+<td><strong>Computed at handler level</strong> from <code>a2a.security_scheme</code> capability rows</td>
+<td>No new column, no migration. Handler iterates the agent's capabilities to build a lightweight summary.</td>
+</tr>
+<tr>
+<td>CatalogEntry changes</td>
+<td><strong>None</strong></td>
+<td>Security data belongs to <code>AgentType</code> (Product Archetype). CatalogEntry never directly holds capabilities. No new columns on <code>catalog_entries</code>.</td>
+</tr>
+<tr>
+<td>Domain model location</td>
+<td><strong>Enrich existing <code>A2ASecurityScheme</code></strong> + new <code>A2ASecurityRequirement</code> in <code>internal/model/a2a_capabilities.go</code></td>
+<td>No new <code>security.go</code> file in model. Security types are A2A capability types — they belong with the other A2A capabilities.</td>
+</tr>
+<tr>
+<td>Deprecated OAuth flows</td>
+<td><strong>Parse but never display</strong></td>
+<td>Implicit and Password flows are parsed for completeness, marked <code>Deprecated = true</code> in the model. Frontend omits them entirely — no strikethrough, no warning.</td>
+</tr>
+<tr>
+<td>Migration approach</td>
+<td><strong>Go migration function</strong> in <code>internal/db/migrations.go</code></td>
+<td>Not SQL files. The project uses Go migration functions registered in <code>AllMigrations()</code>. New migration creates the <code>security_details</code> table if the SecurityStorePlugin doesn't handle its own schema (following cardstore pattern, the plugin does its own <code>AutoMigrate</code>).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="scope-in">Scope (in)<a class="headerlink" href="#scope-in" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Enrich <code>A2ASecurityScheme</code> model with full A2A v1.0 security scheme fields (OAuth flows, scopes, URLs, API key details, OIDC, mTLS)</li>
+<li>New <code>A2ASecurityRequirement</code> capability kind (<code>a2a.security_requirement</code>, non-discoverable)</li>
+<li>New <code>SecurityStorePlugin</code> kernel interface — protocol-agnostic, stores rich structured security detail</li>
+<li>Built-in <code>plugins/securitystore/</code> implementation with <code>security_details</code> table</li>
+<li>A2A parser extension: parse both v0.3 array and v1.0 named map <code>securitySchemes</code>, parse <code>securityRequirements[]</code></li>
+<li>Per-skill <code>securityRequirements</code> parsing into separate capability rows</li>
+<li>API: <code>authSummary</code> derived field in <code>GET /api/v1/catalog</code> list response</li>
+<li>API: rich security detail in <code>GET /api/v1/catalog/{id}</code> detail response</li>
+<li>Dashboard: "Authentication" section in agent detail view with scheme cards, connection recipe, copy buttons</li>
+<li>Per-skill security display on skill rows in agent detail</li>
+<li>Catalog list: small auth indicator badge per row</li>
+</ol>
+<h2 id="scope-out">Scope (out)<a class="headerlink" href="#scope-out" title="Permanent link">&para;</a></h2>
+<ul>
+<li>AgentLens performing OAuth flows on behalf of the user (AgentLens is a registry, not a gateway)</li>
+<li>Token storage, secret management, or credential vaulting</li>
+<li>Validating that the declared auth endpoint is reachable (health probe already covers endpoint liveness)</li>
+<li>MCP server auth parsing (MCP spec handles auth differently — separate backlog item)</li>
+<li>JWS signature verification of the Agent Card itself (<code>signatures[]</code> — Tier 3)</li>
+<li>Modifying or overriding the security config declared by the agent (read-only display)</li>
+<li>New Postgres <code>JSONB</code> column — <code>TEXT</code> for dialect symmetry, same as features 1.6 and 2.2</li>
+</ul>
+<hr />
+<h2 id="backend-changes">Backend Changes<a class="headerlink" href="#backend-changes" title="Permanent link">&para;</a></h2>
+<h3 id="1-enrich-a2asecurityscheme-capability-model">1. Enrich <code>A2ASecurityScheme</code> capability model<a class="headerlink" href="#1-enrich-a2asecurityscheme-capability-model" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/model/a2a_capabilities.go</code></p>
+<p>The existing <code>A2ASecurityScheme</code> carries only <code>Type</code>, <code>Method</code>, <code>Name</code>. Enrich it with fields for all five A2A v1.0 scheme types:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// A2ASecurityScheme represents a security scheme for A2A communication.</span>
+<span class="c1">// kind: &quot;a2a.security_scheme&quot;</span>
+<span class="c1">//</span>
+<span class="c1">// This is a union type discriminated by Type. Only fields relevant to the</span>
+<span class="c1">// scheme type are populated. Consumers switch on Type to determine which</span>
+<span class="c1">// fields to read.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">A2ASecurityScheme</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Common</span>
+<span class="w">    </span><span class="nx">SchemeName</span><span class="w">  </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;scheme_name&quot;`</span><span class="w">           </span><span class="c1">// key from Agent Card&#39;s securitySchemes map</span>
+<span class="w">    </span><span class="nx">Type</span><span class="w">        </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;type&quot;`</span><span class="w">                   </span><span class="c1">// &quot;apiKey&quot; | &quot;http&quot; | &quot;oauth2&quot; | &quot;openIdConnect&quot; | &quot;mutualTls&quot;</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;description,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// apiKey</span>
+<span class="w">    </span><span class="nx">APIKeyLocation</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;api_key_location,omitempty&quot;`</span><span class="w"> </span><span class="c1">// &quot;header&quot; | &quot;query&quot; | &quot;cookie&quot;</span>
+<span class="w">    </span><span class="nx">APIKeyName</span><span class="w">     </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;api_key_name,omitempty&quot;`</span><span class="w">     </span><span class="c1">// e.g. &quot;X-API-Key&quot;</span>
+
+<span class="w">    </span><span class="c1">// http</span>
+<span class="w">    </span><span class="nx">HTTPScheme</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;http_scheme,omitempty&quot;`</span><span class="w">   </span><span class="c1">// &quot;Bearer&quot; | &quot;Basic&quot; | &quot;Digest&quot;</span>
+<span class="w">    </span><span class="nx">BearerFormat</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;bearer_format,omitempty&quot;`</span><span class="w"> </span><span class="c1">// e.g. &quot;JWT&quot;</span>
+
+<span class="w">    </span><span class="c1">// oauth2</span>
+<span class="w">    </span><span class="nx">OAuthFlows</span><span class="w">        </span><span class="p">[]</span><span class="nx">A2AOAuthFlow</span><span class="w"> </span><span class="s">`json:&quot;oauth_flows,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">OAuth2MetadataURL</span><span class="w"> </span><span class="kt">string</span><span class="w">         </span><span class="s">`json:&quot;oauth2_metadata_url,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// openIdConnect</span>
+<span class="w">    </span><span class="nx">OpenIDConnectURL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;openid_connect_url,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// Backward compat (v0.3 parser used these)</span>
+<span class="w">    </span><span class="nx">Method</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;method,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;name,omitempty&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>New supporting type:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// A2AOAuthFlow represents a single OAuth 2.0 flow variant.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">A2AOAuthFlow</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">FlowType</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;flow_type&quot;`</span><span class="w">                    </span><span class="c1">// &quot;authorizationCode&quot; | &quot;clientCredentials&quot; | &quot;deviceCode&quot; | &quot;implicit&quot; | &quot;password&quot;</span>
+<span class="w">    </span><span class="nx">AuthorizationURL</span><span class="w"> </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;authorization_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">TokenURL</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;token_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">RefreshURL</span><span class="w">       </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;refresh_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">DeviceAuthURL</span><span class="w">    </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;device_auth_url,omitempty&quot;`</span><span class="w">    </span><span class="c1">// deviceCode flow only</span>
+<span class="w">    </span><span class="nx">Scopes</span><span class="w">           </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;scopes,omitempty&quot;`</span><span class="w">             </span><span class="c1">// scope -&gt; description</span>
+<span class="w">    </span><span class="nx">Deprecated</span><span class="w">       </span><span class="kt">bool</span><span class="w">              </span><span class="s">`json:&quot;deprecated,omitempty&quot;`</span><span class="w">         </span><span class="c1">// true for implicit/password</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The enriched <code>A2ASecurityScheme</code> continues to implement <code>Capability</code> via <code>Kind() string</code> and <code>Validate() error</code>. The <code>Validate()</code> method checks that <code>Type</code> is non-empty.</p>
+<p><strong>Capability name column mapping:</strong> The store's <code>capabilityToRow</code> extracts the <code>name</code> column from the capability's JSON <code>"name"</code> field. For backward compatibility, the existing <code>Name</code> field is kept and populated: for v1.0, <code>Name = SchemeName</code> (the map key); for v0.3, <code>Name</code> retains the existing v0.3 value. The <code>SchemeName</code> field is the canonical key for referencing schemes in <code>SecurityRequirement</code>. The <code>Name</code> field is what <code>capabilityToRow</code> uses for the <code>name</code> DB column. Both are set by the parser.</p>
+<h3 id="2-new-a2asecurityrequirement-capability-kind">2. New <code>A2ASecurityRequirement</code> capability kind<a class="headerlink" href="#2-new-a2asecurityrequirement-capability-kind" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/model/a2a_capabilities.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// A2ASecurityRequirement declares which scheme(s) a client MUST use.</span>
+<span class="c1">// kind: &quot;a2a.security_requirement&quot;</span>
+<span class="c1">//</span>
+<span class="c1">// Map key = scheme name (matching a key in SecuritySchemes).</span>
+<span class="c1">// Map value = list of required scopes (empty = no specific scopes).</span>
+<span class="c1">// Multiple A2ASecurityRequirement entries on an AgentType are OR&#39;d:</span>
+<span class="c1">// the client must satisfy at least one complete entry.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">A2ASecurityRequirement</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Schemes</span><span class="w">  </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">][]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;schemes&quot;`</span>
+<span class="w">    </span><span class="nx">SkillRef</span><span class="w"> </span><span class="kt">string</span><span class="w">              </span><span class="s">`json:&quot;skill_ref,omitempty&quot;`</span><span class="w"> </span><span class="c1">// non-empty = per-skill override</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">a</span><span class="w"> </span><span class="o">*</span><span class="nx">A2ASecurityRequirement</span><span class="p">)</span><span class="w"> </span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;a2a.security_requirement&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">a</span><span class="w"> </span><span class="o">*</span><span class="nx">A2ASecurityRequirement</span><span class="p">)</span><span class="w"> </span><span class="nx">Validate</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">Schemes</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">&quot;a2a.security_requirement: schemes must not be empty&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Register in <code>init()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;a2a.security_requirement&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">A2ASecurityRequirement</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+</code></pre></div>
+<p><code>SkillRef</code> links per-skill requirements to their parent skill. When empty, the requirement applies to the entire agent. When non-empty, it contains the skill name and overrides the top-level requirements for that specific skill.</p>
+<h3 id="3-new-securitystoreplugin-kernel-interface">3. New <code>SecurityStorePlugin</code> kernel interface<a class="headerlink" href="#3-new-securitystoreplugin-kernel-interface" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/kernel/plugin.go</code></p>
+<p>Add new plugin type constant:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">PluginTypeSecurityStore</span><span class="w"> </span><span class="nx">PluginType</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;securitystore&quot;</span>
+</code></pre></div>
+<p>Add the specialized interface:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// SecurityStorePlugin persists structured security detail keyed by AgentTypeID.</span>
+<span class="c1">// Protocol-agnostic — works for A2A, MCP, and A2UI.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">SecurityStorePlugin</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Plugin</span>
+<span class="w">    </span><span class="nx">StoreSecurityDetail</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">agentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">detail</span><span class="w"> </span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">SecurityDetail</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="w">    </span><span class="nx">GetSecurityDetail</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">agentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">SecurityDetail</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>File: <code>internal/kernel/kernel.go</code> — add field and accessor:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Core</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing fields...</span>
+<span class="w">    </span><span class="nx">securityStore</span><span class="w"> </span><span class="nx">SecurityStorePlugin</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">// SecurityStore returns the registered security store plugin, or nil if not loaded.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">Core</span><span class="p">)</span><span class="w"> </span><span class="nx">SecurityStore</span><span class="p">()</span><span class="w"> </span><span class="nx">SecurityStorePlugin</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">c</span><span class="p">.</span><span class="nx">securityStore</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>File: <code>internal/kernel/plugin.go</code> — extend <code>Kernel</code> interface:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Kernel</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing methods...</span>
+<span class="w">    </span><span class="nx">SecurityStore</span><span class="p">()</span><span class="w"> </span><span class="nx">SecurityStorePlugin</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>File: <code>internal/kernel/core_registry.go</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// RegisterSecurityStore registers the security store plugin.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="w"> </span><span class="o">*</span><span class="nx">Core</span><span class="p">)</span><span class="w"> </span><span class="nx">RegisterSecurityStore</span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="nx">SecurityStorePlugin</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">c</span><span class="p">.</span><span class="nx">securityStore</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">p</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>File: <code>internal/kernel/plugin_manager.go</code> — add auto-registration in <code>InitAll()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Register security store plugins with the kernel</span>
+<span class="k">if</span><span class="w"> </span><span class="nx">ssp</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">p</span><span class="p">.(</span><span class="nx">SecurityStorePlugin</span><span class="p">);</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">pm</span><span class="p">.</span><span class="nx">core</span><span class="p">.</span><span class="nx">RegisterSecurityStore</span><span class="p">(</span><span class="nx">ssp</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="4-securitydetail-transport-model">4. SecurityDetail transport model<a class="headerlink" href="#4-securitydetail-transport-model" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/model/security_detail.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// SecurityDetail holds the full structured security metadata for an AgentType.</span>
+<span class="c1">// It is a pure transport struct returned by SecurityStorePlugin — NOT a GORM</span>
+<span class="c1">// model and has no database tags. Persistence is handled by the plugin&#39;s</span>
+<span class="c1">// internal row struct.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">SecurityDetail</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">AgentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;agent_type_id&quot;`</span>
+<span class="w">    </span><span class="nx">Protocol</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;protocol&quot;`</span>
+
+<span class="w">    </span><span class="c1">// Full structured security schemes keyed by scheme name.</span>
+<span class="w">    </span><span class="c1">// For A2A v0.3 (array format), keys are auto-generated from type field.</span>
+<span class="w">    </span><span class="nx">Schemes</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">SecuritySchemeDetail</span><span class="w"> </span><span class="s">`json:&quot;schemes&quot;`</span>
+
+<span class="w">    </span><span class="c1">// Top-level security requirements.</span>
+<span class="w">    </span><span class="c1">// Multiple entries are OR&#39;d (client must satisfy at least one).</span>
+<span class="w">    </span><span class="c1">// Schemes within a single entry are AND&#39;d.</span>
+<span class="w">    </span><span class="nx">Requirements</span><span class="w"> </span><span class="p">[]</span><span class="nx">SecurityRequirementDetail</span><span class="w"> </span><span class="s">`json:&quot;requirements,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// Per-skill security overrides. Key = skill name.</span>
+<span class="w">    </span><span class="nx">SkillRequirements</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">][]</span><span class="nx">SecurityRequirementDetail</span><span class="w"> </span><span class="s">`json:&quot;skill_requirements,omitempty&quot;`</span>
+<span class="p">}</span>
+
+<span class="c1">// SecuritySchemeDetail is the rich representation of one security scheme.</span>
+<span class="c1">// Protocol-agnostic wrapper — the fields cover A2A scheme types.</span>
+<span class="c1">// Future MCP/A2UI security will extend this or use the same fields.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">SecuritySchemeDetail</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Type</span><span class="w">        </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;type&quot;`</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;description,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// apiKey</span>
+<span class="w">    </span><span class="nx">APIKeyLocation</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;api_key_location,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">APIKeyName</span><span class="w">     </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;api_key_name,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// http</span>
+<span class="w">    </span><span class="nx">HTTPScheme</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;http_scheme,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">BearerFormat</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;bearer_format,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// oauth2</span>
+<span class="w">    </span><span class="nx">OAuthFlows</span><span class="w">        </span><span class="p">[]</span><span class="nx">OAuthFlowDetail</span><span class="w"> </span><span class="s">`json:&quot;oauth_flows,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">OAuth2MetadataURL</span><span class="w"> </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;oauth2_metadata_url,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// openIdConnect</span>
+<span class="w">    </span><span class="nx">OpenIDConnectURL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;openid_connect_url,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// mutualTls — no additional fields</span>
+<span class="p">}</span>
+
+<span class="c1">// OAuthFlowDetail holds one OAuth 2.0 flow variant.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">OAuthFlowDetail</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">FlowType</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;flow_type&quot;`</span>
+<span class="w">    </span><span class="nx">AuthorizationURL</span><span class="w"> </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;authorization_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">TokenURL</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;token_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">RefreshURL</span><span class="w">       </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;refresh_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">DeviceAuthURL</span><span class="w">    </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;device_auth_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Scopes</span><span class="w">           </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;scopes,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Deprecated</span><span class="w">       </span><span class="kt">bool</span><span class="w">              </span><span class="s">`json:&quot;deprecated,omitempty&quot;`</span>
+<span class="p">}</span>
+
+<span class="c1">// SecurityRequirementDetail declares which schemes a client must satisfy.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">SecurityRequirementDetail</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Schemes</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">][]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;schemes&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Notes:
+- <code>SecurityDetail</code> is a pure transport struct like <code>model.RawCard</code>. NOT a GORM model.
+- <code>SecuritySchemeDetail</code> and <code>OAuthFlowDetail</code> mirror <code>A2ASecurityScheme</code>/<code>A2AOAuthFlow</code> fields but live in a protocol-agnostic wrapper. This avoids coupling the plugin interface to A2A-specific types.
+- <strong>Why two similar types?</strong> <code>A2ASecurityScheme</code> is a <code>Capability</code> implementation — it participates in the capability registry, has <code>Kind()</code>/<code>Validate()</code>, and is serialized into capability rows with <code>name</code>/<code>description</code>/<code>properties</code> columns. <code>SecuritySchemeDetail</code> is a flat data struct stored as a single JSON blob by the plugin. The parser builds both from the same source data. The capability is for indexing; the detail is for display.
+- The plugin stores/retrieves <code>SecurityDetail</code> as a single JSON blob per <code>AgentTypeID</code>.</p>
+<h3 id="5-built-in-securitystore-plugin">5. Built-in SecurityStore plugin<a class="headerlink" href="#5-built-in-securitystore-plugin" title="Permanent link">&para;</a></h3>
+<p>File: <code>plugins/securitystore/plugin.go</code></p>
+<p>Follows the exact <code>cardstore</code> plugin pattern:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nx">securitystore</span>
+
+<span class="c1">// Plugin implements kernel.SecurityStorePlugin.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Plugin</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">database</span><span class="w"> </span><span class="o">*</span><span class="nx">db</span><span class="p">.</span><span class="nx">DB</span>
+<span class="p">}</span>
+
+<span class="c1">// securityDetailRow is the GORM model for the security_details table.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">securityDetailRow</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">AgentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="w">    </span><span class="s">`gorm:&quot;primaryKey;type:text&quot;`</span>
+<span class="w">    </span><span class="nx">Data</span><span class="w">        </span><span class="kt">string</span><span class="w">    </span><span class="s">`gorm:&quot;not null;type:text;default:&#39;{}&#39;&quot;`</span><span class="w">  </span><span class="c1">// JSON TEXT</span>
+<span class="w">    </span><span class="nx">UpdatedAt</span><span class="w">   </span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="w"> </span><span class="s">`gorm:&quot;not null&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">securityDetailRow</span><span class="p">)</span><span class="w"> </span><span class="nx">TableName</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;security_details&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>Methods:
+- <code>New(database *db.DB) *Plugin</code>
+- <code>Name() string</code> — returns <code>"security-store"</code>
+- <code>Version() string</code> — returns <code>"1.0.0"</code>
+- <code>Type() kernel.PluginType</code> — returns <code>kernel.PluginTypeSecurityStore</code>
+- <code>Init(_ kernel.Kernel) error</code> — calls <code>MigrateSchema</code> (AutoMigrate, idempotent)
+- <code>Start</code>, <code>Stop</code> — no-ops
+- <code>StoreSecurityDetail(ctx, agentTypeID, detail)</code> — marshals <code>SecurityDetail</code> to JSON, upserts by PK using GORM <code>clause.OnConflict</code>
+- <code>GetSecurityDetail(ctx, agentTypeID)</code> — reads row, unmarshals JSON into <code>*model.SecurityDetail</code>, returns <code>gorm.ErrRecordNotFound</code> if missing</p>
+<p>File: <code>plugins/securitystore/migrate.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="w"> </span><span class="o">*</span><span class="nx">Plugin</span><span class="p">)</span><span class="w"> </span><span class="nx">MigrateSchema</span><span class="p">(</span><span class="nx">_</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">database</span><span class="p">.</span><span class="nx">AutoMigrate</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">securityDetailRow</span><span class="p">{})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="6-a2a-parser-extension">6. A2A parser extension<a class="headerlink" href="#6-a2a-parser-extension" title="Permanent link">&para;</a></h3>
+<p>File: <code>plugins/parsers/a2a/validation.go</code></p>
+<p>Extend <code>fullCard</code> to support v1.0 named map format. The parser must detect whether <code>securitySchemes</code> is an array (v0.3) or a map (v1.0):</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">fullCard</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing fields...</span>
+<span class="w">    </span><span class="nx">SecuritySchemes</span><span class="w">    </span><span class="nx">json</span><span class="p">.</span><span class="nx">RawMessage</span><span class="w">     </span><span class="s">`json:&quot;securitySchemes,omitempty&quot;`</span><span class="w">    </span><span class="c1">// array (v0.3) OR map (v1.0)</span>
+<span class="w">    </span><span class="nx">SecurityRequirements</span><span class="w"> </span><span class="p">[]</span><span class="nx">json</span><span class="p">.</span><span class="nx">RawMessage</span><span class="w"> </span><span class="s">`json:&quot;securityRequirements,omitempty&quot;`</span><span class="w"> </span><span class="c1">// v1.0</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Remove the existing typed <code>[]fullSecurity</code> for <code>SecuritySchemes</code> — use <code>json.RawMessage</code> for deferred parsing.</p>
+<p>File: <code>plugins/parsers/a2a/a2a.go</code></p>
+<p>The <code>Parse</code> method extension:</p>
+<ol>
+<li>After <code>buildA2AMetaCaps(&amp;card)</code>, call new <code>buildSecurityCaps(&amp;card)</code>:</li>
+<li>Try to unmarshal <code>card.SecuritySchemes</code> as <code>map[string]json.RawMessage</code> (v1.0). If that fails, try <code>[]fullSecurity</code> (v0.3).</li>
+<li>For v1.0: iterate the map, use the key as <code>SchemeName</code>, peek at <code>"type"</code> field, unmarshal into enriched <code>A2ASecurityScheme</code> with all fields populated.</li>
+<li>For v0.3: iterate the array, auto-generate <code>SchemeName</code> from <code>Type</code> (e.g., <code>"apiKey"</code> -&gt; <code>"apiKeyAuth"</code>, <code>"http"</code> -&gt; <code>"httpAuth"</code>).</li>
+<li>For OAuth2 flows: if <code>flowType</code> is <code>"implicit"</code> or <code>"password"</code>, set <code>Deprecated = true</code> and log a warning.</li>
+<li>For unknown scheme types: log warning, store with <code>Type</code> and <code>Description</code> only — do not error.</li>
+<li>
+<p>Append each <code>*model.A2ASecurityScheme</code> to capabilities.</p>
+</li>
+<li>
+<p>Call new <code>buildSecurityRequirements(&amp;card)</code>:</p>
+</li>
+<li>Parse <code>card.SecurityRequirements</code> array.</li>
+<li>Each entry is <code>map[string][]string</code> (scheme name -&gt; required scopes).</li>
+<li>Verify each referenced scheme name exists in the parsed schemes (warn if not, do not error).</li>
+<li>
+<p>Create <code>*model.A2ASecurityRequirement</code> with <code>SkillRef = ""</code> (top-level).</p>
+</li>
+<li>
+<p>Parse per-skill <code>securityRequirements</code>:</p>
+</li>
+<li>Extend <code>fullSkill</code> to include <code>SecurityRequirements []json.RawMessage</code>.</li>
+<li>
+<p>For each skill with non-empty security requirements, create <code>*model.A2ASecurityRequirement</code> entries with <code>SkillRef = skill.Name</code>.</p>
+</li>
+<li>
+<p>If the kernel has a <code>SecurityStorePlugin</code> registered, build a <code>model.SecurityDetail</code> from the parsed data and call <code>StoreSecurityDetail</code>. The parser gets access to the kernel via <code>Init(k kernel.Kernel)</code>:</p>
+</li>
+<li>Add a <code>kernel kernel.Kernel</code> field to the A2A parser's <code>Plugin</code> struct (currently it has only <code>initialized bool</code>).</li>
+<li>In <code>Init(k kernel.Kernel)</code>, store <code>p.kernel = k</code>.</li>
+<li><code>Parse</code> is a pure function today — it cannot call the plugin directly. Instead, the caller (discovery manager / handler) is responsible for calling <code>SecurityStore().StoreSecurityDetail()</code> after a successful parse, same way the discovery manager calls <code>CardStore().StoreCard()</code> after parsing. The parser returns the <code>SecurityDetail</code> as a new field on <code>AgentType</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">AgentType</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing fields...</span>
+<span class="w">    </span><span class="nx">SecurityDetail</span><span class="w"> </span><span class="o">*</span><span class="nx">SecurityDetail</span><span class="w"> </span><span class="s">`json:&quot;-&quot; gorm:&quot;-&quot;`</span><span class="w"> </span><span class="c1">// transient, not persisted by GORM</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The discovery manager and the registration handler check for <code>agentType.SecurityDetail != nil</code> and call <code>kernel.SecurityStore().StoreSecurityDetail()</code> if available — following the exact pattern used for <code>RawBytes</code> and <code>CardStore().StoreCard()</code>.</p>
+<h3 id="7-api-changes-detail-endpoint">7. API changes — detail endpoint<a class="headerlink" href="#7-api-changes-detail-endpoint" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/api/handlers.go</code></p>
+<p>Extend <code>GetEntry</code> handler to include security detail in the response:</p>
+<ul>
+<li>After fetching the <code>CatalogEntry</code>, check if <code>kernel.SecurityStore()</code> is non-nil.</li>
+<li>If available, call <code>GetSecurityDetail(ctx, entry.AgentTypeID)</code>.</li>
+<li>If detail exists, add <code>securityDetail</code> to the response via <code>catalogEntryJSON</code>.</li>
+<li>If no detail (not found or plugin not registered), omit the field.</li>
+</ul>
+<p>Extend <code>catalogEntryJSON</code> in <code>internal/model/agent.go</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">catalogEntryJSON</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing fields...</span>
+<span class="w">    </span><span class="nx">SecurityDetail</span><span class="w"> </span><span class="o">*</span><span class="nx">SecurityDetail</span><span class="w"> </span><span class="s">`json:&quot;security_detail,omitempty&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Important:</strong> The <code>MarshalJSON()</code> method on <code>CatalogEntry</code> calls <code>toCatalogEntryJSON()</code> which today has no access to external data like <code>SecurityDetail</code>. The handler must NOT use <code>MarshalJSON()</code> for the detail endpoint. Instead, the handler should:
+1. Call <code>entry.SyncFromDB()</code>
+2. Call <code>entry.toCatalogEntryJSON()</code> — but this is unexported. Two options:
+   a. Export it as <code>ToCatalogEntryJSON()</code> and add a <code>SecurityDetail</code> field to <code>catalogEntryJSON</code>.
+   b. Build the response DTO directly in the handler, composing <code>catalogEntryJSON</code> + <code>security_detail</code>.</p>
+<p>Option (a) is cleaner — export the method and extend the DTO. The handler passes <code>SecurityDetail</code> into the exported method. For the list endpoint, it passes <code>nil</code> (omitted from JSON). Existing callers that use <code>json.Marshal(entry)</code> (which calls <code>MarshalJSON</code>) continue to work — they just don't include security detail.</p>
+<h3 id="8-api-changes-list-endpoint-authsummary">8. API changes — list endpoint <code>authSummary</code><a class="headerlink" href="#8-api-changes-list-endpoint-authsummary" title="Permanent link">&para;</a></h3>
+<p>File: <code>internal/api/handlers.go</code></p>
+<p>Extend <code>ListCatalog</code> handler to compute <code>authSummary</code> for each entry:</p>
+<ul>
+<li>After loading entries (which already includes capabilities via <code>loadCapabilities</code>), iterate each entry's <code>AgentType.Capabilities</code>.</li>
+<li>Filter for <code>a2a.security_scheme</code> kind capabilities.</li>
+<li>Build <code>authSummary</code> from the capability data:</li>
+<li><code>types</code>: array of <code>"&lt;type&gt;:&lt;subtype&gt;"</code> strings (e.g., <code>"http:Bearer"</code>, <code>"apiKey"</code>).</li>
+<li><code>label</code>: human-readable join of type names (max 40 chars). Zero schemes -&gt; <code>"Open (no auth)"</code>.</li>
+<li><code>required</code>: <code>true</code> if any <code>a2a.security_requirement</code> capabilities exist, <code>false</code> otherwise.</li>
+</ul>
+<p>Add <code>authSummary</code> to <code>catalogEntryJSON</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">catalogEntryJSON</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...existing fields...</span>
+<span class="w">    </span><span class="nx">AuthSummary</span><span class="w"> </span><span class="o">*</span><span class="nx">authSummaryJSON</span><span class="w"> </span><span class="s">`json:&quot;auth_summary,omitempty&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">authSummaryJSON</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Types</span><span class="w">    </span><span class="p">[]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;types&quot;`</span>
+<span class="w">    </span><span class="nx">Label</span><span class="w">    </span><span class="kt">string</span><span class="w">   </span><span class="s">`json:&quot;label&quot;`</span>
+<span class="w">    </span><span class="nx">Required</span><span class="w"> </span><span class="kt">bool</span><span class="w">     </span><span class="s">`json:&quot;required&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>authSummary</code> is computed at the handler level, not stored. It is a derived field populated only in the list response.</p>
+<h3 id="9-wiring-in-maingo">9. Wiring in main.go<a class="headerlink" href="#9-wiring-in-maingo" title="Permanent link">&para;</a></h3>
+<p>File: <code>cmd/agentlens/main.go</code></p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nx">securitystorePlugin</span><span class="w"> </span><span class="s">&quot;github.com/PawelHaracz/agentlens/plugins/securitystore&quot;</span>
+
+<span class="c1">// After cardstorePlugin registration:</span>
+<span class="nx">pm</span><span class="p">.</span><span class="nx">Register</span><span class="p">(</span><span class="nx">securitystorePlugin</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="nx">database</span><span class="p">))</span>
+</code></pre></div>
+<p>The <code>PluginManager.InitAll()</code> auto-registers it via the <code>SecurityStorePlugin</code> type assertion (step 3 above).</p>
+<hr />
+<h2 id="frontend-changes">Frontend Changes<a class="headerlink" href="#frontend-changes" title="Permanent link">&para;</a></h2>
+<h3 id="agent-detail-view-authentication-section">Agent detail view — "Authentication" section<a class="headerlink" href="#agent-detail-view-authentication-section" title="Permanent link">&para;</a></h3>
+<p>Add a new section in the agent detail view, positioned below the health section and above protocol extensions. Use shadcn <code>Card</code> as the container.</p>
+<h4 id="scheme-cards">Scheme cards<a class="headerlink" href="#scheme-cards" title="Permanent link">&para;</a></h4>
+<p>Each declared security scheme rendered as a shadcn <code>Card</code> inside the section. Content varies by type:</p>
+<p><strong>HTTP Auth (<code>type: "http"</code>):</strong>
+- Badge: scheme value capitalized — "Bearer JWT", "Basic Auth", "Digest Auth"
+- Icon: <code>lucide-react</code> <code>KeyRound</code>
+- Body: <code>description</code> if present
+- If Bearer + JWT: note "Expects a JWT in the Authorization header"</p>
+<p><strong>API Key (<code>type: "apiKey"</code>):</strong>
+- Badge: "API Key"
+- Icon: <code>lucide-react</code> <code>Key</code>
+- Body: <code>description</code> if present
+- Detail line: <code>Location: {location} / Name: {name}</code>
+- Copy button: copies the header string <code>{name}: &lt;your-key&gt;</code></p>
+<p><strong>OAuth 2.0 (<code>type: "oauth2"</code>):</strong>
+- Badge: "OAuth 2.0"
+- Icon: <code>lucide-react</code> <code>ShieldCheck</code>
+- Sub-badges for each non-deprecated flow: "Authorization Code", "Client Credentials", "Device Code"
+- URLs rendered as clickable links (open in new tab): Authorization URL, Token URL, Device Authorization URL
+- If <code>oauth2MetadataUrl</code> is present: prominent link "OAuth 2.0 Metadata" opening in new tab
+- Scopes table: two columns <code>Scope | Description</code>, only if scopes are non-empty
+- Deprecated flows (Implicit, Password): not rendered at all</p>
+<p><strong>OpenID Connect (<code>type: "openIdConnect"</code>):</strong>
+- Badge: "OIDC"
+- Icon: <code>lucide-react</code> <code>Fingerprint</code>
+- Clickable link: "OpenID Connect Discovery" pointing to <code>openIdConnectUrl</code></p>
+<p><strong>Mutual TLS (<code>type: "mutualTls"</code>):</strong>
+- Badge: "mTLS"
+- Icon: <code>lucide-react</code> <code>Lock</code>
+- Default text: "This agent requires mutual TLS. Configure your client certificate before connecting."</p>
+<h4 id="security-requirements-banner">Security requirements banner<a class="headerlink" href="#security-requirements-banner" title="Permanent link">&para;</a></h4>
+<p>If <code>requirements</code> is non-empty, render a highlighted box above the scheme cards:
+- Title: "Required to connect"
+- For each requirement entry: list scheme names (linked to scheme card via anchor) and their required scopes
+- Multiple entries: show "Any of the following combinations:" (entries are OR'd per A2A spec, schemes within entry are AND'd)</p>
+<h4 id="connection-recipe">Connection recipe<a class="headerlink" href="#connection-recipe" title="Permanent link">&para;</a></h4>
+<p>Below scheme cards, a generated <code>curl</code> example using placeholder values:
+- Endpoint URL from the agent's first <code>a2a.interface</code> capability
+- Auth headers derived from the first <code>securityRequirement</code> entry
+- Render in code block with Copy button</p>
+<h4 id="no-auth-declared-state">No auth declared state<a class="headerlink" href="#no-auth-declared-state" title="Permanent link">&para;</a></h4>
+<ul>
+<li>A2A entries with empty security: shadcn <code>Alert</code> with <code>variant="default"</code>: "This agent does not declare any authentication requirements."</li>
+<li>MCP entries: shadcn <code>Alert</code>: "MCP servers declare authentication at the transport level, not in the server card."</li>
+</ul>
+<h3 id="per-skill-security-in-agent-detail">Per-skill security in agent detail<a class="headerlink" href="#per-skill-security-in-agent-detail" title="Permanent link">&para;</a></h3>
+<p>On skill rows, if a skill has per-skill <code>securityRequirements</code> (detected via <code>a2a.security_requirement</code> capabilities with matching <code>SkillRef</code>), show a small inline badge:
+- "Custom auth" with shadcn <code>HoverCard</code> showing per-skill requirements
+- If different from top-level: "Overrides agent-level auth for this skill"</p>
+<h3 id="catalog-list-view-auth-badge">Catalog list view — auth badge<a class="headerlink" href="#catalog-list-view-auth-badge" title="Permanent link">&para;</a></h3>
+<p>In the catalog list table, add a compact auth indicator using <code>authSummary</code>:
+- Column position: after spec version badge, before last seen
+- Content: compact badge from <code>authSummary.label</code>, truncated to 25 chars with tooltip
+- Color: <code>variant="outline"</code> (neutral)
+- No schemes: "Open" badge with <code>variant="secondary"</code></p>
+<h3 id="capabilities-tab-auth-indicator">Capabilities tab — auth indicator<a class="headerlink" href="#capabilities-tab-auth-indicator" title="Permanent link">&para;</a></h3>
+<p>On the Capability detail view (feature 2.3), add "Auth" column to agent rows showing the same <code>authSummary.label</code> badge.</p>
+<h3 id="new-frontend-files">New frontend files<a class="headerlink" href="#new-frontend-files" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>web/src/routes/catalog/detail/
+  AuthenticationSection.tsx      (main section component)
+  SchemeCard.tsx                 (renders one SecuritySchemeDetail)
+  SecurityRequirementsBanner.tsx (&quot;Required to connect&quot; box)
+  ConnectionRecipe.tsx           (generated curl example)
+  PerSkillAuthBadge.tsx          (inline badge for skill-level security)
+web/src/components/
+  AuthBadge.tsx                  (compact badge for list views, reused in catalog + capabilities)
+web/src/lib/
+  securityUtils.ts              (buildAuthSummary, generateCurlRecipe, formatScopesLabel)
+</code></pre></div>
+<hr />
+<h2 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h2>
+<h3 id="backend-parser">Backend — parser<a class="headerlink" href="#backend-parser" title="Permanent link">&para;</a></h3>
+<p>Table-driven tests in <code>plugins/parsers/a2a/</code>. Add fixture files in <code>testdata/</code>:</p>
+<ol>
+<li><strong>v10_bearer_only.json</strong> — one <code>http</code> scheme with Bearer + JWT, one security requirement. Expected: <code>A2ASecurityScheme</code> with enriched fields, <code>A2ASecurityRequirement</code> capability created.</li>
+<li><strong>v10_apikey_header.json</strong> — one <code>apiKey</code> scheme in header. Expected: <code>APIKeyLocation = "header"</code>, <code>APIKeyName</code> populated.</li>
+<li><strong>v10_oauth2_authcode.json</strong> — OAuth2 with AuthorizationCode flow, <code>oauth2MetadataUrl</code>, scopes. Expected: flow parsed, URLs present, scopes map populated.</li>
+<li><strong>v10_oauth2_deprecated_flows.json</strong> — OAuth2 with Implicit + Password + ClientCredentials. Expected: Implicit and Password marked <code>Deprecated = true</code>, ClientCredentials normal.</li>
+<li><strong>v10_oauth2_device_code.json</strong> — OAuth2 with DeviceCode flow. Expected: <code>DeviceAuthURL</code> populated.</li>
+<li><strong>v10_oidc.json</strong> — OpenIdConnect scheme. Expected: <code>OpenIDConnectURL</code> populated.</li>
+<li><strong>v10_mtls.json</strong> — MutualTLS scheme with no extra fields. Expected: type set, no error.</li>
+<li><strong>v10_multiple_schemes.json</strong> — Three schemes (Bearer + APIKey + OAuth2), two security requirements. Expected: all three parsed as capabilities, both requirements as <code>a2a.security_requirement</code> capabilities.</li>
+<li><strong>v10_skill_security.json</strong> — Top-level Bearer + one skill with its own APIKey requirement. Expected: skill-level <code>A2ASecurityRequirement</code> with <code>SkillRef = skill.Name</code>.</li>
+<li><strong>v10_no_security.json</strong> — No <code>securitySchemes</code> field. Expected: no security capabilities, no error.</li>
+<li><strong>v10_unknown_scheme_type.json</strong> — Scheme with <code>"type": "customAuth"</code>. Expected: parsed with type and description only, log warning.</li>
+<li><strong>v03_security_array.json</strong> — v0.3 format <code>securitySchemes</code> as array. Expected: auto-generated <code>SchemeName</code>, backward-compatible parsing.</li>
+</ol>
+<h3 id="backend-securitystoreplugin">Backend — SecurityStorePlugin<a class="headerlink" href="#backend-securitystoreplugin" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Round-trip: store <code>SecurityDetail</code>, read back, verify JSON equality (SQLite)</li>
+<li>Missing entry: <code>GetSecurityDetail</code> returns <code>gorm.ErrRecordNotFound</code></li>
+<li>Upsert: store twice for same <code>agentTypeID</code>, verify latest data returned</li>
+<li>Empty schemes map: valid state, no error</li>
+</ul>
+<h3 id="backend-handler">Backend — handler<a class="headerlink" href="#backend-handler" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>GET /catalog/{id}</code> includes <code>security_detail</code> when SecurityStorePlugin has data</li>
+<li>Same endpoint omits <code>security_detail</code> when no security data stored</li>
+<li><code>GET /catalog</code> list includes <code>auth_summary</code> with correct <code>types</code>, <code>label</code>, <code>required</code></li>
+<li><code>auth_summary.label</code> for no schemes = <code>"Open (no auth)"</code></li>
+<li><code>auth_summary.required</code> reflects presence of <code>a2a.security_requirement</code> capabilities</li>
+</ul>
+<h3 id="frontend-unit">Frontend — unit<a class="headerlink" href="#frontend-unit" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>SchemeCard</code> renders correct content for each of 5 scheme types (snapshot tests)</li>
+<li><code>ConnectionRecipe</code> generates correct curl for Bearer + APIKey combination</li>
+<li><code>AuthBadge</code> renders "Open" when <code>required == false</code></li>
+<li><code>buildAuthSummary</code> utility: multiple schemes -&gt; joined label, zero schemes -&gt; "Open (no auth)"</li>
+<li><code>PerSkillAuthBadge</code> shows "Custom auth" only when skill has own requirements</li>
+</ul>
+<h3 id="e2e-playwright">E2E — Playwright<a class="headerlink" href="#e2e-playwright" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Seed an A2A agent with Bearer + APIKey schemes and two security requirements</li>
+<li>Navigate to agent detail -&gt; "Authentication" section visible</li>
+<li>Verify two scheme cards rendered with correct badges</li>
+<li>Verify "Required to connect" banner shows requirement</li>
+<li>Verify connection recipe curl present with Copy button</li>
+<li>Copy button works (clipboard API assertion)</li>
+<li>Seed an A2A agent with no security schemes -&gt; verify informational alert</li>
+<li>Seed an MCP entry -&gt; verify MCP-specific alert</li>
+<li>On catalog list -&gt; verify auth badge column shows "Bearer JWT + API Key" for first agent, "Open" for second</li>
+<li>Seed agent with per-skill security -&gt; verify skill row shows "Custom auth" badge with hover card</li>
+</ol>
+<hr />
+<h2 id="acceptance-criteria">Acceptance Criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>All 5 A2A v1.0 security scheme types parse correctly from both v0.3 array and v1.0 named map formats</li>
+<li>Deprecated OAuth flows (Implicit, Password) are parsed but never displayed in the UI</li>
+<li>Unknown scheme types do not cause parse failure — stored with type + description, warning logged</li>
+<li><code>SecurityStorePlugin</code> interface added to kernel, with built-in SQLite implementation</li>
+<li>Parser stores rich security detail via <code>SecurityStorePlugin</code> after parsing</li>
+<li><code>GET /catalog/{id}</code> returns <code>security_detail</code> as structured JSON when available</li>
+<li><code>GET /catalog</code> list includes <code>auth_summary</code> for each entry (computed at handler level)</li>
+<li>Agent detail shows "Authentication" section with per-scheme cards, badges, and clickable URLs</li>
+<li>Connection recipe curl is generated and copyable</li>
+<li>Per-skill security requirements are displayed when present and differ from agent-level</li>
+<li>Entries with no declared security show appropriate informational alert (different for A2A vs MCP)</li>
+<li>Catalog list and Capabilities detail both show compact auth badges</li>
+<li><code>a2a.security_requirement</code> registered as non-discoverable capability kind</li>
+<li>Per-skill security requirements stored as separate <code>a2a.security_requirement</code> capability rows with <code>SkillRef</code></li>
+<li>At least 12 parser fixture files with table-driven tests, all green</li>
+<li>SecurityStorePlugin round-trip tests pass</li>
+<li>Playwright E2E green on CI</li>
+<li><code>docs/api.md</code> updated for new response fields</li>
+<li><code>docs/end-user-guide.md</code> updated for Authentication section</li>
+</ol>
+<hr />
+<h2 id="known-traps">Known Traps<a class="headerlink" href="#known-traps" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Do NOT rename <code>CatalogEntry</code> to <code>Agent</code>.</strong> Seven features in. The streak must continue.</li>
+<li><strong>Do NOT add columns to <code>catalog_entries</code> for security data.</strong> Security belongs to <code>AgentType</code> (Product Archetype). The <code>SecurityStorePlugin</code> stores detail keyed by <code>AgentTypeID</code>.</li>
+<li><strong>Do NOT implement a <code>SecurityScheme</code> Go interface with per-type structs.</strong> Go interface dispatch makes JSON round-tripping painful. Use a single struct with a <code>Type</code> discriminator and type-specific fields — the union pattern used for all existing A2A capabilities.</li>
+<li><strong>Do NOT display deprecated OAuth flows.</strong> Parse them, mark <code>Deprecated = true</code>, but frontend never renders Implicit or Password flows.</li>
+<li><strong>Do NOT validate that auth endpoints are reachable.</strong> This feature displays declared config. Endpoint reachability is the health prober's job (feature 1.2).</li>
+<li><strong>Do NOT add security parsing to the MCP parser.</strong> MCP handles auth differently. Leave MCP entries with empty security capabilities. Dashboard handles this gracefully.</li>
+<li><strong>Do NOT require <code>securitySchemes</code> to be present.</strong> OPTIONAL in the A2A spec. Many agents are publicly accessible.</li>
+<li><strong>Do NOT invent a <code>SecurityLevel</code> enum (high/medium/low).</strong> No basis for ranking. Show what the agent declares, do not editorialize.</li>
+<li><strong>Do NOT put full <code>securitySchemes</code> in the list response.</strong> Use the lightweight <code>authSummary</code> derived field.</li>
+<li><strong>Do NOT use <code>localStorage</code> to cache auth tokens or secrets.</strong> AgentLens is a registry, not an authenticator.</li>
+<li><strong>Do NOT use SQL files for migrations.</strong> The project uses Go migration functions in <code>internal/db/migrations.go</code>. The SecurityStore plugin handles its own schema via <code>AutoMigrate</code> (following cardstore pattern).</li>
+<li><strong>Do NOT use raw HTML for scheme cards.</strong> Use shadcn <code>Card</code>, <code>Badge</code>, <code>HoverCard</code>, <code>Tooltip</code>, <code>Alert</code>.</li>
+<li><strong>Do NOT couple <code>SecurityStorePlugin</code> to A2A.</strong> The interface uses <code>model.SecurityDetail</code>, not <code>model.A2ASecurityScheme</code>. MCP and A2UI parsers will use the same plugin.</li>
+<li><strong>Do NOT violate arch-go function limits:</strong> max 80 lines per function, 5 params, 3 return values, 10 public functions per file.</li>
+<li><strong>Do NOT bypass the capability system.</strong> <code>A2ASecurityScheme</code> capabilities provide indexing. <code>SecurityStorePlugin</code> provides rich detail. Both are needed — one does not replace the other.</li>
+</ol>
+<hr />
+<h2 id="execution-order-suggested-commit-sequence">Execution Order (suggested commit sequence)<a class="headerlink" href="#execution-order-suggested-commit-sequence" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Model:</strong> Enrich <code>A2ASecurityScheme</code> with full fields in <code>a2a_capabilities.go</code>. Add <code>A2AOAuthFlow</code>. Add <code>A2ASecurityRequirement</code> + <code>init()</code> registration. Compiles, zero logic.</li>
+<li><strong>Model:</strong> Add <code>SecurityDetail</code>, <code>SecuritySchemeDetail</code>, <code>OAuthFlowDetail</code>, <code>SecurityRequirementDetail</code> to <code>internal/model/security_detail.go</code>. Add transient <code>SecurityDetail *SecurityDetail</code> field to <code>AgentType</code> (<code>json:"-" gorm:"-"</code>). Pure transport structs.</li>
+<li><strong>Kernel:</strong> Add <code>PluginTypeSecurityStore</code>, <code>SecurityStorePlugin</code> interface, <code>Core.securityStore</code> field, <code>SecurityStore()</code> accessor, <code>RegisterSecurityStore()</code>. Extend <code>InitAll()</code> with type assertion.</li>
+<li><strong>Plugin:</strong> <code>plugins/securitystore/</code> — plugin struct, GORM model, <code>MigrateSchema</code>, <code>StoreSecurityDetail</code>, <code>GetSecurityDetail</code>. Plugin tests.</li>
+<li><strong>Wiring:</strong> Register <code>securitystorePlugin.New(database)</code> in <code>cmd/agentlens/main.go</code>.</li>
+<li><strong>Parser:</strong> Refactor <code>fullCard.SecuritySchemes</code> from <code>[]fullSecurity</code> to <code>json.RawMessage</code>. Add <code>SecurityRequirements</code> field. Implement dual-format parsing (v0.3 array + v1.0 map). Add <code>buildSecurityCaps()</code> and <code>buildSecurityRequirements()</code>. Parser stores to <code>SecurityStorePlugin</code> if available. All 12 fixture files + table-driven tests.</li>
+<li><strong>Parser:</strong> Per-skill <code>securityRequirements</code> parsing. Extend <code>fullSkill</code>, create <code>A2ASecurityRequirement</code> with <code>SkillRef</code>. Tests.</li>
+<li><strong>Handler:</strong> Extend <code>GetEntry</code> to include <code>security_detail</code> from SecurityStore. Handler tests.</li>
+<li><strong>Handler:</strong> Add <code>authSummary</code> to <code>ListCatalog</code> response. Utility function + tests.</li>
+<li><strong>Frontend utility:</strong> <code>securityUtils.ts</code> — <code>buildAuthSummary</code>, <code>generateCurlRecipe</code>, <code>formatScopesLabel</code>. Unit tests.</li>
+<li><strong>Frontend:</strong> <code>SchemeCard</code> + <code>SecurityRequirementsBanner</code> + <code>ConnectionRecipe</code> components. Snapshot tests.</li>
+<li><strong>Frontend:</strong> <code>AuthenticationSection</code> composed from above, wired into agent detail view.</li>
+<li><strong>Frontend:</strong> <code>AuthBadge</code> in catalog list (reuses <code>authSummary</code>).</li>
+<li><strong>Frontend:</strong> <code>AuthBadge</code> in Capabilities detail view agent rows.</li>
+<li><strong>Frontend:</strong> <code>PerSkillAuthBadge</code> on skill rows in agent detail.</li>
+<li><strong>Frontend:</strong> Empty states — "no auth declared" alerts for A2A and MCP.</li>
+<li><strong>E2E tests</strong> in Playwright.</li>
+<li><strong>Docs:</strong> Update <code>docs/api.md</code>, <code>docs/end-user-guide.md</code>.</li>
+</ol>
+<p>Each step is its own commit.</p>
+<hr />
+<h2 id="architectural-notes">Architectural Notes<a class="headerlink" href="#architectural-notes" title="Permanent link">&para;</a></h2>
+<h3 id="product-archetype-alignment">Product Archetype alignment<a class="headerlink" href="#product-archetype-alignment" title="Permanent link">&para;</a></h3>
+<p>Security data follows the Product Archetype separation:
+- <code>AgentType</code> (= ProductType) owns capabilities including <code>a2a.security_scheme</code> and <code>a2a.security_requirement</code>.
+- <code>CatalogEntry</code> wraps <code>AgentType</code> with catalog concerns. It never directly holds security data.
+- The <code>SecurityStorePlugin</code> keys data by <code>AgentTypeID</code>, not <code>CatalogEntry.ID</code>.
+- The <code>authSummary</code> in the list response is derived at the handler level from the agent's capabilities — no storage on CatalogEntry.</p>
+<h3 id="microkernel-alignment">Microkernel alignment<a class="headerlink" href="#microkernel-alignment" title="Permanent link">&para;</a></h3>
+<p>The <code>SecurityStorePlugin</code> follows the exact pattern established by <code>CardStorePlugin</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>CardStorePlugin</th>
+<th>SecurityStorePlugin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plugin type</td>
+<td><code>cardstore</code></td>
+<td><code>securitystore</code></td>
+</tr>
+<tr>
+<td>Transport model</td>
+<td><code>model.RawCard</code></td>
+<td><code>model.SecurityDetail</code></td>
+</tr>
+<tr>
+<td>Internal GORM model</td>
+<td><code>rawCardRow</code></td>
+<td><code>securityDetailRow</code></td>
+</tr>
+<tr>
+<td>Table</td>
+<td><code>raw_cards</code></td>
+<td><code>security_details</code></td>
+</tr>
+<tr>
+<td>Key</td>
+<td><code>AgentTypeID</code></td>
+<td><code>AgentTypeID</code></td>
+</tr>
+<tr>
+<td>Storage format</td>
+<td><code>[]byte</code> (blob)</td>
+<td><code>string</code> (JSON text)</td>
+</tr>
+<tr>
+<td>Migration</td>
+<td><code>AutoMigrate</code> in <code>Init()</code></td>
+<td><code>AutoMigrate</code> in <code>Init()</code></td>
+</tr>
+<tr>
+<td>Wiring</td>
+<td><code>main.go</code> registration</td>
+<td><code>main.go</code> registration</td>
+</tr>
+<tr>
+<td>Auto-registration</td>
+<td><code>plugin_manager.go</code> type assertion</td>
+<td><code>plugin_manager.go</code> type assertion</td>
+</tr>
+</tbody>
+</table>
+<h3 id="capability-system-alignment">Capability system alignment<a class="headerlink" href="#capability-system-alignment" title="Permanent link">&para;</a></h3>
+<p>Security data participates in the capability system at two levels:</p>
+<ol>
+<li>
+<p><strong>Indexing level</strong> — <code>a2a.security_scheme</code> and <code>a2a.security_requirement</code> capability rows in the <code>capabilities</code> table. These provide the data for <code>authSummary</code> computation and allow SQL queries like "which agents require OAuth?" without parsing JSON.</p>
+</li>
+<li>
+<p><strong>Detail level</strong> — <code>SecurityStorePlugin</code> stores the full structured data with OAuth flows, scopes, URLs. This provides the data for the "Authentication" section in the detail view.</p>
+</li>
+</ol>
+<p>The two levels serve different consumers and never conflict. Capability rows are written by the store during <code>Create</code>/<code>Update</code> (existing flow). SecurityStore is written by the parser after parsing (new flow, parallel to CardStore).</p>
+<h3 id="layer-boundaries-arch-go">Layer boundaries (arch-go)<a class="headerlink" href="#layer-boundaries-arch-go" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>New code</th>
+<th>Layer</th>
+<th>Dependencies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>internal/model/a2a_capabilities.go</code> (enriched)</td>
+<td>Foundation</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>internal/model/security_detail.go</code></td>
+<td>Foundation</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>internal/kernel/plugin.go</code> (SecurityStorePlugin)</td>
+<td>Core</td>
+<td>Foundation</td>
+</tr>
+<tr>
+<td><code>internal/kernel/kernel.go</code> (accessor)</td>
+<td>Core</td>
+<td>Foundation</td>
+</tr>
+<tr>
+<td><code>internal/kernel/core_registry.go</code> (register)</td>
+<td>Core</td>
+<td>Foundation</td>
+</tr>
+<tr>
+<td><code>internal/kernel/plugin_manager.go</code> (assertion)</td>
+<td>Core</td>
+<td>Foundation</td>
+</tr>
+<tr>
+<td><code>plugins/securitystore/</code></td>
+<td>Plugins</td>
+<td>Kernel + Foundation</td>
+</tr>
+<tr>
+<td><code>plugins/parsers/a2a/</code> (extended)</td>
+<td>Plugins</td>
+<td>Kernel + Foundation</td>
+</tr>
+<tr>
+<td><code>internal/api/handlers.go</code> (extended)</td>
+<td>API</td>
+<td>Core + Infrastructure</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="out-of-band-notes">Out-of-band Notes<a class="headerlink" href="#out-of-band-notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The connection recipe is deliberately a template, not a working command. Using <code>&lt;token&gt;</code> and <code>&lt;key&gt;</code> placeholders makes it clear the user must supply real credentials.</li>
+<li><code>securityRequirements</code> entries are OR'd per the A2A spec (client must satisfy at least one complete entry). Within a single entry, schemes are AND'd. The UI must communicate this clearly.</li>
+<li>The auth badge in the list view is intentionally compact — a summary signal, not the full story.</li>
+<li>After 2.5, the remaining Tier 2 features are 2.1 (OpenTelemetry) and 2.4 (Helm chart production-ready). Both are infra/DevOps focused.</li>
+<li>Future Tier 3 work on JWS signature verification will build on the parsing infrastructure added here.</li>
+<li>The <code>SecurityStorePlugin</code> is designed to be protocol-agnostic. When MCP defines its own security model, the same plugin and transport types can be reused — just a different parser populates them.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 14:56:55 UTC"><span class="timeago" datetime="2026-04-11T14:56:55+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 14:56:55 UTC">2026-04-11</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 14:56:55 UTC"><span class="timeago" datetime="2026-04-11T14:56:55+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 14:56:55 UTC">2026-04-11</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../js/timeago.min.js"></script>
+      
+        <script src="../../../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>

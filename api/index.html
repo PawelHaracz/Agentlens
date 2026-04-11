@@ -718,6 +718,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#authentication-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication fields
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auth_summary-list-and-detail-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        auth_summary (list and detail responses)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security_detail-detail-response-only-get-apiv1catalogid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        security_detail (detail response only — GET /api/v1/catalog/{id})
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#get-apiv1catalog_1" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1491,6 +1530,45 @@
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication fields
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication fields">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auth_summary-list-and-detail-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        auth_summary (list and detail responses)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security_detail-detail-response-only-get-apiv1catalogid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        security_detail (detail response only — GET /api/v1/catalog/{id})
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -2441,6 +2519,208 @@
 </code></pre></div>
 <p>The <code>status</code> field is a backward-compatible alias for <code>health.state</code>.</p>
 <p><strong>Lifecycle states:</strong> <code>registered</code> (not yet probed) · <code>active</code> · <code>degraded</code> · <code>offline</code> · <code>deprecated</code></p>
+<h3 id="authentication-fields">Authentication fields<a class="headerlink" href="#authentication-fields" title="Permanent link">&para;</a></h3>
+<p>A2A catalog entries include two computed authentication fields derived from their stored capabilities at serialization time. These fields are never stored directly — they are always computed fresh from the <code>a2a.security_scheme</code> and <code>a2a.security_requirement</code> capabilities.</p>
+<h4 id="auth_summary-list-and-detail-responses"><code>auth_summary</code> (list and detail responses)<a class="headerlink" href="#auth_summary-list-and-detail-responses" title="Permanent link">&para;</a></h4>
+<p>Present on all A2A entries that declare at least one security scheme. Absent (<code>omitempty</code>) for open agents and all MCP entries.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;auth_summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;http:Bearer&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;apiKey&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Bearer JWT + API Key&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>types</code></td>
+<td><code>string[]</code></td>
+<td>Normalized scheme type strings. <code>http</code> schemes are qualified as <code>http:Bearer</code>, <code>http:Basic</code>, etc.</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td><code>string</code></td>
+<td>Human-readable summary (max 40 chars, truncated with <code>…</code> if longer).</td>
+</tr>
+<tr>
+<td><code>required</code></td>
+<td><code>bool</code></td>
+<td><code>true</code> when at least one top-level (non-skill) <code>a2a.security_requirement</code> exists.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="security_detail-detail-response-only-get-apiv1catalogid"><code>security_detail</code> (detail response only — <code>GET /api/v1/catalog/{id}</code>)<a class="headerlink" href="#security_detail-detail-response-only-get-apiv1catalogid" title="Permanent link">&para;</a></h4>
+<p>Present when an A2A entry has security schemes. Contains the full scheme and requirement data for use in connection UIs.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;security_detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;security_schemes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;scheme_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;httpAuth&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;JWT Bearer token&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;http_scheme&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Bearer&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;bearer_format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;JWT&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;scheme_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;apiKeyAuth&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;apiKey&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;api_key_location&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;header&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;api_key_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;X-API-Key&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;security_requirements&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;schemes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;httpAuth&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;schemes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;apiKeyAuth&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong><code>security_schemes</code> item fields:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Scheme types</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scheme_name</code></td>
+<td><code>string</code></td>
+<td>all</td>
+<td>Key from the agent card's <code>securitySchemes</code> map.</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string</code></td>
+<td>all</td>
+<td><code>http</code> · <code>apiKey</code> · <code>oauth2</code> · <code>openIdConnect</code> · <code>mutualTls</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>string</code></td>
+<td>all</td>
+<td>Optional human-readable description.</td>
+</tr>
+<tr>
+<td><code>http_scheme</code></td>
+<td><code>string</code></td>
+<td><code>http</code></td>
+<td><code>Bearer</code> · <code>Basic</code> · <code>Digest</code></td>
+</tr>
+<tr>
+<td><code>bearer_format</code></td>
+<td><code>string</code></td>
+<td><code>http</code></td>
+<td>e.g. <code>JWT</code></td>
+</tr>
+<tr>
+<td><code>api_key_location</code></td>
+<td><code>string</code></td>
+<td><code>apiKey</code></td>
+<td><code>header</code> · <code>query</code> · <code>cookie</code></td>
+</tr>
+<tr>
+<td><code>api_key_name</code></td>
+<td><code>string</code></td>
+<td><code>apiKey</code></td>
+<td>e.g. <code>X-API-Key</code></td>
+</tr>
+<tr>
+<td><code>oauth_flows</code></td>
+<td><code>object[]</code></td>
+<td><code>oauth2</code></td>
+<td>Array of flow objects (see below).</td>
+</tr>
+<tr>
+<td><code>oauth2_metadata_url</code></td>
+<td><code>string</code></td>
+<td><code>oauth2</code></td>
+<td>OAuth 2.0 server metadata URL.</td>
+</tr>
+<tr>
+<td><code>openid_connect_url</code></td>
+<td><code>string</code></td>
+<td><code>openIdConnect</code></td>
+<td>OIDC discovery document URL.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>oauth_flows</code> item fields:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flow_type</code></td>
+<td><code>string</code></td>
+<td><code>authorizationCode</code> · <code>clientCredentials</code> · <code>deviceCode</code> · <code>implicit</code> · <code>password</code> (last two have <code>deprecated: true</code> and are filtered from the UI)</td>
+</tr>
+<tr>
+<td><code>authorization_url</code></td>
+<td><code>string</code></td>
+<td>Authorization endpoint (authorizationCode).</td>
+</tr>
+<tr>
+<td><code>token_url</code></td>
+<td><code>string</code></td>
+<td>Token endpoint.</td>
+</tr>
+<tr>
+<td><code>device_auth_url</code></td>
+<td><code>string</code></td>
+<td>Device authorization endpoint (deviceCode).</td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td><code>object</code></td>
+<td>Map of scope name → description.</td>
+</tr>
+<tr>
+<td><code>deprecated</code></td>
+<td><code>bool</code></td>
+<td><code>true</code> for legacy flows (implicit, password).</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>security_requirements</code> item fields:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schemes</code></td>
+<td><code>object</code></td>
+<td>Map of scheme name → required scopes (empty array = any scope).</td>
+</tr>
+<tr>
+<td><code>skill_ref</code></td>
+<td><code>string</code></td>
+<td>Non-empty when this requirement applies to a specific skill only.</td>
+</tr>
+</tbody>
+</table>
+<p>Multiple <code>security_requirements</code> entries are OR'd: the client must satisfy at least one complete entry.</p>
 <h3 id="get-apiv1catalog_1">GET /api/v1/catalog<a class="headerlink" href="#get-apiv1catalog_1" title="Permanent link">&para;</a></h3>
 <p><strong>New query parameter:</strong> <code>?state=</code> — comma-separated lifecycle states filter. Example: <code>?state=active,degraded</code></p>
 <p>Returns 400 if an unknown state value is provided.</p>
@@ -2882,7 +3162,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 10, 2026 08:52:19 UTC"><span class="timeago" datetime="2026-04-10T08:52:19+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 10, 2026 08:52:19 UTC">2026-04-10</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 14:56:55 UTC"><span class="timeago" datetime="2026-04-11T14:56:55+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 14:56:55 UTC">2026-04-11</span>
   </span>
 
     

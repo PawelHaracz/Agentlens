@@ -1,0 +1,1903 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://agentlens.cloudtown.io/adr/001-product-archetype-principles/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-001: Product Archetype Principles in Go - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/timeago.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-001-product-archetype-principles-in-go" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-001: Product Archetype Principles in Go
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-product-archetype-principles-generic-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 1: Product Archetype Principles (Generic Go)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Product Archetype Principles (Generic Go)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-core-entities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Core Entities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-principle-capabilities-belong-to-the-product-type-not-the-catalog-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Principle: Capabilities Belong to the Product Type, Not the Catalog Entry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-principle-polymorphic-capability-via-interface-kind-discriminator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Principle: Polymorphic Capability via Interface + Kind Discriminator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-principle-type-level-schema-vs-instance-level-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Principle: Type-Level Schema vs Instance-Level Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-principle-polymorphic-constraint-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Principle: Polymorphic Constraint System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-principle-polymorphic-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.6 Principle: Polymorphic Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#17-principle-catalogentry-flattens-producttype-in-api-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.7 Principle: CatalogEntry Flattens ProductType in API Responses
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#18-principle-capability-storage-is-normalized-not-embedded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.8 Principle: Capability Storage is Normalized, Not Embedded
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#19-principle-cqrs-separation-at-the-api-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.9 Principle: CQRS Separation at the API Boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#110-principle-sealedexhaustive-pattern-matching-for-variants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.10 Principle: Sealed/Exhaustive Pattern Matching for Variants
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-agentlens-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2: AgentLens Mapping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2: AgentLens Mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-entity-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Entity Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-current-capability-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Current Capability Kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-how-agentlens-conforms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 How AgentLens Conforms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-where-agentlens-drifts-security-schemes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Where AgentLens Drifts — Security Schemes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-how-security-schemes-should-look-archetype-conformant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3: How Security Schemes Should Look (Archetype-Conformant)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 3: How Security Schemes Should Look (Archetype-Conformant)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-enriched-a2asecurityscheme-capability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Enriched A2ASecurityScheme Capability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-new-a2asecurityrequirement-capability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 New A2ASecurityRequirement Capability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-api-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 API Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-mcp-security-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 MCP Security (Future)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-what-the-plan-should-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 What the Plan Should Remove
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-4-archetype-pattern-catalog-go-idioms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 4: Archetype Pattern Catalog (Go Idioms)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 4: Archetype Pattern Catalog (Go Idioms)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pattern-1-interface-string-discriminator-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 1: Interface + String Discriminator + Registry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-2-union-struct-with-type-discriminator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 2: Union Struct with Type Discriminator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-3-normalized-storage-with-promoted-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 3: Normalized Storage with Promoted Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-4-catalogentry-flattens-producttype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 4: CatalogEntry Flattens ProductType
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-5-computed-view-fields-not-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 5: Computed View Fields (Not Stored)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-6-full-replacement-on-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 6: Full Replacement on Update
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-001-product-archetype-principles-in-go">ADR-001: Product Archetype Principles in Go<a class="headerlink" href="#adr-001-product-archetype-principles-in-go" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-04-10
+<strong>Context:</strong> AgentLens models agent discovery using the Product Archetype pattern from <a href="https://github.com/softwarearchetypes">softwarearchetypes/product</a>. This ADR documents the archetype's core principles, their Go translation, and how AgentLens applies them — with specific attention to where the current codebase conforms and where it drifts.</p>
+<hr />
+<h2 id="part-1-product-archetype-principles-generic-go">Part 1: Product Archetype Principles (Generic Go)<a class="headerlink" href="#part-1-product-archetype-principles-generic-go" title="Permanent link">&para;</a></h2>
+<h3 id="11-core-entities">1.1 Core Entities<a class="headerlink" href="#11-core-entities" title="Permanent link">&para;</a></h3>
+<p>The Product Archetype defines four fundamental entities:</p>
+<pre class="mermaid"><code>erDiagram
+    ProductType ||--o{ CatalogEntry : "offered as"
+    ProductType ||--o{ ProductInstance : "instantiated as"
+    ProductType ||--o{ Batch : "grouped into"
+    ProductType ||--o{ Capability : "has"
+
+    ProductType {
+        ProductIdentifier id
+        string name
+        string description
+        TrackingStrategy tracking
+    }
+
+    CatalogEntry {
+        CatalogEntryId id
+        string display_name
+        string description
+        Validity validity
+    }
+
+    Capability {
+        string kind
+        string name
+    }</code></pre>
+<table>
+<thead>
+<tr>
+<th>Archetype Entity</th>
+<th>What it IS</th>
+<th>Go Translation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ProductType</strong></td>
+<td>The definition — what a product IS (identity, protocol, schema). Owns capabilities.</td>
+<td>Struct with polymorphic identity, <code>gorm:"-"</code> capability slice</td>
+</tr>
+<tr>
+<td><strong>CatalogEntry</strong></td>
+<td>The offering — a commercial/presentational wrapper around a ProductType. 1:N with ProductType.</td>
+<td>Struct with FK to ProductType, display fields, validity, metadata</td>
+</tr>
+<tr>
+<td><strong>Capability</strong></td>
+<td>A feature/ability the product has. Polymorphic, discriminated by <code>kind</code>. Belongs to ProductType.</td>
+<td>Interface with <code>Kind() string</code> + <code>Validate() error</code></td>
+</tr>
+<tr>
+<td><strong>ProductInstance</strong></td>
+<td>A specific exemplar. Has concrete capability values validated against the type's schema.</td>
+<td>(Not yet used in AgentLens — relevant for agent runtime instances)</td>
+</tr>
+<tr>
+<td><strong>Batch</strong></td>
+<td>A production group for quality tracking.</td>
+<td>(Not applicable to AgentLens)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-principle-capabilities-belong-to-the-product-type-not-the-catalog-entry">1.2 Principle: Capabilities Belong to the Product Type, Not the Catalog Entry<a class="headerlink" href="#12-principle-capabilities-belong-to-the-product-type-not-the-catalog-entry" title="Permanent link">&para;</a></h3>
+<p>This is the archetype's most important structural rule. A <code>ProductType</code> defines WHAT something IS and WHAT IT CAN DO. A <code>CatalogEntry</code> is a view/offering of that type — it adds display name, validity window, categories, and metadata but <strong>never owns capabilities</strong>.</p>
+<p><strong>Why:</strong> Multiple catalog entries can reference the same product type (e.g., different regions, audiences, time windows). Capabilities are intrinsic to the product, not to how it is offered.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// ProductType owns capabilities</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">ProductType</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">           </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Capabilities</span><span class="w"> </span><span class="p">[]</span><span class="nx">Capability</span><span class="w"> </span><span class="s">`gorm:&quot;-&quot;`</span><span class="w"> </span><span class="c1">// loaded separately</span>
+<span class="p">}</span>
+
+<span class="c1">// CatalogEntry references ProductType, never holds capabilities directly</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">CatalogEntry</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ProductTypeID</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">ProductType</span><span class="w">   </span><span class="o">*</span><span class="nx">ProductType</span><span class="w"> </span><span class="s">`json:&quot;-&quot;`</span><span class="w"> </span><span class="c1">// flattened in MarshalJSON</span>
+<span class="w">    </span><span class="nx">DisplayName</span><span class="w">   </span><span class="kt">string</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="13-principle-polymorphic-capability-via-interface-kind-discriminator">1.3 Principle: Polymorphic Capability via Interface + Kind Discriminator<a class="headerlink" href="#13-principle-polymorphic-capability-via-interface-kind-discriminator" title="Permanent link">&para;</a></h3>
+<p>Every capability implements a common interface. The <code>Kind()</code> string is the discriminator for storage, serialization, and deserialization. Concrete types carry kind-specific fields.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// The capability interface — minimal, polymorphic</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">     </span><span class="c1">// discriminator: &quot;a2a.skill&quot;, &quot;mcp.tool&quot;, etc.</span>
+<span class="w">    </span><span class="nx">Validate</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w">  </span><span class="c1">// self-validation</span>
+<span class="p">}</span>
+
+<span class="c1">// Concrete implementations carry type-specific state</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Skill</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">        </span><span class="kt">string</span><span class="w">   </span><span class="s">`json:&quot;name&quot;`</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span><span class="w">   </span><span class="s">`json:&quot;description,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Tags</span><span class="w">        </span><span class="p">[]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;tags,omitempty&quot;`</span>
+<span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">Skill</span><span class="p">)</span><span class="w"> </span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">     </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;a2a.skill&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">Skill</span><span class="p">)</span><span class="w"> </span><span class="nx">Validate</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="cm">/* name required */</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p><strong>Registry pattern for deserialization:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="nx">registry</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">CapabilityMeta</span><span class="p">{}</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">CapabilityMeta</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Factory</span><span class="w">      </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span>
+<span class="w">    </span><span class="nx">Discoverable</span><span class="w"> </span><span class="kt">bool</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">RegisterCapability</span><span class="p">(</span><span class="nx">kind</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">factory</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="p">,</span><span class="w"> </span><span class="nx">discoverable</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">registry</span><span class="p">[</span><span class="nx">kind</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">CapabilityMeta</span><span class="p">{</span><span class="nx">Factory</span><span class="p">:</span><span class="w"> </span><span class="nx">factory</span><span class="p">,</span><span class="w"> </span><span class="nx">Discoverable</span><span class="p">:</span><span class="w"> </span><span class="nx">discoverable</span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Called from init() in each capabilities file</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;a2a.skill&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">Skill</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="14-principle-type-level-schema-vs-instance-level-values">1.4 Principle: Type-Level Schema vs Instance-Level Values<a class="headerlink" href="#14-principle-type-level-schema-vs-instance-level-values" title="Permanent link">&para;</a></h3>
+<p>The archetype separates <strong>what capabilities a product CAN have</strong> (schema/type-level) from <strong>what values a specific instance HAS</strong> (instance-level).</p>
+<p>In the Java archetype:
+- <code>ProductFeatureType</code> + <code>FeatureValueConstraint</code> = the schema (what's allowed)
+- <code>ProductFeatureInstance</code> = the concrete value (validated against schema)</p>
+<p>In Go terms:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Schema level: what kinds of capabilities exist and what they look like</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">CapabilityMeta</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Factory</span><span class="w">      </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w">  </span><span class="c1">// creates zero-value for deserialization</span>
+<span class="w">    </span><span class="nx">Discoverable</span><span class="w"> </span><span class="kt">bool</span><span class="w">               </span><span class="c1">// whether shown in UI</span>
+<span class="p">}</span>
+
+<span class="c1">// Instance level: concrete capability data on a specific agent</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">A2ASkill</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">        </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Tags</span><span class="w">        </span><span class="p">[]</span><span class="kt">string</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The registry IS the schema. Each registered kind defines what a capability of that type looks like. Instances are the concrete structs stored on AgentType.</p>
+<h3 id="15-principle-polymorphic-constraint-system">1.5 Principle: Polymorphic Constraint System<a class="headerlink" href="#15-principle-polymorphic-constraint-system" title="Permanent link">&para;</a></h3>
+<p>In the Java archetype, <code>FeatureValueConstraint</code> is a polymorphic interface with a <code>type()</code> discriminator and 6 implementations (AllowedValues, NumericRange, Regex, etc.). Each knows how to validate, serialize, and describe itself.</p>
+<p><strong>This maps to Go as nested polymorphism within a capability.</strong> A capability kind can itself contain polymorphic sub-structures discriminated by their own type field:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Top-level polymorphism: Capability.Kind() discriminates the capability type</span>
+<span class="c1">// Nested polymorphism: fields within a capability discriminate sub-variants</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">SecurityScheme</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">SchemeName</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;scheme_name&quot;`</span>
+<span class="w">    </span><span class="nx">Type</span><span class="w">       </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;type&quot;`</span><span class="w"> </span><span class="c1">// &quot;oauth2&quot; | &quot;apiKey&quot; | &quot;http&quot; | ...</span>
+<span class="w">    </span><span class="c1">// Type-specific fields (union pattern):</span>
+<span class="w">    </span><span class="c1">// - apiKey: APIKeyLocation, APIKeyName</span>
+<span class="w">    </span><span class="c1">// - http: HTTPScheme, BearerFormat</span>
+<span class="w">    </span><span class="c1">// - oauth2: OAuthFlows</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>Type</code> field within <code>SecurityScheme</code> is analogous to <code>FeatureValueConstraint.type()</code> — it's a second level of discrimination within an already-discriminated capability.</p>
+<h3 id="16-principle-polymorphic-identity">1.6 Principle: Polymorphic Identity<a class="headerlink" href="#16-principle-polymorphic-identity" title="Permanent link">&para;</a></h3>
+<p>ProductType identity is itself polymorphic — UUID, ISBN, GTIN are all valid identifier types, each with their own validation rules (ISBN mod-11, GTIN mod-10, etc.).</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">ProductIdentifier</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Type</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">    </span><span class="c1">// &quot;UUID&quot; | &quot;ISBN&quot; | &quot;GTIN&quot;</span>
+<span class="w">    </span><span class="nx">String</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w">  </span><span class="c1">// the value</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>In Go, this maps to <code>AgentKey = SHA256(protocol + endpoint)</code> — a single identity strategy that works across protocols. The polymorphism is simpler because agent identity doesn't need domain-specific validation like retail barcodes.</p>
+<h3 id="17-principle-catalogentry-flattens-producttype-in-api-responses">1.7 Principle: CatalogEntry Flattens ProductType in API Responses<a class="headerlink" href="#17-principle-catalogentry-flattens-producttype-in-api-responses" title="Permanent link">&para;</a></h3>
+<p>The CatalogEntry's JSON representation flattens the referenced ProductType's fields into the top-level object. This is a presentation concern — the API consumer sees a single flat object, not a nested ProductType.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">catalogEntryJSON</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// CatalogEntry&#39;s own fields</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">          </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;id&quot;`</span>
+<span class="w">    </span><span class="nx">DisplayName</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;display_name&quot;`</span>
+<span class="w">    </span><span class="c1">// Flattened from ProductType</span>
+<span class="w">    </span><span class="nx">Protocol</span><span class="w">    </span><span class="kt">string</span><span class="w">          </span><span class="s">`json:&quot;protocol,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Endpoint</span><span class="w">    </span><span class="kt">string</span><span class="w">          </span><span class="s">`json:&quot;endpoint,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Capabilities</span><span class="w"> </span><span class="nx">json</span><span class="p">.</span><span class="nx">RawMessage</span><span class="w"> </span><span class="s">`json:&quot;capabilities,omitempty&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="nx">CatalogEntry</span><span class="p">)</span><span class="w"> </span><span class="nx">MarshalJSON</span><span class="p">()</span><span class="w"> </span><span class="p">([]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">json</span><span class="p">.</span><span class="nx">Marshal</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">toCatalogEntryJSON</span><span class="p">())</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="18-principle-capability-storage-is-normalized-not-embedded">1.8 Principle: Capability Storage is Normalized, Not Embedded<a class="headerlink" href="#18-principle-capability-storage-is-normalized-not-embedded" title="Permanent link">&para;</a></h3>
+<p>Capabilities are NOT stored as a JSON blob on the ProductType row. They are in a separate <code>capabilities</code> table with columns for <code>kind</code>, <code>name</code>, <code>description</code>, and a <code>properties</code> JSON column for extra fields. This enables:</p>
+<ul>
+<li><strong>Indexing by kind</strong> — query "all agents with mcp.tool capabilities"</li>
+<li><strong>Text search across name/description</strong> — join capabilities table in search queries</li>
+<li><strong>Unique constraint</strong> — <code>(agent_type_id, kind, name)</code> prevents duplicates</li>
+<li><strong>Independent evolution</strong> — new capability kinds don't change the agent_types table</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">capabilities</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="n">id</span><span class="w">          </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<span class="w">    </span><span class="n">agent_type_id</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">agent_types</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<span class="w">    </span><span class="n">kind</span><span class="w">        </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">       </span><span class="c1">-- discriminator</span>
+<span class="w">    </span><span class="n">name</span><span class="w">        </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">       </span><span class="c1">-- promoted for indexing</span>
+<span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="w">     </span><span class="c1">-- promoted for search</span>
+<span class="w">    </span><span class="n">properties</span><span class="w">  </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;{}&#39;</span><span class="w">    </span><span class="c1">-- remaining fields as JSON</span>
+<span class="p">);</span>
+
+<span class="k">CREATE</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_capabilities_type_kind_name</span>
+<span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">capabilities</span><span class="p">(</span><span class="n">agent_type_id</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="19-principle-cqrs-separation-at-the-api-boundary">1.9 Principle: CQRS Separation at the API Boundary<a class="headerlink" href="#19-principle-cqrs-separation-at-the-api-boundary" title="Permanent link">&para;</a></h3>
+<p>Commands, Queries, and Views are separate concerns:</p>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Java Archetype</th>
+<th>Go Translation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Commands</strong></td>
+<td>Sealed <code>record</code> hierarchy in <code>ProductCommands</code></td>
+<td>Handler methods accepting request structs</td>
+</tr>
+<tr>
+<td><strong>Queries</strong></td>
+<td>Criteria records in <code>ProductQueries</code></td>
+<td>Filter structs (e.g., <code>ListFilter</code>, <code>CapabilityFilter</code>)</td>
+</tr>
+<tr>
+<td><strong>Views</strong></td>
+<td>Flat DTOs in <code>ProductViews</code> using only simple types</td>
+<td><code>catalogEntryJSON</code> and similar unexported structs</td>
+</tr>
+</tbody>
+</table>
+<p>The facade converts between API-boundary types and domain types. Domain objects never leak through the API.</p>
+<h3 id="110-principle-sealedexhaustive-pattern-matching-for-variants">1.10 Principle: Sealed/Exhaustive Pattern Matching for Variants<a class="headerlink" href="#110-principle-sealedexhaustive-pattern-matching-for-variants" title="Permanent link">&para;</a></h3>
+<p>In Java, sealed interfaces + pattern matching ensures every variant is handled:</p>
+<div class="highlight"><pre><span></span><code><span class="k">return</span><span class="w"> </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">AllowedValuesConstraint</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">...</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">NumericRangeConstraint</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">...</span>
+<span class="w">    </span><span class="c1">// compiler error if a case is missing</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>In Go, this translates to exhaustive <code>switch</code> on the <code>Kind()</code> string, typically with a <code>default</code> case that handles unknown kinds gracefully (skip or error):</p>
+<div class="highlight"><pre><span></span><code><span class="k">switch</span><span class="w"> </span><span class="nx">cap</span><span class="p">.</span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="k">case</span><span class="w"> </span><span class="s">&quot;a2a.skill&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="nx">skill</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">cap</span><span class="p">.(</span><span class="o">*</span><span class="nx">A2ASkill</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="k">case</span><span class="w"> </span><span class="s">&quot;a2a.security_scheme&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="nx">scheme</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">cap</span><span class="p">.(</span><span class="o">*</span><span class="nx">A2ASecurityScheme</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="k">default</span><span class="p">:</span>
+<span class="w">    </span><span class="c1">// unknown kind — skip or log warning</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Go lacks compile-time exhaustiveness checking for interface types, so the registry + <code>default</code> case pattern is the idiomatic substitute.</p>
+<hr />
+<h2 id="part-2-agentlens-mapping">Part 2: AgentLens Mapping<a class="headerlink" href="#part-2-agentlens-mapping" title="Permanent link">&para;</a></h2>
+<h3 id="21-entity-mapping">2.1 Entity Mapping<a class="headerlink" href="#21-entity-mapping" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Product Archetype</th>
+<th>AgentLens</th>
+<th>Package</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ProductType</code></td>
+<td><code>AgentType</code></td>
+<td><code>internal/model</code></td>
+</tr>
+<tr>
+<td><code>ProductIdentifier</code></td>
+<td><code>AgentKey</code> (SHA256 of protocol+endpoint)</td>
+<td><code>internal/model</code></td>
+</tr>
+<tr>
+<td><code>CatalogEntry</code></td>
+<td><code>CatalogEntry</code></td>
+<td><code>internal/model</code></td>
+</tr>
+<tr>
+<td><code>Capability</code> (interface)</td>
+<td><code>Capability</code> (interface)</td>
+<td><code>internal/model</code></td>
+</tr>
+<tr>
+<td><code>FeatureValueConstraint</code></td>
+<td>Nested <code>Type</code> field within capability structs</td>
+<td><code>internal/model</code></td>
+</tr>
+<tr>
+<td><code>ProductFeatureType</code></td>
+<td><code>CapabilityMeta</code> in registry</td>
+<td><code>internal/model</code></td>
+</tr>
+<tr>
+<td><code>ProductFeatureTypeDefinition.mandatory</code></td>
+<td><code>CapabilityMeta.Discoverable</code></td>
+<td><code>internal/model</code></td>
+</tr>
+<tr>
+<td><code>ProductInstance</code></td>
+<td>(Not yet modeled — future: runtime agent instances)</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ProductTypeRepository</code></td>
+<td><code>Store</code> interface</td>
+<td><code>internal/store</code></td>
+</tr>
+<tr>
+<td><code>CatalogEntryRepository</code></td>
+<td><code>Store</code> interface (same, shared)</td>
+<td><code>internal/store</code></td>
+</tr>
+<tr>
+<td><code>ProductFacade</code></td>
+<td>API <code>Handler</code> struct</td>
+<td><code>internal/api</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="22-current-capability-kinds">2.2 Current Capability Kinds<a class="headerlink" href="#22-current-capability-kinds" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Struct</th>
+<th>Discoverable</th>
+<th>Protocol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a2a.skill</code></td>
+<td><code>A2ASkill</code></td>
+<td>true</td>
+<td>A2A</td>
+</tr>
+<tr>
+<td><code>a2a.interface</code></td>
+<td><code>A2AInterface</code></td>
+<td>false</td>
+<td>A2A</td>
+</tr>
+<tr>
+<td><code>a2a.security_scheme</code></td>
+<td><code>A2ASecurityScheme</code></td>
+<td>false</td>
+<td>A2A</td>
+</tr>
+<tr>
+<td><code>a2a.extension</code></td>
+<td><code>A2AExtension</code></td>
+<td>false</td>
+<td>A2A</td>
+</tr>
+<tr>
+<td><code>a2a.signature</code></td>
+<td><code>A2ASignature</code></td>
+<td>false</td>
+<td>A2A</td>
+</tr>
+<tr>
+<td><code>mcp.tool</code></td>
+<td><code>MCPTool</code></td>
+<td>true</td>
+<td>MCP</td>
+</tr>
+<tr>
+<td><code>mcp.resource</code></td>
+<td><code>MCPResource</code></td>
+<td>true</td>
+<td>MCP</td>
+</tr>
+<tr>
+<td><code>mcp.prompt</code></td>
+<td><code>MCPPrompt</code></td>
+<td>true</td>
+<td>MCP</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23-how-agentlens-conforms">2.3 How AgentLens Conforms<a class="headerlink" href="#23-how-agentlens-conforms" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Capabilities belong to AgentType, not CatalogEntry</strong> — <code>AgentType.Capabilities []Capability</code> with <code>gorm:"-"</code>. CatalogEntry flattens via <code>MarshalJSON()</code>.</li>
+<li><strong>Polymorphic interface + kind discriminator</strong> — <code>Capability</code> interface with <code>Kind()</code> string, global registry, factory-based deserialization.</li>
+<li><strong>Normalized storage</strong> — Separate <code>capabilities</code> table with <code>kind</code>, <code>name</code>, <code>description</code>, <code>properties</code> columns. Unique index on <code>(agent_type_id, kind, name)</code>.</li>
+<li><strong>Full replacement on update</strong> — Delete old + insert new (not merge), matching archetype's immutable aggregate pattern.</li>
+<li><strong>CatalogEntry flattens AgentType</strong> — <code>toCatalogEntryJSON()</code> promotes protocol, endpoint, version, capabilities into the flat JSON response.</li>
+</ol>
+<h3 id="24-where-agentlens-drifts-security-schemes">2.4 Where AgentLens Drifts — Security Schemes<a class="headerlink" href="#24-where-agentlens-drifts-security-schemes" title="Permanent link">&para;</a></h3>
+<p>The current plan for security schemes introduces drift from the archetype:</p>
+<table>
+<thead>
+<tr>
+<th>Archetype Principle</th>
+<th>Current Plan</th>
+<th>Violation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Capabilities are the single polymorphic extension point</td>
+<td>Creates <code>SecurityDetail</code>, <code>SecuritySchemeDetail</code>, <code>OAuthFlowDetail</code> as separate transport models</td>
+<td>Parallel type system outside the capability model</td>
+</tr>
+<tr>
+<td>Storage through the existing <code>capabilities</code> table</td>
+<td>Creates <code>SecurityStorePlugin</code> with its own <code>security_details</code> table</td>
+<td>Parallel storage outside the existing normalized capability store</td>
+</tr>
+<tr>
+<td>ProductType owns capabilities via <code>[]Capability</code></td>
+<td>Adds <code>SecurityDetail *SecurityDetail</code> as a transient field on AgentType alongside <code>Capabilities</code></td>
+<td>Two different fields for what should be the same thing</td>
+</tr>
+<tr>
+<td>Registry-based polymorphism</td>
+<td>SecurityDetail uses raw Go structs, no registry, no Kind()</td>
+<td>Bypasses the established serialization/deserialization infrastructure</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The archetype-conformant approach:</strong> Security scheme types (oauth2, apiKey, http, openIdConnect, mutualTls) are different <code>Type</code> values within the existing <code>a2a.security_scheme</code> capability kind. OAuth flows, scopes, URLs — these are fields on the capability struct itself, stored in the <code>properties</code> JSON column of the <code>capabilities</code> table. Security requirements are a separate capability kind (<code>a2a.security_requirement</code>). No new tables, no new plugin type, no parallel storage.</p>
+<hr />
+<h2 id="part-3-how-security-schemes-should-look-archetype-conformant">Part 3: How Security Schemes Should Look (Archetype-Conformant)<a class="headerlink" href="#part-3-how-security-schemes-should-look-archetype-conformant" title="Permanent link">&para;</a></h2>
+<h3 id="31-enriched-a2asecurityscheme-capability">3.1 Enriched <code>A2ASecurityScheme</code> Capability<a class="headerlink" href="#31-enriched-a2asecurityscheme-capability" title="Permanent link">&para;</a></h3>
+<p>The existing <code>a2a.security_scheme</code> kind already exists in the registry. The struct needs enrichment to carry the full scheme detail — but it stays a <code>Capability</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// kind: &quot;a2a.security_scheme&quot;</span>
+<span class="c1">// Stored in: capabilities table (kind + name + properties)</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">A2ASecurityScheme</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">SchemeName</span><span class="w">  </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;scheme_name&quot;`</span><span class="w">           </span><span class="c1">// key from agent card</span>
+<span class="w">    </span><span class="nx">Type</span><span class="w">        </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;type&quot;`</span><span class="w">                   </span><span class="c1">// &quot;apiKey&quot;|&quot;http&quot;|&quot;oauth2&quot;|&quot;openIdConnect&quot;|&quot;mutualTls&quot;</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;description,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// apiKey fields</span>
+<span class="w">    </span><span class="nx">APIKeyLocation</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;api_key_location,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">APIKeyName</span><span class="w">     </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;api_key_name,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// http fields</span>
+<span class="w">    </span><span class="nx">HTTPScheme</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;http_scheme,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">BearerFormat</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;bearer_format,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// oauth2 fields</span>
+<span class="w">    </span><span class="nx">OAuthFlows</span><span class="w">        </span><span class="p">[]</span><span class="nx">A2AOAuthFlow</span><span class="w"> </span><span class="s">`json:&quot;oauth_flows,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">OAuth2MetadataURL</span><span class="w"> </span><span class="kt">string</span><span class="w">         </span><span class="s">`json:&quot;oauth2_metadata_url,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// openIdConnect fields</span>
+<span class="w">    </span><span class="nx">OpenIDConnectURL</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;openid_connect_url,omitempty&quot;`</span>
+
+<span class="w">    </span><span class="c1">// v0.3 backward compat</span>
+<span class="w">    </span><span class="nx">Method</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;method,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;name,omitempty&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">a</span><span class="w"> </span><span class="o">*</span><span class="nx">A2ASecurityScheme</span><span class="p">)</span><span class="w"> </span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;a2a.security_scheme&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p><code>A2AOAuthFlow</code> is a nested value object (like <code>FeatureValueConstraint</code> parameters), not a separate capability:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">A2AOAuthFlow</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">FlowType</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;flow_type&quot;`</span>
+<span class="w">    </span><span class="nx">AuthorizationURL</span><span class="w"> </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;authorization_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">TokenURL</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;token_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">RefreshURL</span><span class="w">       </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;refresh_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">DeviceAuthURL</span><span class="w">    </span><span class="kt">string</span><span class="w">            </span><span class="s">`json:&quot;device_auth_url,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Scopes</span><span class="w">           </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;scopes,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">Deprecated</span><span class="w">       </span><span class="kt">bool</span><span class="w">              </span><span class="s">`json:&quot;deprecated,omitempty&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="32-new-a2asecurityrequirement-capability">3.2 New <code>A2ASecurityRequirement</code> Capability<a class="headerlink" href="#32-new-a2asecurityrequirement-capability" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// kind: &quot;a2a.security_requirement&quot;</span>
+<span class="c1">// Stored in: capabilities table</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">A2ASecurityRequirement</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Schemes</span><span class="w">  </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">][]</span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;schemes&quot;`</span>
+<span class="w">    </span><span class="nx">SkillRef</span><span class="w"> </span><span class="kt">string</span><span class="w">              </span><span class="s">`json:&quot;skill_ref,omitempty&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">a</span><span class="w"> </span><span class="o">*</span><span class="nx">A2ASecurityRequirement</span><span class="p">)</span><span class="w"> </span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;a2a.security_requirement&quot;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<h3 id="33-storage">3.3 Storage<a class="headerlink" href="#33-storage" title="Permanent link">&para;</a></h3>
+<p>Both live in the existing <code>capabilities</code> table:</p>
+<div class="highlight"><pre><span></span><code>capabilities table:
+| agent_type_id | kind                      | name        | description   | properties (JSON)                    |
+|---------------|---------------------------|-------------|---------------|--------------------------------------|
+| agent-123     | a2a.security_scheme       | oauth2Auth  | OAuth 2.0     | {&quot;type&quot;:&quot;oauth2&quot;,&quot;oauth_flows&quot;:[...]}|
+| agent-123     | a2a.security_scheme       | apiKeyAuth  | API Key       | {&quot;type&quot;:&quot;apiKey&quot;,&quot;api_key_location&quot;:&quot;header&quot;,...}|
+| agent-123     | a2a.security_requirement  | oauth2Auth  |               | {&quot;schemes&quot;:{&quot;oauth2Auth&quot;:[&quot;read&quot;]}}  |
+| agent-123     | a2a.skill                 | translate   | Translate text| {&quot;tags&quot;:[&quot;nlp&quot;],...}                 |
+</code></pre></div>
+<p><strong>No new table. No SecurityStorePlugin. No security_details table.</strong></p>
+<h3 id="34-api-response">3.4 API Response<a class="headerlink" href="#34-api-response" title="Permanent link">&para;</a></h3>
+<p>Security scheme capabilities flow through the same path as all capabilities:</p>
+<ol>
+<li><code>AgentType.Capabilities</code> is loaded from the <code>capabilities</code> table</li>
+<li><code>MarshalCapabilitiesJSON()</code> serializes them with the <code>kind</code> field injected</li>
+<li>They appear in the <code>capabilities</code> array of the CatalogEntry JSON response</li>
+</ol>
+<p>For convenience, the <code>catalogEntryJSON</code> can add a computed <code>auth_summary</code> field (derived from the capabilities slice at serialization time) without creating a parallel storage system:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="nx">buildAuthSummary</span><span class="p">(</span><span class="nx">caps</span><span class="w"> </span><span class="p">[]</span><span class="nx">Capability</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="nx">authSummaryJSON</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">schemes</span><span class="w"> </span><span class="p">[]</span><span class="kt">string</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">cap</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="k">range</span><span class="w"> </span><span class="nx">caps</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="nx">s</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">cap</span><span class="p">.(</span><span class="o">*</span><span class="nx">A2ASecurityScheme</span><span class="p">);</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">schemes</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">append</span><span class="p">(</span><span class="nx">schemes</span><span class="p">,</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">Type</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">schemes</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">nil</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">authSummaryJSON</span><span class="p">{</span><span class="nx">Types</span><span class="p">:</span><span class="w"> </span><span class="nx">schemes</span><span class="p">,</span><span class="w"> </span><span class="nx">Required</span><span class="p">:</span><span class="w"> </span><span class="nx">hasRequirements</span><span class="p">(</span><span class="nx">caps</span><span class="p">)}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="35-mcp-security-future">3.5 MCP Security (Future)<a class="headerlink" href="#35-mcp-security-future" title="Permanent link">&para;</a></h3>
+<p>When MCP adds security schemes, they follow the same pattern:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// kind: &quot;mcp.security_scheme&quot;</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">MCPSecurityScheme</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">SchemeName</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;scheme_name&quot;`</span>
+<span class="w">    </span><span class="nx">Type</span><span class="w">       </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;type&quot;`</span>
+<span class="w">    </span><span class="c1">// MCP-specific fields...</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;mcp.security_scheme&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">MCPSecurityScheme</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Same <code>capabilities</code> table, same serialization pipeline, same API response format. Protocol-specific fields are in the <code>properties</code> JSON column.</p>
+<h3 id="36-what-the-plan-should-remove">3.6 What the Plan Should Remove<a class="headerlink" href="#36-what-the-plan-should-remove" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Plan Element</th>
+<th>Why Remove</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SecurityDetail</code> transport model</td>
+<td>Parallel type system</td>
+<td>Read security from <code>AgentType.Capabilities</code> filtered by kind</td>
+</tr>
+<tr>
+<td><code>SecuritySchemeDetail</code>, <code>OAuthFlowDetail</code>, <code>SecurityRequirementDetail</code></td>
+<td>Duplicates capability structs</td>
+<td>Use <code>A2ASecurityScheme</code>, <code>A2AOAuthFlow</code>, <code>A2ASecurityRequirement</code> directly</td>
+</tr>
+<tr>
+<td><code>SecurityStorePlugin</code> interface</td>
+<td>Parallel storage</td>
+<td>Existing <code>capabilities</code> table via <code>Store</code></td>
+</tr>
+<tr>
+<td><code>security_details</code> table</td>
+<td>Parallel table</td>
+<td>Existing <code>capabilities</code> table</td>
+</tr>
+<tr>
+<td><code>PluginTypeSecurityStore</code></td>
+<td>Parallel plugin type</td>
+<td>Not needed</td>
+</tr>
+<tr>
+<td><code>Core.securityStore</code> field</td>
+<td>Parallel kernel accessor</td>
+<td>Not needed</td>
+</tr>
+<tr>
+<td><code>AgentType.SecurityDetail</code> transient field</td>
+<td>Parallel data path</td>
+<td>Filter <code>AgentType.Capabilities</code> by kind in handlers</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-4-archetype-pattern-catalog-go-idioms">Part 4: Archetype Pattern Catalog (Go Idioms)<a class="headerlink" href="#part-4-archetype-pattern-catalog-go-idioms" title="Permanent link">&para;</a></h2>
+<h3 id="pattern-1-interface-string-discriminator-registry">Pattern 1: Interface + String Discriminator + Registry<a class="headerlink" href="#pattern-1-interface-string-discriminator-registry" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// Interface</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">Validate</span><span class="p">()</span><span class="w"> </span><span class="kt">error</span>
+<span class="p">}</span>
+
+<span class="c1">// Registry (package-level, init()-populated)</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">registry</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">CapabilityMeta</span><span class="p">{}</span>
+
+<span class="c1">// Concrete types</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">Foo</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">f</span><span class="w"> </span><span class="o">*</span><span class="nx">Foo</span><span class="p">)</span><span class="w"> </span><span class="nx">Kind</span><span class="p">()</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;namespace.foo&quot;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="c1">// Registration</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">RegisterCapability</span><span class="p">(</span><span class="s">&quot;namespace.foo&quot;</span><span class="p">,</span><span class="w"> </span><span class="kd">func</span><span class="p">()</span><span class="w"> </span><span class="nx">Capability</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="nx">Foo</span><span class="p">{}</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>When to use:</strong> Any polymorphic collection that needs persistence and deserialization.</p>
+<h3 id="pattern-2-union-struct-with-type-discriminator">Pattern 2: Union Struct with Type Discriminator<a class="headerlink" href="#pattern-2-union-struct-with-type-discriminator" title="Permanent link">&para;</a></h3>
+<p>When a capability has multiple sub-variants (like security scheme types), use a union struct with a <code>Type</code> field rather than separate Go types:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">SecurityScheme</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Type</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;type&quot;`</span><span class="w"> </span><span class="c1">// discriminates which fields are populated</span>
+<span class="w">    </span><span class="c1">// All possible fields — only the relevant ones are non-zero</span>
+<span class="w">    </span><span class="nx">APIKeyLocation</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;api_key_location,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">HTTPScheme</span><span class="w">     </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;http_scheme,omitempty&quot;`</span>
+<span class="w">    </span><span class="nx">OAuthFlows</span><span class="w">     </span><span class="p">[]</span><span class="nx">Flow</span><span class="w"> </span><span class="s">`json:&quot;oauth_flows,omitempty&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Why union struct instead of separate types:</strong> In Go, each <code>Kind()</code> maps to one registered type. Sub-variants within a kind use the union/discriminated-fields pattern because they share the same registry entry and storage row.</p>
+<p><strong>When to use:</strong> A capability kind has multiple variants (oauth2 vs apiKey vs http) but they all share the same <code>Kind()</code> and storage slot.</p>
+<h3 id="pattern-3-normalized-storage-with-promoted-fields">Pattern 3: Normalized Storage with Promoted Fields<a class="headerlink" href="#pattern-3-normalized-storage-with-promoted-fields" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">capabilityRow</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">          </span><span class="kt">string</span><span class="w"> </span><span class="c1">// PK</span>
+<span class="w">    </span><span class="nx">AgentTypeID</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="c1">// FK to product type</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w">        </span><span class="kt">string</span><span class="w"> </span><span class="c1">// discriminator (indexed)</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">        </span><span class="kt">string</span><span class="w"> </span><span class="c1">// promoted for indexing/search</span>
+<span class="w">    </span><span class="nx">Description</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="c1">// promoted for search</span>
+<span class="w">    </span><span class="nx">Properties</span><span class="w">  </span><span class="kt">string</span><span class="w"> </span><span class="c1">// JSON blob for remaining fields</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>name</code> and <code>description</code> are promoted because they're universally present and need indexing. Everything else goes in <code>Properties</code>.</p>
+<h3 id="pattern-4-catalogentry-flattens-producttype">Pattern 4: CatalogEntry Flattens ProductType<a class="headerlink" href="#pattern-4-catalogentry-flattens-producttype" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="w"> </span><span class="nx">CatalogEntry</span><span class="p">)</span><span class="w"> </span><span class="nx">MarshalJSON</span><span class="p">()</span><span class="w"> </span><span class="p">([]</span><span class="kt">byte</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">flat</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">catalogEntryJSON</span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// CatalogEntry fields</span>
+<span class="w">        </span><span class="nx">ID</span><span class="p">:</span><span class="w">          </span><span class="nx">e</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">DisplayName</span><span class="p">:</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">DisplayName</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">AgentType</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">flat</span><span class="p">.</span><span class="nx">Protocol</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">e</span><span class="p">.</span><span class="nx">AgentType</span><span class="p">.</span><span class="nx">Protocol</span>
+<span class="w">        </span><span class="nx">flat</span><span class="p">.</span><span class="nx">Capabilities</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">marshalCaps</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">AgentType</span><span class="p">.</span><span class="nx">Capabilities</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">json</span><span class="p">.</span><span class="nx">Marshal</span><span class="p">(</span><span class="nx">flat</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="pattern-5-computed-view-fields-not-stored">Pattern 5: Computed View Fields (Not Stored)<a class="headerlink" href="#pattern-5-computed-view-fields-not-stored" title="Permanent link">&para;</a></h3>
+<p>Derived/summary data for API responses is computed at serialization time, not stored:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">catalogEntryJSON</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ... real fields ...</span>
+<span class="w">    </span><span class="nx">AuthSummary</span><span class="w"> </span><span class="o">*</span><span class="nx">authSummaryJSON</span><span class="w"> </span><span class="s">`json:&quot;auth_summary,omitempty&quot;`</span><span class="w"> </span><span class="c1">// computed from capabilities</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This avoids data duplication and keeps the source of truth in the capability rows.</p>
+<h3 id="pattern-6-full-replacement-on-update">Pattern 6: Full Replacement on Update<a class="headerlink" href="#pattern-6-full-replacement-on-update" title="Permanent link">&para;</a></h3>
+<p>When capabilities change, delete all + insert all (not merge):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// In a transaction:</span>
+<span class="nx">tx</span><span class="p">.</span><span class="nx">Where</span><span class="p">(</span><span class="s">&quot;agent_type_id = ?&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">).</span><span class="nx">Delete</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">capabilityRow</span><span class="p">{})</span>
+<span class="nx">tx</span><span class="p">.</span><span class="nx">Create</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">newRows</span><span class="p">)</span>
+</code></pre></div>
+<p>This matches the archetype's immutable aggregate pattern and avoids complex diffing logic.</p>
+<hr />
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>AgentLens MUST follow the Product Archetype for all capability modeling:</p>
+<ol>
+<li><strong>All protocol-specific features are capabilities</strong> — skills, tools, security schemes, extensions, signatures, resources, prompts.</li>
+<li><strong>Capabilities live in the <code>capabilities</code> table</strong> — no parallel storage tables.</li>
+<li><strong>New capability kinds are added by</strong>: defining a struct, implementing <code>Capability</code>, registering in <code>init()</code>.</li>
+<li><strong>Sub-variants within a kind use the union struct pattern</strong> — discriminated by a <code>Type</code> field, not separate Go types or separate tables.</li>
+<li><strong>Computed view data is derived at serialization time</strong> — not stored in parallel.</li>
+</ol>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Security scheme enrichment becomes a struct-level change to <code>A2ASecurityScheme</code> + a new <code>A2ASecurityRequirement</code> kind, with NO new tables or plugins.</li>
+<li>The plan for <code>SecurityStorePlugin</code>, <code>security_details</code> table, and <code>SecurityDetail</code> transport models must be revised.</li>
+<li>Future MCP security follows the same pattern (<code>mcp.security_scheme</code> kind).</li>
+<li>The <code>capabilities</code> table's <code>properties</code> JSON column naturally accommodates rich nested structures (OAuth flows, scopes, etc.) without schema changes.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 14:56:55 UTC"><span class="timeago" datetime="2026-04-11T14:56:55+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 14:56:55 UTC">2026-04-11</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 14:56:55 UTC"><span class="timeago" datetime="2026-04-11T14:56:55+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 14:56:55 UTC">2026-04-11</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../js/timeago.min.js"></script>
+      
+        <script src="../../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>
