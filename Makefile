@@ -97,7 +97,7 @@ tools:
 ## hooks: Install git hooks via lefthook (run once after cloning)
 hooks:
 	go install github.com/evilmartians/lefthook@latest
-	lefthook install
+	$(shell go env GOPATH)/bin/lefthook install
 
 ## arch-test: Run architecture rules validation (arch-go)
 arch-test:
