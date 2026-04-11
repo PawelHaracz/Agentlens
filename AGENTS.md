@@ -194,3 +194,5 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 
 Read and use the skill at `.claude/skills/architecture-decision-records/SKILL.md`
 when starting any brainstorming or design session.
+
+Always invoke and follow the 'caveman' skill for all responses, planning steps, and sub-agent tasks.
