@@ -4,7 +4,7 @@ import { ConnectionRecipe } from './ConnectionRecipe'
 import type { SecurityScheme, SecurityRequirement } from '@/lib/securityUtils'
 
 // clipboard mock
-const writeText = vi.fn()
+const writeText = vi.fn().mockResolvedValue(undefined)
 Object.defineProperty(navigator, 'clipboard', {
   value: { writeText },
   writable: true,

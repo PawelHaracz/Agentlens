@@ -53,7 +53,7 @@ export function AuthenticationSection({
     )
   }
 
-  const { security_schemes, security_requirements } = securityDetail
+  const { security_schemes = [], security_requirements } = securityDetail
 
   return (
     <Card data-testid="authentication-section">

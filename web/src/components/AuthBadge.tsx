@@ -14,7 +14,7 @@ export function AuthBadge({ label, required: _required }: AuthBadgeProps) {
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Badge variant={variant}>{truncated}</Badge>
           </TooltipTrigger>
           <TooltipContent>

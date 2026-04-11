@@ -14,7 +14,7 @@ export function ConnectionRecipe({ endpoint, requirements, schemes }: Connection
   const curl = generateCurlRecipe(endpoint, requirements, schemes)
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(curl)
+    navigator.clipboard.writeText(curl).catch(() => {})
   }
 
   return (
@@ -31,6 +31,7 @@ export function ConnectionRecipe({ endpoint, requirements, schemes }: Connection
             size="sm"
             variant="ghost"
             className="absolute top-2 right-2"
+            aria-label="Copy connection command"
             onClick={copyToClipboard}
           >
             <Copy className="h-4 w-4" />
