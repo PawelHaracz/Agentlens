@@ -1,0 +1,27 @@
+pre-commit:
+  parallel: true
+  commands:
+    go-fmt:
+      run: test -z "$(gofmt -l .)"
+      fail_text: "Go files need formatting. Run: make format"
+    go-lint:
+      run: golangci-lint run
+    web-lint:
+      run: cd web && bun run type-check
+
+commit-msg:
+  commands:
+    commitlint:
+      run: cd web && bunx commitlint --config commitlint.config.ts --edit {1}
+
+pre-push:
+  commands:
+    go-test:
+      run: make test
+      priority: 1
+    web-test:
+      run: make web-test
+      priority: 1
+    arch-test:
+      run: make arch-test
+      priority: 2
