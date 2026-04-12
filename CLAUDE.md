@@ -26,14 +26,32 @@ cd web && bun run dev
 
 **Gotcha**: `make lint` creates stub `web/dist/index.html` if missing. Run `make web-build` first for real frontend.
 
-## RTK
+## RTK — MANDATORY FOR ALL COMMANDS
 
-Always prefix commands with `rtk`. This includes scripts (e.g. `rtk ./scripts/test-helm-templates.sh`). Safe passthrough when no filter exists for all bash commands, plus RTK gains (caching, parallelism, batching) for supported ones:
+**EVERY shell command must be prefixed with `rtk` — no exceptions.**
 
+This applies to: `go`, `git`, `make`, `helm`, `docker`, `bun`, `cat`, `grep`, `awk`, `sed`, `find`, `ls`, `wc`, `sort`, `uniq`, `cut`, `chmod`, `mkdir`, `rm`, scripts (`rtk ./scripts/foo.sh`), and any other shell tool. Safe passthrough when no filter exists.
+
+```bash
+# WRONG — never do this:
+go test ./...
+git commit -m "msg"
+helm lint .
+./scripts/test-helm-templates.sh
+cat file.go | grep func
+
+# CORRECT — always do this:
+rtk go test ./...
+rtk git commit -m "msg"
+rtk helm lint .
+rtk ./scripts/test-helm-templates.sh
+rtk cat file.go | rtk grep func
+```
+
+Pipeline chaining: every command in a pipeline gets `rtk`:
 ```bash
 rtk git add . && rtk git commit -m "msg" && rtk git push
 rtk ls internal/ | rtk grep "func " | rtk wc -l
-rtk awk '{print $1}' internal/api/handlers.go | rtk sort | rtk uniq
 rtk helm template . | rtk grep "image:" | rtk cut -d: -f2 | rtk sort | rtk uniq
 ```
 
