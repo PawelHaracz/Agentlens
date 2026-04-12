@@ -22,7 +22,7 @@ func TestTracedStore_ListCreatesSpan(t *testing.T) {
 	// Use in-memory SQLite store as the underlying store
 	underlying, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	defer underlying.Close()
+	t.Cleanup(func() { _ = underlying.Close() })
 
 	traced := telemetry.NewTracedStore(underlying, "sqlite", telemetry.WithTracerProvider(tp))
 
@@ -49,7 +49,7 @@ func TestTracedStore_GetCreatesSpan(t *testing.T) {
 
 	underlying, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	defer underlying.Close()
+	t.Cleanup(func() { _ = underlying.Close() })
 
 	traced := telemetry.NewTracedStore(underlying, "sqlite", telemetry.WithTracerProvider(tp))
 
@@ -70,7 +70,7 @@ func TestTracedStore_UpdateHealthCreatesSpan(t *testing.T) {
 
 	underlying, err := store.NewSQLiteStore(":memory:")
 	require.NoError(t, err)
-	defer underlying.Close()
+	t.Cleanup(func() { _ = underlying.Close() })
 
 	traced := telemetry.NewTracedStore(underlying, "sqlite", telemetry.WithTracerProvider(tp))
 
