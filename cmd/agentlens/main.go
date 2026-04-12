@@ -168,6 +168,21 @@ func main() {
 	roleStore := store.NewRoleStore(database)
 	settingsStore := store.NewSettingsStore(database)
 
+	// Register catalog entry gauge (async metric, updated at each metrics interval)
+	if err := telemetry.RegisterCatalogGauge(func(ctx context.Context) map[string]int64 {
+		stats, err := catalogStore.Stats(ctx)
+		if err != nil {
+			return nil
+		}
+		counts := make(map[string]int64)
+		for status, count := range stats.ByStatus {
+			counts["all:"+status] = int64(count)
+		}
+		return counts
+	}); err != nil {
+		slog.Warn("failed to register catalog gauge", "err", err)
+	}
+
 	// 9. Init JWT service
 	jwtService := auth.NewJWTService(auth.JWTConfig{
 		Secret:        cfg.Auth.JWTSecret,
