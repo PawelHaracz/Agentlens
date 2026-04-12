@@ -28,10 +28,13 @@ cd web && bun run dev
 
 ## RTK
 
-Always prefix commands with `rtk`. Safe passthrough when no filter exists.
+Always prefix commands with `rtk`. This includes scripts (e.g. `rtk ./scripts/test-helm-templates.sh`). Safe passthrough when no filter exists for all bash commands, plus RTK gains (caching, parallelism, batching) for supported ones:
 
 ```bash
 rtk git add . && rtk git commit -m "msg" && rtk git push
+rtk ls internal/ | rtk grep "func " | rtk wc -l
+rtk awk '{print $1}' internal/api/handlers.go | rtk sort | rtk uniq
+rtk helm template . | rtk grep "image:" | rtk cut -d: -f2 | rtk sort | rtk uniq
 ```
 
 Key savings: tests 90-99%, build 70-87%, git 59-80%, go 70-90%. Run `rtk gain` for stats.

@@ -1,3 +1,6 @@
+{{- if and (gt (int .Values.replicaCount) 1) (eq .Values.database.dialect "sqlite") }}
+{{- fail "replicaCount > 1 is not supported with SQLite — use database.dialect=postgres for multi-replica deployments" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
