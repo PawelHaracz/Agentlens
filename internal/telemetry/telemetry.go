@@ -68,6 +68,36 @@ func Init(ctx context.Context, cfg config.TelemetryConfig, version string) (*Pro
 		return nil, fmt.Errorf("creating otel resource: %w", err)
 	}
 
+	p, err := newSDKProviders(ctx, res, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	otel.SetTracerProvider(p.tp)
+	otel.SetMeterProvider(p.mp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
+
+	return &Provider{
+		TracerProvider: p.tp,
+		MeterProvider:  p.mp,
+		LoggerProvider: p.lp,
+		PromHandler:    p.promHandler,
+		Shutdown:       newShutdown(p.tp, p.mp, p.lp),
+	}, nil
+}
+
+type sdkProviders struct {
+	tp          *sdktrace.TracerProvider
+	mp          *sdkmetric.MeterProvider
+	lp          *sdklog.LoggerProvider
+	promHandler http.Handler
+}
+
+// newSDKProviders constructs trace, metric, and log SDK providers from the given resource and config.
+func newSDKProviders(ctx context.Context, res *resource.Resource, cfg config.TelemetryConfig) (*sdkProviders, error) {
 	traceExp, err := newTraceExporter(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("creating trace exporter: %w", err)
@@ -80,10 +110,24 @@ func Init(ctx context.Context, cfg config.TelemetryConfig, version string) (*Pro
 		sdktrace.WithSampler(sampler),
 	)
 
+	mp, promHandler, err := newMeterProvider(ctx, res, cfg, tp)
+	if err != nil {
+		return nil, err
+	}
+
+	lp, err := newLoggerProvider(ctx, res, cfg, tp, mp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdkProviders{tp: tp, mp: mp, lp: lp, promHandler: promHandler}, nil
+}
+
+func newMeterProvider(ctx context.Context, res *resource.Resource, cfg config.TelemetryConfig, tp *sdktrace.TracerProvider) (*sdkmetric.MeterProvider, http.Handler, error) {
 	otlpMetricExp, err := newMetricExporter(ctx, cfg)
 	if err != nil {
 		_ = tp.Shutdown(ctx)
-		return nil, fmt.Errorf("creating metric exporter: %w", err)
+		return nil, nil, fmt.Errorf("creating metric exporter: %w", err)
 	}
 
 	var metricReaders []sdkmetric.Reader
@@ -96,7 +140,7 @@ func Init(ctx context.Context, cfg config.TelemetryConfig, version string) (*Pro
 		promExp, promErr := promexporter.New()
 		if promErr != nil {
 			_ = tp.Shutdown(ctx)
-			return nil, fmt.Errorf("creating prometheus exporter: %w", promErr)
+			return nil, nil, fmt.Errorf("creating prometheus exporter: %w", promErr)
 		}
 		metricReaders = append(metricReaders, promExp)
 		promHandler = promhttp.Handler()
@@ -106,33 +150,20 @@ func Init(ctx context.Context, cfg config.TelemetryConfig, version string) (*Pro
 	for _, r := range metricReaders {
 		mpOpts = append(mpOpts, sdkmetric.WithReader(r))
 	}
-	mp := sdkmetric.NewMeterProvider(mpOpts...)
+	return sdkmetric.NewMeterProvider(mpOpts...), promHandler, nil
+}
 
+func newLoggerProvider(ctx context.Context, res *resource.Resource, cfg config.TelemetryConfig, tp *sdktrace.TracerProvider, mp *sdkmetric.MeterProvider) (*sdklog.LoggerProvider, error) {
 	logExp, err := newLogExporter(ctx, cfg)
 	if err != nil {
 		_ = tp.Shutdown(ctx)
 		_ = mp.Shutdown(ctx)
 		return nil, fmt.Errorf("creating log exporter: %w", err)
 	}
-	lp := sdklog.NewLoggerProvider(
+	return sdklog.NewLoggerProvider(
 		sdklog.WithResource(res),
 		sdklog.WithProcessor(sdklog.NewBatchProcessor(logExp)),
-	)
-
-	otel.SetTracerProvider(tp)
-	otel.SetMeterProvider(mp)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	))
-
-	return &Provider{
-		TracerProvider: tp,
-		MeterProvider:  mp,
-		LoggerProvider: lp,
-		PromHandler:    promHandler,
-		Shutdown:       newShutdown(tp, mp, lp),
-	}, nil
+	), nil
 }
 
 func newShutdown(tp *sdktrace.TracerProvider, mp *sdkmetric.MeterProvider, lp *sdklog.LoggerProvider) func(context.Context) error {

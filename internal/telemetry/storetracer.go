@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"time"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
@@ -29,10 +28,11 @@ func WithTracerProvider(tp trace.TracerProvider) TracedStoreOption {
 
 // TracedStore wraps a store.Store with OTel tracing spans for key operations.
 // The store package never imports OTel — tracing is added here at the infrastructure boundary.
+// Pass-through methods are handled automatically via the embedded store.Store.
 type TracedStore struct {
-	inner   store.Store
-	dialect string
-	tracer  trace.Tracer
+	store.Store // embedded — handles all pass-through methods automatically
+	dialect     string
+	tracer      trace.Tracer
 }
 
 // NewTracedStore creates a tracing decorator around a catalog store.
@@ -42,7 +42,7 @@ func NewTracedStore(inner store.Store, dialect string, opts ...TracedStoreOption
 		o(cfg)
 	}
 	return &TracedStore{
-		inner:   inner,
+		Store:   inner,
 		dialect: dialect,
 		tracer:  cfg.tp.Tracer("agentlens.store"),
 	}
@@ -70,7 +70,7 @@ func recordErr(span trace.Span, err error) {
 func (t *TracedStore) Create(ctx context.Context, entry *model.CatalogEntry) error {
 	ctx, span := t.startSpan(ctx, "store.catalog.create", "create")
 	defer span.End()
-	err := t.inner.Create(ctx, entry)
+	err := t.Store.Create(ctx, entry)
 	recordErr(span, err)
 	return err
 }
@@ -79,7 +79,7 @@ func (t *TracedStore) Create(ctx context.Context, entry *model.CatalogEntry) err
 func (t *TracedStore) Get(ctx context.Context, id string) (*model.CatalogEntry, error) {
 	ctx, span := t.startSpan(ctx, "store.catalog.get", "get")
 	defer span.End()
-	result, err := t.inner.Get(ctx, id)
+	result, err := t.Store.Get(ctx, id)
 	recordErr(span, err)
 	return result, err
 }
@@ -88,7 +88,7 @@ func (t *TracedStore) Get(ctx context.Context, id string) (*model.CatalogEntry, 
 func (t *TracedStore) List(ctx context.Context, filter store.ListFilter) ([]model.CatalogEntry, error) {
 	ctx, span := t.startSpan(ctx, "store.catalog.list", "list")
 	defer span.End()
-	results, err := t.inner.List(ctx, filter)
+	results, err := t.Store.List(ctx, filter)
 	recordErr(span, err)
 	span.SetAttributes(attribute.Int("agentlens.store.result_count", len(results)))
 	return results, err
@@ -98,7 +98,7 @@ func (t *TracedStore) List(ctx context.Context, filter store.ListFilter) ([]mode
 func (t *TracedStore) UpdateHealth(ctx context.Context, entryID string, h model.Health) error {
 	ctx, span := t.startSpan(ctx, "store.catalog.update_health", "update_health")
 	defer span.End()
-	err := t.inner.UpdateHealth(ctx, entryID, h)
+	err := t.Store.UpdateHealth(ctx, entryID, h)
 	recordErr(span, err)
 	return err
 }
@@ -107,7 +107,7 @@ func (t *TracedStore) UpdateHealth(ctx context.Context, entryID string, h model.
 func (t *TracedStore) ListCapabilities(ctx context.Context, filter store.CapabilityFilter) (*model.CapabilityListResult, error) {
 	ctx, span := t.startSpan(ctx, "store.skills.list", "list_capabilities")
 	defer span.End()
-	result, err := t.inner.ListCapabilities(ctx, filter)
+	result, err := t.Store.ListCapabilities(ctx, filter)
 	recordErr(span, err)
 	return result, err
 }
@@ -116,50 +116,8 @@ func (t *TracedStore) ListCapabilities(ctx context.Context, filter store.Capabil
 func (t *TracedStore) ListAgentsByCapability(ctx context.Context, kind, name string) ([]model.CatalogEntry, error) {
 	ctx, span := t.startSpan(ctx, "store.skills.list_agents", "list_agents_by_capability")
 	defer span.End()
-	results, err := t.inner.ListAgentsByCapability(ctx, kind, name)
+	results, err := t.Store.ListAgentsByCapability(ctx, kind, name)
 	recordErr(span, err)
 	span.SetAttributes(attribute.Int("agentlens.store.result_count", len(results)))
 	return results, err
-}
-
-// Pass-through operations (no tracing — not key paths)
-
-// UpsertProvider delegates to inner store without tracing.
-func (t *TracedStore) UpsertProvider(ctx context.Context, provider *model.Provider) (*model.Provider, error) {
-	return t.inner.UpsertProvider(ctx, provider)
-}
-
-// Update delegates to inner store without tracing.
-func (t *TracedStore) Update(ctx context.Context, entry *model.CatalogEntry) error {
-	return t.inner.Update(ctx, entry)
-}
-
-// Delete delegates to inner store without tracing.
-func (t *TracedStore) Delete(ctx context.Context, id string) error {
-	return t.inner.Delete(ctx, id)
-}
-
-// FindByEndpoint delegates to inner store without tracing.
-func (t *TracedStore) FindByEndpoint(ctx context.Context, endpoint string) (*model.CatalogEntry, error) {
-	return t.inner.FindByEndpoint(ctx, endpoint)
-}
-
-// Stats delegates to inner store without tracing.
-func (t *TracedStore) Stats(ctx context.Context) (*store.StoreStats, error) {
-	return t.inner.Stats(ctx)
-}
-
-// ListForProbing delegates to inner store without tracing.
-func (t *TracedStore) ListForProbing(ctx context.Context, olderThan time.Time, limit int) ([]model.CatalogEntry, error) {
-	return t.inner.ListForProbing(ctx, olderThan, limit)
-}
-
-// SetLifecycle delegates to inner store without tracing.
-func (t *TracedStore) SetLifecycle(ctx context.Context, entryID string, state model.LifecycleState) error {
-	return t.inner.SetLifecycle(ctx, entryID, state)
-}
-
-// Close delegates to inner store without tracing.
-func (t *TracedStore) Close() error {
-	return t.inner.Close()
 }
