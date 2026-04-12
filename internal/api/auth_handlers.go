@@ -5,23 +5,29 @@ import (
 	"net/http"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/PawelHaracz/agentlens/internal/auth"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	"github.com/PawelHaracz/agentlens/internal/telemetry"
 )
 
 // AuthHandler handles authentication endpoints.
 type AuthHandler struct {
-	userStore *store.UserStore
-	roleStore *store.RoleStore
-	jwt       *auth.JWTService
+	userStore   *store.UserStore
+	roleStore   *store.RoleStore
+	jwt         *auth.JWTService
+	authMetrics *telemetry.AuthMetrics
 }
 
 // NewAuthHandler creates a new AuthHandler.
 func NewAuthHandler(userStore *store.UserStore, roleStore *store.RoleStore, jwt *auth.JWTService) *AuthHandler {
 	return &AuthHandler{
-		userStore: userStore,
-		roleStore: roleStore,
-		jwt:       jwt,
+		userStore:   userStore,
+		roleStore:   roleStore,
+		jwt:         jwt,
+		authMetrics: telemetry.NewAuthMetrics(),
 	}
 }
 
@@ -54,18 +60,39 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user == nil {
+		span := trace.SpanFromContext(r.Context())
+		span.AddEvent("auth.login", trace.WithAttributes(
+			attribute.String("username", req.Username),
+			attribute.String("result", "failure"),
+			attribute.String("reason", "invalid_credentials"),
+		))
+		h.authMetrics.RecordLogin(r.Context(), "failure", "invalid_credentials")
 		ErrorResponse(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
 	// Check if the account is active.
 	if !user.IsActive {
+		span := trace.SpanFromContext(r.Context())
+		span.AddEvent("auth.login", trace.WithAttributes(
+			attribute.String("username", req.Username),
+			attribute.String("result", "failure"),
+			attribute.String("reason", "account_disabled"),
+		))
+		h.authMetrics.RecordLogin(r.Context(), "failure", "account_disabled")
 		ErrorResponse(w, http.StatusForbidden, "account is disabled")
 		return
 	}
 
 	// Check if the account is locked.
 	if user.LockedUntil != nil && time.Now().Before(*user.LockedUntil) {
+		span := trace.SpanFromContext(r.Context())
+		span.AddEvent("auth.login", trace.WithAttributes(
+			attribute.String("username", req.Username),
+			attribute.String("result", "failure"),
+			attribute.String("reason", "account_locked"),
+		))
+		h.authMetrics.RecordLogin(r.Context(), "failure", "account_locked")
 		ErrorResponse(w, http.StatusLocked, "account is locked, try again later")
 		return
 	}
@@ -73,11 +100,25 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Check password.
 	if !auth.CheckPassword(req.Password, user.PasswordHash) {
 		_ = h.userStore.IncrementFailedAttempts(r.Context(), user.ID)
+		span := trace.SpanFromContext(r.Context())
+		span.AddEvent("auth.login", trace.WithAttributes(
+			attribute.String("username", req.Username),
+			attribute.String("result", "failure"),
+			attribute.String("reason", "invalid_credentials"),
+		))
+		h.authMetrics.RecordLogin(r.Context(), "failure", "invalid_credentials")
 		ErrorResponse(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
 	// Successful authentication.
+	span := trace.SpanFromContext(r.Context())
+	span.AddEvent("auth.login", trace.WithAttributes(
+		attribute.String("username", req.Username),
+		attribute.String("result", "success"),
+		attribute.String("reason", ""),
+	))
+	h.authMetrics.RecordLogin(r.Context(), "success", "")
 	_ = h.userStore.ResetFailedAttempts(r.Context(), user.ID)
 	_ = h.userStore.UpdateLastLogin(r.Context(), user.ID)
 
