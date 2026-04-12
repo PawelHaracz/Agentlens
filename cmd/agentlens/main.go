@@ -168,9 +168,12 @@ func main() {
 	roleStore := store.NewRoleStore(database)
 	settingsStore := store.NewSettingsStore(database)
 
+	// Wrap store with tracing decorator (no-op spans when telemetry disabled)
+	tracedStore := telemetry.NewTracedStore(catalogStore, string(db.Dialect(cfg.Database.Dialect)))
+
 	// Register catalog entry gauge (async metric, updated at each metrics interval)
 	if err := telemetry.RegisterCatalogGauge(func(ctx context.Context) map[string]int64 {
-		stats, err := catalogStore.Stats(ctx)
+		stats, err := tracedStore.Stats(ctx)
 		if err != nil {
 			return nil
 		}
@@ -192,7 +195,7 @@ func main() {
 
 	// Validate license
 	lic := kernel.ValidateLicense(cfg.LicenseKey)
-	core := kernel.NewCore(catalogStore, cfg, logger, lic)
+	core := kernel.NewCore(tracedStore, cfg, logger, lic)
 
 	// 10. Plugin manager setup
 	pm := kernel.NewPluginManager(core)
@@ -265,7 +268,7 @@ func main() {
 
 	// Start discovery manager
 	if len(sources) > 0 {
-		mgr := discovery.NewManager(sources, catalogStore, cfg.PollInterval)
+		mgr := discovery.NewManager(sources, tracedStore, cfg.PollInterval)
 		// Wire card store into discovery manager if plugin loaded.
 		if core.CardStore() != nil {
 			mgr.SetCardStore(core.CardStore())
