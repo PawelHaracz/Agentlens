@@ -656,7 +656,7 @@ graph LR
 - `telemetry.endpoint` — OTLP collector address (e.g., `localhost:4317`)
 - `telemetry.protocol` — Export protocol: `grpc` (default) or `http`
 - `telemetry.prometheus.enabled` — Expose `/metrics` endpoint
-- `telemetry.tracesSampleRate` — Sample rate (0.0–1.0; default 1.0)
+- `telemetry.traces_sample_rate` — Sample rate (0.0–1.0; default 1.0)
 
 **Related documentation:**
 - [ADR-009: OpenTelemetry as Infrastructure](adr/009-opentelemetry-as-infrastructure.md) — Design decision for tracing/metrics

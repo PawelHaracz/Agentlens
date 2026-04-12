@@ -80,13 +80,14 @@ type AuthTokenConfig struct {
 type TelemetryConfig struct {
 	Enabled          bool              `yaml:"enabled"`
 	Endpoint         string            `yaml:"endpoint"`
+	FrontendEndpoint string            `yaml:"frontend_endpoint"`
 	Protocol         string            `yaml:"protocol"`
 	Insecure         bool              `yaml:"insecure"`
-	ServiceName      string            `yaml:"serviceName"`
+	ServiceName      string            `yaml:"service_name"`
 	Environment      string            `yaml:"environment"`
-	TracesSampleRate float64           `yaml:"tracesSampleRate"`
-	MetricsInterval  time.Duration     `yaml:"metricsInterval"`
-	LogExportLevel   string            `yaml:"logExportLevel"`
+	TracesSampleRate float64           `yaml:"traces_sample_rate"`
+	MetricsInterval  time.Duration     `yaml:"metrics_interval"`
+	LogExportLevel   string            `yaml:"log_export_level"`
 	Headers          map[string]string `yaml:"headers"`
 	Prometheus       PrometheusConfig  `yaml:"prometheus"`
 }
@@ -278,6 +279,9 @@ func applyTelemetryEnv(tel *TelemetryConfig) {
 	}
 	if v := env("OTEL_PROTOCOL"); v != "" {
 		tel.Protocol = v
+	}
+	if v := env("OTEL_FRONTEND_ENDPOINT"); v != "" {
+		tel.FrontendEndpoint = v
 	}
 	if v := env("OTEL_INSECURE"); v != "" {
 		tel.Insecure = strings.EqualFold(v, "true") || v == "1"

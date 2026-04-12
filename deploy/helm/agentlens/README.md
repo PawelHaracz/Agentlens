@@ -8,8 +8,7 @@ Production-grade Helm chart for [AgentLens](https://github.com/PawelHaracz/agent
 
 ```bash
 helm install agentlens ./deploy/helm/agentlens \
-  --namespace agentlens --create-namespace \
-  --set config.adminPassword="your-secure-password"
+  --namespace agentlens --create-namespace
 ```
 
 ### PostgreSQL (production/multi-replica)
@@ -19,8 +18,7 @@ helm install agentlens ./deploy/helm/agentlens \
   --namespace agentlens --create-namespace \
   --set database.dialect=postgres \
   --set postgresql.enabled=true \
-  --set postgresql.auth.password="pg-password" \
-  --set config.adminPassword="your-secure-password"
+  --set postgresql.auth.password="pg-password"
 ```
 
 ### With OpenTelemetry
@@ -41,9 +39,10 @@ helm install agentlens ./deploy/helm/agentlens \
 | `postgresql.enabled` | Enable Bitnami PostgreSQL subchart | `false` |
 | `telemetry.enabled` | Enable OTel instrumentation | `false` |
 | `telemetry.endpoint` | OTLP collector endpoint | `""` |
+| `telemetry.frontendEndpoint` | Optional browser OTLP/HTTP endpoint override | `""` |
 | `metrics.serviceMonitor.enabled` | Enable Prometheus ServiceMonitor | `false` |
 | `metrics.prometheus.enabled` | Enable /metrics endpoint | `false` |
-| `config.adminPassword` | Admin password (generated if empty) | `""` |
+| `serviceAccount.automountServiceAccountToken` | Mount service account token into pod | `false` |
 | `ingress.enabled` | Enable Kubernetes Ingress | `false` |
 | `gateway.enabled` | Enable Gateway API HTTPRoute | `false` |
 | `autoscaling.enabled` | Enable HPA (requires postgres) | `false` |

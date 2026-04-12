@@ -31,7 +31,7 @@ type fanoutHandler struct {
 - **stdout** receives all logs at the configured `logLevel` (unchanged from current behavior). Always active. Never replaced.
 - **OTLP bridge** receives only logs at or above `logExportLevel` (default: `info`). Active only when telemetry is enabled.
 - Both outputs inject `trace_id` and `span_id` from the active span context when available.
-- Configuration: `telemetry.logExportLevel` / `AGENTLENS_OTEL_LOG_EXPORT_LEVEL`.
+- Configuration: `telemetry.log_export_level` / `AGENTLENS_OTEL_LOG_EXPORT_LEVEL`.
 
 When telemetry is disabled: existing slog setup (stdout JSON) is untouched. Zero overhead.
 

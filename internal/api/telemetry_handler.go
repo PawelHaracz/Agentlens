@@ -1,14 +1,15 @@
 package api
 
 import (
+	"context"
 	"net/http"
 )
 
 // NewReadyzHandler creates a readiness probe handler.
 // pingFn should return nil if the database is reachable.
-func NewReadyzHandler(pingFn func() error) http.HandlerFunc {
+func NewReadyzHandler(pingFn func(context.Context) error) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := pingFn(); err != nil {
+		if err := pingFn(r.Context()); err != nil {
 			JSONResponse(w, http.StatusServiceUnavailable, map[string]string{
 				"status": "error",
 				"reason": "database unreachable",

@@ -1,3 +1,4 @@
+{{- include "agentlens.sqliteReplicaGuard" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -112,6 +113,10 @@ spec:
             {{- if .Values.telemetry.endpoint }}
             - name: AGENTLENS_OTEL_ENDPOINT
               value: {{ .Values.telemetry.endpoint | quote }}
+            {{- end }}
+            {{- if .Values.telemetry.frontendEndpoint }}
+            - name: AGENTLENS_OTEL_FRONTEND_ENDPOINT
+              value: {{ .Values.telemetry.frontendEndpoint | quote }}
             {{- end }}
             - name: AGENTLENS_OTEL_PROTOCOL
               value: {{ .Values.telemetry.protocol | quote }}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/PawelHaracz/agentlens/internal/telemetry"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFanoutHandler_BothOutputs(t *testing.T) {
@@ -82,6 +81,3 @@ func TestFanoutHandler_Enabled(t *testing.T) {
 	// Warn is enabled
 	assert.True(t, h.Enabled(context.Background(), slog.LevelWarn))
 }
-
-// suppress unused import warning — require is used indirectly via testify patterns
-var _ = require.NoError

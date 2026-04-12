@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestReadyz_Healthy(t *testing.T) {
-	handler := api.NewReadyzHandler(func() error { return nil })
+	handler := api.NewReadyzHandler(func(context.Context) error { return nil })
 
 	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	w := httptest.NewRecorder()
@@ -22,7 +23,7 @@ func TestReadyz_Healthy(t *testing.T) {
 }
 
 func TestReadyz_Unhealthy(t *testing.T) {
-	handler := api.NewReadyzHandler(func() error {
+	handler := api.NewReadyzHandler(func(context.Context) error {
 		return fmt.Errorf("connection refused")
 	})
 

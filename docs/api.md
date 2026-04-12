@@ -65,7 +65,7 @@ Frontend telemetry configuration. Used by web UI to initialize OpenTelemetry cli
 ```json
 {
   "enabled": true,
-  "endpoint": "http://otel-collector:4318",
+  "endpoint": "http://otel-collector:4318/v1/traces",
   "serviceName": "agentlens-web"
 }
 ```

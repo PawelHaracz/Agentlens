@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"io/fs"
 	"net/http"
 	"strings"
@@ -8,6 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/PawelHaracz/agentlens/internal/auth"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
@@ -30,7 +33,7 @@ type RouterDeps struct {
 	// PromHandler is optional. When non-nil, GET /metrics is registered.
 	PromHandler http.Handler
 	// ReadyzPing is optional. When non-nil, GET /readyz is registered.
-	ReadyzPing func() error
+	ReadyzPing func(context.Context) error
 	// TelemetryEnabled controls the /api/v1/telemetry/config response.
 	TelemetryEnabled bool
 	// TelemetryEndpoint is the OTLP collector endpoint exposed to the frontend.
@@ -52,6 +55,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 	r.Use(LoggerMiddleware)
 	r.Use(CORSMiddleware)
 	r.Use(chiMiddleware.RequestID)
+	r.Use(routePatternSpanNameMiddleware)
 
 	r.Get("/healthz", h.Healthz)
 
@@ -90,19 +94,27 @@ func NewRouter(deps RouterDeps) http.Handler {
 		r.Handle("/*", spaHandler(staticFS))
 	}
 
-	return otelhttp.NewHandler(r, "agentlens.http",
-		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
-			rctx := chi.RouteContext(r.Context())
-			if rctx == nil {
-				return r.Method + " " + r.URL.Path
-			}
-			routePattern := rctx.RoutePattern()
-			if routePattern == "" {
-				return r.Method + " " + r.URL.Path
-			}
-			return r.Method + " " + routePattern
-		}),
-	)
+	return otelhttp.NewHandler(r, "agentlens.http")
+}
+
+func routePatternSpanNameMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+		span := trace.SpanFromContext(r.Context())
+		if span == nil || !span.IsRecording() {
+			return
+		}
+		rctx := chi.RouteContext(r.Context())
+		if rctx == nil {
+			return
+		}
+		routePattern := rctx.RoutePattern()
+		if routePattern == "" {
+			return
+		}
+		span.SetName(r.Method + " " + routePattern)
+		span.SetAttributes(semconv.HTTPRoute(routePattern))
+	})
 }
 
 // registerAuthRoutes mounts public and protected auth endpoints.

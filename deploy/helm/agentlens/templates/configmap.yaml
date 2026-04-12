@@ -28,10 +28,10 @@ data:
       {{- end }}
       protocol: {{ .Values.telemetry.protocol }}
       insecure: {{ .Values.telemetry.insecure }}
-      serviceName: {{ .Values.telemetry.serviceName }}
+      service_name: {{ .Values.telemetry.serviceName }}
       environment: {{ .Values.telemetry.environment }}
-      tracesSampleRate: {{ .Values.telemetry.tracesSampleRate }}
-      metricsInterval: {{ .Values.telemetry.metricsInterval }}
-      logExportLevel: {{ .Values.telemetry.logExportLevel }}
+      traces_sample_rate: {{ .Values.telemetry.tracesSampleRate }}
+      metrics_interval: {{ .Values.telemetry.metricsInterval }}
+      log_export_level: {{ .Values.telemetry.logExportLevel }}
       prometheus:
         enabled: {{ .Values.metrics.prometheus.enabled }}

@@ -134,8 +134,8 @@ func main() {
 		slog.Error("failed to get underlying sql.DB", "err", err)
 		os.Exit(1)
 	}
-	dbPingFn := func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	dbPingFn := func(ctx context.Context) error {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		return sqlDB.PingContext(ctx)
 	}
@@ -197,7 +197,7 @@ func main() {
 
 	// Validate license
 	lic := kernel.ValidateLicense(cfg.LicenseKey)
-	core := kernel.NewCore(tracedStore, cfg, logger, lic)
+	core := kernel.NewCore(tracedStore, cfg, slog.Default(), lic)
 
 	// 10. Plugin manager setup
 	pm := kernel.NewPluginManager(core)
@@ -292,7 +292,7 @@ func main() {
 		PromHandler:          telProvider.PromHandler,
 		ReadyzPing:           dbPingFn,
 		TelemetryEnabled:     cfg.Telemetry.Enabled,
-		TelemetryEndpoint:    cfg.Telemetry.Endpoint,
+		TelemetryEndpoint:    frontendTelemetryEndpoint(cfg.Telemetry),
 		TelemetryServiceName: "agentlens-web",
 	}
 	if healthPlugin != nil {
@@ -305,6 +305,26 @@ func main() {
 		slog.Error("server error", "err", err)
 		os.Exit(1)
 	}
+}
+
+func frontendTelemetryEndpoint(cfg config.TelemetryConfig) string {
+	if cfg.FrontendEndpoint != "" {
+		return cfg.FrontendEndpoint
+	}
+	if cfg.Protocol != "http" || cfg.Endpoint == "" {
+		return ""
+	}
+	endpoint := strings.TrimRight(cfg.Endpoint, "/")
+	if strings.HasSuffix(endpoint, "/v1/traces") {
+		return endpoint
+	}
+	if strings.HasPrefix(endpoint, "http://") || strings.HasPrefix(endpoint, "https://") {
+		return endpoint + "/v1/traces"
+	}
+	if cfg.Insecure {
+		return "http://" + endpoint + "/v1/traces"
+	}
+	return "https://" + endpoint + "/v1/traces"
 }
 
 // parseSlogLevel parses a log level string into a slog.Level value.
