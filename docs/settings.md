@@ -29,6 +29,24 @@ Settings are organized by **category** and identified by a unique **key**. Each 
 | `health_check.degraded_latency` | `1500ms` | `AGENTLENS_HEALTH_CHECK_DEGRADED_LATENCY` | Latency threshold above which a 2xx response → degraded state |
 | `health_check.failure_threshold` | `3` | `AGENTLENS_HEALTH_CHECK_FAILURE_THRESHOLD` | Consecutive failures before → offline state |
 
+### Telemetry (OpenTelemetry)
+
+| Env var | Config key | Default | Description |
+|---------|-----------|---------|-------------|
+| `AGENTLENS_OTEL_ENABLED` | `telemetry.enabled` | `false` | Enable OTel instrumentation and OTLP export |
+| `AGENTLENS_OTEL_ENDPOINT` | `telemetry.endpoint` | `""` | OTLP collector endpoint (e.g., `localhost:4317` for gRPC, `http://localhost:4318` for HTTP) |
+| `AGENTLENS_OTEL_PROTOCOL` | `telemetry.protocol` | `grpc` | Export protocol: `grpc` or `http` |
+| `AGENTLENS_OTEL_INSECURE` | `telemetry.insecure` | `true` | Disable TLS for collector connection |
+| `AGENTLENS_OTEL_SERVICE_NAME` | `telemetry.serviceName` | `agentlens` | Service name in traces and metrics |
+| `AGENTLENS_OTEL_ENVIRONMENT` | `telemetry.environment` | `production` | Deployment environment attribute (e.g., `production`, `staging`, `development`) |
+| `AGENTLENS_OTEL_TRACES_SAMPLER` | `telemetry.tracesSampler` | `parentbased_traceidratio` | Trace sampler: `always_on`, `always_off`, `parentbased_traceidratio`, `traceidratio` |
+| `AGENTLENS_OTEL_TRACES_SAMPLE_RATE` | `telemetry.tracesSampleRate` | `1.0` | Trace sample rate (0.0–1.0; only used with `traceidratio` samplers) |
+| `AGENTLENS_OTEL_METRICS_INTERVAL` | `telemetry.metricsInterval` | `30s` | Metrics export interval |
+| `AGENTLENS_OTEL_LOG_EXPORT_LEVEL` | `telemetry.logExportLevel` | `info` | Minimum log level for OTLP export (`debug`, `info`, `warn`, `error`) |
+| `AGENTLENS_OTEL_HEADERS` | `telemetry.headers` | `""` | Extra OTLP headers (comma-separated `key=value` pairs) |
+| `AGENTLENS_METRICS_PROMETHEUS_ENABLED` | `telemetry.prometheus.enabled` | `false` | Enable `/metrics` Prometheus exposition endpoint |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | — | — | Standard OpenTelemetry env var (used as fallback when `AGENTLENS_OTEL_ENDPOINT` not set) |
+
 ---
 
 ## Categories

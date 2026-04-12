@@ -616,6 +616,55 @@ agentlens/
 
 ---
 
+## Observability
+
+AgentLens ships OpenTelemetry instrumentation as an infrastructure-layer concern. The telemetry subsystem is built on `internal/telemetry` and provides traces, metrics, and logs to external observability backends (Jaeger, Prometheus, Loki).
+
+**Key components:**
+- **Span instrumentation**: HTTP handlers, database queries, and plugin operations emit traces
+- **Prometheus metrics**: Go runtime metrics, HTTP request counters, and custom business metrics
+- **OTLP export**: Configurable OTLP gRPC/HTTP endpoint for trace and log export
+- **Liveness/readiness probes**: `/healthz` (process alive), `/readyz` (DB reachable), `/metrics` (Prometheus scrape)
+
+**Observability data flows:**
+
+```mermaid
+graph LR
+    subgraph AgentLens
+        API[HTTP Handlers]
+        HP[Health Prober]
+        PR[Parsers<br/>A2A / MCP]
+        ST[Store<br/>GORM]
+        TEL[internal/telemetry<br/>TracerProvider]
+    end
+
+    API -->|spans| TEL
+    HP -->|spans + metrics| TEL
+    PR -->|spans + metrics| TEL
+    ST -->|spans| TEL
+
+    TEL -->|OTLP gRPC/HTTP| COLL["OTel Collector<br/>(optional)"]
+    TEL -->|Prometheus scrape| PROM["Prometheus<br/>(optional)"]
+    
+    COLL --> JAE["Jaeger"]
+    COLL --> LOKI["Loki"]
+    PROM --> GRAF["Grafana"]
+```
+
+**Configuration** (see [Settings](settings.md) for full details):
+- `telemetry.enabled` — Enable/disable OTLP export
+- `telemetry.endpoint` — OTLP collector address (e.g., `localhost:4317`)
+- `telemetry.protocol` — Export protocol: `grpc` (default) or `http`
+- `telemetry.prometheus.enabled` — Expose `/metrics` endpoint
+- `telemetry.tracesSampleRate` — Sample rate (0.0–1.0; default 1.0)
+
+**Related documentation:**
+- [ADR-009: OpenTelemetry Integration](adr/009-opentelemetry.md) — Design decision for tracing/metrics
+- [ADR-010: Observability Probes](adr/010-observability-probes.md) — Liveness/readiness probe design
+- [DevOps Guide](devops-guide.md#observability) — Deployment and monitoring setup
+
+---
+
 ## Configuration
 
 AgentLens is configured via YAML file and/or environment variables (prefixed with `AGENTLENS_`):
