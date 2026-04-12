@@ -41,7 +41,8 @@ type Provider struct {
 }
 
 // Init initializes OpenTelemetry providers based on cfg.
-// When disabled or endpoint empty, returns a no-op Provider (nil providers, no-op Shutdown).
+// When disabled, returns a no-op Provider (nil providers, no-op Shutdown).
+// When enabled but endpoint empty, only Prometheus is initialized (if configured).
 // Registers global TracerProvider, MeterProvider, and TextMapPropagator.
 func Init(ctx context.Context, cfg config.TelemetryConfig, version string) (*Provider, error) {
 	noop := &Provider{
@@ -52,9 +53,13 @@ func Init(ctx context.Context, cfg config.TelemetryConfig, version string) (*Pro
 		return noop, nil
 	}
 
+	// Prometheus-only mode: no OTLP endpoint, but Prometheus enabled.
 	if cfg.Endpoint == "" {
-		slog.Warn("telemetry enabled but no endpoint configured, falling back to no-op")
-		return noop, nil
+		if !cfg.Prometheus.Enabled {
+			slog.Warn("telemetry enabled but no endpoint and prometheus disabled, falling back to no-op")
+			return noop, nil
+		}
+		return initPrometheusOnly(ctx, cfg, version)
 	}
 
 	res, err := resource.New(ctx,
@@ -192,6 +197,43 @@ func isContextErr(err error) bool {
 	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
 }
 
+// initPrometheusOnly sets up a MeterProvider with only the Prometheus exporter.
+// Used when telemetry is enabled and Prometheus is configured but no OTLP endpoint is set.
+func initPrometheusOnly(ctx context.Context, cfg config.TelemetryConfig, version string) (*Provider, error) {
+	res, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(cfg.ServiceName),
+			semconv.ServiceVersionKey.String(version),
+			semconv.DeploymentEnvironmentKey.String(cfg.Environment),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("creating otel resource: %w", err)
+	}
+
+	promExp, err := promexporter.New()
+	if err != nil {
+		return nil, fmt.Errorf("creating prometheus exporter: %w", err)
+	}
+
+	mp := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
+		sdkmetric.WithReader(promExp),
+	)
+	otel.SetMeterProvider(mp)
+
+	return &Provider{
+		MeterProvider: mp,
+		PromHandler:   promhttp.Handler(),
+		Shutdown: func(ctx context.Context) error {
+			if err := mp.Shutdown(ctx); err != nil && !isContextErr(err) {
+				return fmt.Errorf("metric provider shutdown: %w", err)
+			}
+			return nil
+		},
+	}, nil
+}
+
 func newTraceExporter(ctx context.Context, cfg config.TelemetryConfig) (sdktrace.SpanExporter, error) {
 	switch cfg.Protocol {
 	case "http":
@@ -222,11 +264,17 @@ func newMetricExporter(ctx context.Context, cfg config.TelemetryConfig) (sdkmetr
 		if cfg.Insecure {
 			opts = append(opts, otlpmetrichttp.WithInsecure())
 		}
+		if len(cfg.Headers) > 0 {
+			opts = append(opts, otlpmetrichttp.WithHeaders(cfg.Headers))
+		}
 		return otlpmetrichttp.New(ctx, opts...)
 	default:
 		opts := []otlpmetricgrpc.Option{otlpmetricgrpc.WithEndpoint(cfg.Endpoint)}
 		if cfg.Insecure {
 			opts = append(opts, otlpmetricgrpc.WithInsecure())
+		}
+		if len(cfg.Headers) > 0 {
+			opts = append(opts, otlpmetricgrpc.WithHeaders(cfg.Headers))
 		}
 		return otlpmetricgrpc.New(ctx, opts...)
 	}
@@ -239,11 +287,17 @@ func newLogExporter(ctx context.Context, cfg config.TelemetryConfig) (sdklog.Exp
 		if cfg.Insecure {
 			opts = append(opts, otlploghttp.WithInsecure())
 		}
+		if len(cfg.Headers) > 0 {
+			opts = append(opts, otlploghttp.WithHeaders(cfg.Headers))
+		}
 		return otlploghttp.New(ctx, opts...)
 	default:
 		opts := []otlploggrpc.Option{otlploggrpc.WithEndpoint(cfg.Endpoint)}
 		if cfg.Insecure {
 			opts = append(opts, otlploggrpc.WithInsecure())
+		}
+		if len(cfg.Headers) > 0 {
+			opts = append(opts, otlploggrpc.WithHeaders(cfg.Headers))
 		}
 		return otlploggrpc.New(ctx, opts...)
 	}

@@ -3,7 +3,6 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -136,27 +135,22 @@ func (m *AuthMetrics) RecordLogin(ctx context.Context, result, reason string) {
 }
 
 // RegisterCatalogGauge registers an async UpDownCounter reporting catalog entry counts.
-// countFn returns a map of "protocol:state" → count, called at each metrics collection.
+// countFn returns a map of state → count, called at each metrics collection.
 func RegisterCatalogGauge(countFn func(ctx context.Context) map[string]int64, opts ...MetricsOption) error {
 	cfg := newMetricsCfg(opts)
 	meter := cfg.mp.Meter("agentlens.catalog")
 
 	gauge, err := meter.Int64ObservableUpDownCounter("agentlens.catalog.entries",
-		metric.WithDescription("Number of catalog entries by protocol and state"))
+		metric.WithDescription("Number of catalog entries by state"))
 	if err != nil {
 		return fmt.Errorf("creating catalog gauge: %w", err)
 	}
 
 	_, err = meter.RegisterCallback(func(ctx context.Context, o metric.Observer) error {
-		for key, count := range countFn(ctx) {
-			parts := strings.SplitN(key, ":", 2)
-			if len(parts) != 2 {
-				continue
-			}
+		for state, count := range countFn(ctx) {
 			o.ObserveInt64(gauge, count,
 				metric.WithAttributes(
-					attribute.String("protocol", parts[0]),
-					attribute.String("state", parts[1]),
+					attribute.String("state", state),
 				))
 		}
 		return nil

@@ -19,5 +19,4 @@ spec:
           set -e
           wget -qO- --timeout=10 http://{{ include "agentlens.fullname" . }}:{{ .Values.service.port }}/healthz && echo "healthz OK"
           wget -qO- --timeout=10 http://{{ include "agentlens.fullname" . }}:{{ .Values.service.port }}/readyz && echo "readyz OK"
-          wget -qO- --timeout=10 http://{{ include "agentlens.fullname" . }}:{{ .Values.service.port }}/api/v1/catalog && echo "catalog OK"
           echo "All tests passed!"

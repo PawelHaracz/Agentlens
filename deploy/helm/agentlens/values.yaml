@@ -159,7 +159,6 @@ telemetry:
   insecure: true
   serviceName: agentlens
   environment: production
-  tracesSampler: parentbased_traceidratio
   tracesSampleRate: 1.0
   metricsInterval: 30s
   logExportLevel: info

@@ -16,7 +16,10 @@ const queryClient = new QueryClient({
 async function boot(): Promise<void> {
   // Initialize OTel if enabled — best-effort, never blocks app startup
   try {
-    const resp = await fetch('/api/v1/telemetry/config')
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 3000)
+    const resp = await fetch('/api/v1/telemetry/config', { signal: controller.signal })
+    clearTimeout(timeout)
     if (resp.ok) {
       const cfg = await resp.json()
       if (cfg.enabled && cfg.endpoint) {

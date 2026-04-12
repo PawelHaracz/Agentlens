@@ -659,8 +659,8 @@ graph LR
 - `telemetry.tracesSampleRate` — Sample rate (0.0–1.0; default 1.0)
 
 **Related documentation:**
-- [ADR-009: OpenTelemetry Integration](adr/009-opentelemetry.md) — Design decision for tracing/metrics
-- [ADR-010: Observability Probes](adr/010-observability-probes.md) — Liveness/readiness probe design
+- [ADR-009: OpenTelemetry as Infrastructure](adr/009-opentelemetry-as-infrastructure.md) — Design decision for tracing/metrics
+- [ADR-010: Dual-Output Structured Logging](adr/010-dual-output-structured-logging.md) — Logging design with OTel bridge
 - [DevOps Guide](devops-guide.md#observability) — Deployment and monitoring setup
 
 ---

@@ -44,7 +44,7 @@ Place OpenTelemetry in `internal/telemetry/` as **infrastructure** (same layer a
 
 ### Neutral
 
-- The store tracing decorator in `internal/telemetry/storetracer.go` defines its own interface matching the traced methods via Go structural typing. It does not import `internal/store/` — the decorator is wired at the composition root (`main.go`).
+- The store tracing decorator in `internal/telemetry/storetracer.go` wraps `store.Store` to add OTel spans for key operations. It imports `internal/store/` for the interface type and is wired at the composition root (`main.go`).
 
 ## Alternatives considered
 

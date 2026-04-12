@@ -135,7 +135,9 @@ func main() {
 		os.Exit(1)
 	}
 	dbPingFn := func() error {
-		return sqlDB.PingContext(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return sqlDB.PingContext(ctx)
 	}
 
 	// Run migrations
@@ -179,7 +181,7 @@ func main() {
 		}
 		counts := make(map[string]int64)
 		for status, count := range stats.ByStatus {
-			counts["all:"+status] = int64(count)
+			counts[status] = int64(count)
 		}
 		return counts
 	}); err != nil {

@@ -84,7 +84,6 @@ type TelemetryConfig struct {
 	Insecure         bool              `yaml:"insecure"`
 	ServiceName      string            `yaml:"serviceName"`
 	Environment      string            `yaml:"environment"`
-	TracesSampler    string            `yaml:"tracesSampler"`
 	TracesSampleRate float64           `yaml:"tracesSampleRate"`
 	MetricsInterval  time.Duration     `yaml:"metricsInterval"`
 	LogExportLevel   string            `yaml:"logExportLevel"`
@@ -165,7 +164,6 @@ func defaults() *Config {
 			Insecure:         true,
 			ServiceName:      "agentlens",
 			Environment:      "production",
-			TracesSampler:    "parentbased_traceidratio",
 			TracesSampleRate: 1.0,
 			MetricsInterval:  30 * time.Second,
 			LogExportLevel:   "info",
@@ -289,9 +287,6 @@ func applyTelemetryEnv(tel *TelemetryConfig) {
 	}
 	if v := env("OTEL_ENVIRONMENT"); v != "" {
 		tel.Environment = v
-	}
-	if v := env("OTEL_TRACES_SAMPLER"); v != "" {
-		tel.TracesSampler = v
 	}
 	if v := env("OTEL_TRACES_SAMPLE_RATE"); v != "" {
 		if f, err := strconv.ParseFloat(v, 64); err == nil {

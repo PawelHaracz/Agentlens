@@ -20,7 +20,6 @@ func TestTelemetryDefaults(t *testing.T) {
 	assert.True(t, cfg.Telemetry.Insecure)
 	assert.Equal(t, "agentlens", cfg.Telemetry.ServiceName)
 	assert.Equal(t, "production", cfg.Telemetry.Environment)
-	assert.Equal(t, "parentbased_traceidratio", cfg.Telemetry.TracesSampler)
 	assert.Equal(t, 1.0, cfg.Telemetry.TracesSampleRate)
 	assert.Equal(t, 30*time.Second, cfg.Telemetry.MetricsInterval)
 	assert.Equal(t, "info", cfg.Telemetry.LogExportLevel)

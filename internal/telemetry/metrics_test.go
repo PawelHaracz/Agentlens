@@ -80,8 +80,8 @@ func TestCatalogGauge(t *testing.T) {
 
 	countFn := func(ctx context.Context) map[string]int64 {
 		return map[string]int64{
-			"a2a:active":  2,
-			"mcp:offline": 1,
+			"active":  2,
+			"offline": 1,
 		}
 	}
 

@@ -39,8 +39,7 @@ Settings are organized by **category** and identified by a unique **key**. Each 
 | `AGENTLENS_OTEL_INSECURE` | `telemetry.insecure` | `true` | Disable TLS for collector connection |
 | `AGENTLENS_OTEL_SERVICE_NAME` | `telemetry.serviceName` | `agentlens` | Service name in traces and metrics |
 | `AGENTLENS_OTEL_ENVIRONMENT` | `telemetry.environment` | `production` | Deployment environment attribute (e.g., `production`, `staging`, `development`) |
-| `AGENTLENS_OTEL_TRACES_SAMPLER` | `telemetry.tracesSampler` | `parentbased_traceidratio` | Trace sampler: `always_on`, `always_off`, `parentbased_traceidratio`, `traceidratio` |
-| `AGENTLENS_OTEL_TRACES_SAMPLE_RATE` | `telemetry.tracesSampleRate` | `1.0` | Trace sample rate (0.0–1.0; only used with `traceidratio` samplers) |
+| `AGENTLENS_OTEL_TRACES_SAMPLE_RATE` | `telemetry.tracesSampleRate` | `1.0` | Trace sample rate (0.0–1.0; uses `ParentBased(TraceIDRatioBased(rate))` sampler) |
 | `AGENTLENS_OTEL_METRICS_INTERVAL` | `telemetry.metricsInterval` | `30s` | Metrics export interval |
 | `AGENTLENS_OTEL_LOG_EXPORT_LEVEL` | `telemetry.logExportLevel` | `info` | Minimum log level for OTLP export (`debug`, `info`, `warn`, `error`) |
 | `AGENTLENS_OTEL_HEADERS` | `telemetry.headers` | `""` | Extra OTLP headers (comma-separated `key=value` pairs) |

@@ -42,7 +42,6 @@ func TestInitEnabledValidConfig(t *testing.T) {
 		Insecure:         true,
 		ServiceName:      "agentlens-test",
 		Environment:      "test",
-		TracesSampler:    "parentbased_traceidratio",
 		TracesSampleRate: 1.0,
 		MetricsInterval:  5 * time.Second,
 		LogExportLevel:   "info",
@@ -66,7 +65,6 @@ func TestInitWithPrometheus(t *testing.T) {
 		Insecure:         true,
 		ServiceName:      "agentlens-test",
 		Environment:      "test",
-		TracesSampler:    "parentbased_traceidratio",
 		TracesSampleRate: 1.0,
 		MetricsInterval:  5 * time.Second,
 		LogExportLevel:   "info",
@@ -78,4 +76,21 @@ func TestInitWithPrometheus(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	require.NoError(t, p.Shutdown(ctx))
+}
+
+func TestInitPrometheusOnlyNoEndpoint(t *testing.T) {
+	cfg := config.TelemetryConfig{
+		Enabled:     true,
+		Endpoint:    "",
+		ServiceName: "agentlens-test",
+		Environment: "test",
+		Prometheus:  config.PrometheusConfig{Enabled: true},
+	}
+	p, err := telemetry.Init(context.Background(), cfg, "v0.0.1")
+	require.NoError(t, err)
+	assert.NotNil(t, p.PromHandler, "Prometheus handler should be set")
+	assert.NotNil(t, p.MeterProvider, "MeterProvider should be set for Prometheus")
+	assert.Nil(t, p.TracerProvider, "TracerProvider should be nil without OTLP endpoint")
+	assert.Nil(t, p.LoggerProvider, "LoggerProvider should be nil without OTLP endpoint")
+	require.NoError(t, p.Shutdown(context.Background()))
 }

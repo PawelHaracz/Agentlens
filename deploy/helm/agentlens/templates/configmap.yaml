@@ -30,7 +30,6 @@ data:
       insecure: {{ .Values.telemetry.insecure }}
       serviceName: {{ .Values.telemetry.serviceName }}
       environment: {{ .Values.telemetry.environment }}
-      tracesSampler: {{ .Values.telemetry.tracesSampler }}
       tracesSampleRate: {{ .Values.telemetry.tracesSampleRate }}
       metricsInterval: {{ .Values.telemetry.metricsInterval }}
       logExportLevel: {{ .Values.telemetry.logExportLevel }}

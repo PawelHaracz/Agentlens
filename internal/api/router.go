@@ -90,7 +90,19 @@ func NewRouter(deps RouterDeps) http.Handler {
 		r.Handle("/*", spaHandler(staticFS))
 	}
 
-	return otelhttp.NewHandler(r, "agentlens.http")
+	return otelhttp.NewHandler(r, "agentlens.http",
+		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
+			rctx := chi.RouteContext(r.Context())
+			if rctx == nil {
+				return r.Method + " " + r.URL.Path
+			}
+			routePattern := rctx.RoutePattern()
+			if routePattern == "" {
+				return r.Method + " " + r.URL.Path
+			}
+			return r.Method + " " + routePattern
+		}),
+	)
 }
 
 // registerAuthRoutes mounts public and protected auth endpoints.

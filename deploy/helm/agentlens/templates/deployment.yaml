@@ -1,6 +1,3 @@
-{{- if and (gt (int .Values.replicaCount) 1) (eq .Values.database.dialect "sqlite") }}
-{{- fail "replicaCount > 1 is not supported with SQLite — use database.dialect=postgres for multi-replica deployments" }}
-{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -74,6 +71,8 @@ spec:
               value: {{ .Values.config.logLevel | quote }}
             - name: AGENTLENS_DB_DIALECT
               value: {{ .Values.database.dialect | quote }}
+            - name: AGENTLENS_DATA_DIR
+              value: {{ if eq .Values.database.dialect "sqlite" }}"/data"{{ else }}"/tmp"{{ end }}
             {{- if eq .Values.database.dialect "sqlite" }}
             - name: AGENTLENS_DB_SQLITE_PATH
               value: {{ .Values.database.sqlite.path | quote }}
@@ -89,7 +88,7 @@ spec:
             - name: AGENTLENS_DB_POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "agentlens.fullname" . }}
+                  name: {{ .Values.postgresql.auth.existingSecret | default (include "agentlens.fullname" .) }}
                   key: database-password
             {{- else }}
             - name: AGENTLENS_DB_POSTGRES_HOST
@@ -103,7 +102,7 @@ spec:
             - name: AGENTLENS_DB_POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "agentlens.fullname" . }}
+                  name: {{ .Values.database.external.existingSecret | default (include "agentlens.fullname" .) }}
                   key: database-password
             - name: AGENTLENS_DB_POSTGRES_SSLMODE
               value: {{ .Values.database.external.sslMode | quote }}
@@ -122,11 +121,6 @@ spec:
             - name: AGENTLENS_METRICS_PROMETHEUS_ENABLED
               value: "true"
             {{- end }}
-            - name: AGENTLENS_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "agentlens.fullname" . }}
-                  key: admin-password
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
