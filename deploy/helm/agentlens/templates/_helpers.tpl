@@ -58,3 +58,10 @@ ServiceAccount name.
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Multi-replica guard: SQLite is single-writer only.
+*/}}
+{{- if and (gt (int .Values.replicaCount) 1) (eq .Values.database.dialect "sqlite") }}
+{{- fail "replicaCount > 1 is not supported with SQLite (single-writer). Set database.dialect=postgres to scale horizontally." }}
+{{- end }}
