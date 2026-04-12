@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"github.com/PawelHaracz/agentlens/internal/auth"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
@@ -26,10 +27,21 @@ type RouterDeps struct {
 	CardFetcher service.Fetcher
 	// HealthProber is optional; enables POST /catalog/{id}/probe.
 	HealthProber HealthProber
+	// PromHandler is optional. When non-nil, GET /metrics is registered.
+	PromHandler http.Handler
+	// ReadyzPing is optional. When non-nil, GET /readyz is registered.
+	ReadyzPing func() error
+	// TelemetryEnabled controls the /api/v1/telemetry/config response.
+	TelemetryEnabled bool
+	// TelemetryEndpoint is the OTLP collector endpoint exposed to the frontend.
+	TelemetryEndpoint string
+	// TelemetryServiceName is the service name exposed to the frontend.
+	TelemetryServiceName string
 }
 
-// NewRouter creates and returns a configured chi router with all routes.
-func NewRouter(deps RouterDeps) *chi.Mux {
+// NewRouter creates and returns a configured HTTP handler with all routes.
+// The handler is wrapped with otelhttp for request tracing.
+func NewRouter(deps RouterDeps) http.Handler {
 	h := NewHandler(deps.Kernel)
 	if deps.CardFetcher != nil {
 		h.cardFetcher = deps.CardFetcher
@@ -43,7 +55,21 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 
 	r.Get("/healthz", h.Healthz)
 
+	if deps.ReadyzPing != nil {
+		r.Get("/readyz", NewReadyzHandler(deps.ReadyzPing))
+	}
+
+	if deps.PromHandler != nil {
+		r.Handle("/metrics", deps.PromHandler)
+	}
+
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/telemetry/config", NewTelemetryConfigHandler(
+			deps.TelemetryEnabled,
+			deps.TelemetryEndpoint,
+			deps.TelemetryServiceName,
+		))
+
 		if deps.JWTService != nil {
 			if deps.UserStore == nil || deps.RoleStore == nil {
 				panic("JWTService requires UserStore and RoleStore to be provided")
@@ -64,7 +90,7 @@ func NewRouter(deps RouterDeps) *chi.Mux {
 		r.Handle("/*", spaHandler(staticFS))
 	}
 
-	return r
+	return otelhttp.NewHandler(r, "agentlens.http")
 }
 
 // registerAuthRoutes mounts public and protected auth endpoints.
