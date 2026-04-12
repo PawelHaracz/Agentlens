@@ -1,0 +1,16 @@
+{{- if eq .Values.database.dialect "sqlite" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "agentlens.fullname" . }}-data
+  labels:
+    {{- include "agentlens.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- if .Values.database.sqlite.storageClass }}
+  storageClassName: {{ .Values.database.sqlite.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.database.sqlite.storageSize }}
+{{- end }}

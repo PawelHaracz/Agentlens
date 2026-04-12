@@ -1,0 +1,7 @@
+# CI values for helm lint
+image:
+  repository: ghcr.io/pawelharacz/agentlens
+  tag: "dev"
+
+config:
+  adminPassword: "Test-Password-12345!"
