@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -41,6 +42,16 @@ type loginResponse struct {
 	User  interface{} `json:"user"`
 }
 
+// recordAuthOutcome records a span event and auth metric for a login attempt.
+func recordAuthOutcome(ctx context.Context, metrics *telemetry.AuthMetrics, username, result, reason string) {
+	trace.SpanFromContext(ctx).AddEvent("auth.login", trace.WithAttributes(
+		attribute.String("username", username),
+		attribute.String("result", result),
+		attribute.String("reason", reason),
+	))
+	metrics.RecordLogin(ctx, result, reason)
+}
+
 // Login handles POST /api/v1/auth/login.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
@@ -60,39 +71,21 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user == nil {
-		span := trace.SpanFromContext(r.Context())
-		span.AddEvent("auth.login", trace.WithAttributes(
-			attribute.String("username", req.Username),
-			attribute.String("result", "failure"),
-			attribute.String("reason", "invalid_credentials"),
-		))
-		h.authMetrics.RecordLogin(r.Context(), "failure", "invalid_credentials")
+		recordAuthOutcome(r.Context(), h.authMetrics, req.Username, "failure", "invalid_credentials")
 		ErrorResponse(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
 	// Check if the account is active.
 	if !user.IsActive {
-		span := trace.SpanFromContext(r.Context())
-		span.AddEvent("auth.login", trace.WithAttributes(
-			attribute.String("username", req.Username),
-			attribute.String("result", "failure"),
-			attribute.String("reason", "account_disabled"),
-		))
-		h.authMetrics.RecordLogin(r.Context(), "failure", "account_disabled")
+		recordAuthOutcome(r.Context(), h.authMetrics, req.Username, "failure", "account_disabled")
 		ErrorResponse(w, http.StatusForbidden, "account is disabled")
 		return
 	}
 
 	// Check if the account is locked.
 	if user.LockedUntil != nil && time.Now().Before(*user.LockedUntil) {
-		span := trace.SpanFromContext(r.Context())
-		span.AddEvent("auth.login", trace.WithAttributes(
-			attribute.String("username", req.Username),
-			attribute.String("result", "failure"),
-			attribute.String("reason", "account_locked"),
-		))
-		h.authMetrics.RecordLogin(r.Context(), "failure", "account_locked")
+		recordAuthOutcome(r.Context(), h.authMetrics, req.Username, "failure", "account_locked")
 		ErrorResponse(w, http.StatusLocked, "account is locked, try again later")
 		return
 	}
@@ -100,25 +93,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Check password.
 	if !auth.CheckPassword(req.Password, user.PasswordHash) {
 		_ = h.userStore.IncrementFailedAttempts(r.Context(), user.ID)
-		span := trace.SpanFromContext(r.Context())
-		span.AddEvent("auth.login", trace.WithAttributes(
-			attribute.String("username", req.Username),
-			attribute.String("result", "failure"),
-			attribute.String("reason", "invalid_credentials"),
-		))
-		h.authMetrics.RecordLogin(r.Context(), "failure", "invalid_credentials")
+		recordAuthOutcome(r.Context(), h.authMetrics, req.Username, "failure", "invalid_credentials")
 		ErrorResponse(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
 	// Successful authentication.
-	span := trace.SpanFromContext(r.Context())
-	span.AddEvent("auth.login", trace.WithAttributes(
-		attribute.String("username", req.Username),
-		attribute.String("result", "success"),
-		attribute.String("reason", ""),
-	))
-	h.authMetrics.RecordLogin(r.Context(), "success", "")
+	recordAuthOutcome(r.Context(), h.authMetrics, req.Username, "success", "")
 	_ = h.userStore.ResetFailedAttempts(r.Context(), user.ID)
 	_ = h.userStore.UpdateLastLogin(r.Context(), user.ID)
 

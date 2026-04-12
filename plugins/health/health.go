@@ -174,7 +174,7 @@ func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.
 	url := resolveProbURL(entry)
 	if url == "" {
 		h := p.noURLHealth(entry.Health)
-		p.recordProbeMetrics(ctx, span, url, stateBefore, h, entry)
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
 		return h
 	}
 
@@ -184,7 +184,7 @@ func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.
 	req, err := http.NewRequestWithContext(probeCtx, http.MethodGet, url, nil)
 	if err != nil {
 		h := p.failureHealth(entry.Health, truncateStr("invalid URL: "+err.Error(), 512))
-		p.recordProbeMetrics(ctx, span, url, stateBefore, h, entry)
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
 		return h
 	}
 
@@ -194,7 +194,7 @@ func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.
 
 	if err != nil {
 		h := p.failureHealth(entry.Health, truncateStr(err.Error(), 512))
-		p.recordProbeMetrics(ctx, span, url, stateBefore, h, entry)
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
 		return h
 	}
 	_ = resp.Body.Close()
@@ -202,18 +202,19 @@ func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.
 	is2xx := resp.StatusCode >= 200 && resp.StatusCode < 300
 	if !is2xx {
 		h := p.failureHealth(entry.Health, fmt.Sprintf("HTTP %d", resp.StatusCode))
-		p.recordProbeMetrics(ctx, span, url, stateBefore, h, entry)
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
 		return h
 	}
 
 	h := p.successHealth(latency)
-	p.recordProbeMetrics(ctx, span, url, stateBefore, h, entry)
+	p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
 	return h
 }
 
 // recordProbeMetrics sets span attributes, records span events and metrics for a completed probe.
-func (p *Plugin) recordProbeMetrics(ctx context.Context, span trace.Span, url string, stateBefore model.LifecycleState, h model.Health, entry *model.CatalogEntry) {
+func (p *Plugin) recordProbeMetrics(ctx context.Context, span trace.Span, stateBefore model.LifecycleState, h model.Health, entry *model.CatalogEntry) {
 	probeResult := probeResultString(h.State)
+	url := resolveProbURL(entry)
 
 	span.SetAttributes(
 		attribute.String("agentlens.probe.url", url),
