@@ -77,6 +77,16 @@ dependenciesRules:
         - "**.plugins.**"
         - "**.cmd.**"
 
+  # Infrastructure — telemetry must not depend on upper layers
+  - package: "**.internal.telemetry"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.kernel"
+        - "**.internal.server"
+        - "**.internal.service"
+        - "**.cmd.**"
+
   # Plugins — may only depend on kernel + foundation, never on api/auth/server/cmd
   - package: "**.plugins.**"
     shouldNotDependsOn:
