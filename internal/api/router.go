@@ -99,11 +99,13 @@ func NewRouter(deps RouterDeps) http.Handler {
 
 func routePatternSpanNameMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
 		span := trace.SpanFromContext(r.Context())
 		if span == nil || !span.IsRecording() {
+			next.ServeHTTP(w, r)
 			return
 		}
+		span.SetName(r.Method + " " + r.URL.Path)
+		next.ServeHTTP(w, r)
 		rctx := chi.RouteContext(r.Context())
 		if rctx == nil {
 			return
