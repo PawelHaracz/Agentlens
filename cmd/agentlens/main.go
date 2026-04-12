@@ -8,11 +8,14 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	otelslogbridge "go.opentelemetry.io/contrib/bridges/otelslog"
 
 	"github.com/PawelHaracz/agentlens/internal/api"
 	"github.com/PawelHaracz/agentlens/internal/auth"
@@ -22,6 +25,7 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/server"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	"github.com/PawelHaracz/agentlens/internal/telemetry"
 	cardstorePlugin "github.com/PawelHaracz/agentlens/plugins/cardstore"
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/audit"
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/postgres"
@@ -31,6 +35,9 @@ import (
 	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
+
+// version is set at build time via -ldflags "-X main.version=vX.Y.Z".
+var version = "dev"
 
 func main() {
 	portFlag := flag.Int("port", 0, "HTTP port (overrides config)")
@@ -48,7 +55,7 @@ func main() {
 		cfg.Port = *portFlag
 	}
 
-	// 2. Setup structured logging
+	// 2. Setup structured logging (stdout JSON — baseline, always present)
 	var logLevel slog.Level
 	switch cfg.LogLevel {
 	case "debug":
@@ -63,6 +70,26 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
+	// 3. Init telemetry (before plugins)
+	telProvider, err := telemetry.Init(context.Background(), cfg.Telemetry, version)
+	if err != nil {
+		slog.Error("failed to initialize telemetry", "err", err)
+		os.Exit(1)
+	}
+
+	// 4. If enabled, replace slog.Default with fan-out handler (stdout + OTel bridge)
+	if cfg.Telemetry.Enabled && telProvider.LoggerProvider != nil {
+		exportLevel := parseSlogLevel(cfg.Telemetry.LogExportLevel)
+		bridgeHandler := otelslogbridge.NewHandler("agentlens",
+			otelslogbridge.WithLoggerProvider(telProvider.LoggerProvider))
+		fanout := telemetry.NewFanoutHandler(
+			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}),
+			bridgeHandler,
+			exportLevel,
+		)
+		slog.SetDefault(slog.New(fanout))
+	}
+
 	fmt.Printf("\n  AgentLens listening on :%d\n\n", cfg.Port)
 
 	// Ensure data directory exists
@@ -71,7 +98,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 3. Open DB based on config dialect
+	// 6. Open DB based on config dialect
 	var database *db.DB
 	switch db.Dialect(cfg.Database.Dialect) {
 	case db.DialectSQLite:
@@ -101,14 +128,24 @@ func main() {
 		}
 	}()
 
-	// 4. Run migrations
+	// Build dbPingFn for readyz health check
+	sqlDB, err := database.DB.DB()
+	if err != nil {
+		slog.Error("failed to get underlying sql.DB", "err", err)
+		os.Exit(1)
+	}
+	dbPingFn := func() error {
+		return sqlDB.PingContext(context.Background())
+	}
+
+	// Run migrations
 	migrator := db.NewMigrator(database, db.AllMigrations())
 	if err := migrator.Migrate(context.Background()); err != nil {
 		slog.Error("failed to run migrations", "err", err)
 		os.Exit(1)
 	}
 
-	// 5. Bootstrap admin
+	// 7. Bootstrap admin
 	userStore := store.NewUserStore(database)
 	password, err := auth.BootstrapAdmin(context.Background(), userStore)
 	if err != nil {
@@ -126,12 +163,12 @@ func main() {
 		_, _ = os.Stdout.WriteString("============================================\n")
 	}
 
-	// 6. Init stores
+	// 8. Init stores
 	catalogStore := store.NewSQLStore(database)
 	roleStore := store.NewRoleStore(database)
 	settingsStore := store.NewSettingsStore(database)
 
-	// 7. Init JWT service
+	// 9. Init JWT service
 	jwtService := auth.NewJWTService(auth.JWTConfig{
 		Secret:        cfg.Auth.JWTSecret,
 		Expiration:    cfg.Auth.SessionDuration,
@@ -142,7 +179,7 @@ func main() {
 	lic := kernel.ValidateLicense(cfg.LicenseKey)
 	core := kernel.NewCore(catalogStore, cfg, logger, lic)
 
-	// 9. Plugin manager setup
+	// 10. Plugin manager setup
 	pm := kernel.NewPluginManager(core)
 
 	// Core plugins
@@ -177,13 +214,23 @@ func main() {
 		slog.Error("failed to start plugins", "err", err)
 		os.Exit(1)
 	}
+
+	// 5. Defer telemetry shutdown (runs AFTER plugin stop due to LIFO order)
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := telProvider.Shutdown(shutdownCtx); err != nil {
+			slog.Error("telemetry shutdown error", "err", err)
+		}
+	}()
+
 	defer func() {
 		if err := pm.StopAll(ctx); err != nil {
 			slog.Error("failed to stop plugins", "err", err)
 		}
 	}()
 
-	// 10. Discovery sources
+	// 12. Discovery sources
 	var sources []discovery.Source
 	if len(cfg.Sources) > 0 {
 		sources = append(sources, discovery.NewStaticSource(cfg.Sources))
@@ -215,13 +262,18 @@ func main() {
 		}()
 	}
 
-	// 8. Create router with full RouterDeps & 11. HTTP server with graceful shutdown
+	// 13. Create router with full RouterDeps & 14. HTTP server with graceful shutdown
 	routerDeps := api.RouterDeps{
-		Kernel:        core,
-		UserStore:     userStore,
-		RoleStore:     roleStore,
-		SettingsStore: settingsStore,
-		JWTService:    jwtService,
+		Kernel:               core,
+		UserStore:            userStore,
+		RoleStore:            roleStore,
+		SettingsStore:        settingsStore,
+		JWTService:           jwtService,
+		PromHandler:          telProvider.PromHandler,
+		ReadyzPing:           dbPingFn,
+		TelemetryEnabled:     cfg.Telemetry.Enabled,
+		TelemetryEndpoint:    cfg.Telemetry.Endpoint,
+		TelemetryServiceName: "agentlens-web",
 	}
 	if healthPlugin != nil {
 		routerDeps.HealthProber = healthPlugin
@@ -232,6 +284,21 @@ func main() {
 	if err := srv.Start(ctx); err != nil {
 		slog.Error("server error", "err", err)
 		os.Exit(1)
+	}
+}
+
+// parseSlogLevel parses a log level string into a slog.Level value.
+// Defaults to slog.LevelInfo for unrecognised strings.
+func parseSlogLevel(s string) slog.Level {
+	switch strings.ToLower(s) {
+	case "debug":
+		return slog.LevelDebug
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
 	}
 }
 

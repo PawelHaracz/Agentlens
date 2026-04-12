@@ -8,6 +8,7 @@ CGO_ENABLED := 1
 GOFLAGS := -v
 COVERAGE_FILE := coverage.out
 COVERAGE_HTML := coverage.html
+VERSION ?= dev
 
 # Go source files
 GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
@@ -38,7 +39,7 @@ check: format vet lint web-lint
 
 ## build: Build the agentlens binary (CGO enabled for SQLite) — runs lint first
 build: lint
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GOFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/agentlens
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GOFLAGS) -ldflags "-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/agentlens
 
 ## test: Run all Go tests
 test:
@@ -97,7 +98,9 @@ tools:
 ## hooks: Install git hooks via lefthook (run once after cloning)
 hooks:
 	go install github.com/evilmartians/lefthook@latest
+	cd web && bun install
 	$(shell go env GOPATH)/bin/lefthook install
+	@bash scripts/patch-hooks.sh
 
 ## arch-test: Run architecture rules validation (arch-go)
 arch-test:
