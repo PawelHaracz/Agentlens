@@ -9,9 +9,16 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
+	"github.com/PawelHaracz/agentlens/internal/telemetry"
 )
 
 // proberStore is the minimal store surface the prober needs.
@@ -32,6 +39,7 @@ type Plugin struct {
 	failureThreshold int
 	httpClient       *http.Client
 	log              *slog.Logger
+	metrics          *telemetry.HealthMetrics
 }
 
 // New creates a Plugin from HealthCheckConfig.
@@ -65,6 +73,7 @@ func NewForTestWithTimeout(degradedLatency time.Duration, failureThreshold int, 
 		failureThreshold: failureThreshold,
 		httpClient:       &http.Client{Timeout: timeout},
 		log:              slog.Default(),
+		metrics:          telemetry.NewHealthMetrics(),
 	}
 }
 
@@ -81,7 +90,11 @@ func (p *Plugin) Type() kernel.PluginType { return kernel.PluginTypeMiddleware }
 func (p *Plugin) Init(k kernel.Kernel) error {
 	p.store = k.Store()
 	p.log = k.Logger().With("component", "health-checker")
-	p.httpClient = &http.Client{Timeout: p.timeout}
+	p.httpClient = &http.Client{
+		Timeout:   p.timeout,
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+	}
+	p.metrics = telemetry.NewHealthMetrics()
 	return nil
 }
 
@@ -143,13 +156,26 @@ func (p *Plugin) checkAll(ctx context.Context) {
 // probeOne executes a single HTTP probe and returns the resulting Health value.
 // It does NOT write to the store. Deprecated entries are returned unchanged.
 func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.Health {
+	tracer := otel.Tracer("agentlens.health")
+	ctx, span := tracer.Start(ctx, "health.probe",
+		trace.WithAttributes(
+			attribute.String("agentlens.entry.id", entry.ID),
+			attribute.String("agentlens.entry.name", entry.DisplayName),
+		),
+	)
+	defer span.End()
+
+	stateBefore := entry.Health.State
+
 	if entry.Status == model.LifecycleDeprecated {
 		return entry.Health
 	}
 
 	url := resolveProbURL(entry)
 	if url == "" {
-		return p.noURLHealth(entry.Health)
+		h := p.noURLHealth(entry.Health)
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
+		return h
 	}
 
 	probeCtx, cancel := context.WithTimeout(ctx, p.timeout)
@@ -157,7 +183,9 @@ func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.
 
 	req, err := http.NewRequestWithContext(probeCtx, http.MethodGet, url, nil)
 	if err != nil {
-		return p.failureHealth(entry.Health, truncateStr("invalid URL: "+err.Error(), 512))
+		h := p.failureHealth(entry.Health, truncateStr("invalid URL: "+err.Error(), 512))
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
+		return h
 	}
 
 	start := time.Now()
@@ -165,16 +193,63 @@ func (p *Plugin) probeOne(ctx context.Context, entry *model.CatalogEntry) model.
 	latency := time.Since(start)
 
 	if err != nil {
-		return p.failureHealth(entry.Health, truncateStr(err.Error(), 512))
+		h := p.failureHealth(entry.Health, truncateStr(err.Error(), 512))
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
+		return h
 	}
 	_ = resp.Body.Close()
 
 	is2xx := resp.StatusCode >= 200 && resp.StatusCode < 300
 	if !is2xx {
-		return p.failureHealth(entry.Health, fmt.Sprintf("HTTP %d", resp.StatusCode))
+		h := p.failureHealth(entry.Health, fmt.Sprintf("HTTP %d", resp.StatusCode))
+		p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
+		return h
 	}
 
-	return p.successHealth(latency)
+	h := p.successHealth(latency)
+	p.recordProbeMetrics(ctx, span, stateBefore, h, entry)
+	return h
+}
+
+// recordProbeMetrics sets span attributes, records span events and metrics for a completed probe.
+func (p *Plugin) recordProbeMetrics(ctx context.Context, span trace.Span, stateBefore model.LifecycleState, h model.Health, entry *model.CatalogEntry) {
+	probeResult := probeResultString(h.State)
+	url := resolveProbURL(entry)
+
+	span.SetAttributes(
+		attribute.String("agentlens.probe.url", url),
+		attribute.Int64("agentlens.probe.latency_ms", h.LatencyMs),
+		attribute.String("agentlens.probe.result", probeResult),
+		attribute.String("agentlens.probe.state_before", string(stateBefore)),
+		attribute.String("agentlens.probe.state_after", string(h.State)),
+	)
+
+	if h.LastError != "" {
+		errMsg := h.LastError
+		if len(errMsg) > 256 {
+			errMsg = errMsg[:256]
+		}
+		span.SetAttributes(attribute.String("agentlens.probe.error", errMsg))
+		span.SetStatus(codes.Error, h.LastError)
+	}
+
+	if stateBefore != h.State {
+		span.AddEvent("state_transition", trace.WithAttributes(
+			attribute.String("from", string(stateBefore)),
+			attribute.String("to", string(h.State)),
+		))
+		protocol := ""
+		if entry.AgentType != nil {
+			protocol = string(entry.AgentType.Protocol)
+		}
+		p.metrics.RecordStateTransition(ctx, string(stateBefore), string(h.State), protocol)
+	}
+
+	protocol := ""
+	if entry.AgentType != nil {
+		protocol = string(entry.AgentType.Protocol)
+	}
+	p.metrics.RecordProbe(ctx, probeResult, protocol, float64(h.LatencyMs))
 }
 
 func (p *Plugin) successHealth(latency time.Duration) model.Health {
@@ -239,4 +314,18 @@ func truncateStr(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen]
+}
+
+// probeResultString maps a LifecycleState to a probe result string.
+func probeResultString(state model.LifecycleState) string {
+	switch state {
+	case model.LifecycleActive:
+		return "success"
+	case model.LifecycleDegraded:
+		return "degraded"
+	case model.LifecycleOffline:
+		return "failure"
+	default:
+		return "unknown"
+	}
 }

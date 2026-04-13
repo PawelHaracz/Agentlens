@@ -6,14 +6,32 @@ metadata:
     {{- include "agentlens.labels" . | nindent 4 }}
 data:
   config.yaml: |
-    port: 8080
-    data_dir: /data
-    log_level: info
-    poll_interval: 5m
-    kubernetes:
-      enabled: true
+    port: {{ .Values.service.port }}
+    log_level: {{ .Values.config.logLevel }}
+    database:
+      dialect: {{ .Values.database.dialect }}
+      {{- if eq .Values.database.dialect "sqlite" }}
+      sqlite:
+        path: {{ .Values.database.sqlite.path }}
+      {{- end }}
     health_check:
-      enabled: true
-      interval: 30s
-      timeout: 5s
-      concurrency: 10
+      enabled: {{ .Values.config.health.enabled }}
+      interval: {{ .Values.config.health.interval }}
+      timeout: {{ .Values.config.health.timeout }}
+      concurrency: {{ .Values.config.health.concurrency }}
+      degraded_latency: {{ .Values.config.health.degradedLatency }}
+      failure_threshold: {{ .Values.config.health.failureThreshold }}
+    telemetry:
+      enabled: {{ .Values.telemetry.enabled }}
+      {{- if .Values.telemetry.endpoint }}
+      endpoint: {{ .Values.telemetry.endpoint }}
+      {{- end }}
+      protocol: {{ .Values.telemetry.protocol }}
+      insecure: {{ .Values.telemetry.insecure }}
+      service_name: {{ .Values.telemetry.serviceName }}
+      environment: {{ .Values.telemetry.environment }}
+      traces_sample_rate: {{ .Values.telemetry.tracesSampleRate }}
+      metrics_interval: {{ .Values.telemetry.metricsInterval }}
+      log_export_level: {{ .Values.telemetry.logExportLevel }}
+      prometheus:
+        enabled: {{ .Values.metrics.prometheus.enabled }}

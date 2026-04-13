@@ -1,14 +1,18 @@
 apiVersion: v2
 name: agentlens
-description: AgentLens – real-time AI agent catalog for Kubernetes
+description: AI Agent Discovery Platform — Traefik for AI agents
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
-keywords:
-  - ai
-  - agent
-  - catalog
-  - observability
+version: 0.2.0
+appVersion: "0.2.0"
 home: https://github.com/PawelHaracz/agentlens
 sources:
   - https://github.com/PawelHaracz/agentlens
+maintainers:
+  - name: Pawel Haracz
+    url: https://github.com/PawelHaracz
+keywords: [ai, agents, a2a, mcp, service-discovery, registry]
+dependencies:
+  - name: postgresql
+    version: "~16.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled

@@ -77,6 +77,22 @@ dependenciesRules:
         - "**.plugins.**"
         - "**.cmd.**"
 
+  # Infrastructure — telemetry must not depend on upper layers or infrastructure peers.
+  # Note: **.internal.store is intentionally NOT blocked — TracedStore wraps store.Store
+  # as a decorator, which requires importing the store interface by design.
+  - package: "**.internal.telemetry"
+    shouldNotDependsOn:
+      internal:
+        - "**.internal.api"
+        - "**.internal.auth"
+        - "**.internal.db"
+        - "**.internal.discovery"
+        - "**.internal.kernel"
+        - "**.internal.server"
+        - "**.internal.service"
+        - "**.plugins.**"
+        - "**.cmd.**"
+
   # Plugins — may only depend on kernel + foundation, never on api/auth/server/cmd
   - package: "**.plugins.**"
     shouldNotDependsOn:

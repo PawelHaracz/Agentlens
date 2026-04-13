@@ -11,6 +11,69 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/config"
 )
 
+func TestTelemetryDefaults(t *testing.T) {
+	cfg, err := config.Load("")
+	require.NoError(t, err)
+
+	assert.False(t, cfg.Telemetry.Enabled)
+	assert.Equal(t, "grpc", cfg.Telemetry.Protocol)
+	assert.True(t, cfg.Telemetry.Insecure)
+	assert.Equal(t, "agentlens", cfg.Telemetry.ServiceName)
+	assert.Equal(t, "production", cfg.Telemetry.Environment)
+	assert.Equal(t, 1.0, cfg.Telemetry.TracesSampleRate)
+	assert.Equal(t, 30*time.Second, cfg.Telemetry.MetricsInterval)
+	assert.Equal(t, "info", cfg.Telemetry.LogExportLevel)
+	assert.False(t, cfg.Telemetry.Prometheus.Enabled)
+}
+
+func TestTelemetryEnvOverrides(t *testing.T) {
+	t.Setenv("AGENTLENS_OTEL_ENABLED", "true")
+	t.Setenv("AGENTLENS_OTEL_ENDPOINT", "collector:4317")
+	t.Setenv("AGENTLENS_OTEL_PROTOCOL", "http")
+	t.Setenv("AGENTLENS_OTEL_INSECURE", "false")
+	t.Setenv("AGENTLENS_OTEL_SERVICE_NAME", "my-service")
+	t.Setenv("AGENTLENS_OTEL_ENVIRONMENT", "staging")
+	t.Setenv("AGENTLENS_OTEL_TRACES_SAMPLE_RATE", "0.5")
+	t.Setenv("AGENTLENS_OTEL_METRICS_INTERVAL", "60s")
+	t.Setenv("AGENTLENS_OTEL_LOG_EXPORT_LEVEL", "warn")
+	t.Setenv("AGENTLENS_METRICS_PROMETHEUS_ENABLED", "true")
+
+	cfg, err := config.Load("")
+	require.NoError(t, err)
+
+	assert.True(t, cfg.Telemetry.Enabled)
+	assert.Equal(t, "collector:4317", cfg.Telemetry.Endpoint)
+	assert.Equal(t, "http", cfg.Telemetry.Protocol)
+	assert.False(t, cfg.Telemetry.Insecure)
+	assert.Equal(t, "my-service", cfg.Telemetry.ServiceName)
+	assert.Equal(t, "staging", cfg.Telemetry.Environment)
+	assert.Equal(t, 0.5, cfg.Telemetry.TracesSampleRate)
+	assert.Equal(t, 60*time.Second, cfg.Telemetry.MetricsInterval)
+	assert.Equal(t, "warn", cfg.Telemetry.LogExportLevel)
+	assert.True(t, cfg.Telemetry.Prometheus.Enabled)
+}
+
+func TestTelemetryOtelEndpointFallback(t *testing.T) {
+	t.Setenv("AGENTLENS_OTEL_ENABLED", "true")
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "fallback:4317")
+	// AGENTLENS_OTEL_ENDPOINT not set
+
+	cfg, err := config.Load("")
+	require.NoError(t, err)
+
+	assert.Equal(t, "fallback:4317", cfg.Telemetry.Endpoint)
+}
+
+func TestTelemetryAgentlensEndpointTakesPrecedence(t *testing.T) {
+	t.Setenv("AGENTLENS_OTEL_ENDPOINT", "primary:4317")
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "fallback:4317")
+
+	cfg, err := config.Load("")
+	require.NoError(t, err)
+
+	assert.Equal(t, "primary:4317", cfg.Telemetry.Endpoint)
+}
+
 func TestDefaults(t *testing.T) {
 	cfg, err := config.Load("")
 	require.NoError(t, err)

@@ -11,60 +11,176 @@ fullnameOverride: ""
 
 serviceAccount:
   create: true
+  automountServiceAccountToken: false
   annotations: {}
   name: ""
 
-clusterRole:
-  create: true
-
 podAnnotations: {}
-podSecurityContext: {}
-securityContext: {}
+podLabels: {}
 
-service:
-  type: ClusterIP
-  port: 80
-  targetPort: 8080
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
 
 resources:
   requests:
-    cpu: 50m
-    memory: 64Mi
+    cpu: 100m
+    memory: 128Mi
   limits:
     cpu: 500m
-    memory: 256Mi
+    memory: 512Mi
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: agentlens.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+gateway:
+  enabled: false
+  gatewayName: ""
+  gatewayNamespace: ""
+  hostname: agentlens.example.com
+  annotations: {}
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 2
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 30
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+topologySpreadConstraints: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
 
 database:
   dialect: sqlite
   sqlite:
     path: /data/agentlens.db
-  postgres:
+    storageSize: 1Gi
+    storageClass: ""
+  external:
     host: ""
     port: 5432
-    user: ""
+    database: agentlens
+    username: agentlens
     password: ""
-    dbname: ""
-    sslmode: prefer
+    existingSecret: ""
+    sslMode: require
 
-auth:
-  jwtSecret: ""
-  existingSecret: ""
-  sessionDuration: 24h
+postgresql:
+  enabled: false
+  auth:
+    database: agentlens
+    username: agentlens
+    password: ""
+    existingSecret: ""
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 
-env:
-  AGENTLENS_PORT: "8080"
-  AGENTLENS_DATA_DIR: "/data"
-  AGENTLENS_LOG_LEVEL: "info"
-  AGENTLENS_KUBERNETES_ENABLED: "true"
-  AGENTLENS_HEALTH_CHECK_ENABLED: "true"
-  AGENTLENS_DB_DIALECT: "{{ .Values.database.dialect }}"
+metrics:
+  prometheus:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+    namespace: ""
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    metricRelabelings: []
+    relabelings: []
 
-persistence:
-  enabled: true
-  storageClass: ""
-  size: 1Gi
-  accessMode: ReadWriteOnce
+telemetry:
+  enabled: false
+  endpoint: ""
+  frontendEndpoint: ""
+  protocol: grpc
+  insecure: true
+  serviceName: agentlens
+  environment: production
+  tracesSampleRate: 1.0
+  metricsInterval: 30s
+  logExportLevel: info
+  headers: {}
 
-nodeSelector: {}
-tolerations: []
-affinity: {}
+config:
+  logLevel: info
+  health:
+    enabled: true
+    interval: 30s
+    timeout: 5s
+    concurrency: 8
+    degradedLatency: 1500ms
+    failureThreshold: 3
+
+networkPolicy:
+  enabled: false
+  ingressFrom: []
+  egressTo: []
+
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []

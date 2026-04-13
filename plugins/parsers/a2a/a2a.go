@@ -7,9 +7,16 @@ import (
 	"fmt"
 	"log/slog"
 	"sort"
+	"time"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/model"
+	"github.com/PawelHaracz/agentlens/internal/telemetry"
 )
 
 type a2aProvider struct {
@@ -20,10 +27,15 @@ type a2aProvider struct {
 // Plugin implements the A2A parser plugin.
 type Plugin struct {
 	initialized bool
+	metrics     *telemetry.ParserMetrics
 }
 
 // New creates a new A2A parser plugin.
-func New() *Plugin { return &Plugin{} }
+func New() *Plugin {
+	return &Plugin{
+		metrics: telemetry.NewParserMetrics(),
+	}
+}
 
 // Name returns the plugin name.
 func (p *Plugin) Name() string { return "a2a-parser" }
@@ -43,6 +55,7 @@ func (p *Plugin) CardPath() string { return "/.well-known/agent-card.json" }
 // Init initializes the plugin.
 func (p *Plugin) Init(k kernel.Kernel) error {
 	p.initialized = true
+	p.metrics = telemetry.NewParserMetrics()
 	return nil
 }
 
@@ -54,16 +67,38 @@ func (p *Plugin) Stop(ctx context.Context) error { return nil }
 
 // Parse parses an A2A agent card JSON blob into an AgentType.
 func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
+	start := time.Now()
+
+	tracer := otel.Tracer("agentlens.parser")
+	ctx, span := tracer.Start(context.Background(), "parser.a2a.parse",
+		trace.WithAttributes(
+			attribute.String("agentlens.parser.type", "a2a"),
+			attribute.Int64("agentlens.parser.input_size", int64(len(raw))),
+		),
+	)
+	defer span.End()
+
 	var card fullCard
 	if err := json.Unmarshal(raw, &card); err != nil {
-		return nil, fmt.Errorf("parsing a2a card: %w", err)
+		err = fmt.Errorf("parsing a2a card: %w", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		p.metrics.RecordInvocation(ctx, "a2a", "error", "", time.Since(start).Seconds()*1000)
+		return nil, err
 	}
 	if card.Name == "" {
-		return nil, fmt.Errorf("a2a card missing required field: name")
+		err := fmt.Errorf("a2a card missing required field: name")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		p.metrics.RecordInvocation(ctx, "a2a", "error", "", time.Since(start).Seconds()*1000)
+		return nil, err
 	}
 
 	endpoint, err := resolveEndpoint(&card)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		p.metrics.RecordInvocation(ctx, "a2a", "error", "", time.Since(start).Seconds()*1000)
 		return nil, err
 	}
 
@@ -83,6 +118,21 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 	specVersion := detectSpecVersion(&card)
 	agentKey := model.ComputeAgentKey(model.ProtocolA2A, endpoint)
 
+	skillCount := len(card.Skills)
+	extensionCount := 0
+	if card.Capabilities != nil {
+		extensionCount = len(card.Capabilities.Extensions)
+	}
+	securitySchemeCount := countSecuritySchemes(card.SecuritySchemes)
+
+	span.SetAttributes(
+		attribute.String("agentlens.parser.spec_version", specVersion),
+		attribute.Int("agentlens.parser.skill_count", skillCount),
+		attribute.Int("agentlens.parser.extension_count", extensionCount),
+		attribute.Int("agentlens.parser.security_scheme_count", securitySchemeCount),
+	)
+	p.metrics.RecordInvocation(ctx, "a2a", "success", specVersion, time.Since(start).Seconds()*1000)
+
 	return &model.AgentType{
 		AgentKey:     agentKey,
 		Protocol:     model.ProtocolA2A,
@@ -93,6 +143,23 @@ func (p *Plugin) Parse(raw []byte) (*model.AgentType, error) {
 		Capabilities: capabilities,
 		RawBytes:     raw,
 	}, nil
+}
+
+// countSecuritySchemes returns the number of security schemes in the raw JSON,
+// supporting both v1.0 named-map and v0.3 array formats.
+func countSecuritySchemes(raw json.RawMessage) int {
+	if len(raw) == 0 {
+		return 0
+	}
+	var mapSchemes map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &mapSchemes); err == nil {
+		return len(mapSchemes)
+	}
+	var arrSchemes []json.RawMessage
+	if err := json.Unmarshal(raw, &arrSchemes); err == nil {
+		return len(arrSchemes)
+	}
+	return 0
 }
 
 // resolveEndpoint determines the agent endpoint from the card, preferring

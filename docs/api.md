@@ -10,12 +10,69 @@ All API responses use JSON (`Content-Type: application/json`).
 
 ### `GET /healthz`
 
-Returns server health status.
+Liveness probe. Returns server health status (process alive).
 
 **Response 200:**
 ```json
 {"status": "ok"}
 ```
+
+**Authentication:** None
+
+---
+
+### `GET /readyz`
+
+Readiness probe. Returns server readiness status including database reachability check. Required before routing traffic.
+
+**Response 200 (Ready):**
+```json
+{"status": "ok"}
+```
+
+**Response 503 (Not ready):**
+```json
+{"status": "error", "reason": "database unreachable"}
+```
+
+**Authentication:** None
+
+---
+
+### `GET /metrics`
+
+Prometheus exposition format metrics endpoint. Only available when `telemetry.prometheus.enabled=true` in configuration.
+
+**Response 200 (Prometheus text format):**
+```
+# HELP go_goroutines Number of goroutines that currently exist
+# TYPE go_goroutines gauge
+go_goroutines 12
+...
+```
+
+**Response 404:** If Prometheus metrics are disabled.
+
+**Authentication:** None
+
+---
+
+### `GET /api/v1/telemetry/config`
+
+Frontend telemetry configuration. Used by web UI to initialize OpenTelemetry client-side tracing.
+
+**Response 200:**
+```json
+{
+  "enabled": true,
+  "endpoint": "http://otel-collector:4318/v1/traces",
+  "serviceName": "agentlens-web"
+}
+```
+
+When telemetry is disabled, `enabled` is `false` and `endpoint`/`serviceName` are omitted.
+
+**Authentication:** None
 
 ---
 

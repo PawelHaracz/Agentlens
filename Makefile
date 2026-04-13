@@ -8,6 +8,7 @@ CGO_ENABLED := 1
 GOFLAGS := -v
 COVERAGE_FILE := coverage.out
 COVERAGE_HTML := coverage.html
+VERSION ?= dev
 
 # Go source files
 GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
@@ -16,7 +17,7 @@ GO_FILES := $(shell find . -name '*.go' -not -path './web/*')
         test-coverage test-race vet \
         web-install web-build web-lint web-test \
         e2e-install e2e-test docs-screenshots \
-        helm-lint docker-build docker-scan \
+        helm-lint helm-test docker-build docker-scan \
         deps tools hooks arch-test web-test-coverage
 
 ## help: Show this help message
@@ -25,8 +26,8 @@ help:
 	@echo ""
 	@sed -n 's/^## //p' $(MAKEFILE_LIST) | column -t -s ':' | sed 's/^/  /'
 
-## all: Run format, lint, test, arch-test, web-lint, web-test, web-build, web-test-coverage, and build
-all: format lint test arch-test build web-lint web-test web-build web-test-coverage
+## all: Run format, lint, test, arch-test, web-lint, web-test, web-build, web-test-coverage, helm-test, and build
+all: format lint test arch-test build web-lint web-test web-build web-test-coverage helm-test
 	@echo "All checks passed and build successful!"
 
 ## check: Run all static analysis — format, vet, lint (Go + frontend)
@@ -38,7 +39,7 @@ check: format vet lint web-lint
 
 ## build: Build the agentlens binary (CGO enabled for SQLite) — runs lint first
 build: lint
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GOFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/agentlens
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GOFLAGS) -ldflags "-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/agentlens
 
 ## test: Run all Go tests
 test:
@@ -97,7 +98,9 @@ tools:
 ## hooks: Install git hooks via lefthook (run once after cloning)
 hooks:
 	go install github.com/evilmartians/lefthook@latest
+	cd web && bun install
 	$(shell go env GOPATH)/bin/lefthook install
+	@bash scripts/patch-hooks.sh
 
 ## arch-test: Run architecture rules validation (arch-go)
 arch-test:
@@ -156,10 +159,17 @@ docker-build:
 docker-scan: docker-build
 	trivy image --severity CRITICAL,HIGH agentlens:local
 
-## helm-lint: Lint the Helm chart
+HELM_CHART := deploy/helm/agentlens
+
+## helm-lint: Lint the Helm chart with strict validation
 helm-lint:
-	helm lint deploy/helm/agentlens
-	helm template agentlens deploy/helm/agentlens --debug > /dev/null
+	helm lint $(HELM_CHART) --strict
+	helm lint $(HELM_CHART) --strict -f $(HELM_CHART)/ci/ci-values.yaml
+	helm template agentlens $(HELM_CHART) --debug > /dev/null
+
+## helm-test: Run Helm template tests for all value combinations
+helm-test: helm-lint
+	./scripts/test-helm-templates.sh
 
 add-html-placeholder:
 	@mkdir -p web/dist

@@ -1,0 +1,4 @@
+# CI values for helm lint
+image:
+  repository: ghcr.io/pawelharacz/agentlens
+  tag: "dev"

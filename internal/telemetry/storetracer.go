@@ -1,0 +1,123 @@
+package telemetry
+
+import (
+	"context"
+
+	"github.com/PawelHaracz/agentlens/internal/model"
+	"github.com/PawelHaracz/agentlens/internal/store"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+)
+
+// compile-time check: *TracedStore must satisfy store.Store.
+var _ store.Store = (*TracedStore)(nil)
+
+// TracedStoreOption configures TracedStore.
+type TracedStoreOption func(*tracedStoreCfg)
+
+type tracedStoreCfg struct {
+	tp trace.TracerProvider
+}
+
+// WithTracerProvider overrides the tracer provider (useful in tests).
+func WithTracerProvider(tp trace.TracerProvider) TracedStoreOption {
+	return func(c *tracedStoreCfg) { c.tp = tp }
+}
+
+// TracedStore wraps a store.Store with OTel tracing spans for key operations.
+// The store package never imports OTel — tracing is added here at the infrastructure boundary.
+// Pass-through methods are handled automatically via the embedded store.Store.
+type TracedStore struct {
+	store.Store // embedded — handles all pass-through methods automatically
+	dialect     string
+	tracer      trace.Tracer
+}
+
+// NewTracedStore creates a tracing decorator around a catalog store.
+func NewTracedStore(inner store.Store, dialect string, opts ...TracedStoreOption) *TracedStore {
+	cfg := &tracedStoreCfg{tp: otel.GetTracerProvider()}
+	for _, o := range opts {
+		o(cfg)
+	}
+	return &TracedStore{
+		Store:   inner,
+		dialect: dialect,
+		tracer:  cfg.tp.Tracer("agentlens.store"),
+	}
+}
+
+func (t *TracedStore) startSpan(ctx context.Context, name, operation string) (context.Context, trace.Span) {
+	return t.tracer.Start(ctx, name,
+		trace.WithAttributes(
+			attribute.String("db.system", t.dialect),
+			attribute.String("db.operation", operation),
+		),
+	)
+}
+
+func recordErr(span trace.Span, err error) {
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+}
+
+// Traced operations
+
+// Create wraps store.Create with a tracing span.
+func (t *TracedStore) Create(ctx context.Context, entry *model.CatalogEntry) error {
+	ctx, span := t.startSpan(ctx, "store.catalog.create", "create")
+	defer span.End()
+	err := t.Store.Create(ctx, entry)
+	recordErr(span, err)
+	return err
+}
+
+// Get wraps store.Get with a tracing span.
+func (t *TracedStore) Get(ctx context.Context, id string) (*model.CatalogEntry, error) {
+	ctx, span := t.startSpan(ctx, "store.catalog.get", "get")
+	defer span.End()
+	result, err := t.Store.Get(ctx, id)
+	recordErr(span, err)
+	return result, err
+}
+
+// List wraps store.List with a tracing span and records result count.
+func (t *TracedStore) List(ctx context.Context, filter store.ListFilter) ([]model.CatalogEntry, error) {
+	ctx, span := t.startSpan(ctx, "store.catalog.list", "list")
+	defer span.End()
+	results, err := t.Store.List(ctx, filter)
+	recordErr(span, err)
+	span.SetAttributes(attribute.Int("agentlens.store.result_count", len(results)))
+	return results, err
+}
+
+// UpdateHealth wraps store.UpdateHealth with a tracing span.
+func (t *TracedStore) UpdateHealth(ctx context.Context, entryID string, h model.Health) error {
+	ctx, span := t.startSpan(ctx, "store.catalog.update_health", "update_health")
+	defer span.End()
+	err := t.Store.UpdateHealth(ctx, entryID, h)
+	recordErr(span, err)
+	return err
+}
+
+// ListCapabilities wraps store.ListCapabilities with a tracing span.
+func (t *TracedStore) ListCapabilities(ctx context.Context, filter store.CapabilityFilter) (*model.CapabilityListResult, error) {
+	ctx, span := t.startSpan(ctx, "store.skills.list", "list_capabilities")
+	defer span.End()
+	result, err := t.Store.ListCapabilities(ctx, filter)
+	recordErr(span, err)
+	return result, err
+}
+
+// ListAgentsByCapability wraps store.ListAgentsByCapability with a tracing span.
+func (t *TracedStore) ListAgentsByCapability(ctx context.Context, kind, name string) ([]model.CatalogEntry, error) {
+	ctx, span := t.startSpan(ctx, "store.skills.list_agents", "list_agents_by_capability")
+	defer span.End()
+	results, err := t.Store.ListAgentsByCapability(ctx, kind, name)
+	recordErr(span, err)
+	span.SetAttributes(attribute.Int("agentlens.store.result_count", len(results)))
+	return results, err
+}

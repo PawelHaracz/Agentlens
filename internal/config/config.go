@@ -76,6 +76,27 @@ type AuthTokenConfig struct {
 	SessionDuration time.Duration `yaml:"session_duration"`
 }
 
+// TelemetryConfig holds OpenTelemetry configuration.
+type TelemetryConfig struct {
+	Enabled          bool              `yaml:"enabled"`
+	Endpoint         string            `yaml:"endpoint"`
+	FrontendEndpoint string            `yaml:"frontend_endpoint"`
+	Protocol         string            `yaml:"protocol"`
+	Insecure         bool              `yaml:"insecure"`
+	ServiceName      string            `yaml:"service_name"`
+	Environment      string            `yaml:"environment"`
+	TracesSampleRate float64           `yaml:"traces_sample_rate"`
+	MetricsInterval  time.Duration     `yaml:"metrics_interval"`
+	LogExportLevel   string            `yaml:"log_export_level"`
+	Headers          map[string]string `yaml:"headers"`
+	Prometheus       PrometheusConfig  `yaml:"prometheus"`
+}
+
+// PrometheusConfig holds Prometheus metrics endpoint configuration.
+type PrometheusConfig struct {
+	Enabled bool `yaml:"enabled"`
+}
+
 // Config holds all AgentLens configuration.
 type Config struct {
 	Port         int               `yaml:"port"`
@@ -88,6 +109,7 @@ type Config struct {
 	HealthCheck  HealthCheckConfig `yaml:"health_check"`
 	Database     DatabaseConfig    `yaml:"database"`
 	Auth         AuthTokenConfig   `yaml:"auth"`
+	Telemetry    TelemetryConfig   `yaml:"telemetry"`
 }
 
 // Load reads configuration from a YAML file at path (may be empty) and applies
@@ -137,6 +159,16 @@ func defaults() *Config {
 		Auth: AuthTokenConfig{
 			SessionDuration: 24 * time.Hour,
 		},
+		Telemetry: TelemetryConfig{
+			Enabled:          false,
+			Protocol:         "grpc",
+			Insecure:         true,
+			ServiceName:      "agentlens",
+			Environment:      "production",
+			TracesSampleRate: 1.0,
+			MetricsInterval:  30 * time.Second,
+			LogExportLevel:   "info",
+		},
 	}
 }
 
@@ -165,6 +197,7 @@ func applyEnv(cfg *Config) {
 	}
 	applyHealthCheckEnv(&cfg.HealthCheck)
 	applyDatabaseEnv(&cfg.Database)
+	applyTelemetryEnv(&cfg.Telemetry)
 	if v := env("JWT_SECRET"); v != "" {
 		cfg.Auth.JWTSecret = v
 	}
@@ -233,6 +266,62 @@ func applyDatabaseEnv(db *DatabaseConfig) {
 	if v := env("DB_POSTGRES_SSLMODE"); v != "" {
 		db.Postgres.SSLMode = v
 	}
+}
+
+func applyTelemetryEnv(tel *TelemetryConfig) {
+	if v := env("OTEL_ENABLED"); v != "" {
+		tel.Enabled = strings.EqualFold(v, "true") || v == "1"
+	}
+	if v := env("OTEL_ENDPOINT"); v != "" {
+		tel.Endpoint = v
+	} else if v := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"); v != "" && tel.Endpoint == "" {
+		tel.Endpoint = v
+	}
+	if v := env("OTEL_PROTOCOL"); v != "" {
+		tel.Protocol = v
+	}
+	if v := env("OTEL_FRONTEND_ENDPOINT"); v != "" {
+		tel.FrontendEndpoint = v
+	}
+	if v := env("OTEL_INSECURE"); v != "" {
+		tel.Insecure = strings.EqualFold(v, "true") || v == "1"
+	}
+	if v := env("OTEL_SERVICE_NAME"); v != "" {
+		tel.ServiceName = v
+	}
+	if v := env("OTEL_ENVIRONMENT"); v != "" {
+		tel.Environment = v
+	}
+	if v := env("OTEL_TRACES_SAMPLE_RATE"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			tel.TracesSampleRate = f
+		}
+	}
+	if v := env("OTEL_METRICS_INTERVAL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			tel.MetricsInterval = d
+		}
+	}
+	if v := env("OTEL_LOG_EXPORT_LEVEL"); v != "" {
+		tel.LogExportLevel = v
+	}
+	if v := env("OTEL_HEADERS"); v != "" {
+		tel.Headers = parseHeaders(v)
+	}
+	if v := env("METRICS_PROMETHEUS_ENABLED"); v != "" {
+		tel.Prometheus.Enabled = strings.EqualFold(v, "true") || v == "1"
+	}
+}
+
+func parseHeaders(s string) map[string]string {
+	headers := make(map[string]string)
+	for _, pair := range strings.Split(s, ",") {
+		kv := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(kv) == 2 {
+			headers[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
+		}
+	}
+	return headers
 }
 
 func env(key string) string {
