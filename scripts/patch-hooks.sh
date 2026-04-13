@@ -3,6 +3,11 @@
 # Lefthook install generates hooks that only check system PATH and node_modules.
 # This adds $GOPATH/bin as fallback so "go install lefthook" users work too.
 
+if ! command -v perl >/dev/null 2>&1; then
+  echo "patch-hooks: perl not found, skipping hook patch (install perl or patch hooks manually)"
+  exit 0
+fi
+
 GOPATH_BIN=$(go env GOPATH)/bin
 LEFTHOOK="$GOPATH_BIN/lefthook"
 

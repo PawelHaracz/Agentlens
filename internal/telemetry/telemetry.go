@@ -50,10 +50,14 @@ func Init(ctx context.Context, cfg config.TelemetryConfig, version string) (*Pro
 	}
 
 	if !cfg.Enabled {
+		// Prometheus can be enabled independently of OTLP export.
+		if cfg.Prometheus.Enabled {
+			return initPrometheusOnly(ctx, cfg, version)
+		}
 		return noop, nil
 	}
 
-	// Prometheus-only mode: no OTLP endpoint, but Prometheus enabled.
+	// Prometheus-only mode: OTLP enabled but no endpoint configured.
 	if cfg.Endpoint == "" {
 		if !cfg.Prometheus.Enabled {
 			slog.Warn("telemetry enabled but no endpoint and prometheus disabled, falling back to no-op")
