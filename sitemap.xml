@@ -2,162 +2,178 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://agentlens.cloudtown.io/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/api/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/architecture/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/auth/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/database/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/developer-guide/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/devops-guide/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/end-user-guide/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/settings/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/user-guide/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/001-product-archetype-principles/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/002-git-hooks-lefthook/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/003-microkernel-plugin-architecture/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/004-product-catalog-pattern/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/005-authentication-and-session-management/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/006-dual-dialect-database-and-forward-only-migrations/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/007-embedded-spa-frontend/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/adr/008-poll-based-agent-discovery/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
+    </url>
+    <url>
+         <loc>https://agentlens.cloudtown.io/adr/009-opentelemetry-as-infrastructure/</loc>
+         <lastmod>2026-04-13</lastmod>
+    </url>
+    <url>
+         <loc>https://agentlens.cloudtown.io/adr/010-dual-output-structured-logging/</loc>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-01-a2a-card-validation/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-01-semantic-versioning-release/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-03-arch-go-rules/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-03-product-archetype/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-07-health-lifecycle/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-08-unified-catalog-view/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-09-capability-discovery/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-10-a2a-security-schemes/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-11-git-hooks/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-11-strip-ai-coauthors/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
+    </url>
+    <url>
+         <loc>https://agentlens.cloudtown.io/superpowers/plans/2026-04-12-otel-helm-plan/</loc>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-01-a2a-card-validation-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-03-arch-go-rules-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-03-product-archetype-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-06-codeql-ssrf-sanitizer-model/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-06-frontend-unit-test-coverage/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-06-regenerate-end-user-guide/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-07-health-lifecycle/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-08-unified-catalog-view-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-09-capability-discovery-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-10-a2a-security-schemes-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-11-git-hooks-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
     </url>
     <url>
          <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-11-strip-ai-coauthors-design/</loc>
-         <lastmod>2026-04-11</lastmod>
+         <lastmod>2026-04-13</lastmod>
+    </url>
+    <url>
+         <loc>https://agentlens.cloudtown.io/superpowers/specs/2026-04-12-otel-helm-design/</loc>
+         <lastmod>2026-04-13</lastmod>
     </url>
 </urlset>

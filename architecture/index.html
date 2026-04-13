@@ -868,6 +868,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1499,6 +1510,17 @@
     <span class="md-ellipsis">
       
         Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
       
     </span>
   </a>
@@ -2441,6 +2463,45 @@
 └── .github/workflows/      # CI, code scanning, E2E, release
 </code></pre></div>
 <hr />
+<h2 id="observability">Observability<a class="headerlink" href="#observability" title="Permanent link">&para;</a></h2>
+<p>AgentLens ships OpenTelemetry instrumentation as an infrastructure-layer concern. The telemetry subsystem is built on <code>internal/telemetry</code> and provides traces, metrics, and logs to external observability backends (Jaeger, Prometheus, Loki).</p>
+<p><strong>Key components:</strong>
+- <strong>Span instrumentation</strong>: HTTP handlers, database queries, and plugin operations emit traces
+- <strong>Prometheus metrics</strong>: Go runtime metrics, HTTP request counters, and custom business metrics
+- <strong>OTLP export</strong>: Configurable OTLP gRPC/HTTP endpoint for trace and log export
+- <strong>Liveness/readiness probes</strong>: <code>/healthz</code> (process alive), <code>/readyz</code> (DB reachable), <code>/metrics</code> (Prometheus scrape)</p>
+<p><strong>Observability data flows:</strong></p>
+<pre class="mermaid"><code>graph LR
+    subgraph AgentLens
+        API[HTTP Handlers]
+        HP[Health Prober]
+        PR[Parsers&lt;br/&gt;A2A / MCP]
+        ST[Store&lt;br/&gt;GORM]
+        TEL[internal/telemetry&lt;br/&gt;TracerProvider]
+    end
+
+    API --&gt;|spans| TEL
+    HP --&gt;|spans + metrics| TEL
+    PR --&gt;|spans + metrics| TEL
+    ST --&gt;|spans| TEL
+
+    TEL --&gt;|OTLP gRPC/HTTP| COLL["OTel Collector&lt;br/&gt;(optional)"]
+    TEL --&gt;|Prometheus scrape| PROM["Prometheus&lt;br/&gt;(optional)"]
+
+    COLL --&gt; JAE["Jaeger"]
+    COLL --&gt; LOKI["Loki"]
+    PROM --&gt; GRAF["Grafana"]</code></pre>
+<p><strong>Configuration</strong> (see <a href="../settings/">Settings</a> for full details):
+- <code>telemetry.enabled</code> — Enable/disable OTLP export
+- <code>telemetry.endpoint</code> — OTLP collector address (e.g., <code>localhost:4317</code>)
+- <code>telemetry.protocol</code> — Export protocol: <code>grpc</code> (default) or <code>http</code>
+- <code>telemetry.prometheus.enabled</code> — Expose <code>/metrics</code> endpoint
+- <code>telemetry.traces_sample_rate</code> — Sample rate (0.0–1.0; default 1.0)</p>
+<p><strong>Related documentation:</strong>
+- <a href="../adr/009-opentelemetry-as-infrastructure/">ADR-009: OpenTelemetry as Infrastructure</a> — Design decision for tracing/metrics
+- <a href="../adr/010-dual-output-structured-logging/">ADR-010: Dual-Output Structured Logging</a> — Logging design with OTel bridge
+- <a href="../devops-guide/#observability">DevOps Guide</a> — Deployment and monitoring setup</p>
+<hr />
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>AgentLens is configured via YAML file and/or environment variables (prefixed with <code>AGENTLENS_</code>):</p>
 <table>
@@ -2595,7 +2656,7 @@ docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </sp
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 11, 2026 14:56:55 UTC"><span class="timeago" datetime="2026-04-11T14:56:55+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 11, 2026 14:56:55 UTC">2026-04-11</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 13, 2026 09:08:27 UTC"><span class="timeago" datetime="2026-04-13T09:08:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 13, 2026 09:08:27 UTC">2026-04-13</span>
   </span>
 
     

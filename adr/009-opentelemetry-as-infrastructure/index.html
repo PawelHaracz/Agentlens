@@ -10,29 +10,27 @@
       
       
       
-        <link rel="canonical" href="https://agentlens.cloudtown.io/settings/">
+        <link rel="canonical" href="https://agentlens.cloudtown.io/adr/009-opentelemetry-as-infrastructure/">
       
-      
-        <link rel="prev" href="../database/">
       
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Settings - AgentLens</title>
+        <title>ADR-009: OpenTelemetry as Infrastructure, Not Plugin - AgentLens</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,9 +49,9 @@
       
     
     
-      <link rel="stylesheet" href="../css/timeago.css">
+      <link rel="stylesheet" href="../../css/timeago.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#settings" class="md-skip">
+        <a href="#adr-009-opentelemetry-as-infrastructure-not-plugin" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +90,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+    <a href="../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Settings
+              ADR-009: OpenTelemetry as Infrastructure, Not Plugin
             
           </span>
         </div>
@@ -225,7 +223,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -244,7 +242,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../architecture/" class="md-tabs__link">
+      <a href="../../architecture/" class="md-tabs__link">
         
   
   
@@ -263,7 +261,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../api/" class="md-tabs__link">
+      <a href="../../api/" class="md-tabs__link">
         
   
   
@@ -282,7 +280,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../user-guide/" class="md-tabs__link">
+      <a href="../../user-guide/" class="md-tabs__link">
         
   
   
@@ -301,7 +299,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../end-user-guide/" class="md-tabs__link">
+      <a href="../../end-user-guide/" class="md-tabs__link">
         
   
   
@@ -320,7 +318,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../developer-guide/" class="md-tabs__link">
+      <a href="../../developer-guide/" class="md-tabs__link">
         
   
   
@@ -339,7 +337,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../devops-guide/" class="md-tabs__link">
+      <a href="../../devops-guide/" class="md-tabs__link">
         
   
   
@@ -358,7 +356,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../auth/" class="md-tabs__link">
+      <a href="../../auth/" class="md-tabs__link">
         
   
   
@@ -377,7 +375,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../database/" class="md-tabs__link">
+      <a href="../../database/" class="md-tabs__link">
         
   
   
@@ -394,11 +392,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../../settings/" class="md-tabs__link">
         
   
   
@@ -433,7 +429,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+    <a href="../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -463,7 +459,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -490,7 +486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   
@@ -517,7 +513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/" class="md-nav__link">
+      <a href="../../api/" class="md-nav__link">
         
   
   
@@ -544,7 +540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/" class="md-nav__link">
+      <a href="../../user-guide/" class="md-nav__link">
         
   
   
@@ -571,7 +567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../end-user-guide/" class="md-nav__link">
+      <a href="../../end-user-guide/" class="md-nav__link">
         
   
   
@@ -598,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../developer-guide/" class="md-nav__link">
+      <a href="../../developer-guide/" class="md-nav__link">
         
   
   
@@ -625,7 +621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../devops-guide/" class="md-nav__link">
+      <a href="../../devops-guide/" class="md-nav__link">
         
   
   
@@ -652,7 +648,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../auth/" class="md-nav__link">
+      <a href="../../auth/" class="md-nav__link">
         
   
   
@@ -679,7 +675,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database/" class="md-nav__link">
+      <a href="../../database/" class="md-nav__link">
         
   
   
@@ -703,37 +699,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Settings
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../settings/" class="md-nav__link">
         
   
   
@@ -749,148 +718,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#settings-keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Settings Keys
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Settings Keys">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#health-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Health Check
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#telemetry-opentelemetry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Telemetry (OpenTelemetry)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#categories" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Categories
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list-all-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        List All Settings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-settings-by-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Get Settings by Category
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bulk-update-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bulk Update Settings
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -922,10 +749,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Context
       
     </span>
   </a>
@@ -933,22 +760,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#settings-keys" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Settings Keys
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Settings Keys">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#health-check" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Health Check
+        Positive
       
     </span>
   </a>
@@ -956,10 +794,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#telemetry-opentelemetry" class="md-nav__link">
+  <a href="#negative-trade-offs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Telemetry (OpenTelemetry)
+        Negative / Trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
       
     </span>
   </a>
@@ -972,71 +821,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#categories" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Categories
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list-all-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        List All Settings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-settings-by-category" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Get Settings by Category
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bulk-update-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bulk Update Settings
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
+        Alternatives considered
       
     </span>
   </a>
@@ -1063,245 +851,74 @@
   
 
 
-<h1 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h1>
-<p>AgentLens provides a key-value settings system for runtime configuration. Settings are stored in the database and can be managed via the REST API.</p>
-<hr />
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Settings are organized by <strong>category</strong> and identified by a unique <strong>key</strong>. Each setting has a value, a default, and a description.</p>
-<hr />
-<h2 id="settings-keys">Settings Keys<a class="headerlink" href="#settings-keys" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Category</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>app.name</code></td>
-<td>general</td>
-<td><code>AgentLens</code></td>
-<td>Application display name</td>
-</tr>
-<tr>
-<td><code>app.registration_enabled</code></td>
-<td>auth</td>
-<td><code>true</code></td>
-<td>Allow new user registration</td>
-</tr>
-<tr>
-<td><code>app.default_role</code></td>
-<td>auth</td>
-<td><code>viewer</code></td>
-<td>Default role for new users</td>
-</tr>
-</tbody>
-</table>
-<h3 id="health-check">Health Check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Default</th>
-<th>Env var</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>health_check.enabled</code></td>
-<td><code>true</code></td>
-<td><code>AGENTLENS_HEALTH_CHECK_ENABLED</code></td>
-<td>Enable/disable periodic health probing</td>
-</tr>
-<tr>
-<td><code>health_check.interval</code></td>
-<td><code>30s</code></td>
-<td><code>AGENTLENS_HEALTH_CHECK_INTERVAL</code></td>
-<td>How often to probe each entry</td>
-</tr>
-<tr>
-<td><code>health_check.timeout</code></td>
-<td><code>5s</code></td>
-<td><code>AGENTLENS_HEALTH_CHECK_TIMEOUT</code></td>
-<td>Probe request timeout</td>
-</tr>
-<tr>
-<td><code>health_check.concurrency</code></td>
-<td><code>8</code></td>
-<td><code>AGENTLENS_HEALTH_CHECK_CONCURRENCY</code></td>
-<td>Parallel probes</td>
-</tr>
-<tr>
-<td><code>health_check.degraded_latency</code></td>
-<td><code>1500ms</code></td>
-<td><code>AGENTLENS_HEALTH_CHECK_DEGRADED_LATENCY</code></td>
-<td>Latency threshold above which a 2xx response → degraded state</td>
-</tr>
-<tr>
-<td><code>health_check.failure_threshold</code></td>
-<td><code>3</code></td>
-<td><code>AGENTLENS_HEALTH_CHECK_FAILURE_THRESHOLD</code></td>
-<td>Consecutive failures before → offline state</td>
-</tr>
-</tbody>
-</table>
-<h3 id="telemetry-opentelemetry">Telemetry (OpenTelemetry)<a class="headerlink" href="#telemetry-opentelemetry" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Env var</th>
-<th>Config key</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AGENTLENS_OTEL_ENABLED</code></td>
-<td><code>telemetry.enabled</code></td>
-<td><code>false</code></td>
-<td>Enable OTel instrumentation and OTLP export</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_ENDPOINT</code></td>
-<td><code>telemetry.endpoint</code></td>
-<td><code>""</code></td>
-<td>OTLP collector endpoint (e.g., <code>localhost:4317</code> for gRPC, <code>http://localhost:4318</code> for HTTP)</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_FRONTEND_ENDPOINT</code></td>
-<td><code>telemetry.frontend_endpoint</code></td>
-<td><code>""</code></td>
-<td>Optional browser OTLP/HTTP endpoint override (must be browser-reachable, typically <code>http://&lt;collector&gt;:4318/v1/traces</code>)</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_PROTOCOL</code></td>
-<td><code>telemetry.protocol</code></td>
-<td><code>grpc</code></td>
-<td>Export protocol: <code>grpc</code> or <code>http</code></td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_INSECURE</code></td>
-<td><code>telemetry.insecure</code></td>
-<td><code>true</code></td>
-<td>Disable TLS for collector connection</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_SERVICE_NAME</code></td>
-<td><code>telemetry.service_name</code></td>
-<td><code>agentlens</code></td>
-<td>Service name in traces and metrics</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_ENVIRONMENT</code></td>
-<td><code>telemetry.environment</code></td>
-<td><code>production</code></td>
-<td>Deployment environment attribute (e.g., <code>production</code>, <code>staging</code>, <code>development</code>)</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_TRACES_SAMPLE_RATE</code></td>
-<td><code>telemetry.traces_sample_rate</code></td>
-<td><code>1.0</code></td>
-<td>Trace sample rate (0.0–1.0; uses <code>ParentBased(TraceIDRatioBased(rate))</code> sampler)</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_METRICS_INTERVAL</code></td>
-<td><code>telemetry.metrics_interval</code></td>
-<td><code>30s</code></td>
-<td>Metrics export interval</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_LOG_EXPORT_LEVEL</code></td>
-<td><code>telemetry.log_export_level</code></td>
-<td><code>info</code></td>
-<td>Minimum log level for OTLP export (<code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>)</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_OTEL_HEADERS</code></td>
-<td><code>telemetry.headers</code></td>
-<td><code>""</code></td>
-<td>Extra OTLP headers (comma-separated <code>key=value</code> pairs)</td>
-</tr>
-<tr>
-<td><code>AGENTLENS_METRICS_PROMETHEUS_ENABLED</code></td>
-<td><code>telemetry.prometheus.enabled</code></td>
-<td><code>false</code></td>
-<td>Enable <code>/metrics</code> Prometheus exposition endpoint</td>
-</tr>
-<tr>
-<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
-<td>—</td>
-<td>—</td>
-<td>Standard OpenTelemetry env var (used as fallback when <code>AGENTLENS_OTEL_ENDPOINT</code> not set)</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="categories">Categories<a class="headerlink" href="#categories" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Category</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>general</code></td>
-<td>General instance settings</td>
-</tr>
-<tr>
-<td><code>auth</code></td>
-<td>Authentication and session settings</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
-<h3 id="list-all-settings">List All Settings<a class="headerlink" href="#list-all-settings" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://localhost:8080/api/v1/settings<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span>
-</code></pre></div>
-<p><strong>Response 200:</strong>
-<div class="highlight"><pre><span></span><code><span class="p">[</span>
-<span class="w">  </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;app.name&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AgentLens&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Application display name&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;general&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">]</span>
-</code></pre></div></p>
-<h3 id="get-settings-by-category">Get Settings by Category<a class="headerlink" href="#get-settings-by-category" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://localhost:8080/api/v1/settings/auth<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span>
-</code></pre></div>
-<h3 id="bulk-update-settings">Bulk Update Settings<a class="headerlink" href="#bulk-update-settings" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>http://localhost:8080/api/v1/settings<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer &lt;token&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;app.name&quot;: &quot;My AgentLens&quot;,</span>
-<span class="s1">    &quot;app.default_role&quot;: &quot;editor&quot;</span>
-<span class="s1">  }&#39;</span>
-</code></pre></div>
-<p><strong>Response 200:</strong> Confirmation message.</p>
-<blockquote>
-<p><strong>Permission required:</strong> <code>settings:write</code> (admin role by default).</p>
-</blockquote>
-<hr />
-<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
+<h1 id="adr-009-opentelemetry-as-infrastructure-not-plugin">ADR-009: OpenTelemetry as Infrastructure, Not Plugin<a class="headerlink" href="#adr-009-opentelemetry-as-infrastructure-not-plugin" title="Permanent link">&para;</a></h1>
+<p>Date: 2026-04-12
+Status: Accepted
+Related: <a href="../003-microkernel-plugin-architecture/">ADR-003</a> (plugin extension model)</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>AgentLens needs full observability — distributed tracing, metrics, and structured log export via OpenTelemetry. The microkernel architecture (ADR-003) establishes plugins as the extension mechanism: capabilities are added via <code>Plugin</code> implementations registered with the <code>PluginManager</code>.</p>
+<p>The question is whether OTel should follow this pattern or be treated differently.</p>
+<p>Three forces are in tension:</p>
+<ol>
+<li>
+<p><strong>Lifecycle ordering</strong> — telemetry must be available before any plugin initializes (so plugin init/start operations produce spans) and must flush after all plugins stop (so shutdown operations are captured). The plugin lifecycle is <code>InitAll → StartAll → [running] → StopAll</code>. Telemetry needs to wrap this entire lifecycle.</p>
+</li>
+<li>
+<p><strong>Cross-cutting scope</strong> — every layer uses telemetry: API handlers, store queries, health probes, parsers. A plugin sits in the <code>plugins/</code> layer, which arch-go constrains to depend only on <code>kernel</code> + foundation. A telemetry plugin couldn't be imported by <code>api</code> or <code>store</code> without violating layer boundaries.</p>
+</li>
+<li>
+<p><strong>Zero-cost when disabled</strong> — when <code>telemetry.enabled=false</code>, the system must have zero overhead. OTel's global no-op providers achieve this naturally. A plugin would add registration overhead, lifecycle management, and conditional checks.</p>
+</li>
+</ol>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Place OpenTelemetry in <code>internal/telemetry/</code> as <strong>infrastructure</strong> (same layer as <code>store</code> and <code>auth</code>), not as a microkernel plugin.</p>
 <ul>
-<li>Settings changes take effect immediately — no restart required.</li>
-<li>Settings stored in the database override values from config files and environment variables.</li>
-<li>The <code>settings:read</code> permission is required to view settings (all default roles have this).</li>
-<li>The <code>settings:write</code> permission is required to modify settings (admin role only by default).</li>
+<li><code>telemetry.Init()</code> is called in <code>main.go</code> <strong>before</strong> <code>pm.InitAll()</code>.</li>
+<li><code>provider.Shutdown()</code> is deferred in <code>main.go</code> and runs <strong>after</strong> <code>pm.StopAll()</code>.</li>
+<li>Providers are registered globally via <code>otel.SetTracerProvider()</code> / <code>otel.SetMeterProvider()</code>. Any package calls <code>otel.Tracer("agentlens.xyz")</code> without explicit dependency injection.</li>
+<li>When disabled, global providers remain as no-ops. Zero goroutines, zero connections.</li>
+<li><code>internal/telemetry/</code> is added to arch-go as infrastructure layer with the same constraints as <code>store</code> and <code>auth</code>.</li>
 </ul>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Telemetry outlives all plugins — every span from plugin init through shutdown is captured and flushed.</li>
+<li>No layer boundary violations — packages use <code>otel.Tracer()</code> (external dependency), not an internal import.</li>
+<li>Zero overhead when disabled — no plugin registration, no lifecycle methods, no conditional paths.</li>
+<li>Consistent with how OTel is used across the Go ecosystem (global providers as infrastructure).</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / Trade-offs<a class="headerlink" href="#negative-trade-offs" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Global state</strong> — <code>otel.SetTracerProvider()</code> is process-global. Tests must reset globals via <code>t.Cleanup()</code>.</li>
+<li><strong>Not discoverable via plugin manager</strong> — <code>pm.List()</code> won't show telemetry. Operators check telemetry status via <code>/metrics</code> or log output, not the plugin registry.</li>
+</ul>
+<h3 id="neutral">Neutral<a class="headerlink" href="#neutral" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The store tracing decorator in <code>internal/telemetry/storetracer.go</code> wraps <code>store.Store</code> to add OTel spans for key operations. It imports <code>internal/store/</code> for the interface type and is wired at the composition root (<code>main.go</code>).</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Why rejected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Microkernel plugin</strong></td>
+<td>Cannot wrap plugin lifecycle (init before, flush after). Layer boundary violations if other packages import it</td>
+</tr>
+<tr>
+<td><strong>Explicit DI (pass providers through deps)</strong></td>
+<td>Invasive — touches every constructor signature. Over-engineered for cross-cutting infrastructure</td>
+</tr>
+<tr>
+<td><strong>Middleware-only (HTTP spans only)</strong></td>
+<td>Misses highest-value instrumentation: parser failures, probe latency, store slow queries</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -1334,7 +951,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="March 31, 2026 22:14:53 UTC"><span class="timeago" datetime="2026-03-31T22:14:53+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="March 31, 2026 22:14:53 UTC">2026-03-31</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 13, 2026 09:08:27 UTC"><span class="timeago" datetime="2026-04-13T09:08:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 13, 2026 09:08:27 UTC">2026-04-13</span>
   </span>
 
     
@@ -1389,14 +1006,14 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="../js/timeago.min.js"></script>
+        <script src="../../js/timeago.min.js"></script>
       
-        <script src="../js/timeago_mkdocs_material.js"></script>
+        <script src="../../js/timeago_mkdocs_material.js"></script>
       
     
   </body>

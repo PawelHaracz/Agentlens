@@ -1,0 +1,2833 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://agentlens.cloudtown.io/superpowers/specs/2026-04-12-otel-helm-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>OpenTelemetry Observability & Production-Ready Helm Chart - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../css/timeago.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#opentelemetry-observability-production-ready-helm-chart" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              OpenTelemetry Observability &amp; Production-Ready Helm Chart
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions-from-brainstorming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Decisions (from brainstorming)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scope">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#out-of-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out of scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-a-telemetry-package-internaltelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part A: Telemetry Package — internal/telemetry/
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part A: Telemetry Package — internal/telemetry/">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#provider-struct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider struct
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#behavior-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#env-var-precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Env var precedence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sampler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shutdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shutdown
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fan-out-slog-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fan-out slog handler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming convention
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arch-go-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arch-go placement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-b-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part B: Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part B: Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-types-in-internalconfigconfiggo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New types in internal/config/config.go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Defaults
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#env-var-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Env var mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-c-instrumentation-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part C: Instrumentation Points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part C: Instrumentation Points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-http-middleware-all-api-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. HTTP middleware — all API requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-health-prober" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Health prober
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-parsers-a2a-mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Parsers (A2A + MCP)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-store-tracing-internaltelemetrystoretracergo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Store tracing — internal/telemetry/storetracer.go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-authentication-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Authentication events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-catalog-gauge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Catalog gauge
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-d-application-endpoints-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part D: Application Endpoints &amp; Routing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part D: Application Endpoints &amp; Routing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#existing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#route-registration-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route registration order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#routerdeps-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RouterDeps change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#readyz-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /readyz implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /metrics implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-e-startup-shutdown-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part E: Startup &amp; Shutdown Sequence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part E: Startup &amp; Shutdown Sequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#startup-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Startup order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shutdown-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shutdown sequence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version string
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-f-frontend-telemetry-websrctelemetryts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part F: Frontend Telemetry — web/src/telemetry.ts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part F: Frontend Telemetry — web/src/telemetry.ts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#init-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init module
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-delivery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration delivery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#app-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#collector-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collector routing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scope-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#end-to-end-trace-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End-to-end trace flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-g-helm-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part G: Helm Chart
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part G: Helm Chart">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chart-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chart structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chartyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chart.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dockerfile-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dockerfile changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security context
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#volume-mounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volume mounts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#init-container-postgresql-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init container (PostgreSQL mode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-toggle-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-toggle Prometheus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-replica-guard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-replica guard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secret-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secret handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Probes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#valuesyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        values.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-h-testing-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part H: Testing Strategy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part H: Testing Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests-internaltelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unit tests — internal/telemetry/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instrumentation-tests-in-memory-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instrumentation tests — in-memory exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-tests-vitest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend tests — Vitest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#helm-lint-template-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Helm lint + template tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-test-docker-compose-jaeger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration test — Docker Compose + Jaeger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e2e-playwright-otel-smoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E2E (Playwright) — OTel smoke
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-i-acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part I: Acceptance Criteria
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part I: Acceptance Criteria">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#helm-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Helm chart
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-j-known-traps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part J: Known Traps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-k-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part K: ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#go-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Go Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="opentelemetry-observability-production-ready-helm-chart">OpenTelemetry Observability &amp; Production-Ready Helm Chart<a class="headerlink" href="#opentelemetry-observability-production-ready-helm-chart" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-04-12
+<strong>Status:</strong> Draft
+<strong>Tier:</strong> 2 — SHOULD HAVE (final Tier 2 features)
+<strong>Effort:</strong> L (7–9 days)
+<strong>Branch:</strong> <code>feat/devops/otel</code> — single branch, single PR</p>
+<hr />
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Ship full observability (traces, metrics, structured logs via OpenTelemetry) and a production-grade Helm chart (security, scaling, PostgreSQL, monitoring). These features are tightly coupled — the Helm chart's ServiceMonitor consumes the Prometheus endpoint that OTel exposes, and the telemetry config is wired through the chart's <code>values.yaml</code>.</p>
+<p>After this work, AgentLens goes from "works on my laptop" to "approved by an SRE for staging".</p>
+<hr />
+<h2 id="design-decisions-from-brainstorming">Design Decisions (from brainstorming)<a class="headerlink" href="#design-decisions-from-brainstorming" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Spec/branch/PR</td>
+<td>Single unit</td>
+<td>Helm + OTel are tightly coupled; avoids broken cross-references</td>
+</tr>
+<tr>
+<td>Slog bridge</td>
+<td>Fan-out: stdout + OTLP, configurable <code>logExportLevel</code></td>
+<td>Operators need <code>kubectl logs</code> always; OTLP filtered separately</td>
+</tr>
+<tr>
+<td>Telemetry arch-go layer</td>
+<td>Infrastructure</td>
+<td>Imports foundation only; wired from <code>cmd/</code>; globals for cross-cutting</td>
+</tr>
+<tr>
+<td>Dockerfile/UID</td>
+<td>Distroless <code>:nonroot</code> (65532) + k8s enforcement</td>
+<td>Defense-in-depth; <code>docker run</code> and k8s both secure</td>
+</tr>
+<tr>
+<td>Metrics endpoint</td>
+<td>Same port (8080), route-level bypass</td>
+<td>Consistent with existing <code>/healthz</code> pattern</td>
+</tr>
+<tr>
+<td>Integration tests</td>
+<td>Docker Compose + Jaeger; Helm lint/template; no Kind</td>
+<td>Proves OTel works e2e; chart correctness via template tests</td>
+</tr>
+<tr>
+<td>OTel integration pattern</td>
+<td>Global providers + thin wrappers</td>
+<td>Canonical OTel-Go; minimal DI changes; store stays decoupled</td>
+</tr>
+<tr>
+<td>Frontend telemetry</td>
+<td><code>traceparent</code> propagation via fetch instrumentation</td>
+<td>Full e2e trace from browser → backend → probed agents</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">&para;</a></h2>
+<h3 id="in-scope">In scope<a class="headerlink" href="#in-scope" title="Permanent link">&para;</a></h3>
+<p><strong>Observability:</strong>
+1. OTLP/gRPC and OTLP/HTTP exporter, configurable via environment variables
+2. Distributed tracing for all HTTP handler operations with trace context propagation (<code>traceparent</code>)
+3. Custom spans for: parser execution, health probe per entry, store queries
+4. Metrics: request count/latency histogram, health probe results, parser success/failure, catalog entry gauge
+5. Structured log export via OTel slog bridge with fan-out (stdout + OTLP)
+6. Prometheus <code>/metrics</code> pull endpoint (needed by Helm ServiceMonitor)
+7. Graceful shutdown: flush pending telemetry on SIGTERM
+8. Frontend <code>traceparent</code> propagation via <code>@opentelemetry/instrumentation-fetch</code></p>
+<p><strong>Helm chart:</strong>
+9. Resource requests/limits, PodDisruptionBudget, HPA
+10. Liveness (<code>/healthz</code>), readiness (<code>/readyz</code>), startup probes
+11. Ingress (networking.k8s.io/v1) + Gateway API (gateway.networking.k8s.io/v1)
+12. ServiceMonitor (Prometheus Operator) pointing at <code>/metrics</code>
+13. PostgreSQL subchart (Bitnami) as optional dependency + external DB config
+14. <code>helm test</code> hook, <code>values.schema.json</code> validation
+15. SecurityContext: non-root (65532), read-only rootfs, dropped capabilities
+16. PVC for SQLite mode, NetworkPolicy (optional), topology spread constraints
+17. Init container for PostgreSQL readiness wait</p>
+<h3 id="out-of-scope">Out of scope<a class="headerlink" href="#out-of-scope" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Custom Grafana dashboards / JSON models</li>
+<li>Continuous profiling (pprof)</li>
+<li>Frontend RUM (document-load, user-interaction instrumentation)</li>
+<li>Operator / CRD-based deployment</li>
+<li>Multi-replica active-active with SQLite</li>
+<li>Cert-manager TLS integration</li>
+<li>ArgoCD / FluxCD application manifests</li>
+<li>Kind cluster integration tests (follow-up)</li>
+</ul>
+<hr />
+<h2 id="part-a-telemetry-package-internaltelemetry">Part A: Telemetry Package — <code>internal/telemetry/</code><a class="headerlink" href="#part-a-telemetry-package-internaltelemetry" title="Permanent link">&para;</a></h2>
+<h3 id="provider-struct">Provider struct<a class="headerlink" href="#provider-struct" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nx">telemetry</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">Provider</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">TracerProvider</span><span class="w">  </span><span class="o">*</span><span class="nx">sdktrace</span><span class="p">.</span><span class="nx">TracerProvider</span>
+<span class="w">    </span><span class="nx">MeterProvider</span><span class="w">   </span><span class="o">*</span><span class="nx">sdkmetric</span><span class="p">.</span><span class="nx">MeterProvider</span>
+<span class="w">    </span><span class="nx">LoggerProvider</span><span class="w">  </span><span class="o">*</span><span class="nx">sdklog</span><span class="p">.</span><span class="nx">LoggerProvider</span>
+<span class="w">    </span><span class="nx">PromHandler</span><span class="w">     </span><span class="nx">http</span><span class="p">.</span><span class="nx">Handler</span><span class="w">   </span><span class="c1">// nil when Prometheus disabled</span>
+<span class="w">    </span><span class="nx">Shutdown</span><span class="w">        </span><span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">Init</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">cfg</span><span class="w"> </span><span class="nx">config</span><span class="p">.</span><span class="nx">TelemetryConfig</span><span class="p">,</span><span class="w"> </span><span class="nx">version</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="nx">Provider</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="behavior-matrix">Behavior matrix<a class="headerlink" href="#behavior-matrix" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th><code>Enabled</code></th>
+<th><code>Endpoint</code></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>false</code></td>
+<td>any</td>
+<td>No-op provider, nil PromHandler, no goroutines</td>
+</tr>
+<tr>
+<td><code>true</code></td>
+<td>empty + no <code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
+<td>Log warning, fall back to no-op</td>
+</tr>
+<tr>
+<td><code>true</code></td>
+<td>valid</td>
+<td>Full provider: trace + metric + log exporters</td>
+</tr>
+<tr>
+<td><code>true</code> + <code>prometheus.enabled</code></td>
+<td>any</td>
+<td>PromHandler non-nil, registered by caller at <code>/metrics</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="env-var-precedence">Env var precedence<a class="headerlink" href="#env-var-precedence" title="Permanent link">&para;</a></h3>
+<p><code>AGENTLENS_OTEL_ENDPOINT</code> &gt; <code>OTEL_EXPORTER_OTLP_ENDPOINT</code> &gt; empty (no-op).</p>
+<h3 id="sampler">Sampler<a class="headerlink" href="#sampler" title="Permanent link">&para;</a></h3>
+<p><code>ParentBased(TraceIDRatioBased(cfg.TracesSampleRate))</code> — respects incoming <code>traceparent</code>.</p>
+<h3 id="shutdown">Shutdown<a class="headerlink" href="#shutdown" title="Permanent link">&para;</a></h3>
+<p>Called from <code>main</code> with 5s context timeout. Flushes all three providers (trace, metric, log).</p>
+<h3 id="fan-out-slog-handler">Fan-out slog handler<a class="headerlink" href="#fan-out-slog-handler" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">fanoutHandler</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">stdout</span><span class="w">      </span><span class="nx">slog</span><span class="p">.</span><span class="nx">Handler</span><span class="w">   </span><span class="c1">// existing JSON handler</span>
+<span class="w">    </span><span class="nx">bridge</span><span class="w">      </span><span class="nx">slog</span><span class="p">.</span><span class="nx">Handler</span><span class="w">   </span><span class="c1">// otelslog bridge</span>
+<span class="w">    </span><span class="nx">exportLevel</span><span class="w"> </span><span class="nx">slog</span><span class="p">.</span><span class="nx">Level</span><span class="w">     </span><span class="c1">// filter for OTLP export</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>All logs go to stdout at configured <code>logLevel</code>. Only logs &gt;= <code>logExportLevel</code> (default <code>info</code>) go to OTLP bridge. <code>trace_id</code>/<code>span_id</code> injected into both outputs when span is active.</p>
+<h3 id="naming-convention">Naming convention<a class="headerlink" href="#naming-convention" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>Tracer/Meter: &quot;agentlens.&lt;package&gt;&quot;     e.g. &quot;agentlens.api&quot;, &quot;agentlens.health&quot;
+Span names:   &quot;&lt;HTTP method&gt; &lt;route&gt;&quot;   for handlers (auto by otelhttp)
+              &quot;&lt;operation&gt;&quot;             for internal ops, e.g. &quot;health.probe&quot;
+</code></pre></div>
+<h3 id="arch-go-placement">Arch-go placement<a class="headerlink" href="#arch-go-placement" title="Permanent link">&para;</a></h3>
+<p>Infrastructure layer. <code>telemetry</code> may import <code>config</code>, <code>model</code>, <code>service</code> (foundation). Must NOT import <code>api</code>, <code>kernel</code>, <code>store</code>, <code>plugins</code>, <code>cmd</code>.</p>
+<hr />
+<h2 id="part-b-configuration">Part B: Configuration<a class="headerlink" href="#part-b-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="new-types-in-internalconfigconfiggo">New types in <code>internal/config/config.go</code><a class="headerlink" href="#new-types-in-internalconfigconfiggo" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">TelemetryConfig</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Enabled</span><span class="w">          </span><span class="kt">bool</span><span class="w">              </span><span class="s">`yaml:&quot;enabled&quot;`</span>
+<span class="w">    </span><span class="nx">Endpoint</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`yaml:&quot;endpoint&quot;`</span>
+<span class="w">    </span><span class="nx">Protocol</span><span class="w">         </span><span class="kt">string</span><span class="w">            </span><span class="s">`yaml:&quot;protocol&quot;`</span>
+<span class="w">    </span><span class="nx">Insecure</span><span class="w">         </span><span class="kt">bool</span><span class="w">              </span><span class="s">`yaml:&quot;insecure&quot;`</span>
+<span class="w">    </span><span class="nx">ServiceName</span><span class="w">      </span><span class="kt">string</span><span class="w">            </span><span class="s">`yaml:&quot;serviceName&quot;`</span>
+<span class="w">    </span><span class="nx">Environment</span><span class="w">      </span><span class="kt">string</span><span class="w">            </span><span class="s">`yaml:&quot;environment&quot;`</span>
+<span class="w">    </span><span class="nx">TracesSampler</span><span class="w">    </span><span class="kt">string</span><span class="w">            </span><span class="s">`yaml:&quot;tracesSampler&quot;`</span>
+<span class="w">    </span><span class="nx">TracesSampleRate</span><span class="w"> </span><span class="kt">float64</span><span class="w">           </span><span class="s">`yaml:&quot;tracesSampleRate&quot;`</span>
+<span class="w">    </span><span class="nx">MetricsInterval</span><span class="w">  </span><span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="w">     </span><span class="s">`yaml:&quot;metricsInterval&quot;`</span>
+<span class="w">    </span><span class="nx">LogExportLevel</span><span class="w">   </span><span class="kt">string</span><span class="w">            </span><span class="s">`yaml:&quot;logExportLevel&quot;`</span>
+<span class="w">    </span><span class="nx">Headers</span><span class="w">          </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="w"> </span><span class="s">`yaml:&quot;headers&quot;`</span>
+<span class="w">    </span><span class="nx">Prometheus</span><span class="w">       </span><span class="nx">PrometheusConfig</span><span class="w">  </span><span class="s">`yaml:&quot;prometheus&quot;`</span>
+<span class="p">}</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">PrometheusConfig</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Enabled</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="s">`yaml:&quot;enabled&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Added to <code>Config</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Config</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ... existing fields ...</span>
+<span class="w">    </span><span class="nx">Telemetry</span><span class="w"> </span><span class="nx">TelemetryConfig</span><span class="w"> </span><span class="s">`yaml:&quot;telemetry&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="defaults">Defaults<a class="headerlink" href="#defaults" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td><code>false</code></td>
+<td>Zero overhead when off</td>
+</tr>
+<tr>
+<td><code>protocol</code></td>
+<td><code>grpc</code></td>
+<td>Standard OTel default</td>
+</tr>
+<tr>
+<td><code>insecure</code></td>
+<td><code>true</code></td>
+<td>Cluster-internal collectors</td>
+</tr>
+<tr>
+<td><code>serviceName</code></td>
+<td><code>agentlens</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td><code>production</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>tracesSampler</code></td>
+<td><code>parentbased_traceidratio</code></td>
+<td>Respects caller's sampling</td>
+</tr>
+<tr>
+<td><code>tracesSampleRate</code></td>
+<td><code>1.0</code></td>
+<td>Safe for registry traffic</td>
+</tr>
+<tr>
+<td><code>metricsInterval</code></td>
+<td><code>30s</code></td>
+<td>Matches health probe interval</td>
+</tr>
+<tr>
+<td><code>logExportLevel</code></td>
+<td><code>info</code></td>
+<td>Debug stays stdout-only</td>
+</tr>
+<tr>
+<td><code>prometheus.enabled</code></td>
+<td><code>false</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="env-var-mapping">Env var mapping<a class="headerlink" href="#env-var-mapping" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTLENS_OTEL_ENABLED</code></td>
+<td><code>telemetry.enabled</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_ENDPOINT</code></td>
+<td><code>telemetry.endpoint</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_PROTOCOL</code></td>
+<td><code>telemetry.protocol</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_INSECURE</code></td>
+<td><code>telemetry.insecure</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_SERVICE_NAME</code></td>
+<td><code>telemetry.serviceName</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_ENVIRONMENT</code></td>
+<td><code>telemetry.environment</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_TRACES_SAMPLER</code></td>
+<td><code>telemetry.tracesSampler</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_TRACES_SAMPLE_RATE</code></td>
+<td><code>telemetry.tracesSampleRate</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_METRICS_INTERVAL</code></td>
+<td><code>telemetry.metricsInterval</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_LOG_EXPORT_LEVEL</code></td>
+<td><code>telemetry.logExportLevel</code></td>
+</tr>
+<tr>
+<td><code>AGENTLENS_OTEL_HEADERS</code></td>
+<td><code>telemetry.headers</code> (comma-separated <code>k=v</code>)</td>
+</tr>
+<tr>
+<td><code>AGENTLENS_METRICS_PROMETHEUS_ENABLED</code></td>
+<td><code>telemetry.prometheus.enabled</code></td>
+</tr>
+</tbody>
+</table>
+<p>Fallback: if <code>AGENTLENS_OTEL_ENDPOINT</code> empty, check <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>.</p>
+<p>New <code>applyTelemetryEnv(&amp;cfg.Telemetry)</code> function following existing patterns.</p>
+<hr />
+<h2 id="part-c-instrumentation-points">Part C: Instrumentation Points<a class="headerlink" href="#part-c-instrumentation-points" title="Permanent link">&para;</a></h2>
+<h3 id="1-http-middleware-all-api-requests">1. HTTP middleware — all API requests<a class="headerlink" href="#1-http-middleware-all-api-requests" title="Permanent link">&para;</a></h3>
+<p>Wrap chi router with <code>otelhttp.NewHandler()</code> — <strong>outermost</strong> in middleware chain.</p>
+<ul>
+<li>Automatic span per request with <code>http.request.method</code>, <code>http.response.status_code</code>, <code>url.path</code></li>
+<li>Trace context extraction from incoming <code>traceparent</code> header</li>
+<li>Trace context injection into response <code>traceresponse</code> header</li>
+</ul>
+<h3 id="2-health-prober">2. Health prober<a class="headerlink" href="#2-health-prober" title="Permanent link">&para;</a></h3>
+<p>Wrap prober's <code>http.Client</code> transport with <code>otelhttp.NewTransport()</code> — outgoing requests carry <code>traceparent</code>.</p>
+<p><strong>Span</strong> <code>health.probe</code> with attributes:</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentlens.entry.id</code></td>
+<td>string</td>
+<td>catalog entry ID</td>
+</tr>
+<tr>
+<td><code>agentlens.entry.name</code></td>
+<td>string</td>
+<td>display name</td>
+</tr>
+<tr>
+<td><code>agentlens.probe.url</code></td>
+<td>string</td>
+<td>probed URL</td>
+</tr>
+<tr>
+<td><code>agentlens.probe.latency_ms</code></td>
+<td>int64</td>
+<td>measured latency</td>
+</tr>
+<tr>
+<td><code>agentlens.probe.result</code></td>
+<td>string</td>
+<td><code>success</code> / <code>degraded</code> / <code>failure</code> / <code>timeout</code> / <code>skipped</code></td>
+</tr>
+<tr>
+<td><code>agentlens.probe.state_before</code></td>
+<td>string</td>
+<td>lifecycle state before probe</td>
+</tr>
+<tr>
+<td><code>agentlens.probe.state_after</code></td>
+<td>string</td>
+<td>lifecycle state after probe</td>
+</tr>
+<tr>
+<td><code>agentlens.probe.error</code></td>
+<td>string</td>
+<td>error message (truncated 256 chars)</td>
+</tr>
+</tbody>
+</table>
+<p>State transitions emit span event:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">span</span><span class="p">.</span><span class="nx">AddEvent</span><span class="p">(</span><span class="s">&quot;state_transition&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">trace</span><span class="p">.</span><span class="nx">WithAttributes</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;from&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">string</span><span class="p">(</span><span class="nx">before</span><span class="p">)),</span>
+<span class="w">    </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;to&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">string</span><span class="p">(</span><span class="nx">after</span><span class="p">)),</span>
+<span class="p">))</span>
+</code></pre></div>
+<p><strong>Metrics</strong> (meter <code>agentlens.health</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Attributes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentlens.health.probes.total</code></td>
+<td>Counter</td>
+<td><code>result</code>, <code>protocol</code></td>
+</tr>
+<tr>
+<td><code>agentlens.health.probes.latency</code></td>
+<td>Histogram</td>
+<td><code>result</code>, <code>protocol</code></td>
+</tr>
+<tr>
+<td><code>agentlens.health.state_transitions.total</code></td>
+<td>Counter</td>
+<td><code>from</code>, <code>to</code>, <code>protocol</code></td>
+</tr>
+</tbody>
+</table>
+<p>Histogram buckets: 10, 50, 100, 250, 500, 1000, 2500, 5000 ms.</p>
+<h3 id="3-parsers-a2a-mcp">3. Parsers (A2A + MCP)<a class="headerlink" href="#3-parsers-a2a-mcp" title="Permanent link">&para;</a></h3>
+<p><strong>Span</strong> <code>parser.&lt;type&gt;.parse</code> with attributes:</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentlens.parser.type</code></td>
+<td>string</td>
+<td><code>a2a</code> or <code>mcp</code></td>
+</tr>
+<tr>
+<td><code>agentlens.parser.input_size</code></td>
+<td>int64</td>
+<td>byte length</td>
+</tr>
+<tr>
+<td><code>agentlens.parser.spec_version</code></td>
+<td>string</td>
+<td>detected version</td>
+</tr>
+<tr>
+<td><code>agentlens.parser.skill_count</code></td>
+<td>int</td>
+<td>skills parsed</td>
+</tr>
+<tr>
+<td><code>agentlens.parser.extension_count</code></td>
+<td>int</td>
+<td>extensions parsed</td>
+</tr>
+<tr>
+<td><code>agentlens.parser.security_scheme_count</code></td>
+<td>int</td>
+<td>security schemes parsed</td>
+</tr>
+</tbody>
+</table>
+<p>On failure: <code>span.RecordError(err)</code> + <code>span.SetStatus(codes.Error, ...)</code>.</p>
+<p><strong>Metrics:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Attributes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentlens.parser.invocations.total</code></td>
+<td>Counter</td>
+<td><code>type</code>, <code>result</code>, <code>spec_version</code></td>
+</tr>
+<tr>
+<td><code>agentlens.parser.duration</code></td>
+<td>Histogram</td>
+<td><code>type</code>, <code>result</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-store-tracing-internaltelemetrystoretracergo">4. Store tracing — <code>internal/telemetry/storetracer.go</code><a class="headerlink" href="#4-store-tracing-internaltelemetrystoretracergo" title="Permanent link">&para;</a></h3>
+<p>Decorator in <code>internal/telemetry/storetracer.go</code>. Defines its own interface matching the 6 traced methods (Go structural typing — no import of <code>internal/store/</code> needed). Wired in <code>main.go</code>: <code>tracedStore := telemetry.NewTracedStore(catalogStore, dbDialect)</code>. Store package never imports OTel.</p>
+<table>
+<thead>
+<tr>
+<th>Span name</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>store.catalog.create</code></td>
+<td>POST catalog entry</td>
+</tr>
+<tr>
+<td><code>store.catalog.get</code></td>
+<td>GET catalog entry by ID</td>
+</tr>
+<tr>
+<td><code>store.catalog.list</code></td>
+<td>GET catalog list</td>
+</tr>
+<tr>
+<td><code>store.catalog.update_health</code></td>
+<td>Health probe update</td>
+</tr>
+<tr>
+<td><code>store.skills.list</code></td>
+<td>Skill aggregation</td>
+</tr>
+<tr>
+<td><code>store.skills.list_agents</code></td>
+<td>Skill detail query</td>
+</tr>
+</tbody>
+</table>
+<p>Attributes: <code>db.system</code> = <code>sqlite</code> or <code>postgresql</code>, <code>db.operation</code>, <code>agentlens.store.result_count</code>.</p>
+<h3 id="5-authentication-events">5. Authentication events<a class="headerlink" href="#5-authentication-events" title="Permanent link">&para;</a></h3>
+<p>On <code>POST /api/v1/auth/login</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">span</span><span class="p">.</span><span class="nx">AddEvent</span><span class="p">(</span><span class="s">&quot;auth.login&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">trace</span><span class="p">.</span><span class="nx">WithAttributes</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;username&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">username</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;result&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;success&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">attribute</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;reason&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">),</span>
+<span class="p">))</span>
+</code></pre></div>
+<p><strong>Never record passwords or tokens as attributes.</strong></p>
+<p>Metric: <code>agentlens.auth.logins.total</code> Counter with <code>result</code>, <code>reason</code>.</p>
+<h3 id="6-catalog-gauge">6. Catalog gauge<a class="headerlink" href="#6-catalog-gauge" title="Permanent link">&para;</a></h3>
+<p><code>agentlens.catalog.entries</code> UpDownCounter via async callback. Attributes: <code>protocol</code>, <code>state</code>. Queries <code>SELECT count(*) ... GROUP BY</code> at metrics interval.</p>
+<hr />
+<h2 id="part-d-application-endpoints-routing">Part D: Application Endpoints &amp; Routing<a class="headerlink" href="#part-d-application-endpoints-routing" title="Permanent link">&para;</a></h2>
+<h3 id="existing">Existing<a class="headerlink" href="#existing" title="Permanent link">&para;</a></h3>
+<p><code>GET /healthz</code> — already in <code>router.go:44</code>. Keep as-is.</p>
+<h3 id="new-endpoints">New endpoints<a class="headerlink" href="#new-endpoints" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Auth</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /readyz</code></td>
+<td>Readiness — <code>SELECT 1</code> against DB</td>
+<td>None</td>
+<td>Always</td>
+</tr>
+<tr>
+<td><code>GET /metrics</code></td>
+<td>Prometheus exposition format</td>
+<td>None</td>
+<td><code>prometheus.enabled</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="route-registration-order">Route registration order<a class="headerlink" href="#route-registration-order" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>1. otelhttp.NewHandler() wrapper       ← NEW, outermost
+2. RecoveryMiddleware
+3. LoggerMiddleware
+4. CORSMiddleware
+5. RequestID
+6. GET /healthz                         ← exists
+7. GET /readyz                          ← NEW
+8. GET /metrics                         ← NEW, conditional
+9. GET /api/v1/telemetry/config         ← NEW, public (no auth, frontend config)
+10. /api/v1/* routes (auth gated)
+11. SPA fallback /*
+</code></pre></div>
+<h3 id="routerdeps-change">RouterDeps change<a class="headerlink" href="#routerdeps-change" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">RouterDeps</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ... existing fields ...</span>
+<span class="w">    </span><span class="nx">PromHandler</span><span class="w">  </span><span class="nx">http</span><span class="p">.</span><span class="nx">Handler</span><span class="w"> </span><span class="c1">// nil = /metrics not registered</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="readyz-implementation"><code>/readyz</code> implementation<a class="headerlink" href="#readyz-implementation" title="Permanent link">&para;</a></h3>
+<p>Calls <code>database.DB.DB()</code> → <code>sqlDB.PingContext(ctx)</code>. Returns 200 <code>{"status":"ok"}</code> or 503 <code>{"status":"error","reason":"database unreachable"}</code>.</p>
+<h3 id="metrics-implementation"><code>/metrics</code> implementation<a class="headerlink" href="#metrics-implementation" title="Permanent link">&para;</a></h3>
+<p><code>telemetry.Provider.PromHandler</code> passed into <code>RouterDeps</code>. Router registers <code>r.Handle("/metrics", promHandler)</code> only when non-nil.</p>
+<hr />
+<h2 id="part-e-startup-shutdown-sequence">Part E: Startup &amp; Shutdown Sequence<a class="headerlink" href="#part-e-startup-shutdown-sequence" title="Permanent link">&para;</a></h2>
+<h3 id="startup-order">Startup order<a class="headerlink" href="#startup-order" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>1.  Load config
+2.  Setup slog (stdout JSON — baseline)
+3.  telemetry.Init(ctx, cfg.Telemetry, version)     ← NEW
+4.  IF telemetry enabled: replace slog with fan-out  ← NEW
+5.  defer provider.Shutdown(5s timeout)               ← NEW
+6.  Open DB + migrations
+7.  Bootstrap admin
+8.  Init stores
+9.  Init JWT
+10. Kernel + plugin manager
+11. Register + init + start plugins
+12. Discovery manager
+13. Router (with PromHandler in RouterDeps)           ← CHANGED
+14. HTTP server (blocks on signal)
+</code></pre></div>
+<h3 id="shutdown-sequence">Shutdown sequence<a class="headerlink" href="#shutdown-sequence" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>1. SIGTERM received → server.Start() returns
+2. HTTP server drains (existing 30s timeout)
+3. pm.StopAll() — stops health prober, plugins
+4. cancel() context — stops discovery manager
+5. provider.Shutdown(5s) — flushes traces/metrics/logs to collector  ← NEW
+6. database close
+</code></pre></div>
+<p>Telemetry init BEFORE plugins. Telemetry shutdown AFTER plugins stop. All plugin operations generate spans that get flushed.</p>
+<h3 id="version-string">Version string<a class="headerlink" href="#version-string" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="nx">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;dev&quot;</span><span class="w"> </span><span class="c1">// set by -ldflags &quot;-X main.version=v0.x.x&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="part-f-frontend-telemetry-websrctelemetryts">Part F: Frontend Telemetry — <code>web/src/telemetry.ts</code><a class="headerlink" href="#part-f-frontend-telemetry-websrctelemetryts" title="Permanent link">&para;</a></h2>
+<h3 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>@opentelemetry/api
+@opentelemetry/sdk-trace-web
+@opentelemetry/instrumentation-fetch
+@opentelemetry/exporter-trace-otlp-http
+@opentelemetry/resources
+@opentelemetry/semantic-conventions
+</code></pre></div>
+<h3 id="init-module">Init module<a class="headerlink" href="#init-module" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">initTelemetry</span><span class="p">(</span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">endpoint</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">serviceName</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">})</span>
+</code></pre></div>
+<ul>
+<li>Creates <code>WebTracerProvider</code> with OTLP/HTTP exporter</li>
+<li>Registers <code>FetchInstrumentation</code> — auto-instruments all <code>fetch()</code> calls</li>
+<li>Injects <code>traceparent</code> header on every API request to <code>/api/*</code></li>
+<li>Resource attributes: <code>service.name</code>, <code>service.version</code>, <code>deployment.environment</code></li>
+</ul>
+<h3 id="configuration-delivery">Configuration delivery<a class="headerlink" href="#configuration-delivery" title="Permanent link">&para;</a></h3>
+<p>Backend endpoint <code>GET /api/v1/telemetry/config</code> (public, no auth):</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;endpoint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http://collector.example.com:4318/v1/traces&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;serviceName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agentlens-web&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>When <code>telemetry.enabled=false</code>, returns <code>{"enabled": false}</code>. Frontend skips init.</p>
+<h3 id="app-integration">App integration<a class="headerlink" href="#app-integration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s1">&#39;/api/v1/telemetry/config&#39;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">resp</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">cfg</span><span class="p">.</span><span class="nx">enabled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">initTelemetry</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s1">&#39;./telemetry&#39;</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">initTelemetry</span><span class="p">(</span><span class="nx">cfg</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Dynamic import — zero JS overhead when disabled.</p>
+<h3 id="collector-routing">Collector routing<a class="headerlink" href="#collector-routing" title="Permanent link">&para;</a></h3>
+<p>Frontend sends traces directly to OTel collector via OTLP/HTTP. No backend proxy. Collector endpoint must be browser-reachable (CORS on collector side).</p>
+<h3 id="scope-boundary">Scope boundary<a class="headerlink" href="#scope-boundary" title="Permanent link">&para;</a></h3>
+<p>Fetch instrumentation only. No document-load, no user-interaction, no error tracking.</p>
+<h3 id="end-to-end-trace-flow">End-to-end trace flow<a class="headerlink" href="#end-to-end-trace-flow" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>Browser fetch(/api/v1/catalog)              [frontend span]
+  └─ HTTP GET /api/v1/catalog               [otelhttp server span]
+       └─ store.catalog.list                [store decorator span]
+
+Browser fetch(/api/v1/catalog/{id}/probe)   [frontend span]
+  └─ HTTP POST /catalog/{id}/probe          [otelhttp server span]
+       └─ health.probe                      [prober span]
+            └─ HTTP GET agent-endpoint      [otelhttp client span → agent]
+</code></pre></div>
+<hr />
+<h2 id="part-g-helm-chart">Part G: Helm Chart<a class="headerlink" href="#part-g-helm-chart" title="Permanent link">&para;</a></h2>
+<h3 id="chart-structure">Chart structure<a class="headerlink" href="#chart-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>deploy/helm/agentlens/
+  Chart.yaml
+  values.yaml
+  values.schema.json
+  templates/
+    _helpers.tpl
+    deployment.yaml
+    service.yaml
+    serviceaccount.yaml
+    configmap.yaml
+    secret.yaml
+    ingress.yaml                (conditional: ingress.enabled)
+    gateway-httproute.yaml      (conditional: gateway.enabled)
+    hpa.yaml                    (conditional: autoscaling.enabled)
+    pdb.yaml                    (conditional: pdb.enabled)
+    servicemonitor.yaml         (conditional: metrics.serviceMonitor.enabled)
+    networkpolicy.yaml          (conditional: networkPolicy.enabled)
+    pvc.yaml                    (conditional: database.dialect == &quot;sqlite&quot;)
+    tests/
+      test-connection.yaml
+  ci/
+    ci-values.yaml
+</code></pre></div>
+<h3 id="chartyaml">Chart.yaml<a class="headerlink" href="#chartyaml" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v2</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agentlens</span>
+<span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AI Agent Discovery Platform — Traefik for AI agents</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">application</span>
+<span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2.0</span>
+<span class="nt">appVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.x.x&quot;</span>
+<span class="nt">home</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/PawelHaracz/Agentlens</span>
+<span class="nt">sources</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/PawelHaracz/Agentlens</span>
+<span class="nt">maintainers</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pawel Haracz</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/PawelHaracz</span>
+<span class="nt">keywords</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">ai</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">agents</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">a2a</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">mcp</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">service-discovery</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">registry</span><span class="p p-Indicator">]</span>
+<span class="nt">dependencies</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;~16.x&quot;</span>
+<span class="w">    </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://charts.bitnami.com/bitnami</span>
+<span class="w">    </span><span class="nt">condition</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql.enabled</span>
+</code></pre></div>
+<h3 id="dockerfile-changes">Dockerfile changes<a class="headerlink" href="#dockerfile-changes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Tag: <code>gcr.io/distroless/base-debian12:nonroot</code> (UID 65532)</li>
+<li>Add <code>USER 65532</code> directive</li>
+</ul>
+<h3 id="security-context">Security context<a class="headerlink" href="#security-context" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">podSecurityContext</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">runAsNonRoot</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">runAsUser</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65532</span>
+<span class="w">  </span><span class="nt">runAsGroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65532</span>
+<span class="w">  </span><span class="nt">fsGroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">65532</span>
+<span class="w">  </span><span class="nt">seccompProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RuntimeDefault</span>
+
+<span class="nt">securityContext</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">allowPrivilegeEscalation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">readOnlyRootFilesystem</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">capabilities</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">drop</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">ALL</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="volume-mounts">Volume mounts<a class="headerlink" href="#volume-mounts" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Mount</th>
+<th>Source</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/tmp</code></td>
+<td>emptyDir</td>
+<td><code>readOnlyRootFilesystem</code> blocks Go's <code>os.TempDir()</code></td>
+</tr>
+<tr>
+<td><code>/etc/agentlens/config.yaml</code></td>
+<td>ConfigMap</td>
+<td>App config</td>
+</tr>
+<tr>
+<td><code>/data</code></td>
+<td>PVC (SQLite only)</td>
+<td>DB file persistence</td>
+</tr>
+</tbody>
+</table>
+<h3 id="init-container-postgresql-mode">Init container (PostgreSQL mode)<a class="headerlink" href="#init-container-postgresql-mode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wait-postgres</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">busybox:1.36</span>
+<span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sh&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;-c&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;until</span><span class="nv"> </span><span class="s">nc</span><span class="nv"> </span><span class="s">-z</span><span class="nv"> </span><span class="s">$DB_HOST</span><span class="nv"> </span><span class="s">$DB_PORT;</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">sleep</span><span class="nv"> </span><span class="s">2;</span><span class="nv"> </span><span class="s">done&#39;</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>Timeout via <code>activeDeadlineSeconds: 120</code>.</p>
+<h3 id="auto-toggle-prometheus">Auto-toggle Prometheus<a class="headerlink" href="#auto-toggle-prometheus" title="Permanent link">&para;</a></h3>
+<p>When <code>metrics.serviceMonitor.enabled=true</code>, deployment template auto-sets <code>AGENTLENS_METRICS_PROMETHEUS_ENABLED=true</code>.</p>
+<h3 id="multi-replica-guard">Multi-replica guard<a class="headerlink" href="#multi-replica-guard" title="Permanent link">&para;</a></h3>
+<p><code>replicaCount &gt; 1</code> + <code>database.dialect=sqlite</code> → <code>helm template</code> fails with clear message.</p>
+<h3 id="secret-handling">Secret handling<a class="headerlink" href="#secret-handling" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>admin-password</code>: <code>randAlphaNum 24</code> if not provided</li>
+<li><code>database-password</code>: from <code>database.external.password</code> or subchart ref</li>
+<li>Never in configmap</li>
+</ul>
+<h3 id="probes">Probes<a class="headerlink" href="#probes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Probe</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Liveness</td>
+<td><code>/healthz</code></td>
+<td>Process alive. No DB check.</td>
+</tr>
+<tr>
+<td>Readiness</td>
+<td><code>/readyz</code></td>
+<td>Can serve. DB reachable.</td>
+</tr>
+<tr>
+<td>Startup</td>
+<td><code>/healthz</code></td>
+<td>30 x 5s = 150s for slow migrations</td>
+</tr>
+</tbody>
+</table>
+<h3 id="valuesyaml">values.yaml<a class="headerlink" href="#valuesyaml" title="Permanent link">&para;</a></h3>
+<p>Full values specification follows the structure defined in the original spec with these adjustments:
+- <code>podSecurityContext.runAsUser</code>: 65532 (not 65534)
+- <code>podSecurityContext.runAsGroup</code>: 65532
+- <code>podSecurityContext.fsGroup</code>: 65532
+- <code>telemetry.logExportLevel</code>: <code>info</code> (new field)</p>
+<p>All other values as specified in the original spec's values.yaml section.</p>
+<hr />
+<h2 id="part-h-testing-strategy">Part H: Testing Strategy<a class="headerlink" href="#part-h-testing-strategy" title="Permanent link">&para;</a></h2>
+<h3 id="unit-tests-internaltelemetry">Unit tests — <code>internal/telemetry/</code><a class="headerlink" href="#unit-tests-internaltelemetry" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Assertion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Init disabled</td>
+<td>No-op provider, nil PromHandler, no error</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Init enabled, empty endpoint</td>
+<td>No-op provider, warning logged</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Init enabled, valid config</td>
+<td>Non-nil TracerProvider, MeterProvider, LoggerProvider</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Init with Prometheus enabled</td>
+<td>PromHandler non-nil</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Shutdown</td>
+<td>Flushes without error (in-memory exporter)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Fan-out slog handler</td>
+<td>Logs appear in both stdout + OTLP; logExportLevel filters OTLP</td>
+</tr>
+</tbody>
+</table>
+<h3 id="instrumentation-tests-in-memory-exporter">Instrumentation tests — in-memory exporter<a class="headerlink" href="#instrumentation-tests-in-memory-exporter" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Assertion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>7</td>
+<td>HTTP middleware</td>
+<td>Request → span with correct method, path, status</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Health probe success</td>
+<td>Span <code>health.probe</code> with <code>result=success</code>, counter incremented</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Health probe state transition</td>
+<td>Span event <code>state_transition</code> with from/to</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Parser success (A2A)</td>
+<td>Span <code>parser.a2a.parse</code> with spec_version, skill_count</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Parser failure</td>
+<td>Span has error, counter <code>result=error</code> incremented</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Store decorator</td>
+<td>Span <code>store.catalog.list</code> with <code>db.system</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>Auth login event</td>
+<td>Span event <code>auth.login</code>, no password in attributes</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Catalog gauge</td>
+<td>3 seeded entries → correct counts per protocol/state</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Prometheus endpoint</td>
+<td>GET <code>/metrics</code> → 200, contains <code>agentlens_health_probes_total</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="frontend-tests-vitest">Frontend tests — Vitest<a class="headerlink" href="#frontend-tests-vitest" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Assertion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16</td>
+<td>Config disabled</td>
+<td>No OTel init, no fetch instrumentation</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Config enabled</td>
+<td>TracerProvider created, fetch instrumented</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Dynamic import</td>
+<td>OTel packages not loaded when disabled</td>
+</tr>
+</tbody>
+</table>
+<h3 id="helm-lint-template-tests">Helm lint + template tests<a class="headerlink" href="#helm-lint-template-tests" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Assertion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>19</td>
+<td>Default values</td>
+<td><code>helm lint</code> zero warnings</td>
+</tr>
+<tr>
+<td>20</td>
+<td>SQLite mode</td>
+<td>PVC rendered, no PostgreSQL subchart, replicaCount: 1</td>
+</tr>
+<tr>
+<td>21</td>
+<td>PostgreSQL subchart</td>
+<td>StatefulSet + init container, no PVC</td>
+</tr>
+<tr>
+<td>22</td>
+<td>External PostgreSQL</td>
+<td>External DB env, no subchart</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Ingress</td>
+<td>Correct hosts/TLS</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Gateway API</td>
+<td>HTTPRoute with parentRefs</td>
+</tr>
+<tr>
+<td>25</td>
+<td>HPA</td>
+<td>Correct targets</td>
+</tr>
+<tr>
+<td>26</td>
+<td>PDB</td>
+<td>minAvailable: 1</td>
+</tr>
+<tr>
+<td>27</td>
+<td>ServiceMonitor</td>
+<td>Correct labels, endpoint, auto-enables Prometheus env</td>
+</tr>
+<tr>
+<td>28</td>
+<td>NetworkPolicy</td>
+<td>DNS egress allowed</td>
+</tr>
+<tr>
+<td>29</td>
+<td>Security context</td>
+<td>runAsNonRoot, readOnlyRootFilesystem, drop ALL</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Schema validation</td>
+<td><code>helm lint --strict</code> catches bad values</td>
+</tr>
+<tr>
+<td>31</td>
+<td>Multi-replica guard</td>
+<td>replicaCount: 3 + sqlite → template fails</td>
+</tr>
+</tbody>
+</table>
+<h3 id="integration-test-docker-compose-jaeger">Integration test — Docker Compose + Jaeger<a class="headerlink" href="#integration-test-docker-compose-jaeger" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Assertion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>32</td>
+<td>End-to-end traces</td>
+<td>AgentLens + Jaeger. Register agent, probe, query. Jaeger API returns traces with expected spans</td>
+</tr>
+</tbody>
+</table>
+<h3 id="e2e-playwright-otel-smoke">E2E (Playwright) — OTel smoke<a class="headerlink" href="#e2e-playwright-otel-smoke" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Assertion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>33</td>
+<td>OTLP receiver</td>
+<td>AgentLens + mock OTLP receiver. Verify receiver got trace + metrics batches</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-i-acceptance-criteria">Part I: Acceptance Criteria<a class="headerlink" href="#part-i-acceptance-criteria" title="Permanent link">&para;</a></h2>
+<h3 id="observability">Observability<a class="headerlink" href="#observability" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>AGENTLENS_OTEL_ENABLED=true AGENTLENS_OTEL_ENDPOINT=localhost:4317</code> → traces visible in Jaeger within 30s</li>
+<li><code>AGENTLENS_OTEL_PROTOCOL=http</code> switches to OTLP/HTTP</li>
+<li><code>AGENTLENS_OTEL_ENABLED=false</code> (default) → zero overhead, no connections</li>
+<li>Incoming <code>traceparent</code> header → used as parent span → full distributed trace</li>
+<li>Health probe spans include latency, result, state transition events</li>
+<li>Parser spans include spec version, skill count, error recording</li>
+<li><code>agentlens.catalog.entries</code> gauge accurate by protocol and state</li>
+<li><code>slog</code> output includes <code>trace_id</code>/<code>span_id</code> when enabled</li>
+<li>Logs fan-out to stdout AND OTLP; <code>logExportLevel</code> filters OTLP side</li>
+<li><code>GET /metrics</code> returns Prometheus exposition format with all OTel metrics</li>
+<li>SIGTERM → telemetry flushed within 5s</li>
+<li>Falls back to <code>OTEL_EXPORTER_OTLP_ENDPOINT</code> when <code>AGENTLENS_OTEL_ENDPOINT</code> not set</li>
+<li>No passwords or tokens in any span attribute or log record</li>
+<li>Frontend fetch calls carry <code>traceparent</code> → connected to backend traces</li>
+</ol>
+<h3 id="helm-chart">Helm chart<a class="headerlink" href="#helm-chart" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>helm install</code> with defaults → working SQLite deployment</li>
+<li><code>helm install --set database.dialect=postgres --set postgresql.enabled=true</code> → working PostgreSQL deployment</li>
+<li>External PostgreSQL mode works</li>
+<li><code>helm test</code> passes</li>
+<li>Pod runs as non-root (UID 65532) with read-only rootfs</li>
+<li>PDB prevents draining last pod</li>
+<li>Ingress and Gateway API render correctly</li>
+<li>ServiceMonitor scrapes <code>/metrics</code> successfully</li>
+<li><code>replicaCount &gt; 1</code> + SQLite → fails with clear error</li>
+<li><code>helm lint --strict</code> passes</li>
+<li>Init container prevents CrashLoopBackOff on slow PostgreSQL</li>
+</ol>
+<hr />
+<h2 id="part-j-known-traps">Part J: Known Traps<a class="headerlink" href="#part-j-known-traps" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Do not import OTel packages in <code>internal/store/</code>.</strong> Use decorator in <code>telemetry</code>.</li>
+<li><strong>Do not instrument every SQL query.</strong> Only the 6 key operations.</li>
+<li><strong>Do not record passwords, tokens, or secrets as span attributes.</strong></li>
+<li><strong>Do not use <code>AlwaysOnSampler</code> as default.</strong> Use <code>ParentBased(TraceIDRatioBased(1.0))</code>.</li>
+<li><strong>Do not start exporter goroutines when telemetry is disabled.</strong></li>
+<li><strong>Do not block shutdown on telemetry flush.</strong> 5-second context timeout.</li>
+<li><strong>Do not add OTel as a microkernel plugin.</strong> Infrastructure, not plugin. See ADR-009.</li>
+<li><strong>Do not gate PostgreSQL behind enterprise license.</strong></li>
+<li><strong>Do not hardcode the image tag.</strong> Default to <code>Chart.appVersion</code>.</li>
+<li><strong>Do not use <code>latest</code> tag anywhere.</strong></li>
+<li><strong>Do not add database checks to liveness probe.</strong> Liveness = process alive.</li>
+<li><strong>Do not skip init container for PostgreSQL.</strong></li>
+<li><strong>Do not forget <code>/tmp</code> emptyDir mount.</strong> <code>readOnlyRootFilesystem</code> blocks writes.</li>
+<li><strong>Do not use <code>helm.sh/hook</code> for database migrations.</strong> AgentLens runs migrations on startup.</li>
+<li><strong>Do not put passwords in <code>configmap.yaml</code>.</strong> Passwords → <code>secret.yaml</code> → <code>secretKeyRef</code>.</li>
+<li><strong>Do not use deprecated Ingress API.</strong> <code>networking.k8s.io/v1</code> only.</li>
+<li><strong>Do not replace slog default with OTel bridge exclusively.</strong> Fan-out to both. See ADR-010.</li>
+<li><strong>Do not use global <code>otel.Tracer()</code> inside hot loops.</strong> Trace at operation boundaries.</li>
+<li><strong>Do not gate observability behind enterprise license.</strong> OSS Core.</li>
+</ol>
+<hr />
+<h2 id="part-k-adrs">Part K: ADRs<a class="headerlink" href="#part-k-adrs" title="Permanent link">&para;</a></h2>
+<p>Two new ADRs required:</p>
+<ul>
+<li>
+<p><strong>ADR-009: OpenTelemetry as Infrastructure, Not Plugin</strong> — OTel lives in <code>internal/telemetry/</code> (infrastructure layer), initialized in <code>main</code> before plugins, shutdown after. Not a microkernel plugin despite ADR-003 establishing plugins as the extension mechanism.</p>
+</li>
+<li>
+<p><strong>ADR-010: Dual-Output Structured Logging with OTel Bridge</strong> — Logs fan-out to stdout (JSON, all levels) AND OTLP bridge (filtered by <code>logExportLevel</code>). Stdout never replaced. Operators depend on <code>kubectl logs</code> always working.</p>
+</li>
+</ul>
+<hr />
+<h2 id="go-dependencies">Go Dependencies<a class="headerlink" href="#go-dependencies" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>go.opentelemetry.io/otel                         v1.28+
+go.opentelemetry.io/otel/sdk                     v1.28+
+go.opentelemetry.io/otel/sdk/metric              v1.28+
+go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
+go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
+go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc
+go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp
+go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc
+go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp
+go.opentelemetry.io/otel/exporters/prometheus
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
+go.opentelemetry.io/otel/bridge/otelslog
+github.com/prometheus/client_golang
+</code></pre></div>
+<p>Pin exact versions. Do not use <code>latest</code>.</p>
+<h2 id="frontend-dependencies">Frontend Dependencies<a class="headerlink" href="#frontend-dependencies" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>@opentelemetry/api
+@opentelemetry/sdk-trace-web
+@opentelemetry/instrumentation-fetch
+@opentelemetry/exporter-trace-otlp-http
+@opentelemetry/resources
+@opentelemetry/semantic-conventions
+</code></pre></div>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 13, 2026 09:08:27 UTC"><span class="timeago" datetime="2026-04-13T09:08:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 13, 2026 09:08:27 UTC">2026-04-13</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 13, 2026 09:08:27 UTC"><span class="timeago" datetime="2026-04-13T09:08:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 13, 2026 09:08:27 UTC">2026-04-13</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../js/timeago.min.js"></script>
+      
+        <script src="../../../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>
