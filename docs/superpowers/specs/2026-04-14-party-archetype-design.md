@@ -127,6 +127,9 @@ The closure rebuild fires for any relationship whose name is in `ContainmentRela
 `PartyGroupClosure` stores `(member_party_id, ancestor_party_id)` regardless of kind —
 the permission resolution algorithm queries it without filtering by kind.
 
+`ContainmentRelationships` lives in `internal/model/party.go` (not `auth/`) so that
+`store` can import it without violating the arch-go `auth → model-only` rule.
+
 ### 3.5 Global Party Roles (groups only)
 
 ```go
@@ -193,7 +196,7 @@ HasProjectPermission(ctx, userID, permission, projectPartyID) bool:
     SELECT r.permissions FROM global_party_roles gpr
     JOIN roles r ON r.id = gpr.role_id
     WHERE gpr.party_id IN (
-      SELECT ancestor_party_id FROM party_group_closure
+      SELECT ancestor_party_id FROM party_group_closures
       WHERE member_party_id = $userPartyID
     )
     any permissions set ∋ permission → ALLOW
@@ -204,7 +207,7 @@ HasProjectPermission(ctx, userID, permission, projectPartyID) bool:
       AND to_party_id = $projectPartyID
       AND from_party_id IN (
             $userPartyID,
-            SELECT ancestor_party_id FROM party_group_closure
+            SELECT ancestor_party_id FROM party_group_closures
             WHERE member_party_id = $userPartyID
           )
     map from_role → permission set (static in-memory table)
@@ -227,7 +230,7 @@ HasCatalogPermission(ctx, userID, permission, catalogEntryID) bool:
 ### 4.4 Per-request context cache
 
 `RequireProjectPermission` middleware caches the user's ancestor party IDs (from
-`party_group_closure`) in `r.Context()` on the first call per request. Subsequent
+`party_group_closures`) in `r.Context()` on the first call per request. Subsequent
 middleware calls on the same request reuse the cached set — single DB round-trip
 per request for group ancestry resolution.
 
@@ -253,17 +256,19 @@ type PartyKindConfig struct {
 }
 ```
 
-Route registration in `router.go`:
+Route registration in `router.go` — called inside the authenticated `/api/v1` group
+(matching the existing `registerCatalogRoutes`/`registerUserRoutes` pattern):
 
 ```go
-RegisterPartyKindRoutes(r, PartyKindConfig{
+// Inside r.Group(func(r chi.Router) { r.Use(RequireAuth(...)) ... }):
+RegisterPartyKindRoutes(r, PartyKindConfig{   // r.Route("/groups", ...)
     Kind: PartyKindGroup, URLPrefix: "groups",
     MemberRelationship: "group_member",
     ValidMemberRoles:   []string{"member"},
     CreatePermission:   "users:write", ManagePermission: "users:write",
     CanContainKinds:    []PartyKind{PartyKindPerson, PartyKindGroup},
 })
-RegisterPartyKindRoutes(r, PartyKindConfig{
+RegisterPartyKindRoutes(r, PartyKindConfig{   // r.Route("/projects", ...)
     Kind: PartyKindProject, URLPrefix: "projects",
     MemberRelationship: "project_member",
     ValidMemberRoles:   []string{"project:owner", "project:developer", "project:viewer"},
@@ -272,6 +277,9 @@ RegisterPartyKindRoutes(r, PartyKindConfig{
 })
 // Future: RegisterPartyKindRoutes(r, PartyKindConfig{Kind: PartyKindOrganization, ...})
 ```
+
+`RegisterPartyKindRoutes` uses relative path prefixes (`/groups`, not `/api/v1/groups`)
+because it is called inside the already-mounted `/api/v1` subrouter.
 
 ### 5.2 Generic endpoints (registered per kind)
 
@@ -299,7 +307,8 @@ GET    /api/v1/catalog?project={projectID}        filter catalog by project
 // RequireProjectPermission is project-aware auth middleware.
 // Reads projectID from chi URL param, resolves permission via closure,
 // caches ancestor parties in context for the request lifetime.
-func RequireProjectPermission(projectIDParam, permission string) func(http.Handler) http.Handler
+// Needs PartyStore (closure lookups) and UserStore (group global-role lookups).
+func RequireProjectPermission(ps *store.PartyStore, us *store.UserStore, projectIDParam, permission string) func(http.Handler) http.Handler
 ```
 
 Existing `RequirePermission` middleware (global) is unchanged and continues to guard all
@@ -312,30 +321,46 @@ existing endpoints.
 ```text
 internal/model/
   party.go              Party, PartyKind, PartyRelationship, PartyGroupClosure,
-                        GlobalPartyRole, CatalogProjectMembership, PartyIdentifier
+                        GlobalPartyRole, CatalogProjectMembership, PartyIdentifier,
+                        ContainmentRelationships (registry) ← lives here, NOT in auth/
+                        ValidPartyKinds, ContainmentRelationshipNames()
 
 internal/store/
   party_store.go        PartyStore — generic CRUD for parties, relationships,
-                        closure rebuild (same tx as relationship changes)
+                        full-table closure rebuild (same tx as relationship changes),
+                        cycle detection on AddMember, cascade cleanup on DeleteParty
                         Methods: CreateParty, AddMember, RemoveMember, ListMembers,
-                                 GetParty, DeleteParty, ListParties
+                                 GetParty, DeleteParty, ListParties,
+                                 AncestorGroupIDs, GetDefaultProject,
+                                 AssignToProject, RemoveFromProject,
+                                 ListProjectsForCatalogEntry,
+                                 ListCatalogEntryIDsForProject, GetProjectRoles
+  sql_store.go          Modified: add ProjectID to ListFilter, handle via JOIN in List;
+                                  add partyStore field, auto-assign new entries to default project
+  store.go              Modified: add ProjectID string to ListFilter struct
 
 internal/auth/
-  party_permissions.go  HasProjectPermission, HasCatalogPermission,
-                        ContainmentRelationships (registry),
-                        projectRolePermissions (static in-memory map)
+  party_permissions.go  HasProjectPermission (pure, no DB),
+                        projectRolePermissions static map,
+                        ValidProjectRoles() (sorted)
+                        Note: ContainmentRelationships is in model/, not here
 
 internal/api/
   party_handlers.go     Generic CRUD + member handlers (parameterized by PartyKindConfig)
   party_kind_configs.go PartyKindConfig definitions for group and project
-  party_middleware.go   RequireProjectPermission + context cache
+  party_middleware.go   RequireProjectPermission (4-arg: ps, us, paramName, permission)
+                        + ancestor context cache (defensive copy)
   catalog_project.go    Catalog↔project scoping handlers (POST/DELETE/GET)
+  router.go             Modified: add registerPartyRoutes(r, deps) called inside
+                        the authenticated JWTService group (same pattern as registerCatalogRoutes)
 
 internal/db/
-  migrations.go         Migration 007: all party tables + seed data
+  migrations.go         Migration 007: all party tables + seed data (Go-side UUID, dialect-agnostic)
 ```
 
 No new arch-go dependency rules required. All placements fit existing layer contracts.
+
+**Key arch constraint:** `store` imports `model` (to read `ContainmentRelationships`). `auth` imports `model` only (pure permission map). `api` imports `store` + `auth`. This is the existing layering — no changes needed.
 
 ---
 
@@ -346,8 +371,8 @@ Adding `organization` (or any future kind) costs:
 | Change | Location | Cost |
 |---|---|---|
 | `PartyKindOrganization` constant | `model/party.go` | 1 line |
-| `"org_member"` in `ContainmentRelationships` | `auth/party_permissions.go` | 1 line |
-| Kind validation entry | `store/party_store.go` | 1 line |
+| `"org_member"` in `ContainmentRelationships` | `model/party.go` | 1 line |
+| Kind validation entry in `ValidPartyKinds` | `model/party.go` | 1 line |
 | `PartyKindConfig{...}` registration | `api/party_kind_configs.go` | ~10 lines |
 | Migration | none — `parties` table already has `kind` discriminator | 0 lines |
 
@@ -362,12 +387,13 @@ Permission resolution, closure rebuild, store methods, and all handlers — **un
 ```text
 1. CREATE TABLE parties (id, kind, name, version, user_id, is_system, ...)
 2. CREATE TABLE party_relationships (id, from_party_id, from_role, to_party_id, to_role, relationship_name)
-3. CREATE TABLE party_group_closure (member_party_id, ancestor_party_id)
+3. CREATE TABLE party_group_closures (member_party_id, ancestor_party_id)    ← plural (GORM default)
 4. CREATE TABLE global_party_roles (party_id, role_id)
 5. CREATE TABLE catalog_project_memberships (catalog_entry_id, project_party_id)
 6. CREATE TABLE party_identifiers (id, party_id, kind, value)   [schema only, not populated]
 7. INSERT INTO parties: default project (kind='project', is_system=true, name='default')
 8. INSERT INTO parties: one Person party per existing User (kind='person', user_id=u.id)
+   — Go-side loop with uuid.New().String() (dialect-agnostic; no SQLite randomblob)
 9. INSERT INTO catalog_project_memberships: all existing CatalogEntries → default project
 ```
 
@@ -378,6 +404,16 @@ Permission resolution, closure rebuild, store methods, and all handlers — **un
   the caller has global access to (existing behaviour preserved)
 - `RequireProjectPermission` only guards new endpoints; existing endpoints keep `RequirePermission`
 - Bootstrap admin creation gains a corresponding Person party automatically
+  (created immediately after `BootstrapAdmin` returns — same startup flow in `main.go`)
+
+**Invariants maintained by the store layer:**
+
+- `AddMember` detects and rejects cycles before inserting any containment relationship
+- `DeleteParty` cascades: removes `party_relationships`, `party_group_closures`,
+  `global_party_roles`, and `catalog_project_memberships` rows in the same transaction,
+  then rebuilds the full closure
+- Closure rebuild (`rebuildAllClosures`) is a full-table rebuild — delete all rows,
+  re-insert via a single recursive CTE. Correct regardless of edge insertion order.
 
 ---
 

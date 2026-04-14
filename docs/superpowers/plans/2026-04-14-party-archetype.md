@@ -224,6 +224,8 @@ Expected: FAIL — `auth.ProjectRoleHasPermission` undefined.
 // internal/auth/party_permissions.go
 package auth
 
+import "sort"
+
 // projectRolePermissions maps project role names to the permissions they grant.
 // Static in-memory — no DB lookup. New roles = one entry here.
 var projectRolePermissions = map[string][]string{
@@ -241,12 +243,13 @@ func ProjectRoleHasPermission(role, permission string) bool {
     return HasPermission(perms, permission)
 }
 
-// ValidProjectRoles returns all valid project-scoped role names.
+// ValidProjectRoles returns all valid project-scoped role names in sorted order.
 func ValidProjectRoles() []string {
     roles := make([]string, 0, len(projectRolePermissions))
     for r := range projectRolePermissions {
         roles = append(roles, r)
     }
+    sort.Strings(roles)
     return roles
 }
 ```
@@ -332,7 +335,7 @@ Expected: FAIL — tables don't exist yet.
 
 - [ ] **Step 3: Add migration007 to migrations.go**
 
-In `internal/db/migrations.go`, add the import `"github.com/google/uuid"` and append to `AllMigrations()`:
+In `internal/db/migrations.go`, add imports `"github.com/google/uuid"` and `"log/slog"` and append to `AllMigrations()`:
 
 ```go
 // In AllMigrations():
@@ -400,25 +403,30 @@ func migration007PartyArchetype() Migration {
                 return fmt.Errorf("reading default project id: %w", err)
             }
 
-            // Create Person party for each existing user (idempotent)
-            if err := tx.Exec(`
-                INSERT INTO parties (id, kind, name, version, user_id, is_system, created_at, updated_at)
-                SELECT
-                    lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' ||
-                    substr(lower(hex(randomblob(2))),2) || '-' ||
-                    substr('89ab', abs(random()) % 4 + 1, 1) ||
-                    substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))),
-                    'person',
-                    COALESCE(display_name, username),
-                    0,
-                    id,
-                    0,
-                    CURRENT_TIMESTAMP,
-                    CURRENT_TIMESTAMP
-                FROM users u
-                WHERE NOT EXISTS (SELECT 1 FROM parties WHERE user_id = u.id)
-            `).Error; err != nil {
-                return fmt.Errorf("creating person parties for existing users: %w", err)
+            // Create Person party for each existing user (idempotent, dialect-agnostic).
+            // Go-side loop with uuid.New() — avoids SQLite-only randomblob, works on Postgres.
+            var existingUsers []struct {
+                ID          string  `gorm:"column:id"`
+                Username    string  `gorm:"column:username"`
+                DisplayName *string `gorm:"column:display_name"`
+            }
+            if err := tx.Raw("SELECT id, username, display_name FROM users").Scan(&existingUsers).Error; err != nil {
+                return fmt.Errorf("reading existing users: %w", err)
+            }
+            for _, u := range existingUsers {
+                name := u.Username
+                if u.DisplayName != nil && *u.DisplayName != "" {
+                    name = *u.DisplayName
+                }
+                partyID := uuid.New().String()
+                userID := u.ID
+                if err := tx.Exec(`
+                    INSERT INTO parties (id, kind, name, version, user_id, is_system, created_at, updated_at)
+                    SELECT ?, 'person', ?, 0, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                    WHERE NOT EXISTS (SELECT 1 FROM parties WHERE user_id = ?)
+                `, partyID, name, userID, userID).Error; err != nil {
+                    return fmt.Errorf("creating person party for user %s: %w", userID, err)
+                }
             }
 
             // Assign all existing catalog entries to the default project (idempotent)
@@ -581,6 +589,7 @@ import (
     "context"
     "errors"
     "fmt"
+    "strings"
 
     "github.com/google/uuid"
     "gorm.io/gorm"
@@ -662,18 +671,51 @@ func (s *PartyStore) ListParties(ctx context.Context, kind model.PartyKind) ([]m
     return parties, nil
 }
 
-// DeleteParty soft-deletes a non-system party. Returns error if not found or is_system=true.
+// DeleteParty deletes a non-system party and cascades: removes all party_relationships,
+// party_group_closures, global_party_roles, and catalog_project_memberships rows that
+// reference the party, then rebuilds the full closure. Returns error if not found or is_system.
 func (s *PartyStore) DeleteParty(ctx context.Context, id string) error {
-    result := s.db.WithContext(ctx).
-        Where("id = ? AND is_system = ?", id, false).
-        Delete(&model.Party{})
-    if result.Error != nil {
-        return fmt.Errorf("deleting party: %w", result.Error)
-    }
-    if result.RowsAffected == 0 {
-        return fmt.Errorf("party %q not found or is a system party", id)
-    }
-    return nil
+    return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+        var party model.Party
+        if err := tx.First(&party, "id = ?", id).Error; err != nil {
+            if errors.Is(err, gorm.ErrRecordNotFound) {
+                return fmt.Errorf("party %q not found", id)
+            }
+            return fmt.Errorf("finding party: %w", err)
+        }
+        if party.IsSystem {
+            return fmt.Errorf("party %q is a system party and cannot be deleted", id)
+        }
+
+        // Cascade: party_relationships (as from or to)
+        if err := tx.Where("from_party_id = ? OR to_party_id = ?", id, id).
+            Delete(&model.PartyRelationship{}).Error; err != nil {
+            return fmt.Errorf("deleting relationships for party: %w", err)
+        }
+
+        // Cascade: global_party_roles
+        if err := tx.Where("party_id = ?", id).
+            Delete(&model.GlobalPartyRole{}).Error; err != nil {
+            return fmt.Errorf("deleting global party roles: %w", err)
+        }
+
+        // Cascade: catalog_project_memberships (if party is a project)
+        if err := tx.Where("project_party_id = ?", id).
+            Delete(&model.CatalogProjectMembership{}).Error; err != nil {
+            return fmt.Errorf("deleting catalog project memberships: %w", err)
+        }
+
+        // Rebuild closure after cascading relationship deletion
+        if err := rebuildAllClosures(tx); err != nil {
+            return fmt.Errorf("rebuilding closure after party deletion: %w", err)
+        }
+
+        // Delete the party itself
+        if err := tx.Delete(&party).Error; err != nil {
+            return fmt.Errorf("deleting party: %w", err)
+        }
+        return nil
+    })
 }
 ```
 
@@ -735,6 +777,65 @@ func TestPartyStore_AddMember_RebuildsClosure(t *testing.T) {
     require.NoError(t, err)
     assert.Contains(t, ancestors, eng.ID)
     assert.Contains(t, ancestors, platform.ID)
+}
+
+// TestPartyStore_AddMember_OutOfOrderHierarchy tests the correctness of the full-table
+// closure rebuild when relationships are added in the "wrong" order (parent→grandparent
+// before child→parent). A scoped rebuild would miss (alice, platform) in this scenario.
+func TestPartyStore_AddMember_OutOfOrderHierarchy(t *testing.T) {
+    s := store.NewPartyStore(newTestPartyDB(t))
+    ctx := context.Background()
+
+    alice := &model.Party{Kind: model.PartyKindPerson, Name: "alice"}
+    eng := &model.Party{Kind: model.PartyKindGroup, Name: "eng"}
+    platform := &model.Party{Kind: model.PartyKindGroup, Name: "platform"}
+    require.NoError(t, s.CreateParty(ctx, alice))
+    require.NoError(t, s.CreateParty(ctx, eng))
+    require.NoError(t, s.CreateParty(ctx, platform))
+
+    // Add eng → platform FIRST
+    require.NoError(t, s.AddMember(ctx, &model.PartyRelationship{
+        FromPartyID: eng.ID, FromRole: "member",
+        ToPartyID: platform.ID, ToRole: "group",
+        RelationshipName: "group_member",
+    }))
+    // Then add alice → eng
+    require.NoError(t, s.AddMember(ctx, &model.PartyRelationship{
+        FromPartyID: alice.ID, FromRole: "member",
+        ToPartyID: eng.ID, ToRole: "group",
+        RelationshipName: "group_member",
+    }))
+
+    // Alice must have platform as a transitive ancestor even with reversed insertion order
+    ancestors, err := s.AncestorGroupIDs(ctx, alice.ID)
+    require.NoError(t, err)
+    assert.Contains(t, ancestors, eng.ID, "alice should be in eng")
+    assert.Contains(t, ancestors, platform.ID, "alice should transitively be in platform")
+}
+
+func TestPartyStore_AddMember_CycleRejected(t *testing.T) {
+    s := store.NewPartyStore(newTestPartyDB(t))
+    ctx := context.Background()
+
+    eng := &model.Party{Kind: model.PartyKindGroup, Name: "eng"}
+    platform := &model.Party{Kind: model.PartyKindGroup, Name: "platform"}
+    require.NoError(t, s.CreateParty(ctx, eng))
+    require.NoError(t, s.CreateParty(ctx, platform))
+
+    // eng → platform
+    require.NoError(t, s.AddMember(ctx, &model.PartyRelationship{
+        FromPartyID: eng.ID, FromRole: "member",
+        ToPartyID: platform.ID, ToRole: "group",
+        RelationshipName: "group_member",
+    }))
+
+    // platform → eng would create a cycle — must be rejected
+    err := s.AddMember(ctx, &model.PartyRelationship{
+        FromPartyID: platform.ID, FromRole: "member",
+        ToPartyID: eng.ID, ToRole: "group",
+        RelationshipName: "group_member",
+    })
+    assert.Error(t, err, "cycle should be rejected")
 }
 
 func TestPartyStore_RemoveMember_UpdatesClosure(t *testing.T) {
@@ -802,14 +903,33 @@ Expected: FAIL — `AddMember`, `RemoveMember`, `AncestorGroupIDs`, `ListMembers
 - [ ] **Step 3: Implement — append to party_store.go**
 
 ```go
-// AddMember creates a PartyRelationship and rebuilds the closure if it is a
+// AddMember creates a PartyRelationship and rebuilds the full closure table if it is a
 // containment relationship (as defined by model.ContainmentRelationships).
-// Idempotent: duplicate edges are silently ignored.
+// Detects and rejects cycles before inserting. Idempotent: duplicate edges silently ignored.
 func (s *PartyStore) AddMember(ctx context.Context, rel *model.PartyRelationship) error {
     if rel.ID == "" {
         rel.ID = uuid.New().String()
     }
     return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+        if model.ContainmentRelationships[rel.RelationshipName] {
+            // Self-loop check
+            if rel.FromPartyID == rel.ToPartyID {
+                return fmt.Errorf("cannot add party %s as member of itself", rel.FromPartyID)
+            }
+            // Cycle check: would adding from→to create a cycle?
+            // A cycle exists if `to` is already a transitive member of `from`
+            // (i.e., `from` is an ancestor of `to` in the current closure).
+            var count int64
+            if err := tx.Model(&model.PartyGroupClosure{}).
+                Where("member_party_id = ? AND ancestor_party_id = ?", rel.ToPartyID, rel.FromPartyID).
+                Count(&count).Error; err != nil {
+                return fmt.Errorf("cycle detection: %w", err)
+            }
+            if count > 0 {
+                return fmt.Errorf("adding %s → %s would create a cycle", rel.FromPartyID, rel.ToPartyID)
+            }
+        }
+
         result := tx.Where(
             "from_party_id = ? AND from_role = ? AND to_party_id = ? AND to_role = ? AND relationship_name = ?",
             rel.FromPartyID, rel.FromRole, rel.ToPartyID, rel.ToRole, rel.RelationshipName,
@@ -818,14 +938,14 @@ func (s *PartyStore) AddMember(ctx context.Context, rel *model.PartyRelationship
             return fmt.Errorf("adding member relationship: %w", result.Error)
         }
         if model.ContainmentRelationships[rel.RelationshipName] {
-            return rebuildClosure(tx, rel.ToPartyID)
+            return rebuildAllClosures(tx)
         }
         return nil
     })
 }
 
 // RemoveMember deletes the relationship from fromPartyID to toPartyID with the
-// given relationship name, then rebuilds the closure if it is a containment relationship.
+// given relationship name, then rebuilds the full closure if it is a containment relationship.
 func (s *PartyStore) RemoveMember(ctx context.Context, fromPartyID, toPartyID, relationshipName string) error {
     return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
         if err := tx.Where(
@@ -835,7 +955,7 @@ func (s *PartyStore) RemoveMember(ctx context.Context, fromPartyID, toPartyID, r
             return fmt.Errorf("removing member relationship: %w", err)
         }
         if model.ContainmentRelationships[relationshipName] {
-            return rebuildClosure(tx, toPartyID)
+            return rebuildAllClosures(tx)
         }
         return nil
     })
@@ -928,13 +1048,14 @@ func (s *PartyStore) GetProjectRoles(ctx context.Context, fromPartyIDs []string,
     return roles, nil
 }
 
-// rebuildClosure recomputes the transitive closure for groupID as ancestor.
+// rebuildAllClosures recomputes the entire party_group_closures table from scratch.
+// Correct regardless of edge insertion order — a scoped rebuild (per-group) would miss
+// transitive members when relationships are added out of order.
 // Must run inside an existing transaction.
-func rebuildClosure(tx *gorm.DB, groupID string) error {
-    // Delete existing closure rows where this group is the ancestor
-    if err := tx.Where("ancestor_party_id = ?", groupID).
-        Delete(&model.PartyGroupClosure{}).Error; err != nil {
-        return fmt.Errorf("clearing closure for group %s: %w", groupID, err)
+func rebuildAllClosures(tx *gorm.DB) error {
+    // Clear all closure rows
+    if err := tx.Exec("DELETE FROM party_group_closures").Error; err != nil {
+        return fmt.Errorf("clearing party_group_closures: %w", err)
     }
 
     names := model.ContainmentRelationshipNames()
@@ -942,20 +1063,37 @@ func rebuildClosure(tx *gorm.DB, groupID string) error {
         return nil
     }
 
-    // Rebuild using recursive CTE — finds all transitive members of groupID
-    return tx.Exec(`
+    // Build placeholders for IN clause — GORM Exec IN ? expansion is reliable in
+    // Where clauses but can be fragile in raw SQL. Build explicitly.
+    placeholders := make([]string, len(names))
+    args := make([]interface{}, 0, len(names)*2)
+    for i, n := range names {
+        placeholders[i] = "?"
+        args = append(args, n)
+    }
+    // args will hold [names... names...] for the two IN clauses below
+    args = append(args, args...)
+
+    inClause := strings.Join(placeholders, ",")
+    sql := fmt.Sprintf(`
         INSERT INTO party_group_closures (member_party_id, ancestor_party_id)
-        WITH RECURSIVE members(party_id) AS (
-            SELECT from_party_id FROM party_relationships
-            WHERE to_party_id = ? AND relationship_name IN ?
+        WITH RECURSIVE pairs(member_id, ancestor_id) AS (
+            SELECT from_party_id, to_party_id
+            FROM party_relationships
+            WHERE relationship_name IN (%s)
             UNION
-            SELECT pr.from_party_id FROM party_relationships pr
-            INNER JOIN members m ON pr.to_party_id = m.party_id
-            WHERE pr.relationship_name IN ?
+            SELECT p.member_id, pr.to_party_id
+            FROM pairs p
+            JOIN party_relationships pr ON pr.from_party_id = p.ancestor_id
+            WHERE pr.relationship_name IN (%s)
         )
-        SELECT party_id, ? FROM members
-    `, groupID, names, names, groupID).Error
+        SELECT DISTINCT member_id, ancestor_id FROM pairs
+    `, inClause, inClause)
+
+    return tx.Exec(sql, args...).Error
 }
+
+// Note: rebuildAllClosures requires "fmt" and "strings" imports in party_store.go.
 ```
 
 - [ ] **Step 4: Run to confirm pass**
@@ -1025,7 +1163,7 @@ var projectKindConfig = PartyKindConfig{
 }
 ```
 
-- [ ] **Step 2: Add PartyStore to RouterDeps and wire RegisterPartyKindRoutes**
+- [ ] **Step 2: Add PartyStore to RouterDeps and wire registerPartyRoutes**
 
 In `internal/api/router.go`, add to `RouterDeps`:
 
@@ -1034,26 +1172,46 @@ In `internal/api/router.go`, add to `RouterDeps`:
 PartyStore *store.PartyStore  // nil disables party/project/group routes
 ```
 
-Add import: `"github.com/PawelHaracz/agentlens/internal/store"`
+The import `"github.com/PawelHaracz/agentlens/internal/store"` is already present.
 
-In `NewRouter`, before returning, register kind routes if PartyStore is set:
+Add a `registerPartyRoutes` function — follow the exact same pattern as `registerCatalogRoutes`
+(uses `r.Group` with `r.Use(RequireAuth(...))` to ensure auth is applied):
 
 ```go
-// After existing route registration, before the SPA handler:
-if deps.PartyStore != nil {
-    RegisterPartyKindRoutes(r, groupKindConfig, deps.PartyStore)
-    RegisterPartyKindRoutes(r, projectKindConfig, deps.PartyStore)
-    registerCatalogProjectRoutes(r, deps.PartyStore)
+// registerPartyRoutes mounts group, project, and catalog-project scoping endpoints
+// behind the same auth middleware as other /api/v1 routes.
+func registerPartyRoutes(r chi.Router, deps RouterDeps) {
+    if deps.PartyStore == nil {
+        return
+    }
+    r.Group(func(r chi.Router) {
+        r.Use(RequireAuth(deps.JWTService))
+        RegisterPartyKindRoutes(r, groupKindConfig, deps.PartyStore)
+        RegisterPartyKindRoutes(r, projectKindConfig, deps.PartyStore)
+        registerCatalogProjectRoutes(r, deps.PartyStore)
+    })
 }
 ```
 
-Add `RegisterPartyKindRoutes` function to router.go:
+Call it inside the `if deps.JWTService != nil` block in `NewRouter`, after `registerSettingsRoutes`:
+
+```go
+// Inside r.Route("/api/v1", func(r chi.Router) { if deps.JWTService != nil { ... } }):
+registerAuthRoutes(r, deps, authHandler)
+registerCatalogRoutes(r, h, deps)
+registerUserRoutes(r, deps)
+registerSettingsRoutes(r, deps)
+registerPartyRoutes(r, deps)   // add this line
+```
+
+Add `RegisterPartyKindRoutes` — uses **relative** paths (no `/api/v1/` prefix) because it
+is called inside the already-mounted `/api/v1` subrouter:
 
 ```go
 // RegisterPartyKindRoutes registers CRUD + member routes for one PartyKindConfig.
-// Auth is already applied at the outer subrouter level — do NOT add RequireAuth here.
+// r must already be a subrouter mounted at /api/v1 with RequireAuth applied.
 func RegisterPartyKindRoutes(r chi.Router, cfg PartyKindConfig, partyStore *store.PartyStore) {
-    r.Route("/api/v1/"+cfg.URLPrefix, func(r chi.Router) {
+    r.Route("/"+cfg.URLPrefix, func(r chi.Router) {
         r.Get("/", ListPartiesHandler(cfg, partyStore))
         r.Post("/", CreatePartyHandler(cfg, partyStore))
         r.Route("/{partyID}", func(r chi.Router) {
@@ -1067,7 +1225,8 @@ func RegisterPartyKindRoutes(r chi.Router, cfg PartyKindConfig, partyStore *stor
 }
 ```
 
-**Note:** `RequireAuth` is already applied via middleware stack — do not double-apply. Check how existing routes are structured in `router.go` and match the pattern (the auth middleware may be applied at the subrouter level, not per-route).
+**Critical:** Do NOT call `r.Route("/api/v1/"+cfg.URLPrefix, ...)` — that would mount at
+`/api/v1/api/v1/groups`. Use relative paths only (`"/"+cfg.URLPrefix`).
 
 - [ ] **Step 3: Compile check**
 
@@ -1505,15 +1664,18 @@ func RequireProjectPermission(ps *store.PartyStore, us *store.UserStore, project
 
 // cachedAncestorIDs returns ancestor group IDs from context cache (fast path)
 // or from the DB (first call per request). Returns an updated context with the cache set.
+// Returns a defensive copy of the slice so callers cannot mutate the cached value.
 func cachedAncestorIDs(ctx context.Context, ps *store.PartyStore, partyID string) ([]string, context.Context) {
     if cached, ok := ctx.Value(ancestorCacheKey{}).([]string); ok {
-        return cached, ctx
+        return append([]string(nil), cached...), ctx
     }
     ids, err := ps.AncestorGroupIDs(ctx, partyID)
     if err != nil {
         ids = nil
     }
-    return ids, context.WithValue(ctx, ancestorCacheKey{}, ids)
+    // Store a copy in the cache; return a copy to the caller
+    cached := append([]string(nil), ids...)
+    return cached, context.WithValue(ctx, ancestorCacheKey{}, cached)
 }
 ```
 
@@ -1660,9 +1822,10 @@ func ListCatalogProjectsHandler(ps *store.PartyStore) http.HandlerFunc {
 }
 
 // registerCatalogProjectRoutes mounts catalog↔project scoping endpoints.
-// Called from NewRouter when PartyStore is non-nil.
+// Called from registerPartyRoutes — already inside /api/v1 subrouter with auth.
+// Uses relative path (no /api/v1/ prefix).
 func registerCatalogProjectRoutes(r chi.Router, ps *store.PartyStore) {
-    r.Route("/api/v1/catalog/{id}/projects", func(r chi.Router) {
+    r.Route("/catalog/{id}/projects", func(r chi.Router) {
         r.Get("/", ListCatalogProjectsHandler(ps))
         r.Post("/", AssignCatalogToProjectHandler(ps))
         r.Delete("/{projectID}", RemoveCatalogFromProjectHandler(ps))
@@ -1716,21 +1879,19 @@ routerDeps := api.RouterDeps{
 In `internal/store/sql_store.go`, find the `Create` (or `Upsert`) method for `CatalogEntry`.
 After a successful insert, assign the entry to the default project.
 
-The store needs access to `PartyStore`. Inject it at construction:
-
-In `sql_store.go`, add to the `SQLStore` struct:
+The store needs access to `PartyStore`. Add a field to `SQLStore` — **keep the existing
+`gdb` field name unchanged** (renaming it to `db` would break all existing methods):
 
 ```go
+// In sql_store.go — add partyStore field, keep gdb unchanged:
 type SQLStore struct {
-    db         *db.DB
-    partyStore *PartyStore // may be nil before party migration
+    gdb        *db.DB
+    partyStore *PartyStore // nil until WithPartyStore is called; safe to omit in tests
 }
 
-func NewSQLStore(database *db.DB) *SQLStore {
-    return &SQLStore{db: database}
-}
+// NewSQLStore is unchanged — only gdb is set here.
 
-// WithPartyStore sets the PartyStore for auto-project assignment on catalog entry creation.
+// WithPartyStore injects a PartyStore for auto-project assignment on catalog entry creation.
 func (s *SQLStore) WithPartyStore(ps *PartyStore) {
     s.partyStore = ps
 }
@@ -1742,7 +1903,7 @@ In `main.go`, after creating both stores:
 catalogStore.WithPartyStore(partyStore)
 ```
 
-In `sql_store.go`, in the catalog entry creation/upsert method, after successful insert:
+In `sql_store.go`, in `SQLStore.Create` (around line 240), after the successful insert:
 
 ```go
 // Auto-assign to default project (best-effort — log on failure, don't break catalog write)
@@ -1755,7 +1916,36 @@ if s.partyStore != nil {
 }
 ```
 
-- [ ] **Step 3: Build**
+- [ ] **Step 3: Bootstrap admin gets a Person party**
+
+`auth.BootstrapAdmin` creates the initial admin `User` but leaves no `Party` for that user.
+On a fresh install, project-scoped endpoints would return 403 for the admin because
+`GetPartyByUserID` returns nil.
+
+In `cmd/agentlens/main.go`, after the `BootstrapAdmin` call, create the Person party:
+
+```go
+// After: password, err := auth.BootstrapAdmin(ctx, userStore)
+// Add:
+if err == nil && password != "" {
+    // A new admin was just created — create the corresponding Person party
+    adminUser, err := userStore.GetByUsername(ctx, "admin")
+    if err == nil && adminUser != nil {
+        adminParty := &model.Party{
+            Kind:   model.PartyKindPerson,
+            Name:   adminUser.Username,
+            UserID: &adminUser.ID,
+        }
+        if err := partyStore.CreateParty(ctx, adminParty); err != nil {
+            slog.Warn("failed to create Person party for bootstrap admin", "err", err)
+        }
+    }
+}
+```
+
+Add import `"github.com/PawelHaracz/agentlens/internal/model"` to `main.go` if not present.
+
+- [ ] **Step 4: Build**
 
 ```bash
 rtk make build
@@ -1763,7 +1953,7 @@ rtk make build
 
 Expected: no errors.
 
-- [ ] **Step 4: Run all tests + arch-test**
+- [ ] **Step 5: Run all tests + arch-test**
 
 ```bash
 rtk make test
@@ -1772,7 +1962,7 @@ rtk make arch-test
 
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 rtk git add cmd/agentlens/main.go internal/store/sql_store.go internal/api/router.go
@@ -1817,55 +2007,62 @@ func TestListCatalog_FilteredByProject_ReturnsOK(t *testing.T) {
 rtk go test ./internal/api/... -run TestListCatalog -v
 ```
 
-- [ ] **Step 3: Add `ListByProject` to SQLStore**
+- [ ] **Step 3: Add `ProjectID` to `ListFilter` in `internal/store/store.go`**
 
-In `internal/store/sql_store.go`, add after the existing `List` method:
+`Handler.store` is typed as `store.Store` (interface). Adding a separate `ListByProject`
+method would require extending the interface and every implementer. Instead, add an optional
+filter field to the existing `ListFilter` — this is the established pattern and composes with
+all other filters (protocol, state, query, etc.).
+
+In `internal/store/store.go`, add to `ListFilter`:
 
 ```go
-// ListByProject returns catalog entries that belong to the given project party ID.
-// Returns all visible entries (scoped to project membership).
-func (s *SQLStore) ListByProject(ctx context.Context, projectPartyID string) ([]model.CatalogEntry, error) {
-    entryIDs, err := s.partyStore.ListCatalogEntryIDsForProject(ctx, projectPartyID)
-    if err != nil {
-        return nil, fmt.Errorf("listing catalog entry ids for project: %w", err)
-    }
-    if len(entryIDs) == 0 {
-        return []model.CatalogEntry{}, nil
-    }
-    var entries []model.CatalogEntry
-    if err := s.gdb.WithContext(ctx).
-        Preload("AgentType").
-        Where("id IN ?", entryIDs).
-        Find(&entries).Error; err != nil {
-        return nil, fmt.Errorf("listing catalog entries by project: %w", err)
-    }
-    for i := range entries {
-        entries[i].SyncFromDB()
-    }
-    return entries, nil
+type ListFilter struct {
+    Protocol   *model.Protocol
+    States     []model.LifecycleState
+    Source     *model.SourceType
+    Team       string
+    Query      string
+    Categories []string
+    Limit      int
+    Offset     int
+    Sort       string
+    ProjectID  string // optional: filter to entries in this project party ID (empty = no filter)
 }
 ```
 
-- [ ] **Step 4: Use `ListByProject` in the catalog list handler**
+- [ ] **Step 4: Handle `ProjectID` in `SQLStore.List`**
 
-In `internal/api/handlers.go`, find the `ListCatalog` (or `GetCatalog`) handler. Add project filter logic:
+In `internal/store/sql_store.go`, in the `List` method, add the JOIN after the existing
+filter conditions (look for where `Protocol`, `States`, `Source` etc. are applied):
 
 ```go
-// In the List/catalog handler, before calling store.List:
+// Add inside SQLStore.List, alongside existing filter conditions:
+if filter.ProjectID != "" {
+    db = db.Joins("JOIN catalog_project_memberships cpm ON cpm.catalog_entry_id = catalog_entries.id").
+        Where("cpm.project_party_id = ?", filter.ProjectID)
+}
+```
+
+- [ ] **Step 5: Pass project query param to `ListFilter` in the catalog handler**
+
+In `internal/api/handlers.go`, find `ListCatalog` (or wherever `parseListFilter` is called).
+Add the project param alongside existing params:
+
+```go
+// In the ListCatalog handler, after parseListFilter(r) or equivalent:
+filter := parseListFilter(r)
 if projectID := r.URL.Query().Get("project"); projectID != "" {
-    entries, err := h.store.ListByProject(r.Context(), projectID)
-    if err != nil {
-        slog.Error("listing catalog by project", "err", err)
-        ErrorResponse(w, http.StatusInternalServerError, "failed to list catalog")
-        return
-    }
-    JSONResponse(w, http.StatusOK, entries)
-    return
+    filter.ProjectID = projectID
 }
-// existing List() call follows unchanged
+entries, err := h.store.List(r.Context(), filter)
+// rest of handler unchanged
 ```
 
-- [ ] **Step 5: Run tests**
+This preserves composability — a caller can combine `?project=X&protocol=a2a` to get A2A
+entries scoped to project X.
+
+- [ ] **Step 6: Run tests**
 
 ```bash
 rtk go test ./internal/api/... -run TestListCatalog -v
@@ -1874,10 +2071,10 @@ rtk make test
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-rtk git add internal/store/sql_store.go internal/api/handlers.go internal/api/party_handlers_test.go
+rtk git add internal/store/store.go internal/store/sql_store.go internal/api/handlers.go internal/api/party_handlers_test.go
 rtk git commit -m "feat(api): add catalog filter by project query param"
 ```
 

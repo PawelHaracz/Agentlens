@@ -38,9 +38,9 @@ in a `party_relationships` table, following the party archetype pattern.
 system `default` project.
 
 **Extensibility:** New party kinds (e.g. `organization`) require only a new `PartyKind`
-constant, a `PartyKindConfig` registration for the generic handler, and a
-`ContainmentRelationships` entry for hierarchical kinds — no schema changes, no new handler
-code, no new store methods.
+constant, an entry in `model.ContainmentRelationships` for hierarchical kinds, an entry in
+`model.ValidPartyKinds`, and a `PartyKindConfig` registration for the generic handler —
+no schema changes, no new handler code, no new store methods.
 
 **Existing `User`, `Role`, and global permission system are unchanged.** The party layer is
 additive — `User.RoleID` continues to carry global permissions; `Party` carries
@@ -64,7 +64,7 @@ project-scoped relationships on top.
 - Graph model adds conceptual overhead compared to simple join tables — developers must
   understand `PartyRelationship` and the `ContainmentRelationships` registry
 - Person parties must be kept in sync with `User` records (created together, never orphaned)
-- `party_group_closure` must be rebuilt on every group membership change (mitigated by ADR-012)
+- `party_group_closures` must be rebuilt on every group membership change (mitigated by ADR-012)
 
 ### Neutral
 
