@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -144,6 +145,11 @@ func AddMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFun
 		}
 		if err := ps.AddMember(r.Context(), rel); err != nil {
 			slog.Error("adding member", "err", err)
+			msg := err.Error()
+			if strings.Contains(msg, "cycle") || strings.Contains(msg, "cannot add party") {
+				ErrorResponse(w, http.StatusConflict, msg)
+				return
+			}
 			ErrorResponse(w, http.StatusInternalServerError, "failed to add member")
 			return
 		}

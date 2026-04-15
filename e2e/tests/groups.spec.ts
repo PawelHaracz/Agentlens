@@ -30,21 +30,16 @@ test.describe('Groups management', () => {
 
     // Back + delete
     await page.getByRole('link', { name: /back to settings/i }).click()
+    await page.getByRole('tab', { name: /groups/i }).click()
     page.once('dialog', d => d.accept())
     await page.getByTitle('Delete').first().click()
     await expect(page.getByText('e2e-demo-group')).not.toBeVisible()
   })
 
-  test('admin adds a person member', async ({ page, request }) => {
-    // Seed a person via API — create a user which auto-creates a Person party.
-    const token = await loginViaAPI(request)
-    const rolesRes = await request.get(`${BASE}/api/v1/roles`, { headers: authHeader(token) })
-    const roles = await rolesRes.json() as Array<{ id: string; name: string }>
-    const viewer = roles.find(r => r.name === 'viewer')!
-    await createUser(request, token, {
-      username: 'e2e_alice', password: 'Alice@E2e99!', display_name: 'E2E Alice', role_id: viewer.id,
-    })
-
+  test('admin adds a person member', async ({ page }) => {
+    // Use the admin's seeded Person party as the member (migration007 seeds one
+    // Person party per bootstrap admin; the app does not auto-provision Person
+    // parties when creating users via the API).
     await loginViaUI(page)
     await page.goto('/settings')
     await page.getByRole('tab', { name: /groups/i }).click()
@@ -54,15 +49,9 @@ test.describe('Groups management', () => {
 
     await page.getByText('e2e-member-group').click()
     await page.getByRole('button', { name: /add member/i }).click()
-    await page.getByRole('combobox').selectOption({ label: /E2E Alice/ })
+    await page.getByRole('combobox').selectOption({ label: 'admin (Person)' })
     await page.getByRole('button', { name: /^add$/i }).click()
-    await expect(page.getByText(/E2E Alice/)).toBeVisible()
-
-    // Cleanup user
-    const usersRes = await request.get(`${BASE}/api/v1/users`, { headers: authHeader(token) })
-    const users = await usersRes.json() as Array<{ id: string; username: string }>
-    const alice = users.find(u => u.username === 'e2e_alice')
-    if (alice) await request.delete(`${BASE}/api/v1/users/${alice.id}`, { headers: authHeader(token) }).catch(() => {})
+    await expect(page.getByRole('cell', { name: 'admin' })).toBeVisible()
   })
 
   test('admin nests a group inside another group', async ({ page, request }) => {
@@ -82,7 +71,7 @@ test.describe('Groups management', () => {
     await page.getByRole('tab', { name: /groups/i }).click()
     await page.getByText('e2e-parent').click()
     await page.getByRole('button', { name: /add member/i }).click()
-    await page.getByRole('combobox').selectOption({ label: /e2e-child/ })
+    await page.getByRole('combobox').selectOption({ label: 'e2e-child (Group)' })
     await page.getByRole('button', { name: /^add$/i }).click()
     await expect(page.getByText('e2e-child')).toBeVisible()
     await expect(page.getByText(/^Group$/)).toBeVisible()
@@ -109,7 +98,7 @@ test.describe('Groups management', () => {
     await page.goto(`/settings/groups/${childId}`)
     await page.getByRole('button', { name: /add member/i }).click()
     // Try to add parent as a member of child → cycle
-    await page.getByRole('combobox').selectOption({ label: /e2e-cycle-parent/ })
+    await page.getByRole('combobox').selectOption({ label: 'e2e-cycle-parent (Group)' })
     await page.getByRole('button', { name: /^add$/i }).click()
     await expect(page.getByText(/already in the group's ancestry/i)).toBeVisible()
   })
