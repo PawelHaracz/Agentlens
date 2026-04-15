@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import GroupsTab from './GroupsTab'
+import PartyTab from './PartyTab'
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -29,7 +29,7 @@ beforeEach(() => {
 })
 
 function renderTab() {
-  return render(<MemoryRouter><GroupsTab /></MemoryRouter>)
+  return render(<MemoryRouter><PartyTab /></MemoryRouter>)
 }
 
 describe('GroupsTab', () => {

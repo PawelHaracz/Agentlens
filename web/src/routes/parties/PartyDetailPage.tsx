@@ -11,7 +11,7 @@ import * as api from '@/api'
 import type { Party, PartyRelationship } from '@/api'
 import AddMemberDialog from './AddMemberDialog'
 
-export default function GroupDetailPage() {
+export default function PartyDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { hasPermission } = useAuth()
   const canWrite = hasPermission('users:write')

@@ -9,7 +9,7 @@ import CapabilityListPage from './routes/capabilities/CapabilityListPage'
 import CapabilityDetailPage from './routes/capabilities/CapabilityDetailPage'
 import LoginPage from './pages/LoginPage'
 import SettingsPage from './pages/SettingsPage'
-import GroupDetailPage from './routes/parties/GroupDetailPage'
+import PartyDetailPage from './routes/parties/PartyDetailPage'
 
 export default function App() {
   return (
@@ -22,7 +22,7 @@ export default function App() {
             <Route path="/catalog/capabilities" element={<ProtectedRoute><Layout><CapabilityListPage /></Layout></ProtectedRoute>} />
             <Route path="/catalog/capabilities/:key" element={<ProtectedRoute><Layout><CapabilityDetailPage /></Layout></ProtectedRoute>} />
             <Route path="/catalog/:id" element={<ProtectedRoute><Layout><CatalogDetailPage /></Layout></ProtectedRoute>} />
-            <Route path="/settings/groups/:id" element={<ProtectedRoute><Layout><GroupDetailPage /></Layout></ProtectedRoute>} />
+            <Route path="/settings/groups/:id" element={<ProtectedRoute><Layout><PartyDetailPage /></Layout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
           </Routes>
         </AuthProvider>

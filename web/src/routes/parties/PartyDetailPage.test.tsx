@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import GroupDetailPage from './GroupDetailPage'
+import PartyDetailPage from './PartyDetailPage'
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: vi.fn(),
@@ -33,7 +33,7 @@ function renderDetail(id = 'g1') {
   return render(
     <MemoryRouter initialEntries={[`/settings/groups/${id}`]}>
       <Routes>
-        <Route path="/settings/groups/:id" element={<GroupDetailPage />} />
+        <Route path="/settings/groups/:id" element={<PartyDetailPage />} />
       </Routes>
     </MemoryRouter>
   )

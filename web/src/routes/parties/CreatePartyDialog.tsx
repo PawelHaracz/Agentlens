@@ -12,7 +12,7 @@ interface Props {
   onCreated: () => void
 }
 
-export default function CreateGroupDialog({ open, onOpenChange, onCreated }: Props) {
+export default function CreatePartyDialog({ open, onOpenChange, onCreated }: Props) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)

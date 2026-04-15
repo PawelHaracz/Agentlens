@@ -8,9 +8,9 @@ import { Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import * as api from '@/api'
 import type { Party } from '@/api'
-import CreateGroupDialog from './CreateGroupDialog'
+import CreatePartyDialog from './CreatePartyDialog'
 
-export default function GroupsTab() {
+export default function PartyTab() {
   const { hasPermission } = useAuth()
   const navigate = useNavigate()
   const [groups, setGroups] = useState<Party[]>([])
@@ -75,7 +75,7 @@ export default function GroupsTab() {
           </TableBody>
         </Table>
       </div>
-      <CreateGroupDialog
+      <CreatePartyDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={load}
