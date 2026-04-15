@@ -4,11 +4,14 @@
       "Bash(rtk find:*)",
       "Bash(rtk ls:*)",
       "Bash(rtk cat:*)",
-      "Bash(rtk rm:*)",
       "Bash(rtk ./e2e/run-e2e.sh tests/docs-screenshots.spec.ts --grep \"groups-tab|group-detail\")",
       "Bash(rtk tail:*)",
-      "Bash(rtk ./e2e/run-e2e.sh tests/groups.spec.ts)",
-      "Bash(rtk head:*)"
+      "Bash(rtk ./e2e/run-e2e.sh tests/groups.spec.ts)",      
+      "Bash(rtk ./e2e/run-e2e.sh tests/projects.spec.ts)",
+      "Bash(rtk ./e2e/run-e2e.sh tests/catalog.spec.ts)",
+      "Bash(rtk ./e2e/run-e2e.sh tests/docs-screenshots.spec.ts --grep \"projects-tab|project-detail\")",
+      "Bash(rtk make:*)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   },
   "hooks": {
