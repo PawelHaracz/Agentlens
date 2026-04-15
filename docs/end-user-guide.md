@@ -913,6 +913,8 @@ Groups can be nested: add a group as a member of another group. Transitive membe
 
 ### Managing Projects
 
+Projects can be managed from the **Settings → Projects** tab in the web UI.
+
 Create a project:
 
 ```bash
@@ -922,6 +924,9 @@ curl -X POST http://localhost:8080/api/v1/projects \
   -d '{"name": "my-project"}'
 ```
 
+![Settings page showing the Projects tab populated with demo projects](images/projects-tab.png)
+*The Projects tab inside Settings — admins can create and delete projects here.*
+
 Assign a person or group to the project with a role:
 
 ```bash
@@ -930,6 +935,9 @@ curl -X POST http://localhost:8080/api/v1/projects/{projectID}/members \
   -H "Content-Type: application/json" \
   -d '{"party_id": "<partyID>", "role": "project:developer"}'
 ```
+
+![Project detail page showing members with roles and an assigned catalog entry](images/project-detail.png)
+*Project detail page — manage members (with roles) and assigned catalog entries.*
 
 List all projects:
 

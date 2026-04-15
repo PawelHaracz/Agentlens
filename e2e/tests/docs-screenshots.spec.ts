@@ -229,6 +229,17 @@ test.describe('Documentation Screenshots', () => {
         headers: authHeader(token),
         data: { project_id: projectId },
       });
+      // Add admin's Person party as project:owner so the detail screenshot shows a populated members table.
+      const partiesRes = await request.get(`${BASE}/api/v1/parties?kind=person`, { headers: authHeader(token) });
+      if (partiesRes.ok()) {
+        const parties = (await partiesRes.json()) as Array<{ id: string }>;
+        if (parties[0] && projectId) {
+          await request.post(`${BASE}/api/v1/projects/${projectId}/members`, {
+            headers: authHeader(token),
+            data: { party_id: parties[0].id, role: 'project:owner' },
+          }).catch(() => {});
+        }
+      }
     }
 
     // Seed viewer user for settings screenshots
@@ -914,6 +925,27 @@ test.describe('Documentation Screenshots', () => {
     await page.goto(`/settings/groups/${demoGroupId}`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/group-detail.png`, fullPage: false });
+  });
+
+  // ───────── Projects screenshots ─────────
+
+  test('projects-tab', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/settings');
+    await page.getByRole('tab', { name: /^projects$/i }).click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/projects-tab.png`, fullPage: false });
+  });
+
+  test('project-detail', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/settings/projects/${projectId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/project-detail.png`, fullPage: false });
   });
 });
 
