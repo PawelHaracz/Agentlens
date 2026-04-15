@@ -24,6 +24,10 @@ vi.mock('@/api', () => ({
   updateRole: vi.fn(),
   deleteRole: vi.fn(),
   changePassword: vi.fn(),
+  listGroups: vi.fn(),
+  listGroupMembers: vi.fn(),
+  createGroup: vi.fn(),
+  deleteGroup: vi.fn(),
 }))
 
 import { useAuth } from '../contexts/AuthContext'
@@ -67,6 +71,7 @@ beforeEach(() => {
   mockApi.getSettings.mockResolvedValue([])
   mockApi.listUsers.mockResolvedValue([])
   mockApi.listRoles.mockResolvedValue([])
+  mockApi.listGroups.mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -114,6 +119,11 @@ describe('SettingsPage', () => {
   it('renders My Account tab', () => {
     renderSettingsPage()
     expect(screen.getByRole('tab', { name: /my account/i })).toBeInTheDocument()
+  })
+
+  it('renders Groups tab for any authenticated user', async () => {
+    renderSettingsPage()
+    await waitFor(() => expect(screen.getByRole('tab', { name: /groups/i })).toBeInTheDocument())
   })
 
   it('shows theme buttons in General tab', () => {

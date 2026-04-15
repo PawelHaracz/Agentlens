@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Sun, Moon, Monitor, Plus, Pencil, Trash2, Lock, Unlock, Shield } from 'lucide-react'
+import GroupsTab from '../routes/groups/GroupsTab'
 
 const ALL_PERMISSIONS = [
   'catalog:read', 'catalog:write', 'catalog:delete',
@@ -640,11 +641,13 @@ export default function SettingsPage() {
           <TabsTrigger value="general">General</TabsTrigger>
           {showUsers && <TabsTrigger value="users">Users</TabsTrigger>}
           {showRoles && <TabsTrigger value="roles">Roles</TabsTrigger>}
+          <TabsTrigger value="groups">Groups</TabsTrigger>
           <TabsTrigger value="account">My Account</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="mt-6"><GeneralTab /></TabsContent>
         {showUsers && <TabsContent value="users" className="mt-6"><UsersTab /></TabsContent>}
         {showRoles && <TabsContent value="roles" className="mt-6"><RolesTab /></TabsContent>}
+        <TabsContent value="groups" className="mt-6"><GroupsTab /></TabsContent>
         <TabsContent value="account" className="mt-6"><AccountTab /></TabsContent>
       </Tabs>
     </div>
