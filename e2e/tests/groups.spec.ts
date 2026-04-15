@@ -49,9 +49,9 @@ test.describe('Groups management', () => {
 
     await page.getByText('e2e-member-group').click()
     await page.getByRole('button', { name: /add member/i }).click()
-    await page.getByRole('combobox').selectOption({ label: 'admin (Person)' })
+    await page.getByRole('combobox').selectOption({ label: 'Administrator (Person)' })
     await page.getByRole('button', { name: /^add$/i }).click()
-    await expect(page.getByRole('cell', { name: 'admin' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Administrator' })).toBeVisible()
   })
 
   test('admin nests a group inside another group', async ({ page, request }) => {

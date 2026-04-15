@@ -46,10 +46,10 @@ test.describe('Projects management', () => {
 
     await page.getByText('e2e-member-project').click()
     await page.getByRole('button', { name: /add member/i }).click()
-    await page.getByLabel('Member', { exact: true }).selectOption({ label: 'admin (Person)' })
+    await page.getByLabel('Member', { exact: true }).selectOption({ label: 'Administrator (Person)' })
     await page.getByLabel('Role', { exact: true }).selectOption('project:developer')
     await page.getByRole('button', { name: /^add$/i }).click()
-    await expect(page.getByRole('cell', { name: 'admin' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Administrator' })).toBeVisible()
     await expect(page.getByText('project:developer')).toBeVisible()
   })
 
