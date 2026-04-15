@@ -10,16 +10,28 @@ import { useAuth } from '../../contexts/AuthContext'
 import * as api from '@/api'
 import type { Party, PartyRelationship } from '@/api'
 import AddMemberDialog from './AddMemberDialog'
+import EditMemberRoleDialog from './EditMemberRoleDialog'
+import ProjectEntriesPanel from './ProjectEntriesPanel'
+import { groupUIConfig, type PartyUIConfig } from './partyUIConfig'
 
-export default function PartyDetailPage() {
+interface Props {
+  config?: PartyUIConfig
+}
+
+export default function PartyDetailPage({ config = groupUIConfig }: Props) {
   const { id } = useParams<{ id: string }>()
   const { hasPermission } = useAuth()
-  const canWrite = hasPermission('users:write')
-  const [group, setGroup] = useState<Party | null>(null)
+  const canWrite = hasPermission(config.writePermission)
+  const [party, setParty] = useState<Party | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [members, setMembers] = useState<PartyRelationship[]>([])
   const [parties, setParties] = useState<Party[]>([])
   const [addOpen, setAddOpen] = useState(false)
+  const [editRoleState, setEditRoleState] = useState<{ memberId: string; memberName: string; currentRole: string } | null>(null)
+
+  const getFn = config.kind === 'group' ? api.getGroup : api.getProject
+  const listMembersFn = config.kind === 'group' ? api.listGroupMembers : api.listProjectMembers
+  const removeFn = config.kind === 'group' ? api.removeGroupMember : api.removeProjectMember
 
   const partyById = useMemo(() => {
     const m = new Map<string, Party>()
@@ -29,33 +41,24 @@ export default function PartyDetailPage() {
 
   const reloadMembers = () => {
     if (!id) return
-    api.listGroupMembers(id).then(setMembers).catch(() => {})
+    listMembersFn(id).then(setMembers).catch(() => {})
   }
 
   useEffect(() => {
     if (!id) return
     setNotFound(false)
-    api.getGroup(id)
-      .then(setGroup)
-      .catch(() => setNotFound(true))
-    api.listGroupMembers(id).then(setMembers).catch(() => {})
+    getFn(id).then(setParty).catch(() => setNotFound(true))
+    listMembersFn(id).then(setMembers).catch(() => {})
     api.listParties().then(setParties).catch(() => {})
-  }, [id])
+  }, [id, getFn, listMembersFn])
 
   const handleRemove = async (partyId: string, name: string) => {
     if (!id) return
-    if (!confirm(`Remove "${name}" from "${group?.name ?? ''}"?`)) return
-    try {
-      await api.removeGroupMember(id, partyId)
-      reloadMembers()
-    } catch { /* ignore */ }
+    if (!confirm(`Remove "${name}" from "${party?.name ?? ''}"?`)) return
+    try { await removeFn(id, partyId); reloadMembers() } catch { /* ignore */ }
   }
 
-  const excludedIds = useMemo(() => {
-    const set = new Set<string>([id ?? ''])
-    return set
-  }, [id])
-
+  const excludedIds = useMemo(() => new Set<string>([id ?? '']), [id])
   const existingMemberIds = useMemo(() => {
     const set = new Set<string>()
     for (const r of members) set.add(r.from_party_id)
@@ -65,30 +68,33 @@ export default function PartyDetailPage() {
   if (notFound) {
     return (
       <div className="space-y-4">
-        <Link to="/settings?tab=groups" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link to={`/settings?tab=${config.urlPrefix}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> Back to Settings
         </Link>
-        <p className="text-muted-foreground">Group not found.</p>
+        <p className="text-muted-foreground">{config.labels.single} not found.</p>
       </div>
     )
   }
 
-  if (!group) {
-    return <div className="text-muted-foreground">Loading…</div>
-  }
+  if (!party) return <div className="text-muted-foreground">Loading…</div>
 
-  const memberParties = members.map(r => partyById.get(r.from_party_id)).filter(Boolean) as Party[]
+  const memberRows = members
+    .map(r => {
+      const p = partyById.get(r.from_party_id)
+      return p ? { party: p, rel: r } : null
+    })
+    .filter(Boolean) as { party: Party; rel: PartyRelationship }[]
+
+  const colSpan = (config.showMemberRoleColumn ? 3 : 2) + (canWrite ? 1 : 0)
 
   return (
     <div className="space-y-6">
-      <Link to="/settings?tab=groups" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link to={`/settings?tab=${config.urlPrefix}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ChevronLeft className="h-4 w-4" /> Back to Settings
       </Link>
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">{group.name}</h2>
-        <p className="text-muted-foreground">
-          Created {new Date(group.created_at).toLocaleDateString()}
-        </p>
+        <h2 className="text-2xl font-bold tracking-tight">{party.name}</h2>
+        <p className="text-muted-foreground">Created {new Date(party.created_at).toLocaleDateString()}</p>
       </div>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -105,16 +111,32 @@ export default function PartyDetailPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Kind</TableHead>
+                {config.showMemberRoleColumn && <TableHead>Role</TableHead>}
                 {canWrite && <TableHead className="w-24">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {memberParties.map(p => (
+              {memberRows.map(({ party: p, rel }) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{p.kind === 'person' ? 'Person' : p.kind === 'group' ? 'Group' : 'Project'}</Badge>
                   </TableCell>
+                  {config.showMemberRoleColumn && (
+                    <TableCell>
+                      {canWrite ? (
+                        <button
+                          type="button"
+                          className="inline-flex"
+                          onClick={() => setEditRoleState({ memberId: p.id, memberName: p.name, currentRole: rel.from_role })}
+                        >
+                          <Badge variant="outline">{rel.from_role}</Badge>
+                        </button>
+                      ) : (
+                        <Badge variant="outline">{rel.from_role}</Badge>
+                      )}
+                    </TableCell>
+                  )}
                   {canWrite && (
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => handleRemove(p.id, p.name)} title="Remove">
@@ -124,15 +146,18 @@ export default function PartyDetailPage() {
                   )}
                 </TableRow>
               ))}
-              {memberParties.length === 0 && (
-                <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                  No members yet. Click <strong>Add member</strong> to add the first person or group.
-                </TableCell></TableRow>
+              {memberRows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={colSpan} className="text-center text-muted-foreground py-8">
+                    No members yet. Click <strong>Add member</strong> to add the first person or group.
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
         </div>
       </div>
+      {config.showEntriesPanel && id && <ProjectEntriesPanel projectId={id} canWrite={canWrite} />}
       <AddMemberDialog
         open={addOpen}
         onOpenChange={setAddOpen}
@@ -141,7 +166,23 @@ export default function PartyDetailPage() {
         parties={parties}
         excludedIds={excludedIds}
         existingMemberIds={existingMemberIds}
+        kind={config.kind}
+        roleOptions={config.memberRoleOptions}
+        defaultRole={config.defaultMemberRole}
+        cycleErrorMessage={config.cycleErrorMessage}
       />
+      {editRoleState && id && (
+        <EditMemberRoleDialog
+          open={true}
+          onOpenChange={(o) => { if (!o) setEditRoleState(null) }}
+          onSaved={reloadMembers}
+          projectId={id}
+          memberPartyId={editRoleState.memberId}
+          memberName={editRoleState.memberName}
+          currentRole={editRoleState.currentRole}
+          roleOptions={config.memberRoleOptions}
+        />
+      )}
     </div>
   )
 }
