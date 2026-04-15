@@ -73,6 +73,15 @@ func (s *PartyStore) ListParties(ctx context.Context, kind model.PartyKind) ([]m
 	return parties, nil
 }
 
+// ListAllParties returns all parties regardless of kind.
+func (s *PartyStore) ListAllParties(ctx context.Context) ([]model.Party, error) {
+	var parties []model.Party
+	if err := s.db.WithContext(ctx).Find(&parties).Error; err != nil {
+		return nil, fmt.Errorf("listing all parties: %w", err)
+	}
+	return parties, nil
+}
+
 // DeleteParty deletes a non-system party and cascades: removes all party_relationships,
 // party_group_closures, global_party_roles, and catalog_project_memberships rows that
 // reference the party, then rebuilds the full closure. Returns error if not found or is_system.

@@ -461,4 +461,69 @@ describe('Parties API', () => {
     expect(result).toEqual(mockGroup)
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1', expect.any(Object))
   })
+
+  it('createGroup POSTs to /api/v1/groups with name', async () => {
+    const mockGroup = { id: 'g2', kind: 'group', name: 'team-a', is_system: false, created_at: '', updated_at: '' }
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 201, json: () => Promise.resolve(mockGroup),
+    })
+    const result = await api.createGroup({ name: 'team-a' })
+    expect(result).toEqual(mockGroup)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ name: 'team-a' }),
+    }))
+  })
+
+  it('deleteGroup sends DELETE to /api/v1/groups/:id', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 204,
+    })
+    await api.deleteGroup('g1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1', expect.objectContaining({
+      method: 'DELETE',
+    }))
+  })
+
+  it('listGroupMembers GETs /api/v1/groups/:id/members', async () => {
+    const mockRels: api.PartyRelationship[] = [{
+      id: 'r1', from_party_id: 'p1', from_role: 'member', to_party_id: 'g1',
+      to_role: 'group', relationship_name: 'group_member',
+    }]
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve(mockRels),
+    })
+    const result = await api.listGroupMembers('g1')
+    expect(result).toEqual(mockRels)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1/members', expect.any(Object))
+  })
+
+  it('addGroupMember POSTs to /api/v1/groups/:id/members with role member', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 204,
+    })
+    await api.addGroupMember('g1', 'p1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1/members', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ party_id: 'p1', role: 'member' }),
+    }))
+  })
+
+  it('removeGroupMember DELETEs /api/v1/groups/:id/members/:pid', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 204,
+    })
+    await api.removeGroupMember('g1', 'p1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1/members/p1', expect.objectContaining({
+      method: 'DELETE',
+    }))
+  })
+
+  it('listParties GETs /api/v1/parties with optional kind', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve([]),
+    })
+    await api.listParties('person')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/parties?kind=person', expect.any(Object))
+  })
 })

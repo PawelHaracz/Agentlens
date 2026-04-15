@@ -213,6 +213,7 @@ func registerPartyRoutes(r chi.Router, deps RouterDeps) {
 		r.Use(RequireAuth(deps.JWTService))
 		RegisterPartyKindRoutes(r, groupKindConfig, deps.PartyStore)
 		RegisterPartyKindRoutes(r, projectKindConfig, deps.PartyStore)
+		r.Get("/parties", ListAllPartiesHandler(deps.PartyStore))
 		registerCatalogProjectRoutes(r, deps.PartyStore)
 	})
 }

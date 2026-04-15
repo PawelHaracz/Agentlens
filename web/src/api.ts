@@ -321,3 +321,38 @@ export function listGroups(): Promise<Party[]> {
 export function getGroup(id: string): Promise<Party> {
   return request<Party>(`/groups/${id}`)
 }
+
+export function createGroup(data: { name: string }): Promise<Party> {
+  return request<Party>('/groups', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function deleteGroup(id: string): Promise<void> {
+  return request<void>(`/groups/${id}`, { method: 'DELETE' })
+}
+
+export function listGroupMembers(id: string): Promise<PartyRelationship[]> {
+  return request<PartyRelationship[]>(`/groups/${id}/members`)
+}
+
+export function addGroupMember(groupId: string, partyId: string): Promise<void> {
+  return request<void>(`/groups/${groupId}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ party_id: partyId, role: 'member' }),
+  })
+}
+
+export function removeGroupMember(groupId: string, memberPartyId: string): Promise<void> {
+  return request<void>(`/groups/${groupId}/members/${memberPartyId}`, {
+    method: 'DELETE',
+  })
+}
+
+/* ─── Parties API ─── */
+
+export function listParties(kind?: 'person' | 'group' | 'project'): Promise<Party[]> {
+  const qs = kind ? `?kind=${kind}` : ''
+  return request<Party[]>(`/parties${qs}`)
+}
