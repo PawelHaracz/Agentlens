@@ -5,19 +5,24 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import * as api from '@/api'
-import type { PartyUIConfig } from './partyUIConfig'
+import { groupUIConfig, type PartyUIConfig } from './partyUIConfig'
 
 interface Props {
+  config?: PartyUIConfig
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreated: () => void
-  config?: PartyUIConfig
 }
 
-export default function CreatePartyDialog({ open, onOpenChange, onCreated, config: _config }: Props) {
+export default function CreatePartyDialog({ config = groupUIConfig, open, onOpenChange, onCreated }: Props) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const createFn = config.kind === 'group' ? api.createGroup : api.createProject
+  const descriptionText = config.kind === 'group'
+    ? 'Groups organize people and nested groups. Add members after creation.'
+    : 'Projects scope catalog entries and group access by role. Add members after creation.'
 
   const reset = () => { setName(''); setError(''); setSaving(false) }
 
@@ -26,12 +31,12 @@ export default function CreatePartyDialog({ open, onOpenChange, onCreated, confi
     setError('')
     setSaving(true)
     try {
-      await api.createGroup({ name: name.trim() })
+      await createFn({ name: name.trim() })
       onCreated()
       reset()
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create group')
+      setError(err instanceof Error ? err.message : `Failed to create ${config.labels.single.toLowerCase()}`)
       setSaving(false)
     }
   }
@@ -40,21 +45,14 @@ export default function CreatePartyDialog({ open, onOpenChange, onCreated, confi
     <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o) }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create group</DialogTitle>
-          <DialogDescription>Groups organize people and nested groups. Add members after creation.</DialogDescription>
+          <DialogTitle>Create {config.labels.single.toLowerCase()}</DialogTitle>
+          <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
           <div className="space-y-2">
-            <label htmlFor="group-name" className="text-sm font-medium">Name</label>
-            <Input
-              id="group-name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              maxLength={128}
-              required
-              autoFocus
-            />
+            <label htmlFor="party-name" className="text-sm font-medium">Name</label>
+            <Input id="party-name" value={name} onChange={e => setName(e.target.value)} maxLength={128} required autoFocus />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={saving || name.trim().length === 0}>

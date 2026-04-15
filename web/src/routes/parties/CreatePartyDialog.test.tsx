@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import CreatePartyDialog from './CreatePartyDialog'
+import { projectUIConfig } from './partyUIConfig'
 
 vi.mock('@/api', () => ({
   createGroup: vi.fn(),
+  createProject: vi.fn(),
 }))
 
 import * as api from '@/api'
@@ -37,5 +39,18 @@ describe('CreatePartyDialog', () => {
   it('disables create button when name is empty', () => {
     render(<CreatePartyDialog open={true} onOpenChange={vi.fn()} onCreated={vi.fn()} />)
     expect(screen.getByRole('button', { name: /^create$/i })).toBeDisabled()
+  })
+})
+
+describe('CreatePartyDialog (project config)', () => {
+  it('calls createProject and uses project labels', async () => {
+    mockApi.createProject = vi.fn().mockResolvedValue({ id: 'p1', kind: 'project', name: 'team-a', is_system: false, created_at: '', updated_at: '' })
+    const onCreated = vi.fn()
+    render(<CreatePartyDialog config={projectUIConfig} open={true} onOpenChange={vi.fn()} onCreated={onCreated} />)
+    expect(screen.getByRole('heading', { name: /create project/i })).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText(/name/i), 'team-a')
+    await userEvent.click(screen.getByRole('button', { name: /^create$/i }))
+    await waitFor(() => expect(mockApi.createProject).toHaveBeenCalledWith({ name: 'team-a' }))
+    expect(onCreated).toHaveBeenCalled()
   })
 })
