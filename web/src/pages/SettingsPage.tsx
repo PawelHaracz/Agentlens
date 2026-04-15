@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Sun, Moon, Monitor, Plus, Pencil, Trash2, Lock, Unlock, Shield } from 'lucide-react'
-import GroupsTab from '../routes/groups/GroupsTab'
+import GroupsTab from '../routes/parties/GroupsTab'
 
 const ALL_PERMISSIONS = [
   'catalog:read', 'catalog:write', 'catalog:delete',

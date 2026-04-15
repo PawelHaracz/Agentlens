@@ -9,7 +9,7 @@ import CapabilityListPage from './routes/capabilities/CapabilityListPage'
 import CapabilityDetailPage from './routes/capabilities/CapabilityDetailPage'
 import LoginPage from './pages/LoginPage'
 import SettingsPage from './pages/SettingsPage'
-import GroupDetailPage from './routes/groups/GroupDetailPage'
+import GroupDetailPage from './routes/parties/GroupDetailPage'
 
 export default function App() {
   return (
