@@ -227,3 +227,41 @@ func TestPartyStore_ListMembers(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, rels, 2)
 }
+
+func newTestPartyStore(t *testing.T) *store.PartyStore {
+	t.Helper()
+	return store.NewPartyStore(newTestPartyDB(t))
+}
+
+func TestPartyStore_UpdateMemberRole(t *testing.T) {
+	ctx := context.Background()
+	s := newTestPartyStore(t)
+
+	project := &model.Party{ID: "proj-1", Kind: model.PartyKindProject, Name: "p1"}
+	require.NoError(t, s.CreateParty(ctx, project))
+	person := &model.Party{ID: "person-1", Kind: model.PartyKindPerson, Name: "alice"}
+	require.NoError(t, s.CreateParty(ctx, person))
+	rel := &model.PartyRelationship{
+		FromPartyID:      person.ID,
+		FromRole:         "project:viewer",
+		ToPartyID:        project.ID,
+		ToRole:           "project",
+		RelationshipName: "project_member",
+	}
+	require.NoError(t, s.AddMember(ctx, rel))
+
+	require.NoError(t, s.UpdateMemberRole(ctx, person.ID, project.ID, "project_member", "project:developer"))
+
+	rels, err := s.ListMembers(ctx, project.ID, "project_member")
+	require.NoError(t, err)
+	require.Len(t, rels, 1)
+	assert.Equal(t, "project:developer", rels[0].FromRole)
+}
+
+func TestPartyStore_UpdateMemberRole_NotFound(t *testing.T) {
+	ctx := context.Background()
+	s := newTestPartyStore(t)
+
+	err := s.UpdateMemberRole(ctx, "missing", "also-missing", "project_member", "project:viewer")
+	assert.Error(t, err)
+}
