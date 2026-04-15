@@ -1154,6 +1154,32 @@ Global role bypass: any user whose JWT carries the required permission is allowe
 
 ---
 
+### `GET /api/v1/parties`
+
+List all parties across kinds, optionally filtered by `?kind=`. Used by the web UI to populate member-pickers and by E2E setup helpers to resolve person/group IDs without hitting kind-scoped endpoints. **Requires auth.**
+
+**Query parameters:**
+- `kind` (optional) — one of `person`, `group`, `project`. Returns only parties of that kind. Omitted → all kinds.
+
+**Response 200:**
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "kind": "person",
+    "name": "Administrator",
+    "user_id": null,
+    "is_system": false,
+    "created_at": "2026-04-15T00:00:00Z",
+    "updated_at": "2026-04-15T00:00:00Z"
+  }
+]
+```
+
+Returns an empty array (never `null`) when no parties match. No permission required beyond authentication — read access is open by design (the kind-scoped endpoints `/groups`, `/projects` are also read-open).
+
+---
+
 ### `GET /api/v1/groups`
 
 List all groups. **Requires auth.**
@@ -1327,7 +1353,7 @@ Assign a catalog entry to a project. **Requires auth.** Permission: `catalog:wri
 {"project_id": "<project-party-id>"}
 ```
 
-**Response 201.** Idempotent — duplicate assignments are silently ignored.
+**Response 204 (No Content).** No response body. Idempotent — duplicate assignments are silently ignored.
 
 ---
 

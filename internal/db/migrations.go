@@ -24,6 +24,29 @@ func AllMigrations() []Migration {
 		migration006RawCards(),
 		migration007PartyArchetype(),
 		migration008BackfillPersonParties(),
+		migration009CatalogProjectMembershipIndexes(),
+	}
+}
+
+// migration009CatalogProjectMembershipIndexes adds non-unique indexes on each
+// half of the (catalog_entry_id, project_party_id) composite PK so lookups
+// filtered by either column alone are well-indexed (notably the project
+// filter on /catalog?project= and the per-entry list on /catalog/:id/projects).
+func migration009CatalogProjectMembershipIndexes() Migration {
+	return Migration{
+		Version:     9,
+		Description: "add per-column indexes on catalog_project_memberships",
+		Up: func(tx *gorm.DB) error {
+			if err := tx.Exec(`CREATE INDEX IF NOT EXISTS idx_cpm_project_party_id
+				ON catalog_project_memberships(project_party_id)`).Error; err != nil {
+				return fmt.Errorf("creating cpm project index: %w", err)
+			}
+			if err := tx.Exec(`CREATE INDEX IF NOT EXISTS idx_cpm_catalog_entry_id
+				ON catalog_project_memberships(catalog_entry_id)`).Error; err != nil {
+				return fmt.Errorf("creating cpm entry index: %w", err)
+			}
+			return nil
+		},
 	}
 }
 
