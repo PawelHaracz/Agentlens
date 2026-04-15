@@ -28,6 +28,10 @@ vi.mock('@/api', () => ({
   listGroupMembers: vi.fn(),
   createGroup: vi.fn(),
   deleteGroup: vi.fn(),
+  listProjects: vi.fn(),
+  listProjectMembers: vi.fn(),
+  createProject: vi.fn(),
+  deleteProject: vi.fn(),
 }))
 
 import { useAuth } from '../contexts/AuthContext'
@@ -72,6 +76,7 @@ beforeEach(() => {
   mockApi.listUsers.mockResolvedValue([])
   mockApi.listRoles.mockResolvedValue([])
   mockApi.listGroups.mockResolvedValue([])
+  mockApi.listProjects.mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -124,6 +129,11 @@ describe('SettingsPage', () => {
   it('renders Groups tab for any authenticated user', async () => {
     renderSettingsPage()
     await waitFor(() => expect(screen.getByRole('tab', { name: /groups/i })).toBeInTheDocument())
+  })
+
+  it('renders Projects tab for any authenticated user', async () => {
+    renderSettingsPage()
+    await waitFor(() => expect(screen.getByRole('tab', { name: /projects/i })).toBeInTheDocument())
   })
 
   it('shows theme buttons in General tab', () => {
