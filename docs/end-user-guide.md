@@ -634,6 +634,15 @@ The **My Account** tab lets you update your own profile:
 
 > You do not need any special permission to update your own account.
 
+### My projects
+
+Open **Settings → My Account** to see every project you belong to (directly or through a group)
+and your effective role on each. Click a row to jump to the project's detail page.
+
+![My Account tab with a populated My projects card](images/my-account-projects.png)
+*The My projects card — roles resolve via the group closure; the highest-privilege role wins when
+a user belongs via multiple paths ([ADR-014](adr/014-project-role-resolution-highest-privilege.md)).*
+
 ---
 
 ## User Management

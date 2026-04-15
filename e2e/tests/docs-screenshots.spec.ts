@@ -956,6 +956,16 @@ test.describe('Documentation Screenshots', () => {
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/project-detail.png`, fullPage: false });
   });
+
+  test('my-account-my-projects', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/settings');
+    await page.getByRole('tab', { name: /my account/i }).click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/my-account-projects.png`, fullPage: false });
+  });
 });
 
 // Export nothing — this file is a generator, not a module with exports.
