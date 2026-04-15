@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -202,6 +203,25 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 type changePasswordRequest struct {
 	CurrentPassword string `json:"current_password"`
 	NewPassword     string `json:"new_password"`
+}
+
+// MyProjectsHandler returns the calling user's resolved project memberships.
+// Authenticated-only; a user always sees their own memberships.
+func MyProjectsHandler(partyStore *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID := UserIDFromContext(r.Context())
+		if userID == "" {
+			ErrorResponse(w, http.StatusUnauthorized, "unauthenticated")
+			return
+		}
+		memberships, err := partyStore.ResolveUserProjects(r.Context(), userID)
+		if err != nil {
+			slog.Error("resolving user projects", "user_id", userID, "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to load projects")
+			return
+		}
+		JSONResponse(w, http.StatusOK, memberships)
+	}
 }
 
 // ChangePassword handles PUT /api/v1/auth/password.

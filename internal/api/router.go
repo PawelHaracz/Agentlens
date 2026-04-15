@@ -132,6 +132,9 @@ func registerAuthRoutes(r chi.Router, deps RouterDeps, authHandler *AuthHandler)
 		r.Post("/auth/refresh", authHandler.Refresh)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/password", authHandler.ChangePassword)
+		if deps.PartyStore != nil {
+			r.Get("/auth/me/projects", MyProjectsHandler(deps.PartyStore))
+		}
 	})
 }
 

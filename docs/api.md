@@ -889,6 +889,28 @@ Get the current authenticated user's information. **Requires auth.**
 
 ---
 
+### `GET /api/v1/auth/me/projects`
+
+Return the caller's resolved project memberships (direct and transitive through groups). **Requires auth.**
+
+**Response 200:**
+```json
+[
+  {
+    "project": { "id": "...", "kind": "project", "name": "orion", "is_system": false, "created_at": "...", "updated_at": "..." },
+    "role": "project:developer"
+  }
+]
+```
+
+Sorted by project name ASC. Empty array when the user has no memberships (or no Person party has been created yet — see ADR-011).
+
+**Errors:** `401 Unauthorized` · `500 Internal Server Error`.
+
+**Role resolution.** When a user reaches a project via multiple paths, the highest-privilege role wins (`project:owner > project:developer > project:viewer`) per [ADR-014](../adr/014-project-role-resolution-highest-privilege.md).
+
+---
+
 ### `PUT /api/v1/auth/password`
 
 Change the current user's password. **Requires auth.**
