@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -49,6 +50,25 @@ type createUserRequest struct {
 	DisplayName string `json:"display_name"`
 	Password    string `json:"password"`
 	RoleID      string `json:"role_id"`
+}
+
+// syncPersonOrRollback creates the Person party for a freshly inserted user.
+// On failure, compensates the user insert via userStore.Delete so the
+// User↔Person 1:1 invariant (ADR-011) holds at rest — migration008 is a
+// one-time backfill that won't sweep runtime-created orphans. No-op when
+// no PartyStore is wired (test harness that doesn't care about parties).
+func (h *UserHandler) syncPersonOrRollback(ctx context.Context, user *model.User) error {
+	if h.partyStore == nil {
+		return nil
+	}
+	if err := h.partyStore.CreatePersonForUser(ctx, user); err != nil {
+		slog.Error("creating person for new user, rolling back user", "user_id", user.ID, "err", err)
+		if delErr := h.userStore.Delete(ctx, user.ID); delErr != nil {
+			slog.Error("rollback: delete user failed", "user_id", user.ID, "err", delErr)
+		}
+		return err
+	}
+	return nil
 }
 
 // Create handles POST /api/v1/users.
@@ -116,19 +136,9 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.partyStore != nil {
-		if err := h.partyStore.CreatePersonForUser(r.Context(), user); err != nil {
-			// Preserve the User↔Person 1:1 invariant (ADR-011) at rest:
-			// compensate the user insert we just did and fail the request so
-			// the client can retry. migration008 is a one-time backfill and
-			// will not self-heal orphan users created at runtime.
-			slog.Error("creating person for new user, rolling back user", "user_id", user.ID, "err", err)
-			if delErr := h.userStore.Delete(r.Context(), user.ID); delErr != nil {
-				slog.Error("rollback: delete user failed", "user_id", user.ID, "err", delErr)
-			}
-			ErrorResponse(w, http.StatusInternalServerError, "failed to create user")
-			return
-		}
+	if err := h.syncPersonOrRollback(r.Context(), user); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "failed to create user")
+		return
 	}
 
 	// Re-fetch to get the role preloaded.
