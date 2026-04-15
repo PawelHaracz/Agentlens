@@ -21,6 +21,7 @@ import { Separator } from '@/components/ui/separator'
 import { Sun, Moon, Monitor, Plus, Pencil, Trash2, Lock, Unlock, Shield } from 'lucide-react'
 import PartyTab from '../routes/parties/PartyTab'
 import { groupUIConfig, projectUIConfig } from '../routes/parties/partyUIConfig'
+import MyProjectsTable from '../routes/parties/MyProjectsTable'
 
 const ALL_PERMISSIONS = [
   'catalog:read', 'catalog:write', 'catalog:delete',
@@ -618,6 +619,16 @@ function AccountTab() {
               {pwMsg && <span className="text-sm text-muted-foreground">{pwMsg}</span>}
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>My projects</CardTitle>
+          <CardDescription>Projects you belong to — directly or through a group.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MyProjectsTable />
         </CardContent>
       </Card>
     </div>
