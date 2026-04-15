@@ -3,7 +3,7 @@
 **Date:** 2026-04-15
 **Status:** Draft
 **Predecessor specs:** [2026-04-15-projects-ui-design.md](2026-04-15-projects-ui-design.md), [2026-04-15-groups-ui-design.md](2026-04-15-groups-ui-design.md), [2026-04-14-party-archetype-design.md](2026-04-14-party-archetype-design.md)
-**Relevant ADRs:** [011-party-archetype-unified-actor-model.md](../../adr/011-party-archetype-unified-actor-model.md) (Person↔User invariant, closure-based RBAC), [012-materialized-closure.md](../../adr/012-materialized-closure.md) (closure table used by role resolution)
+**Relevant ADRs:** [011-party-archetype-unified-actor-model.md](../../adr/011-party-archetype-unified-actor-model.md) (Person↔User invariant, closure-based RBAC), [012-materialized-group-closure-for-permission-resolution.md](../../adr/012-materialized-group-closure-for-permission-resolution.md) (closure table used by role resolution), [014-project-role-resolution-highest-privilege.md](../../adr/014-project-role-resolution-highest-privilege.md) (multi-path tie-break rule)
 
 ## Goal
 

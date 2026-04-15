@@ -3,7 +3,7 @@
 **Date:** 2026-04-15
 **Status:** Draft
 **Predecessor specs:** [2026-04-15-groups-ui-design.md](2026-04-15-groups-ui-design.md), [2026-04-14-party-archetype-design.md](2026-04-14-party-archetype-design.md)
-**Relevant ADRs:** [011-party-archetype-unified-actor-model.md](../../adr/011-party-archetype-unified-actor-model.md), [012-materialized-closure.md](../../adr/012-materialized-closure.md), [007-embedded-spa.md](../../adr/007-embedded-spa.md)
+**Relevant ADRs:** [011-party-archetype-unified-actor-model.md](../../adr/011-party-archetype-unified-actor-model.md), [012-materialized-group-closure-for-permission-resolution.md](../../adr/012-materialized-group-closure-for-permission-resolution.md), [013-frontend-party-ui-kind-config.md](../../adr/013-frontend-party-ui-kind-config.md), [007-embedded-spa-frontend.md](../../adr/007-embedded-spa-frontend.md)
 
 ## Goal
 
