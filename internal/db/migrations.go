@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
@@ -21,6 +22,7 @@ func AllMigrations() []Migration {
 		migration004Settings(),
 		migration005HealthColumns(),
 		migration006RawCards(),
+		migration007PartyArchetype(),
 	}
 }
 
@@ -308,6 +310,99 @@ func migration006RawCards() Migration {
 				}
 			}
 
+			return nil
+		},
+	}
+}
+
+func migration007PartyArchetype() Migration {
+	return Migration{
+		Version:     7,
+		Description: "create party archetype tables and seed default project",
+		Up: func(tx *gorm.DB) error {
+			// Create all party tables
+			for _, m := range []interface{}{
+				&model.Party{},
+				&model.PartyRelationship{},
+				&model.PartyGroupClosure{},
+				&model.GlobalPartyRole{},
+				&model.CatalogProjectMembership{},
+				&model.PartyIdentifier{},
+			} {
+				if err := tx.AutoMigrate(m); err != nil {
+					return fmt.Errorf("auto migrate %T: %w", m, err)
+				}
+			}
+
+			// Unique constraint on party_relationships
+			if err := tx.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_party_rel_unique
+				ON party_relationships(from_party_id, from_role, to_party_id, to_role, relationship_name)`).Error; err != nil {
+				return fmt.Errorf("creating party_relationships unique index: %w", err)
+			}
+
+			// Unique constraint on party_identifiers
+			if err := tx.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_party_identifiers_kind_value
+				ON party_identifiers(kind, value)`).Error; err != nil {
+				return fmt.Errorf("creating party_identifiers unique index: %w", err)
+			}
+
+			// Seed default project (idempotent)
+			defaultID := uuid.New().String()
+			if err := tx.Exec(`
+				INSERT INTO parties (id, kind, name, version, is_system, created_at, updated_at)
+				SELECT ?, 'project', 'default', 0, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+				WHERE NOT EXISTS (SELECT 1 FROM parties WHERE kind='project' AND is_system=1)
+			`, defaultID).Error; err != nil {
+				return fmt.Errorf("seeding default project: %w", err)
+			}
+
+			// Get default project ID (may differ from defaultID if already seeded)
+			var defaultProjectID string
+			if err := tx.Raw("SELECT id FROM parties WHERE kind='project' AND is_system=1 LIMIT 1").
+				Scan(&defaultProjectID).Error; err != nil {
+				return fmt.Errorf("reading default project id: %w", err)
+			}
+
+			// Create Person party for each existing user (idempotent, dialect-agnostic).
+			// Go-side loop with uuid.New() — avoids SQLite-only randomblob, works on Postgres.
+			var existingUsers []struct {
+				ID          string `gorm:"column:id"`
+				Username    string `gorm:"column:username"`
+				DisplayName string `gorm:"column:display_name"`
+			}
+			if err := tx.Raw("SELECT id, username, display_name FROM users").Scan(&existingUsers).Error; err != nil {
+				return fmt.Errorf("reading existing users: %w", err)
+			}
+			for _, u := range existingUsers {
+				name := u.Username
+				if u.DisplayName != "" {
+					name = u.DisplayName
+				}
+				partyID := uuid.New().String()
+				userID := u.ID
+				if err := tx.Exec(`
+					INSERT INTO parties (id, kind, name, version, user_id, is_system, created_at, updated_at)
+					SELECT ?, 'person', ?, 0, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+					WHERE NOT EXISTS (SELECT 1 FROM parties WHERE user_id = ?)
+				`, partyID, name, userID, userID).Error; err != nil {
+					return fmt.Errorf("creating person party for user %s: %w", userID, err)
+				}
+			}
+
+			// Assign all existing catalog entries to the default project (idempotent)
+			if err := tx.Exec(`
+				INSERT INTO catalog_project_memberships (catalog_entry_id, project_party_id, created_at)
+				SELECT ce.id, ?, CURRENT_TIMESTAMP
+				FROM catalog_entries ce
+				WHERE NOT EXISTS (
+					SELECT 1 FROM catalog_project_memberships
+					WHERE catalog_entry_id = ce.id AND project_party_id = ?
+				)
+			`, defaultProjectID, defaultProjectID).Error; err != nil {
+				return fmt.Errorf("assigning catalog entries to default project: %w", err)
+			}
+
+			slog.Info("migration007: party archetype tables created and seeded")
 			return nil
 		},
 	}
