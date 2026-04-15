@@ -15,19 +15,26 @@ interface Props {
   parties: Party[]
   excludedIds: Set<string>
   existingMemberIds: Set<string>
+  kind?: 'group' | 'project'
+  roleOptions?: string[]
+  defaultRole?: string
+  cycleErrorMessage?: string
 }
 
-function translateError(msg: string): string {
-  if (msg.toLowerCase().includes('cycle')) {
-    return "This member is already in the group's ancestry — adding them would create a cycle."
-  }
+function translateError(msg: string, fallback: string): string {
+  if (msg.toLowerCase().includes('cycle')) return fallback
   return msg
 }
 
 export default function AddMemberDialog({
   open, onOpenChange, onAdded, groupId, parties, excludedIds, existingMemberIds,
+  kind = 'group',
+  roleOptions = ['member'],
+  defaultRole = 'member',
+  cycleErrorMessage = "This member is already in the group's ancestry — adding them would create a cycle.",
 }: Props) {
   const [selectedId, setSelectedId] = useState('')
+  const [role, setRole] = useState(defaultRole)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -35,19 +42,23 @@ export default function AddMemberDialog({
     p => !excludedIds.has(p.id) && !existingMemberIds.has(p.id) && p.kind !== 'project'
   )
 
-  const reset = () => { setSelectedId(''); setError(''); setSaving(false) }
+  const reset = () => { setSelectedId(''); setRole(defaultRole); setError(''); setSaving(false) }
 
   const handleSubmit = async () => {
     if (!selectedId) return
     setError('')
     setSaving(true)
     try {
-      await api.addGroupMember(groupId, selectedId)
+      if (kind === 'group') {
+        await api.addGroupMember(groupId, selectedId)
+      } else {
+        await api.addProjectMember(groupId, selectedId, role)
+      }
       onAdded()
       reset()
       onOpenChange(false)
     } catch (err) {
-      setError(translateError(err instanceof Error ? err.message : 'Failed to add member'))
+      setError(translateError(err instanceof Error ? err.message : 'Failed to add member', cycleErrorMessage))
       setSaving(false)
     }
   }
@@ -79,6 +90,20 @@ export default function AddMemberDialog({
               ))}
             </select>
           </div>
+          {roleOptions.length > 1 && (
+            <div className="space-y-2">
+              <label htmlFor="role-select" className="text-sm font-medium">Role</label>
+              <select
+                id="role-select"
+                aria-label="Role"
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+              >
+                {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+          )}
           {selectedId && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               Selected: <Badge variant="secondary">

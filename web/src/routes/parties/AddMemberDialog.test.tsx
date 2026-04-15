@@ -5,6 +5,7 @@ import AddMemberDialog from './AddMemberDialog'
 
 vi.mock('@/api', () => ({
   addGroupMember: vi.fn(),
+  addProjectMember: vi.fn(),
 }))
 
 import * as api from '@/api'
@@ -59,5 +60,27 @@ describe('AddMemberDialog', () => {
     await userEvent.selectOptions(screen.getByRole('combobox'), 'p2')
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
     await waitFor(() => expect(screen.getByText(/already in the group's ancestry/i)).toBeInTheDocument())
+  })
+
+  it('renders role select and posts with role for project kind', async () => {
+    mockApi.addProjectMember = vi.fn().mockResolvedValue(undefined)
+    const onAdded = vi.fn()
+    render(<AddMemberDialog
+      open={true}
+      onOpenChange={vi.fn()}
+      onAdded={onAdded}
+      groupId="proj1"
+      parties={parties}
+      excludedIds={new Set()}
+      existingMemberIds={new Set()}
+      kind="project"
+      roleOptions={['project:owner', 'project:developer', 'project:viewer']}
+      defaultRole="project:viewer"
+    />)
+    await userEvent.selectOptions(screen.getByLabelText('Member'), 'p2')
+    await userEvent.selectOptions(screen.getByLabelText('Role'), 'project:developer')
+    await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
+    await waitFor(() => expect(mockApi.addProjectMember).toHaveBeenCalledWith('proj1', 'p2', 'project:developer'))
+    expect(onAdded).toHaveBeenCalled()
   })
 })
