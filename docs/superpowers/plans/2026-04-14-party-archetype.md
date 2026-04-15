@@ -2082,7 +2082,28 @@ rtk git commit -m "feat(api): add catalog filter by project query param"
 
 ## Task 12: Final Validation
 
-- [ ] **Step 1: Full test suite**
+- [ ] **Step 1: update unit tests to cover new code paths (e.g. project filter, catalog-project handlers)**
+- [ ] **Step 3: add unit test on frontend for project filter in catalog list (if applicable)**
+- [ ]  **Step 2: write new e2e test in `e2e/party_archetype.spec.ts` that covers:**
+   - creating a new project via API
+   - creating a catalog entry via API
+   - assigning the catalog entry to the new project
+   - verifying the catalog entry appears when listing with the project filter
+   - verifying the catalog entry does not appear when listing without the project filter (if default project is not used)
+   - assigning the catalog entry to the default project and verifying it appears without the project filter
+   - verifying permissions are enforced for project-scoped endpoints
+   - verifying the bootstrap admin can access project-scoped endpoints
+   - verifying the project appears in the UI (manual check or screenshot test)
+   - verifying the new project can be listed via API and appears in the UI project list
+   - verifying group membership and permissions work with the new project archetype
+   - etc. — be creative and cover as many relevant scenarios as possible!
+- [ ] **Step 3: run the new e2e test and ensure it passes**
+- [ ] **Step 4: run the full test suite and ensure all tests pass**
+- [ ] **Step 5: do a final code review and sanity check of all changes**
+- [ ] **Step 6: commit any final fixes or improvements discovered during testing and review**
+
+```bash
+- [ ] **Step 3: Full test suite**
 
 ```bash
 rtk make all
@@ -2105,6 +2126,12 @@ TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/groups
 # List projects (should include 'default')
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/projects
+
+rtk make test-coverage
+rtk make e2e-test
+rtk make check
+rtk make web-test
+rtk make web-lint
 ```
 
 Expected: `/api/v1/projects` returns JSON array containing the default project.
@@ -2115,3 +2142,17 @@ Expected: `/api/v1/projects` returns JSON array containing the default project.
 rtk git add -A
 rtk git commit -m "feat(party): complete party archetype implementation"
 ```
+
+## Task 13: Update documentation
+
+- [ ] **Step 1: update api doc**
+- [ ] **Step 2: update README with new concepts and API usage examples**
+- [ ] **Step 3: update architecture doc with new party system and project scoping**
+- [ ] **Step 4: update migration guide with new party archetype changes**
+- [ ] **Step 5: update settings doc**
+- [ ] **Step 6: update auth doc**
+- [ ] **Step 7: add new screenshot with party archetype in e2e docs-screenshot.spec.ts**
+- [ ] **Step 8: run the e2e docs-screenshot.spec.ts**
+- [ ] **Step 9: update end user doc**
+- [ ] **Step 10: commit docs**
+
