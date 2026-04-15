@@ -118,7 +118,16 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if h.partyStore != nil {
 		if err := h.partyStore.CreatePersonForUser(r.Context(), user); err != nil {
-			slog.Error("creating person for new user", "user_id", user.ID, "err", err)
+			// Preserve the User↔Person 1:1 invariant (ADR-011) at rest:
+			// compensate the user insert we just did and fail the request so
+			// the client can retry. migration008 is a one-time backfill and
+			// will not self-heal orphan users created at runtime.
+			slog.Error("creating person for new user, rolling back user", "user_id", user.ID, "err", err)
+			if delErr := h.userStore.Delete(r.Context(), user.ID); delErr != nil {
+				slog.Error("rollback: delete user failed", "user_id", user.ID, "err", delErr)
+			}
+			ErrorResponse(w, http.StatusInternalServerError, "failed to create user")
+			return
 		}
 	}
 

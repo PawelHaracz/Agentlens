@@ -179,11 +179,11 @@ flowchart TD
 
 **Project roles:**
 
-| Role | `catalog:read` | `catalog:write` | `catalog:delete` | `party:write` |
-| :---: | :---: | :---: | :---: | :---: |
-| `project:owner` | ✓ | ✓ | ✓ | ✓ |
-| `project:developer` | ✓ | ✓ | — | — |
-| `project:viewer` | ✓ | — | — | — |
+| Role | `catalog:read` | `catalog:write` | `catalog:delete` |
+| :---: | :---: | :---: | :---: |
+| `project:owner` | ✓ | ✓ | ✓ |
+| `project:developer` | ✓ | ✓ | — |
+| `project:viewer` | ✓ | — | — |
 
 Global system roles (`admin`, `editor`, `viewer`) are orthogonal — admins always pass `RequireProjectPermission` regardless of party membership.
 

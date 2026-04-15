@@ -23,7 +23,6 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/db"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
-	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/server"
 	"github.com/PawelHaracz/agentlens/internal/store"
 	"github.com/PawelHaracz/agentlens/internal/telemetry"
@@ -167,14 +166,12 @@ func main() {
 		_, _ = os.Stdout.WriteString("============================================\n")
 
 		// Create Person party for the newly bootstrapped admin user.
+		// CreatePersonForUser centralizes the display_name-or-username name
+		// formula and is idempotent, so re-runs (e.g. if a Person already
+		// exists with the admin's user_id) are safe no-ops.
 		adminUser, uErr := userStore.GetByUsername(context.Background(), "admin")
 		if uErr == nil && adminUser != nil {
-			adminParty := &model.Party{
-				Kind:   model.PartyKindPerson,
-				Name:   adminUser.Username,
-				UserID: &adminUser.ID,
-			}
-			if pErr := partyStore.CreateParty(context.Background(), adminParty); pErr != nil {
+			if pErr := partyStore.CreatePersonForUser(context.Background(), adminUser); pErr != nil {
 				slog.Warn("failed to create Person party for bootstrap admin", "err", pErr)
 			}
 		}

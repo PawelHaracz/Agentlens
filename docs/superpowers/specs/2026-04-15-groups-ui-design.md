@@ -21,7 +21,7 @@ Expose the existing party archetype **groups** backend API through the AgentLens
 ## Context & Constraints
 
 - Backend endpoints are live: `GET/POST /api/v1/groups`, `GET/DELETE /api/v1/groups/{id}`, `GET/POST /api/v1/groups/{id}/members`, `DELETE /api/v1/groups/{id}/members/{memberPartyID}` (see [docs/api.md](../../api.md)).
-- Permission check on the backend is `party:write` for all mutating endpoints; read endpoints are auth-gated only.
+- Permission check on the backend is `users:write` for all mutating endpoints; read endpoints are auth-gated only.
 - ADR-007 locks us to React 18 + React Router v6 + shadcn/ui + TanStack React Query + Vite + TypeScript.
 - ADR-011 defines `Party`, `PartyRelationship`, and the party kinds. The UI model mirrors these directly.
 - Backend cycle detection rejects edges that would create loops; the UI pre-empts this client-side where feasible but also surfaces backend errors gracefully.
@@ -125,11 +125,11 @@ export function listParties(kind?: 'person' | 'group' | 'project'): Promise<Part
 ### GroupsTab (inside `SettingsPage`)
 
 - shadcn `<Table>` with columns: **Name**, **Direct members** (count), **Created**, **Actions**.
-- Top-right **Create group** button. Hidden if the current user lacks `party:write`.
+- Top-right **Create group** button. Hidden if the current user lacks `users:write`.
 - Row click navigates to `/settings/groups/<id>`.
-- Per-row **Delete** icon button (trash icon, `variant="ghost"`). Hidden without `party:write`. Click opens shadcn `<AlertDialog>` with confirm/cancel.
+- Per-row **Delete** icon button (trash icon, `variant="ghost"`). Hidden without `users:write`. Click opens shadcn `<AlertDialog>` with confirm/cancel.
 - Loading: shadcn `<Skeleton>` rows (3 rows) inside the table body.
-- Empty state: centered message *"No groups yet. Click **Create group** to get started."* (or *"No groups yet."* for users without `party:write`).
+- Empty state: centered message *"No groups yet. Click **Create group** to get started."* (or *"No groups yet."* for users without `users:write`).
 
 ### CreateGroupDialog
 
@@ -145,8 +145,8 @@ export function listParties(kind?: 'person' | 'group' | 'project'): Promise<Part
   - `← Back to Settings` link (routes back to `/settings` with the Groups tab active — preserve the tab via query string, e.g. `/settings?tab=groups`).
   - Group name (from `useQuery(['parties'])` lookup by `id`, with fallback to `getGroup(id)` if not found in the parties cache).
   - Created date.
-- **Members** section with an **Add member** button (hidden without `party:write`).
-- Members table columns: **Name**, **Kind** (shadcn `<Badge>`: *Person* or *Group*), **Actions** (remove icon, hidden without `party:write`).
+- **Members** section with an **Add member** button (hidden without `users:write`).
+- Members table columns: **Name**, **Kind** (shadcn `<Badge>`: *Person* or *Group*), **Actions** (remove icon, hidden without `users:write`).
 - 404 on fetch → inline empty state *"Group not found."* + back link.
 - Empty members state: *"No members yet. Click **Add member** to add the first person or group."*
 
@@ -175,10 +175,10 @@ export function listParties(kind?: 'person' | 'group' | 'project'): Promise<Part
 |---|---|---|
 | View groups list | auth | always visible |
 | View group detail | auth | always visible |
-| Create group | `party:write` | button hidden |
-| Delete group | `party:write` | button hidden |
-| Add member | `party:write` | button hidden |
-| Remove member | `party:write` | button hidden |
+| Create group | `users:write` | button hidden |
+| Delete group | `users:write` | button hidden |
+| Add member | `users:write` | button hidden |
+| Remove member | `users:write` | button hidden |
 
 Client-side gating is informative only; the backend remains authoritative. We add a `hasPermission(perm: string): boolean` helper on `AuthContext` if one doesn't already exist (check during implementation — if present, reuse).
 

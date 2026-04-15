@@ -57,7 +57,12 @@ func RequireProjectPermission(ps *store.PartyStore, us *store.UserStore, project
 			}
 
 			// Get/cache ancestor IDs for this request
-			ancestorIDs, ctx := cachedAncestorIDs(ctx, ps, userParty.ID)
+			ancestorIDs, ctx, ancErr := cachedAncestorIDs(ctx, ps, userParty.ID)
+			if ancErr != nil {
+				slog.Error("project permission: load ancestors", "user_id", userID, "err", ancErr)
+				ErrorResponse(w, http.StatusInternalServerError, "permission resolution failed")
+				return
+			}
 
 			// Step 2: group global roles
 			if len(ancestorIDs) > 0 {
@@ -96,17 +101,19 @@ func RequireProjectPermission(ps *store.PartyStore, us *store.UserStore, project
 }
 
 // cachedAncestorIDs returns ancestor group IDs from context cache (fast path)
-// or from the DB (first call per request). Returns an updated context with the cache set.
+// or from the DB (first call per request). Returns an updated context with the
+// cache set and a non-nil error if the underlying store call failed — callers
+// must distinguish that from the legitimate "no ancestors" case.
 // Returns a defensive copy of the slice so callers cannot mutate the cached value.
-func cachedAncestorIDs(ctx context.Context, ps *store.PartyStore, partyID string) ([]string, context.Context) {
+func cachedAncestorIDs(ctx context.Context, ps *store.PartyStore, partyID string) ([]string, context.Context, error) {
 	if cached, ok := ctx.Value(ancestorCacheKey{}).([]string); ok {
-		return append([]string(nil), cached...), ctx
+		return append([]string(nil), cached...), ctx, nil
 	}
 	ids, err := ps.AncestorGroupIDs(ctx, partyID)
 	if err != nil {
-		ids = nil
+		return nil, ctx, err
 	}
 	// Store a copy in the cache; return a copy to the caller
 	cached := append([]string(nil), ids...)
-	return cached, context.WithValue(ctx, ancestorCacheKey{}, cached)
+	return cached, context.WithValue(ctx, ancestorCacheKey{}, cached), nil
 }
