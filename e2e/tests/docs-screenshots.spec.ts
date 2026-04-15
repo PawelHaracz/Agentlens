@@ -224,11 +224,19 @@ test.describe('Documentation Screenshots', () => {
     if (projRes.ok()) {
       const proj = await projRes.json();
       projectId = proj.id as string;
-      // Assign the A2A entry to the project.
+      // Assign both protocols to the project so docs screenshots show a mixed catalog.
       await request.post(`${BASE}/api/v1/catalog/${a2aEntryId}/projects`, {
         headers: authHeader(token),
         data: { project_id: projectId },
       });
+      await request.post(`${BASE}/api/v1/catalog/${mcpEntryId}/projects`, {
+        headers: authHeader(token),
+        data: { project_id: projectId },
+      });
+      await request.post(`${BASE}/api/v1/catalog/${a2aCapEntryId}/projects`, {
+        headers: authHeader(token),
+        data: { project_id: projectId },
+      }).catch(() => {});
       // Add admin's Person party as project:owner so the detail screenshot shows a populated members table.
       const partiesRes = await request.get(`${BASE}/api/v1/parties?kind=person`, { headers: authHeader(token) });
       if (partiesRes.ok()) {
@@ -890,8 +898,9 @@ test.describe('Documentation Screenshots', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginViaUI(page);
     // Navigate to the catalog filtered to the seeded project.
-    // Shows only the entries assigned to that project.
-    await page.goto(`/catalog?project=${projectId}`);
+    // Shows only the entries assigned to that project. Catalog list is at `/`,
+    // not `/catalog` (which 404s silently to a blank screen).
+    await page.goto(`/?project=${projectId}`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `${DOCS_IMAGES}/catalog-project-filter.png`, fullPage: false });
   });

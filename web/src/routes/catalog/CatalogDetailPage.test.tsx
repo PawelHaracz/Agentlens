@@ -10,6 +10,7 @@ vi.mock('@/api', () => ({
   postProbe: vi.fn(),
   patchLifecycle: vi.fn(),
   getRawCard: vi.fn(),
+  listEntryProjects: vi.fn().mockResolvedValue([]),
 }))
 
 // Prism.js is not available in jsdom — mock it

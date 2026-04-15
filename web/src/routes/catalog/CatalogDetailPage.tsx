@@ -12,6 +12,7 @@ import ProtocolBadge from '../../components/ProtocolBadge'
 import { SpecVersionBadge } from './components/SpecVersionBadge'
 import { RawCardTab } from './components/RawCardTab'
 import { AuthenticationSection } from './components/AuthenticationSection'
+import { EntryProjectsSection } from './components/EntryProjectsSection'
 
 type PageStatus = 'loading' | 'success' | 'error'
 
@@ -288,6 +289,9 @@ export default function CatalogDetailPage() {
             securityDetail={entry.security_detail}
             endpoint={entry.endpoint}
           />
+
+          {/* Projects */}
+          <EntryProjectsSection entryId={entry.id} />
         </TabsContent>
 
         {/* Raw Card tab */}

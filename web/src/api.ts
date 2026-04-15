@@ -404,6 +404,10 @@ export function removeEntryFromProject(entryId: string, projectId: string): Prom
   return request<void>(`/catalog/${entryId}/projects/${projectId}`, { method: 'DELETE' })
 }
 
+export function listEntryProjects(entryId: string): Promise<Party[]> {
+  return request<Party[]>(`/catalog/${entryId}/projects`)
+}
+
 /* ─── Parties API ─── */
 
 export function listParties(kind?: 'person' | 'group' | 'project'): Promise<Party[]> {

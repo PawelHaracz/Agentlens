@@ -913,9 +913,11 @@ Groups can be nested: add a group as a member of another group. Transitive membe
 
 ### Managing Projects
 
-Projects can be managed from the **Settings → Projects** tab in the web UI.
+Projects scope catalog entries and grant role-based access to people and groups. The full project workflow is reachable from the web UI and mirrored on the REST API — the following walkthrough uses the seeded *Docs Demo Project* (containing one A2A agent and one MCP server) to show each step end-to-end.
 
-Create a project:
+#### 1. Create a project
+
+From **Settings → Projects**, click *Create project* and enter a name. Or via API:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/projects \
@@ -924,10 +926,12 @@ curl -X POST http://localhost:8080/api/v1/projects \
   -d '{"name": "my-project"}'
 ```
 
-![Settings page showing the Projects tab populated with demo projects](images/projects-tab.png)
-*The Projects tab inside Settings — admins can create and delete projects here.*
+![Settings page showing the Projects tab with default and Docs Demo Project rows](images/projects-tab.png)
+*Projects tab — admins (global `catalog:write`) create and delete projects here. Clicking a row drills into the detail page.*
 
-Assign a person or group to the project with a role:
+#### 2. Add members with roles
+
+Projects have three built-in roles: `project:owner`, `project:developer`, `project:viewer`. Members can be persons (linked 1:1 to users) or groups — groups grant their role to every transitive member.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/projects/{projectID}/members \
@@ -936,47 +940,64 @@ curl -X POST http://localhost:8080/api/v1/projects/{projectID}/members \
   -d '{"party_id": "<partyID>", "role": "project:developer"}'
 ```
 
-![Project detail page showing members with roles and an assigned catalog entry](images/project-detail.png)
-*Project detail page — manage members (with roles) and assigned catalog entries.*
-
-List all projects:
+Change an existing member's role in place (no remove + re-add required):
 
 ```bash
-curl http://localhost:8080/api/v1/projects \
-  -H "Authorization: Bearer $TOKEN"
+curl -X PATCH http://localhost:8080/api/v1/projects/{projectID}/members/{memberID} \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"role": "project:owner"}'
 ```
 
-### Assigning Catalog Entries to a Project
+In the UI, click the role badge on a member row to open the edit dialog.
+
+#### 3. Assign catalog entries
+
+Each project owns a set of catalog entries. Assign an entry from the project detail page (*Assign entry* → search the catalog → pick) or via API:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/catalog/{entryID}/projects \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"project_party_id": "<projectID>"}'
+  -d '{"project_id": "<projectID>"}'
 ```
 
-Remove from a project:
+Unassign:
 
 ```bash
 curl -X DELETE http://localhost:8080/api/v1/catalog/{entryID}/projects/{projectID} \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### Filtering the Catalog by Project
+![Project detail page showing an owner, an A2A agent, and an MCP server assigned to the project](images/project-detail.png)
+*Project detail — members carry a role; the *Assigned catalog entries* panel mixes protocols (A2A + MCP) within one project. Remove-per-row controls are hidden for viewers.*
 
-Pass the `project` query parameter to `GET /api/v1/catalog` to return only entries in a specific project:
+Entries can belong to multiple projects; removing from one does not detach from the others.
+
+#### 4. Filter the catalog by project
+
+From the catalog list, use the *Projects* dropdown in the filter bar (or pass `?project=<id>` in the URL):
 
 ```bash
 curl "http://localhost:8080/api/v1/catalog?project=<projectID>" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-![Catalog filtered to show only entries in the Docs Demo Project](images/catalog-project-filter.png)
-*Catalog list with `?project=<id>` — only entries assigned to that project appear.*
+![Catalog list filtered to the Docs Demo Project, showing both the A2A and MCP entries](images/catalog-project-filter.png)
+*The catalog list, filtered to a single project. "All projects" in the dropdown clears the filter.*
 
-Omitting the parameter returns all entries regardless of project membership.
+Omitting the parameter returns every entry regardless of project membership.
 
-To see which projects a specific catalog entry belongs to:
+#### 5. See projects from an entry
 
-![Agent detail page showing the entry's project memberships](images/catalog-entry-projects.png)
-*The entry detail page lists all projects the entry is assigned to.*
+The reverse view — which projects does *this entry* belong to — is surfaced on the catalog entry detail page. Project badges are clickable links back to the corresponding project detail page.
+
+![Agent detail page showing the Docs Demo Project badge below the authentication section](images/catalog-entry-projects.png)
+*Catalog entry detail — the *Projects* section lists every project the entry is currently assigned to.*
+
+#### List all projects
+
+```bash
+curl http://localhost:8080/api/v1/projects \
+  -H "Authorization: Bearer $TOKEN"
+```
