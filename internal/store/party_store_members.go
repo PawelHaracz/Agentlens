@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -9,6 +10,11 @@ import (
 
 	"github.com/PawelHaracz/agentlens/internal/model"
 )
+
+// ErrMemberNotFound is returned by UpdateMemberRole when no PartyRelationship
+// matches the supplied (from, to, relationship, oldRole) tuple. Callers should
+// map this to HTTP 404, not 500.
+var ErrMemberNotFound = errors.New("member relationship not found")
 
 // AddMember creates a PartyRelationship and rebuilds the full closure table if it is a
 // containment relationship (as defined by model.ContainmentRelationships).
@@ -104,8 +110,8 @@ func (s *PartyStore) UpdateMemberRole(ctx context.Context, params UpdateMemberRo
 		return fmt.Errorf("updating member role: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("member relationship not found: from=%s to=%s relationship=%s role=%s",
-			params.FromPartyID, params.ToPartyID, params.RelationshipName, params.OldRole)
+		return fmt.Errorf("%w: from=%s to=%s relationship=%s role=%s",
+			ErrMemberNotFound, params.FromPartyID, params.ToPartyID, params.RelationshipName, params.OldRole)
 	}
 	return nil
 }

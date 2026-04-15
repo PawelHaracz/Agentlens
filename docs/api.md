@@ -1276,17 +1276,15 @@ Remove a member from a project. **Requires auth.** Permission: `catalog:write`.
 
 ---
 
-### `PATCH /api/v1/projects/{projectID}/members/{memberID}`
+### `PATCH /api/v1/projects/{partyID}/members/{memberID}`
 
-Update a member's role on a project in place.
+Update a member's role on a project in place. **Requires auth.** Permission: `catalog:write`.
 
-- **Permission:** `catalog:write`
-- **Body:** `{"role": "project:owner" | "project:developer" | "project:viewer"}`
-- **Responses:**
-  - `204 No Content` — role updated
-  - `400 Bad Request` — missing or invalid role
-  - `403 Forbidden` — caller lacks `catalog:write`
-  - `404 Not Found` — no such membership
+**Body:** `{"role": "project:owner" | "project:developer" | "project:viewer"}`
+
+**Response 204.**
+
+**Errors:** `400` missing or invalid role · `403` insufficient permissions · `404` member not found · `500 Internal Server Error`
 
 ---
 

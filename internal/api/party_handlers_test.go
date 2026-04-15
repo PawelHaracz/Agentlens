@@ -227,6 +227,24 @@ func TestUpdateMemberRoleHandler_PermissionDenied(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, patchW.Code)
 }
 
+func TestUpdateMemberRoleHandler_MemberNotFound(t *testing.T) {
+	router, ps := newPartyTestRouter(t)
+	adminToken := partyAuthHeader(t, []string{"catalog:write"})
+
+	// Create a project party but do NOT add any member.
+	proj := &model.Party{Kind: model.PartyKindProject, Name: "myproject-notfound"}
+	require.NoError(t, ps.CreateParty(context.Background(), proj))
+
+	// PATCH against a random UUID that was never added as a member.
+	patchBody, _ := json.Marshal(map[string]string{"role": "project:developer"})
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/v1/projects/"+proj.ID+"/members/00000000-0000-0000-0000-000000000001", bytes.NewReader(patchBody))
+	patchReq.Header.Set("Authorization", adminToken)
+	patchReq.Header.Set("Content-Type", "application/json")
+	patchW := httptest.NewRecorder()
+	router.ServeHTTP(patchW, patchReq)
+	assert.Equal(t, http.StatusNotFound, patchW.Code)
+}
+
 func TestListCatalog_FilteredByProject_ReturnsOK(t *testing.T) {
 	router, _ := newPartyTestRouter(t)
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -217,6 +218,10 @@ func UpdateMemberRoleHandler(cfg PartyKindConfig, ps *store.PartyStore) http.Han
 			ErrorResponse(w, http.StatusNotFound, "member not found")
 			return
 		}
+		// Optimistic: another request could mutate this membership between the
+		// ListMembers lookup and the UpdateMemberRole call. The WHERE clause in
+		// UpdateMemberRole includes the OldRole we observed, so the race surfaces
+		// as ErrMemberNotFound (mapped to 404) rather than corrupting state.
 		if err := ps.UpdateMemberRole(r.Context(), store.UpdateMemberRoleParams{
 			FromPartyID:      memberPartyID,
 			ToPartyID:        toPartyID,
@@ -224,6 +229,10 @@ func UpdateMemberRoleHandler(cfg PartyKindConfig, ps *store.PartyStore) http.Han
 			OldRole:          oldRole,
 			NewRole:          req.Role,
 		}); err != nil {
+			if errors.Is(err, store.ErrMemberNotFound) {
+				ErrorResponse(w, http.StatusNotFound, "member not found")
+				return
+			}
 			slog.Error("updating member role", "err", err)
 			ErrorResponse(w, http.StatusInternalServerError, "failed to update role")
 			return
