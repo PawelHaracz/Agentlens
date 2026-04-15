@@ -141,31 +141,29 @@ All permissions follow the `resource:action` format:
 
 ## Project-Scoped RBAC
 
-In addition to global roles, AgentLens supports **project-scoped roles** via the party archetype. A user (or any group they belong to) can be assigned a role on a specific project.
+In addition to global roles, AgentLens models **project-scoped roles** via the party archetype. A user (or any group they belong to) can be assigned a role on a specific project, and `GET /api/v1/auth/me/projects` resolves the user's effective role per project per [ADR-014](adr/014-project-role-resolution-highest-privilege.md).
 
-### Project Roles
+### Project Roles (model)
 
-| Role | `catalog:read` | `catalog:write` | `catalog:delete` | `party:write` |
-| --- | --- | --- | --- | --- |
-| `project:owner` | ✓ | ✓ | ✓ | ✓ |
-| `project:developer` | ✓ | ✓ | — | — |
-| `project:viewer` | ✓ | — | — | — |
+| Role | Intended scope |
+| --- | --- |
+| `project:owner` | Full control over project membership and assigned catalog entries |
+| `project:developer` | Read + write of catalog entries within the project |
+| `project:viewer` | Read-only access to the project's catalog entries |
 
-### How it works
+### Current enforcement model
 
-1. Each user has a **Person** party created automatically at bootstrap.
-2. Person parties can be members of **Group** parties (hierarchical, transitive closure pre-computed).
+1. Each user has a **Person** party (auto-created on user create; backfilled by `migration008`).
+2. Person parties can be members of **Group** parties (hierarchical, transitive closure pre-computed per [ADR-012](adr/012-materialized-group-closure-for-permission-resolution.md)).
 3. Groups or persons can be assigned a role on a **Project** party via a `project_member` relationship.
-4. When accessing project-scoped endpoints (`/api/v1/projects/{id}/...`, `/api/v1/catalog/{id}/projects`), the `RequireProjectPermission` middleware resolves the effective role by:
-   - Looking up the user's Person party
-   - Fetching all ancestor group IDs from `party_group_closures`
-   - Finding the highest `project_member` role across the user's party and all ancestor groups
+4. `GET /api/v1/auth/me/projects` resolves the highest-privilege role per project across the user's Person and every ancestor group.
+5. **Mutation endpoints (`POST /api/v1/projects/{id}/members`, `POST /api/v1/catalog/{id}/projects`, etc.) currently gate on the global `catalog:write`/`users:write` permissions, NOT on project-scoped roles.** Project-role-aware mutation gating is implemented in `internal/api/party_middleware.go` (`RequireProjectPermission`) but is intentionally not yet wired into routes — see Spec 2 D6.
 
 ### Notes
 
-- Global `admin` role bypasses all project permission checks.
+- Global `admin` role bypasses all permission checks (project or otherwise).
 - Project membership is managed via `POST /api/v1/projects/{id}/members`.
-- New catalog entries are auto-assigned to the `default` system project.
+- New catalog entries are auto-assigned to the `default` system project inside the same transaction as the entry create.
 
 ---
 

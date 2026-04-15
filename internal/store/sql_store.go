@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"sort"
 	"strings"
 
@@ -251,6 +250,19 @@ func (s *SQLStore) Create(ctx context.Context, entry *model.CatalogEntry) error 
 
 	entry.SyncToDB()
 
+	// Resolve default project before the transaction (read-only). If the
+	// PartyStore is unavailable, skip the membership insert entirely (no-op).
+	var defaultProjectID string
+	if s.partyStore != nil {
+		def, defErr := s.partyStore.GetDefaultProject(ctx)
+		if defErr != nil {
+			return fmt.Errorf("resolving default project: %w", defErr)
+		}
+		if def != nil {
+			defaultProjectID = def.ID
+		}
+	}
+
 	if err := s.gdb.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. Create AgentType.
 		if err := tx.Create(entry.AgentType).Error; err != nil {
@@ -277,20 +289,22 @@ func (s *SQLStore) Create(ctx context.Context, entry *model.CatalogEntry) error 
 		if err := tx.Create(entry).Error; err != nil {
 			return fmt.Errorf("inserting catalog entry: %w", err)
 		}
+
+		// 4. Auto-assign to the default project in the same transaction so
+		// the "every entry belongs to default" invariant holds at rest.
+		if defaultProjectID != "" {
+			if err := tx.Create(&model.CatalogProjectMembership{
+				CatalogEntryID: entry.ID,
+				ProjectPartyID: defaultProjectID,
+			}).Error; err != nil {
+				return fmt.Errorf("assigning entry to default project: %w", err)
+			}
+		}
 		return nil
 	}); err != nil {
 		return err
 	}
 
-	// Auto-assign to default project (best-effort — log on failure, don't break catalog write)
-	if s.partyStore != nil {
-		if def, defErr := s.partyStore.GetDefaultProject(ctx); defErr == nil && def != nil {
-			if assignErr := s.partyStore.AssignToProject(ctx, entry.ID, def.ID); assignErr != nil {
-				slog.Warn("failed to assign new catalog entry to default project",
-					"entry_id", entry.ID, "err", assignErr)
-			}
-		}
-	}
 	return nil
 }
 

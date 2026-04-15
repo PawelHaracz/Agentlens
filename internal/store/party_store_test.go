@@ -16,6 +16,12 @@ func newTestPartyDB(t *testing.T) *db.DB {
 	t.Helper()
 	database, err := db.Open(db.DialectSQLite, ":memory:")
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		sqlDB, _ := database.DB.DB()
+		if sqlDB != nil {
+			_ = sqlDB.Close()
+		}
+	})
 	migrator := db.NewMigrator(database, db.AllMigrations())
 	require.NoError(t, migrator.Migrate(context.Background()))
 	return database

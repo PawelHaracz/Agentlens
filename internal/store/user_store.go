@@ -103,6 +103,9 @@ func (s *UserStore) UpdateLastLogin(ctx context.Context, id string) error {
 // GetRolesForParties returns the global Role records for parties listed in partyIDs
 // via the global_party_roles join table.
 func (s *UserStore) GetRolesForParties(ctx context.Context, partyIDs []string) ([]model.Role, error) {
+	if len(partyIDs) == 0 {
+		return []model.Role{}, nil
+	}
 	var roles []model.Role
 	if err := s.db.WithContext(ctx).
 		Joins("JOIN global_party_roles gpr ON gpr.role_id = roles.id").

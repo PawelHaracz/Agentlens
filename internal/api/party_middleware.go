@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -14,6 +15,13 @@ type ancestorCacheKey struct{}
 
 // RequireProjectPermission checks that the authenticated user has the given permission
 // in the project identified by the chi URL parameter projectIDParam.
+//
+// NOTE: This middleware is intentionally NOT wired into any routes yet — Spec 2 D6
+// deferred project-role-aware mutation gating. Mutations on /projects/* and
+// /catalog/{id}/projects currently gate on global catalog:write only. The
+// middleware exists so that wiring it on can be a single-line route change once
+// the deferred work is scheduled. Removing it would force a re-implementation
+// of closure caching and the resolution order documented below.
 //
 // Resolution order:
 //  1. Global bypass: if user's JWT permissions contain `permission` → ALLOW
@@ -35,9 +43,15 @@ func RequireProjectPermission(ps *store.PartyStore, us *store.UserStore, project
 			userID := UserIDFromContext(ctx)
 			projectID := chi.URLParam(r, projectIDParam)
 
-			// Resolve user's party
+			// Resolve user's party. Distinguish "no person yet" (legitimate
+			// 403) from store errors (operational 500).
 			userParty, err := ps.GetPartyByUserID(ctx, userID)
-			if err != nil || userParty == nil {
+			if err != nil {
+				slog.Error("project permission: load person", "user_id", userID, "err", err)
+				ErrorResponse(w, http.StatusInternalServerError, "permission resolution failed")
+				return
+			}
+			if userParty == nil {
 				ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
 				return
 			}
@@ -48,12 +62,15 @@ func RequireProjectPermission(ps *store.PartyStore, us *store.UserStore, project
 			// Step 2: group global roles
 			if len(ancestorIDs) > 0 {
 				groupRoles, err := us.GetRolesForParties(ctx, ancestorIDs)
-				if err == nil {
-					for _, role := range groupRoles {
-						if auth.HasPermission([]string(role.Permissions), permission) {
-							next.ServeHTTP(w, r.WithContext(ctx))
-							return
-						}
+				if err != nil {
+					slog.Error("project permission: load group roles", "user_id", userID, "err", err)
+					ErrorResponse(w, http.StatusInternalServerError, "permission resolution failed")
+					return
+				}
+				for _, role := range groupRoles {
+					if auth.HasPermission([]string(role.Permissions), permission) {
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
 					}
 				}
 			}
@@ -61,12 +78,15 @@ func RequireProjectPermission(ps *store.PartyStore, us *store.UserStore, project
 			// Step 3: project-scoped roles
 			fromIDs := append([]string{userParty.ID}, ancestorIDs...)
 			projectRoles, err := ps.GetProjectRoles(ctx, fromIDs, projectID)
-			if err == nil {
-				for _, role := range projectRoles {
-					if auth.ProjectRoleHasPermission(role, permission) {
-						next.ServeHTTP(w, r.WithContext(ctx))
-						return
-					}
+			if err != nil {
+				slog.Error("project permission: load project roles", "user_id", userID, "project_id", projectID, "err", err)
+				ErrorResponse(w, http.StatusInternalServerError, "permission resolution failed")
+				return
+			}
+			for _, role := range projectRoles {
+				if auth.ProjectRoleHasPermission(role, permission) {
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
 				}
 			}
 

@@ -23,6 +23,12 @@ func newPartyTestRouter(t *testing.T) (http.Handler, *store.PartyStore) {
 	t.Helper()
 	database, err := db.Open(db.DialectSQLite, ":memory:")
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		sqlDB, _ := database.DB.DB()
+		if sqlDB != nil {
+			_ = sqlDB.Close()
+		}
+	})
 	require.NoError(t, db.NewMigrator(database, db.AllMigrations()).Migrate(context.Background()))
 
 	catalogStore := store.NewSQLStore(database)
@@ -97,14 +103,16 @@ func TestListGroups_ReturnsOK(t *testing.T) {
 	assert.GreaterOrEqual(t, len(groups), 1)
 }
 
-func TestRequireProjectPermission_GlobalAdminBypasses(t *testing.T) {
+// TestGetProject_GlobalAdminCanRead verifies an admin token can fetch a
+// project of the matching kind. RequireProjectPermission middleware is not
+// yet wired onto these routes (see Spec 2 D6); this test simply asserts the
+// happy-path GET works end-to-end through the router with a global token.
+func TestGetProject_GlobalAdminCanRead(t *testing.T) {
 	router, ps := newPartyTestRouter(t)
 
-	// Create a project
 	proj := &model.Party{Kind: model.PartyKindProject, Name: "myproject"}
 	require.NoError(t, ps.CreateParty(context.Background(), proj))
 
-	// global admin permissions bypass project check
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/projects/"+proj.ID, nil)
 	req.Header.Set("Authorization", partyAuthHeader(t, []string{
 		"catalog:read", "catalog:write", "catalog:delete",
@@ -115,7 +123,6 @@ func TestRequireProjectPermission_GlobalAdminBypasses(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	// 200 because kind matches and global admin bypasses project permission check
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 

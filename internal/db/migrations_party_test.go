@@ -76,6 +76,7 @@ func TestMigration007_TablesExist(t *testing.T) {
 
 	sqlDB, err := database.DB.DB()
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = sqlDB.Close() })
 
 	tables := []string{
 		"parties",

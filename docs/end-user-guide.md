@@ -880,15 +880,17 @@ AgentLens uses a **party archetype** to model actors and their relationships:
 
 A `default` system project is seeded on first run. All new catalog entries are automatically assigned to it.
 
-**Project roles** control what members can do inside a project:
+**Project roles** describe a member's intended responsibility within a project. They are surfaced in the UI (My Account → My projects, project detail member rows) and via `GET /api/v1/auth/me/projects`, but **catalog mutation endpoints currently gate on the global `catalog:write` permission, not on these project roles**:
 
-| Role | View entries | Register / update | Delete | Manage members |
-| --- | --- | --- | --- | --- |
-| `project:owner` | ✓ | ✓ | ✓ | ✓ |
-| `project:developer` | ✓ | ✓ | — | — |
-| `project:viewer` | ✓ | — | — | — |
+| Role | Intended responsibility |
+| --- | --- |
+| `project:owner` | Owns the project; manages members and assigned entries |
+| `project:developer` | Contributes to and maintains catalog entries in the project |
+| `project:viewer` | Read-only consumer of the project's entries |
 
-Global `admin` users bypass all project permission checks.
+Project-role-aware enforcement is implemented at the middleware layer (`RequireProjectPermission`) but not yet wired into mutation routes (see [auth.md](auth.md#project-scoped-rbac) and Spec 2 decision D6). Until it is, any user with global `catalog:write` can mutate any project.
+
+Global `admin` users bypass every permission check.
 
 ### Managing Groups
 
