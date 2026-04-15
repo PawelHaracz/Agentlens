@@ -67,15 +67,7 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 			Where("cpm.project_party_id = ?", filter.ProjectID)
 	}
 
-	switch filter.Sort {
-	case "displayName_asc":
-		query = query.Order("catalog_entries.display_name ASC")
-	case "createdAt_desc":
-		query = query.Order("catalog_entries.created_at DESC")
-	default: // "lastSuccessAt_desc" or empty
-		query = query.Order("catalog_entries.health_last_success_at DESC NULLS LAST, catalog_entries.display_name ASC")
-	}
-
+	query = applyListSort(query, filter.Sort)
 	if filter.Limit > 0 {
 		query = query.Limit(filter.Limit)
 	}
@@ -94,6 +86,17 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 		entries[i].SyncFromDB()
 	}
 	return entries, nil
+}
+
+func applyListSort(query *gorm.DB, sort string) *gorm.DB {
+	switch sort {
+	case "displayName_asc":
+		return query.Order("catalog_entries.display_name ASC")
+	case "createdAt_desc":
+		return query.Order("catalog_entries.created_at DESC")
+	default:
+		return query.Order("catalog_entries.health_last_success_at DESC NULLS LAST, catalog_entries.display_name ASC")
+	}
 }
 
 // ListForProbing returns entries due for a health probe. Entries are excluded
