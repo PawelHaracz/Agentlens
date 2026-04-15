@@ -95,6 +95,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(body.error ?? res.statusText)
   }
   if (res.status === 204) return undefined as T
+  if (typeof res.json !== 'function') return undefined as T
   return res.json() as Promise<T>
 }
 
@@ -110,6 +111,7 @@ export function listCatalog(filter: ListFilter = {}): Promise<CatalogEntry[]> {
   if (filter.limit !== undefined) params.set('limit', String(filter.limit))
   if (filter.offset !== undefined) params.set('offset', String(filter.offset))
   if (filter.sort) params.set('sort', filter.sort)
+  if (filter.project) params.set('project', filter.project)
   const qs = params.toString()
   return request<CatalogEntry[]>(`/catalog${qs ? '?' + qs : ''}`)
 }
@@ -348,6 +350,59 @@ export function removeGroupMember(groupId: string, memberPartyId: string): Promi
   return request<void>(`/groups/${groupId}/members/${memberPartyId}`, {
     method: 'DELETE',
   })
+}
+
+/* ─── Projects API ─── */
+
+export function listProjects(): Promise<Party[]> {
+  return request<Party[]>('/projects')
+}
+
+export function getProject(id: string): Promise<Party> {
+  return request<Party>(`/projects/${id}`)
+}
+
+export function createProject(data: { name: string }): Promise<Party> {
+  return request<Party>('/projects', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function deleteProject(id: string): Promise<void> {
+  return request<void>(`/projects/${id}`, { method: 'DELETE' })
+}
+
+export function listProjectMembers(id: string): Promise<PartyRelationship[]> {
+  return request<PartyRelationship[]>(`/projects/${id}/members`)
+}
+
+export function addProjectMember(projectId: string, partyId: string, role: string): Promise<void> {
+  return request<void>(`/projects/${projectId}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ party_id: partyId, role }),
+  })
+}
+
+export function removeProjectMember(projectId: string, memberPartyId: string): Promise<void> {
+  return request<void>(`/projects/${projectId}/members/${memberPartyId}`, { method: 'DELETE' })
+}
+
+export function updateProjectMemberRole(projectId: string, memberPartyId: string, role: string): Promise<void> {
+  return request<void>(`/projects/${projectId}/members/${memberPartyId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  })
+}
+
+/* ─── Catalog × Project assignment ─── */
+
+export function assignEntryToProject(entryId: string, projectId: string): Promise<void> {
+  return request<void>(`/catalog/${entryId}/projects`, {
+    method: 'POST',
+    body: JSON.stringify({ project_party_id: projectId }),
+  })
+}
+
+export function removeEntryFromProject(entryId: string, projectId: string): Promise<void> {
+  return request<void>(`/catalog/${entryId}/projects/${projectId}`, { method: 'DELETE' })
 }
 
 /* ─── Parties API ─── */

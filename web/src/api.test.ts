@@ -526,4 +526,92 @@ describe('Parties API', () => {
     await api.listParties('person')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/parties?kind=person', expect.any(Object))
   })
+
+  it('listProjects GETs /api/v1/projects', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve([]),
+    })
+    await api.listProjects()
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects', expect.any(Object))
+  })
+
+  it('createProject POSTs to /api/v1/projects', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 201, json: () => Promise.resolve({ id: 'p1' }),
+    })
+    await api.createProject({ name: 'proj' })
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects', expect.objectContaining({
+      method: 'POST', body: JSON.stringify({ name: 'proj' }),
+    }))
+  })
+
+  it('deleteProject sends DELETE', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    await api.deleteProject('p1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1', expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('getProject GETs /api/v1/projects/:id', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve({ id: 'p1' }),
+    })
+    await api.getProject('p1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1', expect.any(Object))
+  })
+
+  it('listProjectMembers GETs /api/v1/projects/:id/members', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve([]),
+    })
+    await api.listProjectMembers('p1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1/members', expect.any(Object))
+  })
+
+  it('addProjectMember POSTs with party_id + role', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    await api.addProjectMember('p1', 'm1', 'project:developer')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1/members', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ party_id: 'm1', role: 'project:developer' }),
+    }))
+  })
+
+  it('removeProjectMember DELETEs', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    await api.removeProjectMember('p1', 'm1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1/members/m1', expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('updateProjectMemberRole PATCHes with role', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    await api.updateProjectMemberRole('p1', 'm1', 'project:owner')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1/members/m1', expect.objectContaining({
+      method: 'PATCH', body: JSON.stringify({ role: 'project:owner' }),
+    }))
+  })
+
+  it('assignEntryToProject POSTs to /api/v1/catalog/:entryId/projects', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 201 })
+    await api.assignEntryToProject('e1', 'p1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/catalog/e1/projects', expect.objectContaining({
+      method: 'POST', body: JSON.stringify({ project_party_id: 'p1' }),
+    }))
+  })
+
+  it('removeEntryFromProject DELETEs', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    await api.removeEntryFromProject('e1', 'p1')
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/catalog/e1/projects/p1', expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('listCatalog sends project filter', async () => {
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve([]),
+    })
+    await api.listCatalog({ project: 'p1' })
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('project=p1'),
+      expect.any(Object)
+    )
+  })
 })

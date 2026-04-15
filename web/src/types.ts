@@ -85,6 +85,7 @@ export interface ListFilter {
   protocol?: Protocol
   status?: LifecycleState  // single status backward compat
   source?: SourceType
+  project?: string
   team?: string
   q?: string
   categories?: string
