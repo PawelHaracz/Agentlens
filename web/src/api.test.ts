@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { validateAgentCard, createAgentFromCard, setToken } from './api'
+import * as api from './api'
 import type { ValidationResult, CatalogEntry } from './types'
 
 const originalFetch = globalThis.fetch
@@ -430,5 +431,34 @@ describe('updateSettings', () => {
     globalThis.fetch = vi.fn().mockResolvedValue(mockNoContent())
     await updateSettings({ 'ui.theme': 'dark' })
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/settings', expect.objectContaining({ method: 'PUT' }))
+  })
+})
+
+describe('Parties API', () => {
+  beforeEach(() => {
+    (globalThis.fetch as unknown) = vi.fn()
+    api.setToken('test-token')
+  })
+
+  it('listGroups GETs /api/v1/groups and returns array', async () => {
+    const mockGroups = [{ id: 'g1', kind: 'group', name: 'platform', is_system: false, created_at: '', updated_at: '' }]
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve(mockGroups),
+    })
+    const result = await api.listGroups()
+    expect(result).toEqual(mockGroups)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups', expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
+    }))
+  })
+
+  it('getGroup GETs /api/v1/groups/:id', async () => {
+    const mockGroup = { id: 'g1', kind: 'group', name: 'platform', is_system: false, created_at: '', updated_at: '' }
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve(mockGroup),
+    })
+    const result = await api.getGroup('g1')
+    expect(result).toEqual(mockGroup)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1', expect.any(Object))
   })
 })

@@ -32,6 +32,27 @@ export interface Setting {
   description: string
 }
 
+/* ─── Party Archetype types ─── */
+
+export interface Party {
+  id: string
+  kind: 'person' | 'group' | 'project'
+  name: string
+  user_id?: string
+  is_system: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface PartyRelationship {
+  id: string
+  from_party_id: string
+  from_role: string
+  to_party_id: string
+  to_role: string
+  relationship_name: string
+}
+
 export interface LoginResponse {
   token: string
   user: User
@@ -289,4 +310,14 @@ export async function getCapabilityAgents(
   return request<CapabilityDetailResponse>(`/capabilities/${key}`, {
     method: 'GET',
   })
+}
+
+/* ─── Groups API ─── */
+
+export function listGroups(): Promise<Party[]> {
+  return request<Party[]>('/groups')
+}
+
+export function getGroup(id: string): Promise<Party> {
+  return request<Party>(`/groups/${id}`)
 }
