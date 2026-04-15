@@ -883,6 +883,8 @@ Global `admin` users bypass all project permission checks.
 
 ### Managing Groups
 
+Groups can be managed from the **Settings → Groups** tab in the web UI, or via the REST API.
+
 Create a group via the REST API (editor or admin required):
 
 ```bash
@@ -892,6 +894,9 @@ curl -X POST http://localhost:8080/api/v1/groups \
   -d '{"name": "platform-team"}'
 ```
 
+![Settings page showing the Groups tab populated with demo groups](images/groups-tab.png)
+*The Groups tab inside Settings — admins can create and delete groups here.*
+
 Add a person to a group (use the person party ID, obtainable from `GET /api/v1/groups`):
 
 ```bash
@@ -900,6 +905,9 @@ curl -X POST http://localhost:8080/api/v1/groups/{groupID}/members \
   -H "Content-Type: application/json" \
   -d '{"party_id": "<personPartyID>", "role": "member"}'
 ```
+
+![Group detail page showing a mix of person and nested-group members](images/group-detail.png)
+*Group detail page — manage direct members (persons and nested groups).*
 
 Groups can be nested: add a group as a member of another group. Transitive membership is resolved automatically.
 
