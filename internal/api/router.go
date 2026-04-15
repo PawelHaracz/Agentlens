@@ -231,6 +231,7 @@ func RegisterPartyKindRoutes(r chi.Router, cfg PartyKindConfig, partyStore *stor
 			r.Get("/members", ListMembersHandler(cfg, partyStore))
 			r.Post("/members", AddMemberHandler(cfg, partyStore))
 			r.Delete("/members/{memberPartyID}", RemoveMemberHandler(cfg, partyStore))
+			r.Patch("/members/{memberPartyID}", UpdateMemberRoleHandler(cfg, partyStore))
 		})
 	})
 }

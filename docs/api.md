@@ -1276,6 +1276,20 @@ Remove a member from a project. **Requires auth.** Permission: `catalog:write`.
 
 ---
 
+### `PATCH /api/v1/projects/{projectID}/members/{memberID}`
+
+Update a member's role on a project in place.
+
+- **Permission:** `catalog:write`
+- **Body:** `{"role": "project:owner" | "project:developer" | "project:viewer"}`
+- **Responses:**
+  - `204 No Content` — role updated
+  - `400 Bad Request` — missing or invalid role
+  - `403 Forbidden` — caller lacks `catalog:write`
+  - `404 Not Found` — no such membership
+
+---
+
 ### `GET /api/v1/catalog/{id}/projects`
 
 List all projects a catalog entry belongs to. **Requires auth.**

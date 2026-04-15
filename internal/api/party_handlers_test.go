@@ -128,6 +128,105 @@ func TestCatalogAssignToProject_ReturnsUnauthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
+func TestUpdateMemberRoleHandler_Success(t *testing.T) {
+	router, ps := newPartyTestRouter(t)
+	adminToken := partyAuthHeader(t, []string{"catalog:write"})
+
+	// Create a project party
+	proj := &model.Party{Kind: model.PartyKindProject, Name: "myproject"}
+	require.NoError(t, ps.CreateParty(context.Background(), proj))
+
+	// Create a person party directly via store
+	person := &model.Party{Kind: model.PartyKindPerson, Name: "alice-person"}
+	require.NoError(t, ps.CreateParty(context.Background(), person))
+
+	// Add person to project with role project:viewer
+	addBody, _ := json.Marshal(map[string]string{"party_id": person.ID, "role": "project:viewer"})
+	addReq := httptest.NewRequest(http.MethodPost, "/api/v1/projects/"+proj.ID+"/members", bytes.NewReader(addBody))
+	addReq.Header.Set("Authorization", adminToken)
+	addReq.Header.Set("Content-Type", "application/json")
+	addW := httptest.NewRecorder()
+	router.ServeHTTP(addW, addReq)
+	require.Equal(t, http.StatusCreated, addW.Code)
+
+	// PATCH to project:developer
+	patchBody, _ := json.Marshal(map[string]string{"role": "project:developer"})
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/v1/projects/"+proj.ID+"/members/"+person.ID, bytes.NewReader(patchBody))
+	patchReq.Header.Set("Authorization", adminToken)
+	patchReq.Header.Set("Content-Type", "application/json")
+	patchW := httptest.NewRecorder()
+	router.ServeHTTP(patchW, patchReq)
+	assert.Equal(t, http.StatusNoContent, patchW.Code)
+
+	// Verify role updated via GET members
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/projects/"+proj.ID+"/members", nil)
+	getReq.Header.Set("Authorization", adminToken)
+	getW := httptest.NewRecorder()
+	router.ServeHTTP(getW, getReq)
+	require.Equal(t, http.StatusOK, getW.Code)
+	var rels []model.PartyRelationship
+	require.NoError(t, json.Unmarshal(getW.Body.Bytes(), &rels))
+	require.Len(t, rels, 1)
+	assert.Equal(t, "project:developer", rels[0].FromRole)
+}
+
+func TestUpdateMemberRoleHandler_InvalidRole(t *testing.T) {
+	router, ps := newPartyTestRouter(t)
+	adminToken := partyAuthHeader(t, []string{"catalog:write"})
+
+	proj := &model.Party{Kind: model.PartyKindProject, Name: "myproject2"}
+	require.NoError(t, ps.CreateParty(context.Background(), proj))
+
+	person := &model.Party{Kind: model.PartyKindPerson, Name: "bob-person"}
+	require.NoError(t, ps.CreateParty(context.Background(), person))
+
+	addBody, _ := json.Marshal(map[string]string{"party_id": person.ID, "role": "project:viewer"})
+	addReq := httptest.NewRequest(http.MethodPost, "/api/v1/projects/"+proj.ID+"/members", bytes.NewReader(addBody))
+	addReq.Header.Set("Authorization", adminToken)
+	addReq.Header.Set("Content-Type", "application/json")
+	addW := httptest.NewRecorder()
+	router.ServeHTTP(addW, addReq)
+	require.Equal(t, http.StatusCreated, addW.Code)
+
+	// PATCH with bogus role
+	patchBody, _ := json.Marshal(map[string]string{"role": "bogus"})
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/v1/projects/"+proj.ID+"/members/"+person.ID, bytes.NewReader(patchBody))
+	patchReq.Header.Set("Authorization", adminToken)
+	patchReq.Header.Set("Content-Type", "application/json")
+	patchW := httptest.NewRecorder()
+	router.ServeHTTP(patchW, patchReq)
+	assert.Equal(t, http.StatusBadRequest, patchW.Code)
+}
+
+func TestUpdateMemberRoleHandler_PermissionDenied(t *testing.T) {
+	router, ps := newPartyTestRouter(t)
+	adminToken := partyAuthHeader(t, []string{"catalog:write"})
+	viewerToken := partyAuthHeader(t, []string{"catalog:read"})
+
+	proj := &model.Party{Kind: model.PartyKindProject, Name: "myproject3"}
+	require.NoError(t, ps.CreateParty(context.Background(), proj))
+
+	person := &model.Party{Kind: model.PartyKindPerson, Name: "carol-person"}
+	require.NoError(t, ps.CreateParty(context.Background(), person))
+
+	addBody, _ := json.Marshal(map[string]string{"party_id": person.ID, "role": "project:viewer"})
+	addReq := httptest.NewRequest(http.MethodPost, "/api/v1/projects/"+proj.ID+"/members", bytes.NewReader(addBody))
+	addReq.Header.Set("Authorization", adminToken)
+	addReq.Header.Set("Content-Type", "application/json")
+	addW := httptest.NewRecorder()
+	router.ServeHTTP(addW, addReq)
+	require.Equal(t, http.StatusCreated, addW.Code)
+
+	// PATCH with viewer token — expect 403
+	patchBody, _ := json.Marshal(map[string]string{"role": "project:developer"})
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/v1/projects/"+proj.ID+"/members/"+person.ID, bytes.NewReader(patchBody))
+	patchReq.Header.Set("Authorization", viewerToken)
+	patchReq.Header.Set("Content-Type", "application/json")
+	patchW := httptest.NewRecorder()
+	router.ServeHTTP(patchW, patchReq)
+	assert.Equal(t, http.StatusForbidden, patchW.Code)
+}
+
 func TestListCatalog_FilteredByProject_ReturnsOK(t *testing.T) {
 	router, _ := newPartyTestRouter(t)
 

@@ -174,6 +174,64 @@ func RemoveMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.Handler
 	}
 }
 
+type updateMemberRoleRequest struct {
+	Role string `json:"role"`
+}
+
+// UpdateMemberRoleHandler changes a member's role on a party in place.
+func UpdateMemberRoleHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	validRoles := make(map[string]bool, len(cfg.ValidMemberRoles))
+	for _, r := range cfg.ValidMemberRoles {
+		validRoles[r] = true
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !auth.HasPermission(PermissionsFromContext(r.Context()), cfg.ManagePermission) {
+			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
+			return
+		}
+		toPartyID := chi.URLParam(r, "partyID")
+		memberPartyID := chi.URLParam(r, "memberPartyID")
+		var req updateMemberRoleRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if req.Role == "" || !validRoles[req.Role] {
+			ErrorResponse(w, http.StatusBadRequest, "invalid role for this party kind")
+			return
+		}
+		members, err := ps.ListMembers(r.Context(), toPartyID, cfg.MemberRelationship)
+		if err != nil {
+			slog.Error("listing members for role update", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to load member")
+			return
+		}
+		var oldRole string
+		for _, m := range members {
+			if m.FromPartyID == memberPartyID {
+				oldRole = m.FromRole
+				break
+			}
+		}
+		if oldRole == "" {
+			ErrorResponse(w, http.StatusNotFound, "member not found")
+			return
+		}
+		if err := ps.UpdateMemberRole(r.Context(), store.UpdateMemberRoleParams{
+			FromPartyID:      memberPartyID,
+			ToPartyID:        toPartyID,
+			RelationshipName: cfg.MemberRelationship,
+			OldRole:          oldRole,
+			NewRole:          req.Role,
+		}); err != nil {
+			slog.Error("updating member role", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to update role")
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 // ListMembersHandler lists all direct members of a party.
 func ListMembersHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
