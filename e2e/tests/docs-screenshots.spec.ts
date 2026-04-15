@@ -964,6 +964,9 @@ test.describe('Documentation Screenshots', () => {
     await page.goto('/settings');
     await page.getByRole('tab', { name: /my account/i }).click();
     await page.waitForLoadState('networkidle');
+    // Scroll the My projects card into view — it sits below the Profile
+    // and Change password cards, off the initial 1050px viewport.
+    await page.getByRole('heading', { name: /^my projects$/i }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${DOCS_IMAGES}/my-account-projects.png`, fullPage: false });
   });
 });
