@@ -227,7 +227,7 @@ test.describe('Documentation Screenshots', () => {
       // Assign the A2A entry to the project.
       await request.post(`${BASE}/api/v1/catalog/${a2aEntryId}/projects`, {
         headers: authHeader(token),
-        data: { project_party_id: projectId },
+        data: { project_id: projectId },
       });
     }
 

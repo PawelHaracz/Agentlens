@@ -396,7 +396,7 @@ export function updateProjectMemberRole(projectId: string, memberPartyId: string
 export function assignEntryToProject(entryId: string, projectId: string): Promise<void> {
   return request<void>(`/catalog/${entryId}/projects`, {
     method: 'POST',
-    body: JSON.stringify({ project_party_id: projectId }),
+    body: JSON.stringify({ project_id: projectId }),
   })
 }
 

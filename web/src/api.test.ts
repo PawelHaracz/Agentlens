@@ -594,7 +594,7 @@ describe('Parties API', () => {
     ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve(undefined) })
     await api.assignEntryToProject('e1', 'p1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/catalog/e1/projects', expect.objectContaining({
-      method: 'POST', body: JSON.stringify({ project_party_id: 'p1' }),
+      method: 'POST', body: JSON.stringify({ project_id: 'p1' }),
     }))
   })
 
