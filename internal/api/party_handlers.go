@@ -38,14 +38,8 @@ func ListPartiesHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerF
 // ListAllPartiesHandler returns parties across all kinds, optionally filtered by ?kind=.
 func ListAllPartiesHandler(ps *store.PartyStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		kind := r.URL.Query().Get("kind")
-		var parties []model.Party
-		var err error
-		if kind != "" {
-			parties, err = ps.ListParties(r.Context(), model.PartyKind(kind))
-		} else {
-			parties, err = ps.ListAllParties(r.Context())
-		}
+		kind := model.PartyKind(r.URL.Query().Get("kind"))
+		parties, err := ps.ListParties(r.Context(), kind)
 		if err != nil {
 			slog.Error("listing all parties", "err", err)
 			ErrorResponse(w, http.StatusInternalServerError, "failed to list parties")

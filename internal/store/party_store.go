@@ -64,20 +64,15 @@ func (s *PartyStore) GetPartyByUserID(ctx context.Context, userID string) (*mode
 	return &p, nil
 }
 
-// ListParties returns all parties of the given kind.
+// ListParties returns parties filtered by kind. If kind is empty, returns all parties.
 func (s *PartyStore) ListParties(ctx context.Context, kind model.PartyKind) ([]model.Party, error) {
 	var parties []model.Party
-	if err := s.db.WithContext(ctx).Where("kind = ?", kind).Find(&parties).Error; err != nil {
-		return nil, fmt.Errorf("listing parties: %w", err)
+	q := s.db.WithContext(ctx)
+	if kind != "" {
+		q = q.Where("kind = ?", kind)
 	}
-	return parties, nil
-}
-
-// ListAllParties returns all parties regardless of kind.
-func (s *PartyStore) ListAllParties(ctx context.Context) ([]model.Party, error) {
-	var parties []model.Party
-	if err := s.db.WithContext(ctx).Find(&parties).Error; err != nil {
-		return nil, fmt.Errorf("listing all parties: %w", err)
+	if err := q.Find(&parties).Error; err != nil {
+		return nil, fmt.Errorf("listing parties: %w", err)
 	}
 	return parties, nil
 }
