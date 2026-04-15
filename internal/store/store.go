@@ -66,6 +66,7 @@ type ListFilter struct {
 	Limit      int
 	Offset     int
 	Sort       string // "lastSuccessAt_desc" (default) | "displayName_asc" | "createdAt_desc"
+	ProjectID  string // optional: filter to entries in this project party ID (empty = no filter)
 }
 
 // StoreStats holds aggregate statistics about stored catalog entries.

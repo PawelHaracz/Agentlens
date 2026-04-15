@@ -61,6 +61,11 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 	for _, cat := range filter.Categories {
 		query = query.Where("catalog_entries.categories LIKE ?", "%"+cat+"%")
 	}
+	if filter.ProjectID != "" {
+		query = query.
+			Joins("JOIN catalog_project_memberships cpm ON cpm.catalog_entry_id = catalog_entries.id").
+			Where("cpm.project_party_id = ?", filter.ProjectID)
+	}
 
 	switch filter.Sort {
 	case "displayName_asc":
