@@ -20,6 +20,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Sun, Moon, Monitor, Plus, Pencil, Trash2, Lock, Unlock, Shield } from 'lucide-react'
 import PartyTab from '../routes/parties/PartyTab'
+import { groupUIConfig } from '../routes/parties/partyUIConfig'
 
 const ALL_PERMISSIONS = [
   'catalog:read', 'catalog:write', 'catalog:delete',
@@ -647,7 +648,7 @@ export default function SettingsPage() {
         <TabsContent value="general" className="mt-6"><GeneralTab /></TabsContent>
         {showUsers && <TabsContent value="users" className="mt-6"><UsersTab /></TabsContent>}
         {showRoles && <TabsContent value="roles" className="mt-6"><RolesTab /></TabsContent>}
-        <TabsContent value="groups" className="mt-6"><PartyTab /></TabsContent>
+        <TabsContent value="groups" className="mt-6"><PartyTab config={groupUIConfig} /></TabsContent>
         <TabsContent value="account" className="mt-6"><AccountTab /></TabsContent>
       </Tabs>
     </div>

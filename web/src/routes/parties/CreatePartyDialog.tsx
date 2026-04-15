@@ -5,14 +5,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import * as api from '@/api'
+import type { PartyUIConfig } from './partyUIConfig'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreated: () => void
+  config?: PartyUIConfig
 }
 
-export default function CreatePartyDialog({ open, onOpenChange, onCreated }: Props) {
+export default function CreatePartyDialog({ open, onOpenChange, onCreated, config: _config }: Props) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
