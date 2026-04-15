@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 
@@ -29,12 +30,18 @@ func (capabilityRow) TableName() string { return "capabilities" }
 
 // SQLStore is a GORM-backed implementation of Store.
 type SQLStore struct {
-	gdb *db.DB
+	gdb        *db.DB
+	partyStore *PartyStore // nil until WithPartyStore is called; auto-assigns entries to default project
 }
 
 // NewSQLStore creates a new SQLStore from an existing GORM DB wrapper.
 func NewSQLStore(database *db.DB) *SQLStore {
 	return &SQLStore{gdb: database}
+}
+
+// WithPartyStore injects a PartyStore for auto-project assignment on catalog entry creation.
+func (s *SQLStore) WithPartyStore(ps *PartyStore) {
+	s.partyStore = ps
 }
 
 // NewSQLiteStore opens (or creates) a SQLite database at path and runs migrations.
@@ -244,7 +251,7 @@ func (s *SQLStore) Create(ctx context.Context, entry *model.CatalogEntry) error 
 
 	entry.SyncToDB()
 
-	return s.gdb.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	if err := s.gdb.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. Create AgentType.
 		if err := tx.Create(entry.AgentType).Error; err != nil {
 			return fmt.Errorf("creating agent_type: %w", err)
@@ -271,7 +278,20 @@ func (s *SQLStore) Create(ctx context.Context, entry *model.CatalogEntry) error 
 			return fmt.Errorf("inserting catalog entry: %w", err)
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Auto-assign to default project (best-effort — log on failure, don't break catalog write)
+	if s.partyStore != nil {
+		if def, defErr := s.partyStore.GetDefaultProject(ctx); defErr == nil && def != nil {
+			if assignErr := s.partyStore.AssignToProject(ctx, entry.ID, def.ID); assignErr != nil {
+				slog.Warn("failed to assign new catalog entry to default project",
+					"entry_id", entry.ID, "err", assignErr)
+			}
+		}
+	}
+	return nil
 }
 
 // Get retrieves a catalog entry by ID, with AgentType, Provider, and Capabilities.

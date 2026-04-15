@@ -23,6 +23,7 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/db"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
+	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/server"
 	"github.com/PawelHaracz/agentlens/internal/store"
 	"github.com/PawelHaracz/agentlens/internal/telemetry"
@@ -149,6 +150,7 @@ func main() {
 
 	// 7. Bootstrap admin
 	userStore := store.NewUserStore(database)
+	partyStore := store.NewPartyStore(database)
 	password, err := auth.BootstrapAdmin(context.Background(), userStore)
 	if err != nil {
 		slog.Error("failed to bootstrap admin", "err", err)
@@ -163,10 +165,24 @@ func main() {
 		_, _ = os.Stdout.WriteString("  Password: " + password + "\n")
 		_, _ = os.Stdout.WriteString("  CHANGE THIS PASSWORD IMMEDIATELY\n")
 		_, _ = os.Stdout.WriteString("============================================\n")
+
+		// Create Person party for the newly bootstrapped admin user.
+		adminUser, uErr := userStore.GetByUsername(context.Background(), "admin")
+		if uErr == nil && adminUser != nil {
+			adminParty := &model.Party{
+				Kind:   model.PartyKindPerson,
+				Name:   adminUser.Username,
+				UserID: &adminUser.ID,
+			}
+			if pErr := partyStore.CreateParty(context.Background(), adminParty); pErr != nil {
+				slog.Warn("failed to create Person party for bootstrap admin", "err", pErr)
+			}
+		}
 	}
 
 	// 8. Init stores
 	catalogStore := store.NewSQLStore(database)
+	catalogStore.WithPartyStore(partyStore)
 	roleStore := store.NewRoleStore(database)
 	settingsStore := store.NewSettingsStore(database)
 
@@ -289,6 +305,7 @@ func main() {
 		RoleStore:            roleStore,
 		SettingsStore:        settingsStore,
 		JWTService:           jwtService,
+		PartyStore:           partyStore,
 		PromHandler:          telProvider.PromHandler,
 		ReadyzPing:           dbPingFn,
 		TelemetryEnabled:     cfg.Telemetry.Enabled,
