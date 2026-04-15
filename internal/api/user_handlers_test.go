@@ -262,3 +262,60 @@ func TestUserCreate_InvalidRole(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+func TestCreateUser_AlsoCreatesPersonParty(t *testing.T) {
+	router, database, partyStore := testRouterWithParty(t)
+	createAdminRole(t, database)
+	createViewerRole(t, database)
+	username, password := createTestAdmin(t, database)
+
+	token := loginAndGetToken(t, router, username, password)
+
+	body := `{"username":"partyuser","email":"party@test.com","display_name":"Party User","password":"NewUser1234!@","role_id":"role-viewer"}`
+	req := authRequest(http.MethodPost, "/api/v1/users", token, body)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusCreated, w.Code)
+
+	var created map[string]interface{}
+	require.NoError(t, decodeJSON(w, &created))
+	newUserID := created["id"].(string)
+
+	person, err := partyStore.GetPartyByUserID(context.Background(), newUserID)
+	require.NoError(t, err)
+	require.NotNil(t, person, "Person party should have been created for the new user")
+	assert.Equal(t, "Party User", person.Name)
+}
+
+func TestUpdateUser_SyncsPersonName(t *testing.T) {
+	router, database, partyStore := testRouterWithParty(t)
+	createAdminRole(t, database)
+	createViewerRole(t, database)
+	username, password := createTestAdmin(t, database)
+
+	token := loginAndGetToken(t, router, username, password)
+
+	// Create user via API so the Person party is created by the handler.
+	createBody := `{"username":"syncuser","email":"sync@test.com","display_name":"Original Name","password":"NewUser1234!@","role_id":"role-viewer"}`
+	createReq := authRequest(http.MethodPost, "/api/v1/users", token, createBody)
+	createW := httptest.NewRecorder()
+	router.ServeHTTP(createW, createReq)
+	require.Equal(t, http.StatusCreated, createW.Code)
+
+	var created map[string]interface{}
+	require.NoError(t, decodeJSON(createW, &created))
+	newUserID := created["id"].(string)
+
+	// Update display_name.
+	updateBody := `{"display_name":"Updated Name"}`
+	updateReq := authRequest(http.MethodPut, "/api/v1/users/"+newUserID, token, updateBody)
+	updateW := httptest.NewRecorder()
+	router.ServeHTTP(updateW, updateReq)
+	require.Equal(t, http.StatusOK, updateW.Code)
+
+	person, err := partyStore.GetPartyByUserID(context.Background(), newUserID)
+	require.NoError(t, err)
+	require.NotNil(t, person)
+	assert.Equal(t, "Updated Name", person.Name)
+}

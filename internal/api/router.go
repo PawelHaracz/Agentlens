@@ -165,7 +165,7 @@ func registerUserRoutes(r chi.Router, deps RouterDeps) {
 	if deps.UserStore == nil || deps.RoleStore == nil {
 		return
 	}
-	userHandler := NewUserHandler(deps.UserStore, deps.RoleStore)
+	userHandler := NewUserHandler(deps.UserStore, deps.RoleStore, deps.PartyStore)
 	roleHandler := NewRoleHandler(deps.RoleStore)
 
 	r.Group(func(r chi.Router) {

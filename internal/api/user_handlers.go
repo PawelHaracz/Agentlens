@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -15,15 +16,17 @@ import (
 
 // UserHandler handles user management endpoints.
 type UserHandler struct {
-	userStore *store.UserStore
-	roleStore *store.RoleStore
+	userStore  *store.UserStore
+	roleStore  *store.RoleStore
+	partyStore *store.PartyStore
 }
 
 // NewUserHandler creates a new UserHandler.
-func NewUserHandler(userStore *store.UserStore, roleStore *store.RoleStore) *UserHandler {
+func NewUserHandler(userStore *store.UserStore, roleStore *store.RoleStore, partyStore *store.PartyStore) *UserHandler {
 	return &UserHandler{
-		userStore: userStore,
-		roleStore: roleStore,
+		userStore:  userStore,
+		roleStore:  roleStore,
+		partyStore: partyStore,
 	}
 }
 
@@ -113,6 +116,12 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.partyStore != nil {
+		if err := h.partyStore.CreatePersonForUser(r.Context(), user); err != nil {
+			slog.Error("creating person for new user", "user_id", user.ID, "err", err)
+		}
+	}
+
 	// Re-fetch to get the role preloaded.
 	created, err := h.userStore.GetByID(r.Context(), user.ID)
 	if err != nil || created == nil {
@@ -190,6 +199,12 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err := h.userStore.Update(r.Context(), user); err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "failed to update user")
 		return
+	}
+
+	if h.partyStore != nil && req.DisplayName != nil {
+		if err := h.partyStore.UpdatePersonForUser(r.Context(), user); err != nil {
+			slog.Error("syncing person name", "user_id", user.ID, "err", err)
+		}
 	}
 
 	// Re-fetch to get the role preloaded.
