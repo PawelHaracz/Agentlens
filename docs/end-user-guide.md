@@ -54,6 +54,12 @@ For architectural details see [docs/architecture.md](architecture.md).
     - [Creating a Role](#creating-a-role)
     - [Editing a Role](#editing-a-role)
     - [Deleting a Role](#deleting-a-role)
+  - [Groups and Projects](#groups-and-projects)
+    - [Concepts](#concepts)
+    - [Managing Groups](#managing-groups)
+    - [Managing Projects](#managing-projects)
+    - [Assigning Catalog Entries to a Project](#assigning-catalog-entries-to-a-project)
+    - [Filtering the Catalog by Project](#filtering-the-catalog-by-project)
   - [Using the REST API](#using-the-rest-api)
     - [Authentication](#authentication)
     - [Quick Reference](#quick-reference)
@@ -850,3 +856,103 @@ curl -s -X POST https://agentlens.example.com/api/v1/catalog \
 Agents running in Kubernetes are discovered when their `Pod` or `Service` carries the annotation
 `agentlens.io/enabled: "true"`. See [docs/user-guide.md](user-guide.md) and
 [docs/architecture.md](architecture.md) for the full annotation schema.
+
+---
+
+## Groups and Projects
+
+### Concepts
+
+AgentLens uses a **party archetype** to model actors and their relationships:
+
+- **Person** — one per user account, created automatically at bootstrap.
+- **Group** — a named collection of persons or other groups (hierarchical). Members inherit group permissions transitively.
+- **Project** — a namespace that scopes catalog entries. Each entry belongs to one or more projects.
+
+A `default` system project is seeded on first run. All new catalog entries are automatically assigned to it.
+
+**Project roles** control what members can do inside a project:
+
+| Role | View entries | Register / update | Delete | Manage members |
+| --- | --- | --- | --- | --- |
+| `project:owner` | ✓ | ✓ | ✓ | ✓ |
+| `project:developer` | ✓ | ✓ | — | — |
+| `project:viewer` | ✓ | — | — | — |
+
+Global `admin` users bypass all project permission checks.
+
+### Managing Groups
+
+Create a group via the REST API (editor or admin required):
+
+```bash
+curl -X POST http://localhost:8080/api/v1/groups \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "platform-team"}'
+```
+
+Add a person to a group (use the person party ID, obtainable from `GET /api/v1/groups`):
+
+```bash
+curl -X POST http://localhost:8080/api/v1/groups/{groupID}/members \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"party_id": "<personPartyID>", "role": "member"}'
+```
+
+Groups can be nested: add a group as a member of another group. Transitive membership is resolved automatically.
+
+### Managing Projects
+
+Create a project:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/projects \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-project"}'
+```
+
+Assign a person or group to the project with a role:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/projects/{projectID}/members \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"party_id": "<partyID>", "role": "project:developer"}'
+```
+
+List all projects:
+
+```bash
+curl http://localhost:8080/api/v1/projects \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Assigning Catalog Entries to a Project
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/{entryID}/projects \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"project_party_id": "<projectID>"}'
+```
+
+Remove from a project:
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/catalog/{entryID}/projects/{projectID} \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Filtering the Catalog by Project
+
+Pass the `project` query parameter to `GET /api/v1/catalog` to return only entries in a specific project:
+
+```bash
+curl "http://localhost:8080/api/v1/catalog?project=<projectID>" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Omitting the parameter returns all entries regardless of project membership.

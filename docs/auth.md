@@ -139,6 +139,36 @@ All permissions follow the `resource:action` format:
 
 ---
 
+## Project-Scoped RBAC
+
+In addition to global roles, AgentLens supports **project-scoped roles** via the party archetype. A user (or any group they belong to) can be assigned a role on a specific project.
+
+### Project Roles
+
+| Role | `catalog:read` | `catalog:write` | `catalog:delete` | `party:write` |
+| --- | --- | --- | --- | --- |
+| `project:owner` | ✓ | ✓ | ✓ | ✓ |
+| `project:developer` | ✓ | ✓ | — | — |
+| `project:viewer` | ✓ | — | — | — |
+
+### How it works
+
+1. Each user has a **Person** party created automatically at bootstrap.
+2. Person parties can be members of **Group** parties (hierarchical, transitive closure pre-computed).
+3. Groups or persons can be assigned a role on a **Project** party via a `project_member` relationship.
+4. When accessing project-scoped endpoints (`/api/v1/projects/{id}/...`, `/api/v1/catalog/{id}/projects`), the `RequireProjectPermission` middleware resolves the effective role by:
+   - Looking up the user's Person party
+   - Fetching all ancestor group IDs from `party_group_closures`
+   - Finding the highest `project_member` role across the user's party and all ancestor groups
+
+### Notes
+
+- Global `admin` role bypasses all project permission checks.
+- Project membership is managed via `POST /api/v1/projects/{id}/members`.
+- New catalog entries are auto-assigned to the `default` system project.
+
+---
+
 ## Unauthenticated Endpoints
 
 The following endpoints do **not** require authentication:

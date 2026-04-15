@@ -77,6 +77,11 @@ erDiagram
     providers ||--o{ agent_types : "owns"
     agent_types ||--o{ capabilities : "has"
     agent_types ||--|| catalog_entries : "cataloged as"
+    catalog_entries }o--o{ parties : "belongs to (via catalog_project_memberships)"
+    parties ||--o{ party_relationships : "from"
+    parties ||--o{ party_relationships : "to"
+    parties ||--o{ party_group_closures : "member"
+    parties ||--o{ party_group_closures : "ancestor"
 
     providers {
         UUID id PK
@@ -115,7 +120,72 @@ erDiagram
         DATETIME created_at
         DATETIME updated_at
     }
+    parties {
+        UUID id PK
+        TEXT kind "person|group|project"
+        TEXT name
+        INT version
+        UUID user_id FK "nullable — person parties only"
+        BOOL is_system
+        DATETIME created_at
+        DATETIME updated_at
+    }
+    party_relationships {
+        UUID id PK
+        UUID from_party_id FK
+        TEXT from_role
+        UUID to_party_id FK
+        TEXT to_role
+        TEXT relationship_name "group_member|project_member"
+    }
+    party_group_closures {
+        UUID member_party_id FK
+        UUID ancestor_party_id FK
+    }
+    catalog_project_memberships {
+        UUID catalog_entry_id FK
+        UUID project_party_id FK
+        DATETIME created_at
+    }
 ```
+
+### Party Archetype: Groups, Projects, and Scoped RBAC
+
+AgentLens uses a **party archetype** to manage actors (users, groups, projects) and their relationships in a single unified model.
+
+```mermaid
+flowchart TD
+    U[User] -->|bootstrap| P[Person Party]
+    P -->|group_member| G[Group Party]
+    G -->|group_member| G2[Nested Group]
+    P -->|project_member\nfrom_role=owner| PR[Project Party]
+    G -->|project_member\nfrom_role=developer| PR
+    PR -->|scopes| CE[CatalogEntry]
+
+    subgraph Closure
+        C[party_group_closures\npre-computed transitive members]
+    end
+    G --> C
+    G2 --> C
+```
+
+**How permission resolution works:**
+
+1. On every request to a project-scoped endpoint, `RequireProjectPermission` middleware loads the current user's `Person` party.
+2. It fetches all transitive ancestor group IDs from `party_group_closures` (O(1) lookup).
+3. It checks `party_relationships` for `project_member` edges from the user's party or any ancestor group to the target project.
+4. The highest `from_role` found (`owner` > `developer` > `viewer`) determines effective access.
+5. The permission is checked against the `ProjectRolePermissions` static map in `internal/auth/party_permissions.go`.
+
+**Project roles:**
+
+| Role | `catalog:read` | `catalog:write` | `catalog:delete` | `party:write` |
+| :---: | :---: | :---: | :---: | :---: |
+| `project:owner` | ✓ | ✓ | ✓ | ✓ |
+| `project:developer` | ✓ | ✓ | — | — |
+| `project:viewer` | ✓ | — | — | — |
+
+Global system roles (`admin`, `editor`, `viewer`) are orthogonal — admins always pass `RequireProjectPermission` regardless of party membership.
 
 ### Capability Kinds
 
