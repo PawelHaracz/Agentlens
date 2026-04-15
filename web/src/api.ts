@@ -414,3 +414,14 @@ export function listParties(kind?: 'person' | 'group' | 'project'): Promise<Part
   const qs = kind ? `?kind=${kind}` : ''
   return request<Party[]>(`/parties${qs}`)
 }
+
+/* ─── My Projects ─── */
+
+export interface UserProjectMembership {
+  project: Party
+  role: string
+}
+
+export function getMyProjects(): Promise<UserProjectMembership[]> {
+  return request<UserProjectMembership[]>('/auth/me/projects')
+}

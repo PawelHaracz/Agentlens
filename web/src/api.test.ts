@@ -614,4 +614,19 @@ describe('Parties API', () => {
       expect.any(Object)
     )
   })
+
+  it('getMyProjects GETs /api/v1/auth/me/projects', async () => {
+    const mock: api.UserProjectMembership[] = [
+      {
+        project: { id: 'pr1', kind: 'project', name: 'orion', is_system: false, created_at: '', updated_at: '' },
+        role: 'project:developer',
+      },
+    ]
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true, status: 200, json: () => Promise.resolve(mock),
+    })
+    const got = await api.getMyProjects()
+    expect(got).toEqual(mock)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/auth/me/projects', expect.any(Object))
+  })
 })
