@@ -93,6 +93,7 @@ List all catalog entries with optional filtering.
 | `source` | string | — | Filter by source: `k8s`, `config`, `push`, `upstream` |
 | `team` | string | — | Filter by provider team name |
 | `categories` | string | — | Comma-separated category filter |
+| `project` | string | — | Filter to entries belonging to this project party ID |
 | `limit` | int | — | Maximum results to return (default: no limit) |
 | `offset` | int | — | Pagination offset |
 
@@ -1112,5 +1113,194 @@ Bulk update settings. **Requires auth.** Permission: `settings:write`.
   "app.default_role": "editor"
 }
 ```
+
+---
+
+## Party Archetype — Groups, Projects, Memberships
+
+AgentLens uses a unified **party archetype** model. Users, groups, and projects are all `Party` entities connected by named directed `PartyRelationship` edges. This enables hierarchical groups and project-scoped RBAC.
+
+**Project-scoped roles:** `project:owner`, `project:developer`, `project:viewer`
+
+| Role | catalog:read | catalog:write | catalog:delete |
+| --- | :---: | :---: | :---: |
+| `project:owner` | ✓ | ✓ | ✓ |
+| `project:developer` | ✓ | ✓ | — |
+| `project:viewer` | ✓ | — | — |
+
+Global role bypass: any user whose JWT carries the required permission is allowed regardless of project membership.
+
+---
+
+### `GET /api/v1/groups`
+
+List all groups. **Requires auth.**
+
+**Response 200:**
+```json
+[{"id": "...", "kind": "group", "name": "eng-team", "is_system": false, "created_at": "..."}]
+```
+
+---
+
+### `POST /api/v1/groups`
+
+Create a new group. **Requires auth.** Permission: `users:write`.
+
+**Request Body:**
+```json
+{"name": "eng-team"}
+```
+
+**Response 201:** Party object.
+
+**Errors:** `400` name missing · `403` insufficient permissions
+
+---
+
+### `GET /api/v1/groups/{partyID}`
+
+Get a group by ID. **Requires auth.**
+
+**Response 200:** Party object. **Response 404:** Not found.
+
+---
+
+### `DELETE /api/v1/groups/{partyID}`
+
+Delete a group (non-system only). **Requires auth.** Permission: `users:write`.
+
+**Response 204.** **Errors:** `400` system party or not found · `403` insufficient permissions
+
+---
+
+### `GET /api/v1/groups/{partyID}/members`
+
+List direct members of a group. **Requires auth.**
+
+**Response 200:**
+```json
+[{"id": "...", "from_party_id": "alice-id", "from_role": "member", "to_party_id": "eng-id", "to_role": "group", "relationship_name": "group_member"}]
+```
+
+---
+
+### `POST /api/v1/groups/{partyID}/members`
+
+Add a member to a group. **Requires auth.** Permission: `users:write`.
+
+**Request Body:**
+```json
+{"party_id": "<person-or-group-party-id>", "role": "member"}
+```
+
+Valid roles: `member`. **Response 201:** PartyRelationship object.
+
+**Errors:** `400` invalid role / cycle detected · `403` insufficient permissions
+
+---
+
+### `DELETE /api/v1/groups/{partyID}/members/{memberPartyID}`
+
+Remove a member from a group. **Requires auth.** Permission: `users:write`.
+
+**Response 204.**
+
+---
+
+### `GET /api/v1/projects`
+
+List all projects. **Requires auth.**
+
+**Response 200:** Array of Party objects with `kind: "project"`.
+
+---
+
+### `POST /api/v1/projects`
+
+Create a new project. **Requires auth.** Permission: `catalog:write`.
+
+**Request Body:**
+```json
+{"name": "my-project"}
+```
+
+**Response 201:** Party object.
+
+---
+
+### `GET /api/v1/projects/{partyID}`
+
+Get a project by ID. **Requires auth.**
+
+**Response 200:** Party object. **Response 404:** Not found.
+
+---
+
+### `DELETE /api/v1/projects/{partyID}`
+
+Delete a project (non-system only). **Requires auth.** Permission: `catalog:write`.
+
+**Response 204.** **Errors:** `400` system party (default project cannot be deleted).
+
+---
+
+### `GET /api/v1/projects/{partyID}/members`
+
+List direct members of a project. **Requires auth.**
+
+**Response 200:** Array of PartyRelationship objects.
+
+---
+
+### `POST /api/v1/projects/{partyID}/members`
+
+Assign a user or group to a project with a role. **Requires auth.** Permission: `catalog:write`.
+
+**Request Body:**
+```json
+{"party_id": "<person-or-group-party-id>", "role": "project:developer"}
+```
+
+Valid roles: `project:owner`, `project:developer`, `project:viewer`.
+
+**Response 201:** PartyRelationship object.
+
+---
+
+### `DELETE /api/v1/projects/{partyID}/members/{memberPartyID}`
+
+Remove a member from a project. **Requires auth.** Permission: `catalog:write`.
+
+**Response 204.**
+
+---
+
+### `GET /api/v1/catalog/{id}/projects`
+
+List all projects a catalog entry belongs to. **Requires auth.**
+
+**Response 200:** Array of Party objects.
+
+---
+
+### `POST /api/v1/catalog/{id}/projects`
+
+Assign a catalog entry to a project. **Requires auth.** Permission: `catalog:write`.
+
+**Request Body:**
+```json
+{"project_id": "<project-party-id>"}
+```
+
+**Response 201.** Idempotent — duplicate assignments are silently ignored.
+
+---
+
+### `DELETE /api/v1/catalog/{id}/projects/{projectID}`
+
+Remove a catalog entry from a project. **Requires auth.** Permission: `catalog:write`.
+
+**Response 204.**
 
 **Response 200:** Confirmation message.

@@ -60,6 +60,16 @@ AgentLens models each discovered agent or server using the **Product Archetype**
 | `Role` | A named set of permissions. Three built-in system roles: `admin`, `editor`, `viewer`. |
 | `Setting` | A key-value configuration entry scoped to a category (e.g., `ui.theme`, `app.name`). |
 
+### Party Archetype Types
+
+| Type | Description |
+| ---- | ----------- |
+| `Party` | Unified actor: `person` (1:1 with User), `group` (hierarchical), or `project` (catalog namespace). |
+| `PartyRelationship` | Directed named edge in the party graph: `group_member` (containment) or `project_member` (scoped RBAC). |
+| `PartyGroupClosure` | Pre-computed transitive closure of containment edges. Rebuilt synchronously on every membership change. Enables O(1) permission checks. |
+| `GlobalPartyRole` | Assigns a global system `Role` to a group party. Group members inherit the role's permissions. |
+| `CatalogProjectMembership` | Many-to-many link between catalog entries and projects. New entries auto-assigned to the `default` project. |
+
 ### Entity Relationships
 
 ```mermaid
