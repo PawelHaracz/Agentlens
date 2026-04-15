@@ -23,7 +23,24 @@ func AllMigrations() []Migration {
 		migration005HealthColumns(),
 		migration006RawCards(),
 		migration007PartyArchetype(),
+		migration008BackfillPersonParties(),
 	}
+}
+
+func migration008BackfillPersonParties() Migration {
+	return Migration{
+		Version:     8,
+		Description: "backfill person parties for users created after migration007",
+		Up:          migration008Up,
+	}
+}
+
+func migration008Up(tx *gorm.DB) error {
+	if err := migration007SeedPersonParties(tx); err != nil {
+		return fmt.Errorf("migration008 backfill: %w", err)
+	}
+	slog.Info("migration008: person party backfill complete")
+	return nil
 }
 
 func migration001CreateTables() Migration {
