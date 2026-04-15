@@ -955,4 +955,12 @@ curl "http://localhost:8080/api/v1/catalog?project=<projectID>" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+![Catalog filtered to show only entries in the Docs Demo Project](images/catalog-project-filter.png)
+*Catalog list with `?project=<id>` — only entries assigned to that project appear.*
+
 Omitting the parameter returns all entries regardless of project membership.
+
+To see which projects a specific catalog entry belongs to:
+
+![Agent detail page showing the entry's project memberships](images/catalog-entry-projects.png)
+*The entry detail page lists all projects the entry is assigned to.*

@@ -180,6 +180,7 @@ test.describe('Documentation Screenshots', () => {
   let mcpEntryId: string;
   let a2aCapEntryId: string; // Entry seeded via register (has capabilities)
   let viewerUserId: string;
+  let projectId: string; // Project party for catalog-project-filter screenshot
 
   test.beforeAll(async ({ request }) => {
     token = await loginViaAPI(request);
@@ -213,6 +214,21 @@ test.describe('Documentation Screenshots', () => {
       headers: authHeader(token),
       data: { state: 'active' },
     });
+
+    // Seed a named project for the project-filter screenshot.
+    const projRes = await request.post(`${BASE}/api/v1/projects`, {
+      headers: authHeader(token),
+      data: { name: 'Docs Demo Project' },
+    });
+    if (projRes.ok()) {
+      const proj = await projRes.json();
+      projectId = proj.id as string;
+      // Assign the A2A entry to the project.
+      await request.post(`${BASE}/api/v1/catalog/${a2aEntryId}/projects`, {
+        headers: authHeader(token),
+        data: { project_party_id: projectId },
+      });
+    }
 
     // Seed viewer user for settings screenshots
     // Get roles list first
@@ -248,6 +264,11 @@ test.describe('Documentation Screenshots', () => {
       await request.delete(`${BASE}/api/v1/users/${viewerUserId}`, {
         headers: authHeader(token),
       }).catch(ignoreCleanupError('delete viewer user'));
+    }
+    if (projectId) {
+      await request.delete(`${BASE}/api/v1/projects/${projectId}`, {
+        headers: authHeader(token),
+      }).catch(ignoreCleanupError('delete docs-demo project'));
     }
   });
 
@@ -803,6 +824,29 @@ test.describe('Documentation Screenshots', () => {
       capHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
     });
     await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-crosslink.png`, fullPage: false });
+  });
+
+  // ───────── Project filter screenshots ─────────
+
+  test('catalog-project-filter', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Navigate to the catalog filtered to the seeded project.
+    // Shows only the entries assigned to that project.
+    await page.goto(`/catalog?project=${projectId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-project-filter.png`, fullPage: false });
+  });
+
+  test('catalog-entry-projects', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Navigate to the A2A entry detail page — shows the entry's project memberships.
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-entry-projects.png`, fullPage: false });
   });
 });
 
