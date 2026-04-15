@@ -227,14 +227,14 @@ func registerPartyRoutes(r chi.Router, deps RouterDeps) {
 func RegisterPartyKindRoutes(r chi.Router, cfg PartyKindConfig, partyStore *store.PartyStore) {
 	r.Route("/"+cfg.URLPrefix, func(r chi.Router) {
 		r.Get("/", ListPartiesHandler(cfg, partyStore))
-		r.Post("/", CreatePartyHandler(cfg, partyStore))
+		r.With(RequirePermission(cfg.CreatePermission)).Post("/", CreatePartyHandler(cfg, partyStore))
 		r.Route("/{partyID}", func(r chi.Router) {
 			r.Get("/", GetPartyHandler(cfg, partyStore))
-			r.Delete("/", DeletePartyHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Delete("/", DeletePartyHandler(cfg, partyStore))
 			r.Get("/members", ListMembersHandler(cfg, partyStore))
-			r.Post("/members", AddMemberHandler(cfg, partyStore))
-			r.Delete("/members/{memberPartyID}", RemoveMemberHandler(cfg, partyStore))
-			r.Patch("/members/{memberPartyID}", UpdateMemberRoleHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Post("/members", AddMemberHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Delete("/members/{memberPartyID}", RemoveMemberHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Patch("/members/{memberPartyID}", UpdateMemberRoleHandler(cfg, partyStore))
 		})
 	})
 }

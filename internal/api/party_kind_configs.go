@@ -1,6 +1,9 @@
 package api
 
-import "github.com/PawelHaracz/agentlens/internal/model"
+import (
+	"github.com/PawelHaracz/agentlens/internal/auth"
+	"github.com/PawelHaracz/agentlens/internal/model"
+)
 
 // PartyKindConfig drives route registration and handler behaviour for one party kind.
 // Adding a new party kind = add a new PartyKindConfig registration in registerPartyRoutes.
@@ -21,8 +24,8 @@ var groupKindConfig = PartyKindConfig{
 	URLPrefix:          "groups",
 	MemberRelationship: "group_member",
 	ValidMemberRoles:   []string{"member"},
-	CreatePermission:   "users:write",
-	ManagePermission:   "users:write",
+	CreatePermission:   auth.PermUsersWrite,
+	ManagePermission:   auth.PermUsersWrite,
 	CanContainKinds:    []model.PartyKind{model.PartyKindPerson, model.PartyKindGroup},
 }
 
@@ -32,7 +35,7 @@ var projectKindConfig = PartyKindConfig{
 	URLPrefix:          "projects",
 	MemberRelationship: "project_member",
 	ValidMemberRoles:   []string{"project:owner", "project:developer", "project:viewer"},
-	CreatePermission:   "catalog:write",
-	ManagePermission:   "catalog:write",
+	CreatePermission:   auth.PermCatalogWrite,
+	ManagePermission:   auth.PermCatalogWrite,
 	CanContainKinds:    []model.PartyKind{model.PartyKindPerson, model.PartyKindGroup},
 }

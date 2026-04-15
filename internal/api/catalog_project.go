@@ -19,10 +19,6 @@ type assignProjectRequest struct {
 // Requires catalog:write globally.
 func AssignCatalogToProjectHandler(ps *store.PartyStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.HasPermission(PermissionsFromContext(r.Context()), auth.PermCatalogWrite) {
-			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
-			return
-		}
 		catalogID := chi.URLParam(r, "id")
 		var req assignProjectRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.ProjectID == "" {
@@ -34,17 +30,13 @@ func AssignCatalogToProjectHandler(ps *store.PartyStore) http.HandlerFunc {
 			ErrorResponse(w, http.StatusInternalServerError, "failed to assign")
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
 // RemoveCatalogFromProjectHandler removes a catalog entry from a project.
 func RemoveCatalogFromProjectHandler(ps *store.PartyStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.HasPermission(PermissionsFromContext(r.Context()), auth.PermCatalogWrite) {
-			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
-			return
-		}
 		catalogID := chi.URLParam(r, "id")
 		projectID := chi.URLParam(r, "projectID")
 		if err := ps.RemoveFromProject(r.Context(), catalogID, projectID); err != nil {
@@ -74,7 +66,7 @@ func ListCatalogProjectsHandler(ps *store.PartyStore) http.HandlerFunc {
 func registerCatalogProjectRoutes(r chi.Router, ps *store.PartyStore) {
 	r.Route("/catalog/{id}/projects", func(r chi.Router) {
 		r.Get("/", ListCatalogProjectsHandler(ps))
-		r.Post("/", AssignCatalogToProjectHandler(ps))
-		r.Delete("/{projectID}", RemoveCatalogFromProjectHandler(ps))
+		r.With(RequirePermission(auth.PermCatalogWrite)).Post("/", AssignCatalogToProjectHandler(ps))
+		r.With(RequirePermission(auth.PermCatalogWrite)).Delete("/{projectID}", RemoveCatalogFromProjectHandler(ps))
 	})
 }

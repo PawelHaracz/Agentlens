@@ -10,7 +10,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/PawelHaracz/agentlens/internal/auth"
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
 )
@@ -58,16 +57,17 @@ func ListAllPartiesHandler(ps *store.PartyStore) http.HandlerFunc {
 // Requires cfg.CreatePermission in the caller's global role.
 func CreatePartyHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.HasPermission(PermissionsFromContext(r.Context()), cfg.CreatePermission) {
-			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
+		var req createPartyRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
-		var req createPartyRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
+		name := strings.TrimSpace(req.Name)
+		if name == "" {
 			ErrorResponse(w, http.StatusBadRequest, "name is required")
 			return
 		}
-		p := &model.Party{ID: uuid.New().String(), Kind: cfg.Kind, Name: req.Name}
+		p := &model.Party{ID: uuid.New().String(), Kind: cfg.Kind, Name: name}
 		if err := ps.CreateParty(r.Context(), p); err != nil {
 			slog.Error("creating party", "kind", cfg.Kind, "err", err)
 			ErrorResponse(w, http.StatusInternalServerError, "failed to create")
@@ -98,10 +98,6 @@ func GetPartyHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc
 // Requires cfg.ManagePermission.
 func DeletePartyHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.HasPermission(PermissionsFromContext(r.Context()), cfg.ManagePermission) {
-			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
-			return
-		}
 		id := chi.URLParam(r, "partyID")
 		if err := ps.DeleteParty(r.Context(), id); err != nil {
 			ErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -119,10 +115,6 @@ func AddMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFun
 		validRoles[r] = true
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.HasPermission(PermissionsFromContext(r.Context()), cfg.ManagePermission) {
-			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
-			return
-		}
 		toPartyID := chi.URLParam(r, "partyID")
 		var req addMemberRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -135,6 +127,39 @@ func AddMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFun
 		}
 		if !validRoles[req.Role] {
 			ErrorResponse(w, http.StatusBadRequest, "invalid role for this party kind")
+			return
+		}
+		// Validate target party exists and matches cfg.Kind.
+		target, err := ps.GetParty(r.Context(), toPartyID)
+		if err != nil {
+			slog.Error("loading target party", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to load target party")
+			return
+		}
+		if target == nil || target.Kind != cfg.Kind {
+			ErrorResponse(w, http.StatusNotFound, "target party not found")
+			return
+		}
+		// Validate member party exists and its kind is allowed.
+		member, err := ps.GetParty(r.Context(), req.PartyID)
+		if err != nil {
+			slog.Error("loading member party", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to load member party")
+			return
+		}
+		if member == nil {
+			ErrorResponse(w, http.StatusBadRequest, "member party not found")
+			return
+		}
+		allowedKind := false
+		for _, k := range cfg.CanContainKinds {
+			if member.Kind == k {
+				allowedKind = true
+				break
+			}
+		}
+		if !allowedKind {
+			ErrorResponse(w, http.StatusBadRequest, "member party kind not allowed for this container")
 			return
 		}
 		rel := &model.PartyRelationship{
@@ -161,10 +186,6 @@ func AddMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFun
 // RemoveMemberHandler removes a party from membership.
 func RemoveMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.HasPermission(PermissionsFromContext(r.Context()), cfg.ManagePermission) {
-			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
-			return
-		}
 		toPartyID := chi.URLParam(r, "partyID")
 		memberPartyID := chi.URLParam(r, "memberPartyID")
 		if err := ps.RemoveMember(r.Context(), memberPartyID, toPartyID, cfg.MemberRelationship); err != nil {
@@ -186,10 +207,6 @@ func UpdateMemberRoleHandler(cfg PartyKindConfig, ps *store.PartyStore) http.Han
 		validRoles[r] = true
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.HasPermission(PermissionsFromContext(r.Context()), cfg.ManagePermission) {
-			ErrorResponse(w, http.StatusForbidden, "insufficient permissions")
-			return
-		}
 		toPartyID := chi.URLParam(r, "partyID")
 		memberPartyID := chi.URLParam(r, "memberPartyID")
 		var req updateMemberRoleRequest
