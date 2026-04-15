@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/PawelHaracz/agentlens/internal/db"
@@ -228,11 +229,6 @@ func TestPartyStore_ListMembers(t *testing.T) {
 	assert.Len(t, rels, 2)
 }
 
-func newTestPartyStore(t *testing.T) *store.PartyStore {
-	t.Helper()
-	return store.NewPartyStore(newTestPartyDB(t))
-}
-
 func TestPartyStore_UpdateMemberRole(t *testing.T) {
 	ctx := context.Background()
 	s := newTestPartyStore(t)
@@ -250,7 +246,13 @@ func TestPartyStore_UpdateMemberRole(t *testing.T) {
 	}
 	require.NoError(t, s.AddMember(ctx, rel))
 
-	require.NoError(t, s.UpdateMemberRole(ctx, person.ID, project.ID, "project_member", "project:developer"))
+	require.NoError(t, s.UpdateMemberRole(ctx, store.UpdateMemberRoleParams{
+		FromPartyID:      person.ID,
+		ToPartyID:        project.ID,
+		RelationshipName: "project_member",
+		OldRole:          "project:viewer",
+		NewRole:          "project:developer",
+	}))
 
 	rels, err := s.ListMembers(ctx, project.ID, "project_member")
 	require.NoError(t, err)
@@ -262,6 +264,20 @@ func TestPartyStore_UpdateMemberRole_NotFound(t *testing.T) {
 	ctx := context.Background()
 	s := newTestPartyStore(t)
 
-	err := s.UpdateMemberRole(ctx, "missing", "also-missing", "project_member", "project:viewer")
-	assert.Error(t, err)
+	err := s.UpdateMemberRole(ctx, store.UpdateMemberRoleParams{
+		FromPartyID:      "missing",
+		ToPartyID:        "also-missing",
+		RelationshipName: "project_member",
+		OldRole:          "project:viewer",
+		NewRole:          "project:developer",
+	})
+	require.Error(t, err)
+	if !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("want 'not found' in error, got: %v", err)
+	}
+}
+
+func newTestPartyStore(t *testing.T) *store.PartyStore {
+	t.Helper()
+	return store.NewPartyStore(newTestPartyDB(t))
 }

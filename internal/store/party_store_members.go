@@ -80,18 +80,32 @@ func (s *PartyStore) ListMembers(ctx context.Context, toPartyID, relationshipNam
 	return rels, nil
 }
 
+// UpdateMemberRoleParams holds the parameters for UpdateMemberRole.
+// OldRole must be the current from_role value to disambiguate when multiple rows
+// share the same (FromPartyID, ToPartyID, RelationshipName) but differ in from_role.
+type UpdateMemberRoleParams struct {
+	FromPartyID      string
+	ToPartyID        string
+	RelationshipName string
+	OldRole          string
+	NewRole          string
+}
+
 // UpdateMemberRole changes the FromRole of an existing PartyRelationship in place.
+// The caller must supply OldRole in params to disambiguate the exact row being updated.
 // No closure rebuild is performed — the containment graph is unchanged.
 // Returns an error if no matching relationship exists.
-func (s *PartyStore) UpdateMemberRole(ctx context.Context, fromPartyID, toPartyID, relationshipName, newRole string) error {
+func (s *PartyStore) UpdateMemberRole(ctx context.Context, params UpdateMemberRoleParams) error {
 	result := s.db.WithContext(ctx).Model(&model.PartyRelationship{}).
-		Where("from_party_id = ? AND to_party_id = ? AND relationship_name = ?", fromPartyID, toPartyID, relationshipName).
-		Update("from_role", newRole)
+		Where("from_party_id = ? AND to_party_id = ? AND relationship_name = ? AND from_role = ?",
+			params.FromPartyID, params.ToPartyID, params.RelationshipName, params.OldRole).
+		Update("from_role", params.NewRole)
 	if result.Error != nil {
 		return fmt.Errorf("updating member role: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("no member relationship found for from=%s to=%s name=%s", fromPartyID, toPartyID, relationshipName)
+		return fmt.Errorf("member relationship not found: from=%s to=%s relationship=%s role=%s",
+			params.FromPartyID, params.ToPartyID, params.RelationshipName, params.OldRole)
 	}
 	return nil
 }
