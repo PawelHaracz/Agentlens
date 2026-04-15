@@ -477,7 +477,7 @@ describe('Parties API', () => {
 
   it('deleteGroup sends DELETE to /api/v1/groups/:id', async () => {
     ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true, status: 204,
+      ok: true, status: 204, json: () => Promise.resolve(undefined),
     })
     await api.deleteGroup('g1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1', expect.objectContaining({
@@ -500,7 +500,7 @@ describe('Parties API', () => {
 
   it('addGroupMember POSTs to /api/v1/groups/:id/members with role member', async () => {
     ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true, status: 204,
+      ok: true, status: 204, json: () => Promise.resolve(undefined),
     })
     await api.addGroupMember('g1', 'p1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1/members', expect.objectContaining({
@@ -511,7 +511,7 @@ describe('Parties API', () => {
 
   it('removeGroupMember DELETEs /api/v1/groups/:id/members/:pid', async () => {
     ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true, status: 204,
+      ok: true, status: 204, json: () => Promise.resolve(undefined),
     })
     await api.removeGroupMember('g1', 'p1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/groups/g1/members/p1', expect.objectContaining({
@@ -546,7 +546,7 @@ describe('Parties API', () => {
   })
 
   it('deleteProject sends DELETE', async () => {
-    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.resolve(undefined) })
     await api.deleteProject('p1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1', expect.objectContaining({ method: 'DELETE' }))
   })
@@ -568,7 +568,7 @@ describe('Parties API', () => {
   })
 
   it('addProjectMember POSTs with party_id + role', async () => {
-    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.resolve(undefined) })
     await api.addProjectMember('p1', 'm1', 'project:developer')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1/members', expect.objectContaining({
       method: 'POST',
@@ -577,13 +577,13 @@ describe('Parties API', () => {
   })
 
   it('removeProjectMember DELETEs', async () => {
-    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.resolve(undefined) })
     await api.removeProjectMember('p1', 'm1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1/members/m1', expect.objectContaining({ method: 'DELETE' }))
   })
 
   it('updateProjectMemberRole PATCHes with role', async () => {
-    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.resolve(undefined) })
     await api.updateProjectMemberRole('p1', 'm1', 'project:owner')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/projects/p1/members/m1', expect.objectContaining({
       method: 'PATCH', body: JSON.stringify({ role: 'project:owner' }),
@@ -591,7 +591,7 @@ describe('Parties API', () => {
   })
 
   it('assignEntryToProject POSTs to /api/v1/catalog/:entryId/projects', async () => {
-    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 201 })
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve(undefined) })
     await api.assignEntryToProject('e1', 'p1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/catalog/e1/projects', expect.objectContaining({
       method: 'POST', body: JSON.stringify({ project_party_id: 'p1' }),
@@ -599,7 +599,7 @@ describe('Parties API', () => {
   })
 
   it('removeEntryFromProject DELETEs', async () => {
-    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204 })
+    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.resolve(undefined) })
     await api.removeEntryFromProject('e1', 'p1')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/catalog/e1/projects/p1', expect.objectContaining({ method: 'DELETE' }))
   })
