@@ -1,0 +1,1298 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://agentlens.cloudtown.io/superpowers/specs/2026-04-15-my-projects-context-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Current-User Project Context — Design Spec - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../css/timeago.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#current-user-project-context-design-spec" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Current-User Project Context — Design Spec
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Goal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Background
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role-resolution-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role resolution algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API surface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API surface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apiv1authmeprojects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/v1/auth/me/projects
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-createupdate-side-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User create/update side-effects
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rollout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compliance-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compliance notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="current-user-project-context-design-spec">Current-User Project Context — Design Spec<a class="headerlink" href="#current-user-project-context-design-spec" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-04-15
+<strong>Status:</strong> Draft
+<strong>Predecessor specs:</strong> <a href="../2026-04-15-projects-ui-design/">2026-04-15-projects-ui-design.md</a>, <a href="../2026-04-15-groups-ui-design/">2026-04-15-groups-ui-design.md</a>, <a href="../2026-04-14-party-archetype-design/">2026-04-14-party-archetype-design.md</a>
+<strong>Relevant ADRs:</strong> <a href="../../../adr/011-party-archetype-unified-actor-model/">011-party-archetype-unified-actor-model.md</a> (Person↔User invariant, closure-based RBAC), <a href="../../../adr/012-materialized-group-closure-for-permission-resolution/">012-materialized-group-closure-for-permission-resolution.md</a> (closure table used by role resolution), <a href="../../../adr/014-project-role-resolution-highest-privilege/">014-project-role-resolution-highest-privilege.md</a> (multi-path tie-break rule)</p>
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Give every logged-in user a read-only "My projects" view of the projects they belong to (directly or via group membership), with their resolved role per project. Close the Person↔User invariant gap that blocks this feature from being reachable by non-admin users.</p>
+<h2 id="non-goals">Non-goals<a class="headerlink" href="#non-goals" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Project-role-aware UI permission gating. Still deferred — backend currently only checks global <code>catalog:write</code> for project mutations. A user who is <code>project:owner</code> on a project does not get mutation affordances just from that role; they need global <code>catalog:write</code>.</li>
+<li>Global "current project" header switcher. Not revisited here.</li>
+<li>Editing/leaving a project from the My Account view. V1 is read-only; group/admin workflows exist for removal.</li>
+<li>Provenance annotations ("via group X") on memberships reached transitively. Role value is resolved; the path is not shown.</li>
+<li>Multi-tenant partitioning or separate Person records per namespace.</li>
+</ul>
+<h2 id="background">Background<a class="headerlink" href="#background" title="Permanent link">&para;</a></h2>
+<p>ADR-011 declares Person↔User as an invariant ("Person parties must be kept in sync with User records — created together, never orphaned"). The party archetype rollout (<a href="../2026-04-14-party-archetype-design/">party-archetype-design.md</a>) shipped the schema and the bootstrap admin's Person party via migration007, but deferred auto-creation on user-create. Specs 1 and 2 explicitly documented this gap as a known limitation that users work around.</p>
+<p>Without that gap closed, the AddMember picker on Groups/Projects can only ever select the admin as a Person — every other user is invisible to the party graph. This spec closes the gap and adds the first user-facing feature that consumes it: "My projects" on the My Account tab.</p>
+<p>Role resolution uses the existing <code>party_group_closures</code> table (materialized per ADR-012). A user's Person is treated as a party-graph member; the set of parties they "are" equals <code>{personID} ∪ all ancestor group IDs</code>. Project memberships of any of those parties count for the user.</p>
+<h2 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>Auto-create a Person party when a User is created via <code>POST /api/v1/users</code>. Fail-open: log on failure, don't block user creation — migration008 sweeps stragglers.</td>
+<td>ADR-011 invariant. Blocking user creation on a best-effort write is worse than eventual consistency — the invariant still holds at rest after migration008 runs on next boot.</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Person <code>name</code> = <code>user.display_name || user.username</code>. Kept in sync on user <code>PUT</code>.</td>
+<td>Nicest UX in the AddMember picker without making <code>display_name</code> required. Drift would confuse users ("who is 'old alice'?").</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>One-time backfill migration <code>migration008_backfill_person_parties</code> for existing orphan users. Idempotent.</td>
+<td>Makes the Person↔User invariant hold at rest for everyone. Alternatives (lazy-create on read, do-nothing) either surprise maintainers with writes in read endpoints or leave existing DBs half-migrated.</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>New endpoint <code>GET /api/v1/auth/me/projects</code> returning <code>[]UserProjectMembership</code>. Authenticated-only, no extra permission check (users always see their own memberships).</td>
+<td>Smallest surface that returns exactly what the frontend needs. Placing it under <code>/auth/me/...</code> follows the existing <code>/auth/me</code> pattern; returning a bespoke shape avoids leaking relationship rows.</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>"My projects" panel on the My Account tab. Columns: Name + Role. Clickable rows navigate to <code>/settings/projects/:id</code>.</td>
+<td>Minimal admin-style metadata — this is a personal context page, not an audit view. The navigate target is Spec 2's project detail page; whatever the user can/can't do there is already permission-gated.</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Role resolution walks <code>party_group_closures</code> from the user's Person, includes the Person itself, and picks the highest-privilege role per project when reached via multiple paths. Rank: <code>owner</code> &gt; <code>developer</code> &gt; <code>viewer</code>.</td>
+<td>ADR-011's promise ("per-project RBAC, hierarchical via closure") — direct-only would silently hide access alice actually has. Highest-privilege resolution matches standard RBAC semantics and is the only tie-break choice that never <em>downgrades</em> a user's effective access in the UI relative to reality.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<h3 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h3>
+<p><strong>Model (no schema changes):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/model/party_query.go (new file)</span>
+
+<span class="c1">// UserProjectMembership is a denormalized read-only view: a user&#39;s</span>
+<span class="c1">// resolved role on a project, collapsing direct and transitive paths.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">UserProjectMembership</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Project</span><span class="w"> </span><span class="nx">Party</span><span class="w">  </span><span class="s">`json:&quot;project&quot;`</span>
+<span class="w">    </span><span class="nx">Role</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="s">`json:&quot;role&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Store additions</strong> (<code>internal/store/party_store.go</code> or a new <code>party_store_person_sync.go</code> if that file is at its public-function ceiling — see Spec 2 plan Task 1 for the same split strategy):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// CreatePersonForUser upserts a Person party linked 1:1 to the user.</span>
+<span class="c1">// Idempotent: no-op if a Person with matching user_id already exists.</span>
+<span class="c1">// Name formula: user.display_name || user.username.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">PartyStore</span><span class="p">)</span><span class="w"> </span><span class="nx">CreatePersonForUser</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">User</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="c1">// UpdatePersonForUser resyncs the Person&#39;s name to match the user&#39;s</span>
+<span class="c1">// current display_name || username. No-op if no Person exists.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">PartyStore</span><span class="p">)</span><span class="w"> </span><span class="nx">UpdatePersonForUser</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">User</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+
+<span class="c1">// ResolveUserProjects returns the user&#39;s project memberships, including</span>
+<span class="c1">// those reached transitively through group membership. Picks the highest-</span>
+<span class="c1">// privilege role when the user reaches a project via multiple paths.</span>
+<span class="c1">// Returns an empty slice (never nil) when the user has no memberships</span>
+<span class="c1">// or no Person party exists.</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">s</span><span class="w"> </span><span class="o">*</span><span class="nx">PartyStore</span><span class="p">)</span><span class="w"> </span><span class="nx">ResolveUserProjects</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">userID</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">([]</span><span class="nx">model</span><span class="p">.</span><span class="nx">UserProjectMembership</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Handler</strong> (<code>internal/api/auth_handlers.go</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// MyProjectsHandler returns the calling user&#39;s resolved project memberships.</span>
+<span class="c1">// Authenticated-only; no explicit permission gate.</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">MyProjectsHandler</span><span class="p">(</span><span class="nx">partyStore</span><span class="w"> </span><span class="o">*</span><span class="nx">store</span><span class="p">.</span><span class="nx">PartyStore</span><span class="p">)</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">HandlerFunc</span>
+</code></pre></div>
+<p><strong>Router</strong> (<code>internal/api/router.go</code>, inside the existing authenticated <code>/auth</code> block):</p>
+<div class="highlight"><pre><span></span><code><span class="nx">r</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="s">&quot;/me/projects&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">MyProjectsHandler</span><span class="p">(</span><span class="nx">deps</span><span class="p">.</span><span class="nx">PartyStore</span><span class="p">))</span>
+</code></pre></div>
+<p><strong>User handler integration</strong> (<code>internal/api/user_handlers.go</code>):</p>
+<ul>
+<li><code>CreateUserHandler</code> — after <code>userStore.CreateUser</code> returns, call <code>partyStore.CreatePersonForUser</code>. Log any error via <code>slog.Error</code>, do not fail the request.</li>
+<li><code>UpdateUserHandler</code> — after <code>userStore.UpdateUser</code> returns, if either <code>display_name</code> or <code>username</code> changed, call <code>partyStore.UpdatePersonForUser</code>. Same fail-open policy.</li>
+</ul>
+<p><strong>Migration</strong> (<code>internal/db/migrations.go</code> — append to <code>AllMigrations()</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// migration008: backfill Person parties for existing users that don&#39;t have one.</span>
+<span class="c1">// Idempotent — selects users with no matching party, inserts one each.</span>
+</code></pre></div>
+<p>Runs on next boot. Safe to re-run (uses LEFT JOIN / NOT EXISTS pattern). Never deletes anything.</p>
+<h3 id="role-resolution-algorithm">Role resolution algorithm<a class="headerlink" href="#role-resolution-algorithm" title="Permanent link">&para;</a></h3>
+<p><code>ResolveUserProjects(userID)</code>:</p>
+<ol>
+<li><code>person, err := GetPartyByUserID(userID)</code>. If <code>person == nil</code> (pre-migration straggler), return <code>[]</code>.</li>
+<li>Build the set of party IDs the user "is":</li>
+<li><code>personID := person.ID</code></li>
+<li>Query <code>party_group_closures</code> WHERE <code>member_party_id = personID</code>, project <code>ancestor_party_id</code>. Call this <code>ancestors</code>.</li>
+<li><code>reachable := {personID} ∪ ancestors</code>.</li>
+<li>Query <code>party_relationships</code> joined to <code>parties</code>:
+   <div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">to_party_id</span><span class="p">,</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">from_role</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="o">*</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">party_relationships</span><span class="w"> </span><span class="n">pr</span>
+<span class="k">JOIN</span><span class="w"> </span><span class="n">parties</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">to_party_id</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">from_party_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="o">&lt;</span><span class="n">reachable</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">pr</span><span class="p">.</span><span class="n">relationship_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;project_member&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">kind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;project&#39;</span>
+</code></pre></div></li>
+<li>In Go, group by <code>to_party_id</code>. For each group, pick the highest-ranked <code>from_role</code> using rank map <code>{owner: 2, developer: 1, viewer: 0}</code>; unknown roles rank -1.</li>
+<li>Return <code>[]UserProjectMembership</code> sorted by <code>project.name</code> ASC.</li>
+</ol>
+<p>Two round-trips to the DB (reachable-set query, then memberships+projects join query). Wrap in a read-only GORM transaction for snapshot consistency.</p>
+<h3 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h3>
+<p><strong>Types + API client</strong> (<code>web/src/api.ts</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">UserProjectMembership</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">project</span><span class="o">:</span><span class="w"> </span><span class="kt">Party</span>
+<span class="w">  </span><span class="nx">role</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">getMyProjects</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">UserProjectMembership</span><span class="p">[]</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">request</span><span class="o">&lt;</span><span class="nx">UserProjectMembership</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="s1">&#39;/auth/me/projects&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>New component</strong> <code>web/src/routes/parties/MyProjectsTable.tsx</code>:
+- Fetches via <code>api.getMyProjects()</code> on mount (use React Query with a short-lived cache; invalidate on logout).
+- Renders a shadcn <code>Table</code> with two columns: Name, Role.
+- Each row has <code>onClick</code> → <code>navigate(</code>/settings/projects/${membership.project.id}<code>)</code>.
+- Empty state: "You don't belong to any projects yet."
+- Error state: retry button.</p>
+<p><strong>My Account tab</strong> (<code>web/src/pages/SettingsPage.tsx</code> — <code>AccountTab</code> component): add a third <code>&lt;Card&gt;</code> titled "My projects" below "Change password" containing <code>&lt;MyProjectsTable /&gt;</code>.</p>
+<h3 id="data-flow">Data flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as User
+    participant UI as My Account UI
+    participant API as /auth/me/projects
+    participant Store as PartyStore.ResolveUserProjects
+    participant DB as DB
+
+    U-&gt;&gt;UI: open /settings, click My Account tab
+    UI-&gt;&gt;API: GET /api/v1/auth/me/projects  (JWT)
+    API-&gt;&gt;Store: ResolveUserProjects(userID)
+    Store-&gt;&gt;DB: SELECT person WHERE user_id = ?
+    Store-&gt;&gt;DB: SELECT ancestor_party_id FROM party_group_closures WHERE member_party_id = ?
+    Store-&gt;&gt;DB: SELECT memberships JOIN projects WHERE from_party_id IN (...) AND relationship_name = 'project_member'
+    Store--&gt;&gt;API: [{project, role}] with highest-privilege role per project
+    API--&gt;&gt;UI: 200 [] JSON
+    UI-&gt;&gt;U: render "My projects" table</code></pre>
+<h2 id="api-surface">API surface<a class="headerlink" href="#api-surface" title="Permanent link">&para;</a></h2>
+<h3 id="get-apiv1authmeprojects"><code>GET /api/v1/auth/me/projects</code><a class="headerlink" href="#get-apiv1authmeprojects" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Auth:</strong> JWT required. No extra permission check.</li>
+<li><strong>Response 200:</strong> <code>[{ "project": Party, "role": string }]</code>, sorted by project name ASC. Empty array when the user has no memberships.</li>
+<li><strong>Response 401:</strong> no/invalid token.</li>
+</ul>
+<p>Documented in <code>docs/api.md</code> under the Auth section.</p>
+<h3 id="user-createupdate-side-effects">User create/update side-effects<a class="headerlink" href="#user-createupdate-side-effects" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>POST /api/v1/users</code> — same semantics as today, plus a best-effort <code>CreatePersonForUser</code>. User receives no extra response field. If Person creation fails, the user still exists; migration008 on next boot (or a subsequent successful update) closes the gap.</li>
+<li><code>PUT /api/v1/users/{id}</code> — same semantics, plus a best-effort <code>UpdatePersonForUser</code> when name-affecting fields changed.</li>
+</ul>
+<h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>ResolveUserProjects</code> DB error</strong> → handler returns 500 with a generic message; frontend shows retry UI.</li>
+<li><strong>User has no Person party</strong> (pre-migration) → handler returns 200 with empty array. Frontend shows empty state — indistinguishable from a user with no memberships, which is the correct UX.</li>
+<li><strong>Unknown <code>from_role</code> on a relationship</strong> → resolution ranks it -1 (never wins). Logged at warn level for ops visibility. UI shows the raw role string.</li>
+<li><strong>Person-sync failure on user create/update</strong> → logged, request succeeds. Invariant restoration is deferred to the next sync point.</li>
+</ul>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p><strong>Store (<code>internal/store/party_store_test.go</code>):</strong>
+- <code>TestCreatePersonForUser_CreatesWhenMissing</code>
+- <code>TestCreatePersonForUser_IdempotentWhenExists</code> — second call is a no-op
+- <code>TestCreatePersonForUser_UsesDisplayNameWhenSet</code>
+- <code>TestCreatePersonForUser_FallsBackToUsername</code>
+- <code>TestUpdatePersonForUser_UpdatesNameOnDisplayNameChange</code>
+- <code>TestUpdatePersonForUser_NoOpWhenNoPersonExists</code>
+- <code>TestResolveUserProjects_DirectMemberships</code>
+- <code>TestResolveUserProjects_TransitiveViaGroup</code>
+- <code>TestResolveUserProjects_HighestPrivilegeWinsOnMultiPath</code>
+- <code>TestResolveUserProjects_EmptyForUserWithNoMemberships</code>
+- <code>TestResolveUserProjects_EmptyForUserWithoutPerson</code></p>
+<p><strong>Migration (<code>internal/db/migrations_test.go</code> or equivalent):</strong>
+- <code>TestMigration008_BackfillCreatesPersonsForOrphanUsers</code>
+- <code>TestMigration008_Idempotent</code>
+- <code>TestMigration008_SkipsUsersAlreadyHavingPerson</code></p>
+<p><strong>Handlers (<code>internal/api/auth_handlers_test.go</code>, <code>internal/api/user_handlers_test.go</code>):</strong>
+- <code>TestMyProjectsHandler_ReturnsMemberships</code>
+- <code>TestMyProjectsHandler_Unauthenticated401</code>
+- <code>TestCreateUser_AlsoCreatesPersonParty</code>
+- <code>TestCreateUser_SucceedsEvenIfPersonCreateFails</code> (inject store that errors)
+- <code>TestUpdateUser_SyncsPersonName</code> (only when name fields change)</p>
+<p><strong>Frontend (Vitest + RTL):</strong>
+- <code>web/src/api.test.ts</code> — <code>getMyProjects</code> GET test.
+- <code>web/src/routes/parties/MyProjectsTable.test.tsx</code> — empty state; rows rendered from mock; row click navigates; error state with retry.
+- <code>web/src/pages/SettingsPage.test.tsx</code> — My Account tab shows "My projects" card.</p>
+<p><strong>E2E (<code>e2e/tests/my-account-projects.spec.ts</code>):</strong>
+- New user seeded via API → login UI → My Account → sees empty "My projects" card.
+- Admin seeds project + adds user's Person as <code>project:developer</code> → user logs back in → sees row with role <code>project:developer</code>.
+- Click a row → lands on project detail page (assert heading).</p>
+<h2 id="rollout">Rollout<a class="headerlink" href="#rollout" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Migration008 ships with this change. Idempotent; safe to run on existing DBs.</li>
+<li>No feature flag — the backend endpoint is low-cost and the UI is additive (new card on existing tab).</li>
+<li>No breaking change to existing endpoints.</li>
+<li>Existing admin already has a Person party from migration007; migration008 is a no-op for them.</li>
+<li>E2E helpers (<code>createUser</code> in <code>e2e/tests/helpers.ts</code>) continue to work; newly-created users now automatically get Person parties, which unlocks AddMember tests from Specs 1 and 2 that currently use only the admin person.</li>
+</ul>
+<h2 id="compliance-notes">Compliance notes<a class="headerlink" href="#compliance-notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>ADR-011:</strong> Closes the "Person parties must be kept in sync with User records" invariant that was previously documented as a known gap. Adds <code>ResolveUserProjects</code> as a new consumer of the closure table — exactly the pattern ADR-011 was designed to support (single resolution algorithm, no new join tables).</li>
+<li><strong>ADR-012:</strong> Role resolution uses <code>party_group_closures</code> read-only. No new writes to the closure table. No effect on the materialization cost.</li>
+<li><strong>ADR-007:</strong> Frontend change is additive — React 18 + shadcn + embedded SPA unchanged.</li>
+</ul>
+<h2 id="open-questions">Open questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
+<p>None at draft time. The plan should confirm migration008's exact numbering by inspecting <code>internal/db/migrations.go</code> before committing the migration file.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 16, 2026 06:25:58 UTC"><span class="timeago" datetime="2026-04-16T06:25:58+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 16, 2026 06:25:58 UTC">2026-04-16</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 16, 2026 06:25:58 UTC"><span class="timeago" datetime="2026-04-16T06:25:58+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 16, 2026 06:25:58 UTC">2026-04-16</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../js/timeago.min.js"></script>
+      
+        <script src="../../../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>

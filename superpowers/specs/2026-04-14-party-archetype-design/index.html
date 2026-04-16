@@ -1,0 +1,1585 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AgentLens - AI Agent Observability Platform">
+      
+      
+      
+        <link rel="canonical" href="https://agentlens.cloudtown.io/superpowers/specs/2026-04-14-party-archetype-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Party Archetype — Design Spec - AgentLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../css/timeago.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#party-archetype-design-spec" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="AgentLens" class="md-header__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AgentLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Party Archetype — Design Spec
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../end-user-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  End User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../developer-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../devops-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  DevOps Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../auth/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Authentication
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../database/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Database
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../settings/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Settings
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="AgentLens" class="md-nav__button md-logo" aria-label="AgentLens" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AgentLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/PawelHaracz/Agentlens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    PawelHaracz/Agentlens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../end-user-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DevOps Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-source-archetype-java-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Source Archetype — Java Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-core-domain-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Core Domain Model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Core Domain Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-party" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Party
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-partyrelationship-graph-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 PartyRelationship (graph edge)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-party-group-closure-materialized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Party Group Closure (materialized)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-containment-relationship-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Containment Relationship Registry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-global-party-roles-groups-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Global Party Roles (groups only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-catalog-project-membership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 Catalog Project Membership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-party-identifier-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7 Party Identifier (v2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-permission-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Permission Resolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Permission Resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-project-scoped-permission-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Project-scoped permission matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-resolution-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Resolution algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-catalog-entry-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Catalog entry access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-per-request-context-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Per-request context cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. API Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. API Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-generic-handler-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Generic handler architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-generic-endpoints-registered-per-kind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Generic endpoints (registered per kind)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-catalog-scoping-endpoints-catalog-specific-not-generic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Catalog scoping endpoints (catalog-specific, not generic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-new-middleware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 New middleware
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-layer-boundaries-arch-go-compliant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Layer Boundaries (arch-go compliant)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-extensibility-adding-a-new-party-kind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Extensibility — Adding a New Party Kind
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-migration-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Migration Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-out-of-scope-v1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Out of Scope (v1)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="party-archetype-design-spec">Party Archetype — Design Spec<a class="headerlink" href="#party-archetype-design-spec" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-04-14
+<strong>Status:</strong> Approved
+<strong>Scope:</strong> Users, groups, projects, project-scoped permissions, catalog entry project membership</p>
+<hr />
+<h2 id="1-problem-statement">1. Problem Statement<a class="headerlink" href="#1-problem-statement" title="Permanent link">&para;</a></h2>
+<p>AgentLens currently has a flat, global permission model: every user has one global role
+(<code>admin</code>, <code>editor</code>, <code>viewer</code>) and all catalog entries are visible to all authenticated users.
+There is no concept of projects, group membership, or per-project permissions.</p>
+<p>The goals of this feature:</p>
+<ul>
+<li>Introduce <strong>projects</strong> as logical namespaces (à la ArgoCD AppProject) that scope catalog entries</li>
+<li>Introduce <strong>groups</strong> as hierarchical collections of users that can carry project roles</li>
+<li>Allow <strong>catalog entries</strong> to belong to multiple projects simultaneously</li>
+<li>Enforce <strong>project-scoped RBAC</strong> in addition to existing global roles</li>
+<li>Model all actors (users, groups, future org types) using the <strong>Party archetype</strong> as a unified abstraction</li>
+<li>Keep the system <strong>open to new party kinds</strong> (e.g. organization) with zero handler code changes</li>
+</ul>
+<hr />
+<h2 id="2-source-archetype-java-mapping">2. Source Archetype — Java Mapping<a class="headerlink" href="#2-source-archetype-java-mapping" title="Permanent link">&para;</a></h2>
+<p>The <a href="~/src/private/archetypes/party">party archetype</a> defines:</p>
+<table>
+<thead>
+<tr>
+<th>Java concept</th>
+<th>AgentLens Go mapping</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Party</code> (sealed abstract)</td>
+<td><code>Party</code> struct + <code>PartyKind</code> discriminator</td>
+</tr>
+<tr>
+<td><code>Person</code></td>
+<td><code>Party{Kind: "person"}</code> linked to existing <code>User</code> (auth lives in <code>User</code>)</td>
+</tr>
+<tr>
+<td><code>Organization</code> / <code>OrganizationUnit</code></td>
+<td><code>Party{Kind: "group"}</code> — nested via relationships</td>
+</tr>
+<tr>
+<td><code>Company</code></td>
+<td><code>Party{Kind: "project"}</code> — logical namespace</td>
+</tr>
+<tr>
+<td><code>Role</code> (value object)</td>
+<td>plain <code>string</code> — no separate table</td>
+</tr>
+<tr>
+<td><code>PartyRole</code></td>
+<td><code>(PartyID, RoleName)</code> pair — embedded in relationship edges</td>
+</tr>
+<tr>
+<td><code>PartyRelationship</code></td>
+<td><code>PartyRelationship</code> struct — directed named graph edge</td>
+</tr>
+<tr>
+<td><code>RegisteredIdentifier</code></td>
+<td><code>PartyIdentifier</code> struct — external IDs (email, username)</td>
+</tr>
+</tbody>
+</table>
+<p>Go does not have sealed types. The discriminator pattern (<code>kind</code> field + validation in store
+layer) replaces Java's sealed class hierarchy.</p>
+<hr />
+<h2 id="3-core-domain-model">3. Core Domain Model<a class="headerlink" href="#3-core-domain-model" title="Permanent link">&para;</a></h2>
+<h3 id="31-party">3.1 Party<a class="headerlink" href="#31-party" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PartyKind</span><span class="w"> </span><span class="kt">string</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="nx">PartyKindPerson</span><span class="w">  </span><span class="nx">PartyKind</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;person&quot;</span>
+<span class="w">    </span><span class="nx">PartyKindGroup</span><span class="w">   </span><span class="nx">PartyKind</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;group&quot;</span>
+<span class="w">    </span><span class="nx">PartyKindProject</span><span class="w"> </span><span class="nx">PartyKind</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;project&quot;</span>
+<span class="w">    </span><span class="c1">// Future: PartyKindOrganization PartyKind = &quot;organization&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span><span class="w"> </span><span class="nx">Party</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">        </span><span class="kt">string</span><span class="w">    </span><span class="s">`gorm:&quot;primaryKey&quot;`</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w">      </span><span class="nx">PartyKind</span><span class="w"> </span><span class="s">`gorm:&quot;not null&quot;`</span>
+<span class="w">    </span><span class="nx">Name</span><span class="w">      </span><span class="kt">string</span><span class="w">    </span><span class="s">`gorm:&quot;not null&quot;`</span>
+<span class="w">    </span><span class="nx">Version</span><span class="w">   </span><span class="kt">int</span><span class="w">       </span><span class="s">`gorm:&quot;not null;default:0&quot;`</span>
+<span class="w">    </span><span class="nx">UserID</span><span class="w">    </span><span class="o">*</span><span class="kt">string</span><span class="w">   </span><span class="s">`gorm:&quot;uniqueIndex&quot;`</span><span class="w"> </span><span class="c1">// non-null for persons only, FK→users.id</span>
+<span class="w">    </span><span class="nx">IsSystem</span><span class="w">  </span><span class="kt">bool</span><span class="w">      </span><span class="s">`gorm:&quot;default:false&quot;`</span><span class="w"> </span><span class="c1">// true for default project / system groups</span>
+<span class="w">    </span><span class="nx">CreatedAt</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+<span class="w">    </span><span class="nx">UpdatedAt</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><strong>Person</strong> parties are created automatically when a <code>User</code> is created (migration + bootstrap).</li>
+<li><strong>Group</strong> parties are user-managed. Groups can contain persons or other groups (hierarchical).</li>
+<li><strong>Project</strong> parties are user-managed namespaces. One system project (<code>is_system=true</code>,
+  <code>name="default"</code>) is seeded at migration time.</li>
+</ul>
+<h3 id="32-partyrelationship-graph-edge">3.2 PartyRelationship (graph edge)<a class="headerlink" href="#32-partyrelationship-graph-edge" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PartyRelationship</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">               </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span>
+<span class="w">    </span><span class="nx">FromPartyID</span><span class="w">      </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null;index&quot;`</span>
+<span class="w">    </span><span class="nx">FromRole</span><span class="w">         </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null&quot;`</span>
+<span class="w">    </span><span class="nx">ToPartyID</span><span class="w">        </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null;index&quot;`</span>
+<span class="w">    </span><span class="nx">ToRole</span><span class="w">           </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null&quot;`</span>
+<span class="w">    </span><span class="nx">RelationshipName</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null&quot;`</span>
+<span class="w">    </span><span class="nx">CreatedAt</span><span class="w">        </span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+<span class="w">    </span><span class="c1">// UNIQUE(FromPartyID, FromRole, ToPartyID, ToRole, RelationshipName)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Relationship taxonomy:</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>RelationshipName</code></th>
+<th><code>FromRole</code></th>
+<th><code>ToRole</code></th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>group_member</code></td>
+<td><code>member</code></td>
+<td><code>group</code></td>
+<td>Person or group is a member of a group</td>
+</tr>
+<tr>
+<td><code>project_member</code></td>
+<td><code>project:owner</code> | <code>project:developer</code> | <code>project:viewer</code></td>
+<td><code>project</code></td>
+<td>Party has a role within a project</td>
+</tr>
+</tbody>
+</table>
+<p>New party kinds add a new row to this taxonomy. No schema change required.</p>
+<h3 id="33-party-group-closure-materialized">3.3 Party Group Closure (materialized)<a class="headerlink" href="#33-party-group-closure-materialized" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PartyGroupClosure</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">MemberPartyID</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span>
+<span class="w">    </span><span class="nx">AncestorPartyID</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Pre-computed transitive closure of <strong>all containment relationships</strong> (see §3.4).
+Rebuilt synchronously (in the same transaction) whenever a containment relationship
+is added or removed. Enables O(1) indexed auth checks — no recursive CTE at request time.</p>
+<h3 id="34-containment-relationship-registry">3.4 Containment Relationship Registry<a class="headerlink" href="#34-containment-relationship-registry" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// ContainmentRelationships is the set of relationship names that form</span>
+<span class="c1">// hierarchical containment and trigger closure rebuilds.</span>
+<span class="c1">// Adding a new hierarchical party kind costs exactly one entry here.</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">ContainmentRelationships</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">bool</span><span class="p">{</span>
+<span class="w">    </span><span class="s">&quot;group_member&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// &quot;org_member&quot;: true  ← future: adding &quot;organization&quot; kind costs one line</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The closure rebuild fires for any relationship whose name is in <code>ContainmentRelationships</code>.
+<code>PartyGroupClosure</code> stores <code>(member_party_id, ancestor_party_id)</code> regardless of kind —
+the permission resolution algorithm queries it without filtering by kind.</p>
+<p><code>ContainmentRelationships</code> lives in <code>internal/model/party.go</code> (not <code>auth/</code>) so that
+<code>store</code> can import it without violating the arch-go <code>auth → model-only</code> rule.</p>
+<h3 id="35-global-party-roles-groups-only">3.5 Global Party Roles (groups only)<a class="headerlink" href="#35-global-party-roles-groups-only" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">GlobalPartyRole</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">PartyID</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span><span class="w"> </span><span class="c1">// kind=group (or future hierarchical kinds)</span>
+<span class="w">    </span><span class="nx">RoleID</span><span class="w">  </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span><span class="w"> </span><span class="c1">// FK→roles.id</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Person parties derive their global role from <code>users.role_id</code> (unchanged). Groups can
+additionally carry global roles (e.g. a <code>platform-admins</code> group with <code>global:admin</code>).</p>
+<h3 id="36-catalog-project-membership">3.6 Catalog Project Membership<a class="headerlink" href="#36-catalog-project-membership" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">CatalogProjectMembership</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">CatalogEntryID</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span><span class="w"> </span><span class="c1">// FK→catalog_entries.id</span>
+<span class="w">    </span><span class="nx">ProjectPartyID</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span><span class="w"> </span><span class="c1">// FK→parties.id, kind=project</span>
+<span class="w">    </span><span class="nx">CreatedAt</span><span class="w">      </span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Many-to-many. Every new <code>CatalogEntry</code> is automatically inserted into the <code>default</code> project
+at creation time. Additional project assignments are explicit.</p>
+<h3 id="37-party-identifier-v2">3.7 Party Identifier (v2)<a class="headerlink" href="#37-party-identifier-v2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">PartyIdentifier</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">        </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;primaryKey&quot;`</span>
+<span class="w">    </span><span class="nx">PartyID</span><span class="w">   </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null;index&quot;`</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w">      </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null&quot;`</span><span class="w"> </span><span class="c1">// &quot;email&quot;, &quot;username&quot;, &quot;external_id&quot;</span>
+<span class="w">    </span><span class="nx">Value</span><span class="w">     </span><span class="kt">string</span><span class="w"> </span><span class="s">`gorm:&quot;not null&quot;`</span>
+<span class="w">    </span><span class="nx">CreatedAt</span><span class="w"> </span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+<span class="w">    </span><span class="c1">// UNIQUE(Kind, Value)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Schema added in v1 migration, not populated until v2. Included for archetype completeness.</p>
+<hr />
+<h2 id="4-permission-resolution">4. Permission Resolution<a class="headerlink" href="#4-permission-resolution" title="Permanent link">&para;</a></h2>
+<h3 id="41-project-scoped-permission-matrix">4.1 Project-scoped permission matrix<a class="headerlink" href="#41-project-scoped-permission-matrix" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Project role</th>
+<th>Permissions granted within project</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project:owner</code></td>
+<td><code>catalog:read</code>, <code>catalog:write</code>, <code>catalog:delete</code></td>
+</tr>
+<tr>
+<td><code>project:developer</code></td>
+<td><code>catalog:read</code>, <code>catalog:write</code></td>
+</tr>
+<tr>
+<td><code>project:viewer</code></td>
+<td><code>catalog:read</code></td>
+</tr>
+</tbody>
+</table>
+<p>Static in-memory map — no DB table. New project roles = one map entry in <code>auth/party_permissions.go</code>.</p>
+<h3 id="42-resolution-algorithm">4.2 Resolution algorithm<a class="headerlink" href="#42-resolution-algorithm" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>HasProjectPermission(ctx, userID, permission, projectPartyID) bool:
+
+  Step 1 — Global bypass (existing system, unchanged)
+    user.Role.Permissions ∋ permission → ALLOW
+
+  Step 2 — Group global roles
+    SELECT r.permissions FROM global_party_roles gpr
+    JOIN roles r ON r.id = gpr.role_id
+    WHERE gpr.party_id IN (
+      SELECT ancestor_party_id FROM party_group_closures
+      WHERE member_party_id = $userPartyID
+    )
+    any permissions set ∋ permission → ALLOW
+
+  Step 3 — Project-scoped roles (user direct + via group ancestry)
+    SELECT from_role FROM party_relationships
+    WHERE relationship_name = &#39;project_member&#39;
+      AND to_party_id = $projectPartyID
+      AND from_party_id IN (
+            $userPartyID,
+            SELECT ancestor_party_id FROM party_group_closures
+            WHERE member_party_id = $userPartyID
+          )
+    map from_role → permission set (static in-memory table)
+    any mapped permissions ∋ permission → ALLOW
+
+  Step 4 — DENY
+</code></pre></div>
+<p>All lookups use indexed columns. No recursive CTE at auth time (closure is pre-materialized).</p>
+<h3 id="43-catalog-entry-access">4.3 Catalog entry access<a class="headerlink" href="#43-catalog-entry-access" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>HasCatalogPermission(ctx, userID, permission, catalogEntryID) bool:
+  projectIDs = SELECT project_party_id FROM catalog_project_memberships
+               WHERE catalog_entry_id = $catalogEntryID
+  return ANY projectID: HasProjectPermission(ctx, userID, permission, projectID)
+</code></pre></div>
+<h3 id="44-per-request-context-cache">4.4 Per-request context cache<a class="headerlink" href="#44-per-request-context-cache" title="Permanent link">&para;</a></h3>
+<p><code>RequireProjectPermission</code> middleware caches the user's ancestor party IDs (from
+<code>party_group_closures</code>) in <code>r.Context()</code> on the first call per request. Subsequent
+middleware calls on the same request reuse the cached set — single DB round-trip
+per request for group ancestry resolution.</p>
+<hr />
+<h2 id="5-api-design">5. API Design<a class="headerlink" href="#5-api-design" title="Permanent link">&para;</a></h2>
+<h3 id="51-generic-handler-architecture">5.1 Generic handler architecture<a class="headerlink" href="#51-generic-handler-architecture" title="Permanent link">&para;</a></h3>
+<p>All party kinds share a single handler implementation, parameterized by <code>PartyKindConfig</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// PartyKindConfig drives route registration and handler behaviour for one party kind.</span>
+<span class="c1">// Adding a new party kind = add a new PartyKindConfig. Zero handler code changes.</span>
+<span class="kd">type</span><span class="w"> </span><span class="nx">PartyKindConfig</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="w">               </span><span class="nx">PartyKind</span><span class="w">   </span><span class="c1">// &quot;group&quot;, &quot;project&quot;, &quot;organization&quot;</span>
+<span class="w">    </span><span class="nx">URLPrefix</span><span class="w">          </span><span class="kt">string</span><span class="w">      </span><span class="c1">// &quot;groups&quot;, &quot;projects&quot;, &quot;orgs&quot;</span>
+<span class="w">    </span><span class="nx">MemberRelationship</span><span class="w"> </span><span class="kt">string</span><span class="w">      </span><span class="c1">// relationship_name for members: &quot;group_member&quot;, &quot;project_member&quot;</span>
+<span class="w">    </span><span class="nx">ValidMemberRoles</span><span class="w">   </span><span class="p">[]</span><span class="kt">string</span><span class="w">    </span><span class="c1">// roles a member may hold in this kind</span>
+<span class="w">    </span><span class="nx">CreatePermission</span><span class="w">   </span><span class="kt">string</span><span class="w">      </span><span class="c1">// global permission required to create</span>
+<span class="w">    </span><span class="nx">ManagePermission</span><span class="w">   </span><span class="kt">string</span><span class="w">      </span><span class="c1">// global permission required to delete / modify</span>
+<span class="w">    </span><span class="nx">CanContainKinds</span><span class="w">    </span><span class="p">[]</span><span class="nx">PartyKind</span><span class="w"> </span><span class="c1">// which party kinds may be added as members</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Route registration in <code>router.go</code> — called inside the authenticated <code>/api/v1</code> group
+(matching the existing <code>registerCatalogRoutes</code>/<code>registerUserRoutes</code> pattern):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Inside r.Group(func(r chi.Router) { r.Use(RequireAuth(...)) ... }):</span>
+<span class="nx">RegisterPartyKindRoutes</span><span class="p">(</span><span class="nx">r</span><span class="p">,</span><span class="w"> </span><span class="nx">PartyKindConfig</span><span class="p">{</span><span class="w">   </span><span class="c1">// r.Route(&quot;/groups&quot;, ...)</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="p">:</span><span class="w"> </span><span class="nx">PartyKindGroup</span><span class="p">,</span><span class="w"> </span><span class="nx">URLPrefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;groups&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">MemberRelationship</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;group_member&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">ValidMemberRoles</span><span class="p">:</span><span class="w">   </span><span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&quot;member&quot;</span><span class="p">},</span>
+<span class="w">    </span><span class="nx">CreatePermission</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;users:write&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">ManagePermission</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;users:write&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">CanContainKinds</span><span class="p">:</span><span class="w">    </span><span class="p">[]</span><span class="nx">PartyKind</span><span class="p">{</span><span class="nx">PartyKindPerson</span><span class="p">,</span><span class="w"> </span><span class="nx">PartyKindGroup</span><span class="p">},</span>
+<span class="p">})</span>
+<span class="nx">RegisterPartyKindRoutes</span><span class="p">(</span><span class="nx">r</span><span class="p">,</span><span class="w"> </span><span class="nx">PartyKindConfig</span><span class="p">{</span><span class="w">   </span><span class="c1">// r.Route(&quot;/projects&quot;, ...)</span>
+<span class="w">    </span><span class="nx">Kind</span><span class="p">:</span><span class="w"> </span><span class="nx">PartyKindProject</span><span class="p">,</span><span class="w"> </span><span class="nx">URLPrefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;projects&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">MemberRelationship</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;project_member&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">ValidMemberRoles</span><span class="p">:</span><span class="w">   </span><span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&quot;project:owner&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;project:developer&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;project:viewer&quot;</span><span class="p">},</span>
+<span class="w">    </span><span class="nx">CreatePermission</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;catalog:write&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">ManagePermission</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;catalog:write&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">CanContainKinds</span><span class="p">:</span><span class="w">    </span><span class="p">[]</span><span class="nx">PartyKind</span><span class="p">{</span><span class="nx">PartyKindPerson</span><span class="p">,</span><span class="w"> </span><span class="nx">PartyKindGroup</span><span class="p">},</span>
+<span class="p">})</span>
+<span class="c1">// Future: RegisterPartyKindRoutes(r, PartyKindConfig{Kind: PartyKindOrganization, ...})</span>
+</code></pre></div>
+<p><code>RegisterPartyKindRoutes</code> uses relative path prefixes (<code>/groups</code>, not <code>/api/v1/groups</code>)
+because it is called inside the already-mounted <code>/api/v1</code> subrouter.</p>
+<h3 id="52-generic-endpoints-registered-per-kind">5.2 Generic endpoints (registered per kind)<a class="headerlink" href="#52-generic-endpoints-registered-per-kind" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>GET    /api/v1/{prefix}                         ListParties(cfg)
+POST   /api/v1/{prefix}                         CreateParty(cfg)
+GET    /api/v1/{prefix}/{id}                    GetParty(cfg)
+DELETE /api/v1/{prefix}/{id}                    DeleteParty(cfg)   [non-system only]
+POST   /api/v1/{prefix}/{id}/members            AddMember(cfg)
+DELETE /api/v1/{prefix}/{id}/members/{memberID} RemoveMember(cfg)
+GET    /api/v1/{prefix}/{id}/members            ListMembers(cfg)
+</code></pre></div>
+<h3 id="53-catalog-scoping-endpoints-catalog-specific-not-generic">5.3 Catalog scoping endpoints (catalog-specific, not generic)<a class="headerlink" href="#53-catalog-scoping-endpoints-catalog-specific-not-generic" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>POST   /api/v1/catalog/{id}/projects             assign entry to additional project
+DELETE /api/v1/catalog/{id}/projects/{projectID} remove from project
+GET    /api/v1/catalog?project={projectID}        filter catalog by project
+</code></pre></div>
+<h3 id="54-new-middleware">5.4 New middleware<a class="headerlink" href="#54-new-middleware" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// RequireProjectPermission is project-aware auth middleware.</span>
+<span class="c1">// Reads projectID from chi URL param, resolves permission via closure,</span>
+<span class="c1">// caches ancestor parties in context for the request lifetime.</span>
+<span class="c1">// Needs PartyStore (closure lookups) and UserStore (group global-role lookups).</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">RequireProjectPermission</span><span class="p">(</span><span class="nx">ps</span><span class="w"> </span><span class="o">*</span><span class="nx">store</span><span class="p">.</span><span class="nx">PartyStore</span><span class="p">,</span><span class="w"> </span><span class="nx">us</span><span class="w"> </span><span class="o">*</span><span class="nx">store</span><span class="p">.</span><span class="nx">UserStore</span><span class="p">,</span><span class="w"> </span><span class="nx">projectIDParam</span><span class="p">,</span><span class="w"> </span><span class="nx">permission</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="kd">func</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">Handler</span><span class="p">)</span><span class="w"> </span><span class="nx">http</span><span class="p">.</span><span class="nx">Handler</span>
+</code></pre></div>
+<p>Existing <code>RequirePermission</code> middleware (global) is unchanged and continues to guard all
+existing endpoints.</p>
+<hr />
+<h2 id="6-layer-boundaries-arch-go-compliant">6. Layer Boundaries (arch-go compliant)<a class="headerlink" href="#6-layer-boundaries-arch-go-compliant" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>internal/model/
+  party.go              Party, PartyKind, PartyRelationship, PartyGroupClosure,
+                        GlobalPartyRole, CatalogProjectMembership, PartyIdentifier,
+                        ContainmentRelationships (registry) ← lives here, NOT in auth/
+                        ValidPartyKinds, ContainmentRelationshipNames()
+
+internal/store/
+  party_store.go        PartyStore — generic CRUD for parties, relationships,
+                        full-table closure rebuild (same tx as relationship changes),
+                        cycle detection on AddMember, cascade cleanup on DeleteParty
+                        Methods: CreateParty, AddMember, RemoveMember, ListMembers,
+                                 GetParty, DeleteParty, ListParties,
+                                 AncestorGroupIDs, GetDefaultProject,
+                                 AssignToProject, RemoveFromProject,
+                                 ListProjectsForCatalogEntry,
+                                 ListCatalogEntryIDsForProject, GetProjectRoles
+  sql_store.go          Modified: add ProjectID to ListFilter, handle via JOIN in List;
+                                  add partyStore field, auto-assign new entries to default project
+  store.go              Modified: add ProjectID string to ListFilter struct
+
+internal/auth/
+  party_permissions.go  HasProjectPermission (pure, no DB),
+                        projectRolePermissions static map,
+                        ValidProjectRoles() (sorted)
+                        Note: ContainmentRelationships is in model/, not here
+
+internal/api/
+  party_handlers.go     Generic CRUD + member handlers (parameterized by PartyKindConfig)
+  party_kind_configs.go PartyKindConfig definitions for group and project
+  party_middleware.go   RequireProjectPermission (4-arg: ps, us, paramName, permission)
+                        + ancestor context cache (defensive copy)
+  catalog_project.go    Catalog↔project scoping handlers (POST/DELETE/GET)
+  router.go             Modified: add registerPartyRoutes(r, deps) called inside
+                        the authenticated JWTService group (same pattern as registerCatalogRoutes)
+
+internal/db/
+  migrations.go         Migration 007: all party tables + seed data (Go-side UUID, dialect-agnostic)
+</code></pre></div>
+<p>No new arch-go dependency rules required. All placements fit existing layer contracts.</p>
+<p><strong>Key arch constraint:</strong> <code>store</code> imports <code>model</code> (to read <code>ContainmentRelationships</code>). <code>auth</code> imports <code>model</code> only (pure permission map). <code>api</code> imports <code>store</code> + <code>auth</code>. This is the existing layering — no changes needed.</p>
+<hr />
+<h2 id="7-extensibility-adding-a-new-party-kind">7. Extensibility — Adding a New Party Kind<a class="headerlink" href="#7-extensibility-adding-a-new-party-kind" title="Permanent link">&para;</a></h2>
+<p>Adding <code>organization</code> (or any future kind) costs:</p>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Location</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PartyKindOrganization</code> constant</td>
+<td><code>model/party.go</code></td>
+<td>1 line</td>
+</tr>
+<tr>
+<td><code>"org_member"</code> in <code>ContainmentRelationships</code></td>
+<td><code>model/party.go</code></td>
+<td>1 line</td>
+</tr>
+<tr>
+<td>Kind validation entry in <code>ValidPartyKinds</code></td>
+<td><code>model/party.go</code></td>
+<td>1 line</td>
+</tr>
+<tr>
+<td><code>PartyKindConfig{...}</code> registration</td>
+<td><code>api/party_kind_configs.go</code></td>
+<td>~10 lines</td>
+</tr>
+<tr>
+<td>Migration</td>
+<td>none — <code>parties</code> table already has <code>kind</code> discriminator</td>
+<td>0 lines</td>
+</tr>
+</tbody>
+</table>
+<p>Permission resolution, closure rebuild, store methods, and all handlers — <strong>unchanged</strong>.</p>
+<hr />
+<h2 id="8-migration-strategy">8. Migration Strategy<a class="headerlink" href="#8-migration-strategy" title="Permanent link">&para;</a></h2>
+<p><strong>Migration 007</strong> — next in sequence after <code>migration006RawCards</code> (idempotent):</p>
+<div class="highlight"><pre><span></span><code>1. CREATE TABLE parties (id, kind, name, version, user_id, is_system, ...)
+2. CREATE TABLE party_relationships (id, from_party_id, from_role, to_party_id, to_role, relationship_name)
+3. CREATE TABLE party_group_closures (member_party_id, ancestor_party_id)    ← plural (GORM default)
+4. CREATE TABLE global_party_roles (party_id, role_id)
+5. CREATE TABLE catalog_project_memberships (catalog_entry_id, project_party_id)
+6. CREATE TABLE party_identifiers (id, party_id, kind, value)   [schema only, not populated]
+7. INSERT INTO parties: default project (kind=&#39;project&#39;, is_system=true, name=&#39;default&#39;)
+8. INSERT INTO parties: one Person party per existing User (kind=&#39;person&#39;, user_id=u.id)
+   — Go-side loop with uuid.New().String() (dialect-agnostic; no SQLite randomblob)
+9. INSERT INTO catalog_project_memberships: all existing CatalogEntries → default project
+</code></pre></div>
+<p><strong>Backward compatibility:</strong></p>
+<ul>
+<li>All existing API endpoints work unchanged after migration</li>
+<li><code>?project=</code> query param on <code>GET /api/v1/catalog</code> is opt-in; omitting it returns all entries
+  the caller has global access to (existing behaviour preserved)</li>
+<li><code>RequireProjectPermission</code> only guards new endpoints; existing endpoints keep <code>RequirePermission</code></li>
+<li>Bootstrap admin creation gains a corresponding Person party automatically
+  (created immediately after <code>BootstrapAdmin</code> returns — same startup flow in <code>main.go</code>)</li>
+</ul>
+<p><strong>Invariants maintained by the store layer:</strong></p>
+<ul>
+<li><code>AddMember</code> detects and rejects cycles before inserting any containment relationship</li>
+<li><code>DeleteParty</code> cascades: removes <code>party_relationships</code>, <code>party_group_closures</code>,
+  <code>global_party_roles</code>, and <code>catalog_project_memberships</code> rows in the same transaction,
+  then rebuilds the full closure</li>
+<li>Closure rebuild (<code>rebuildAllClosures</code>) is a full-table rebuild — delete all rows,
+  re-insert via a single recursive CTE. Correct regardless of edge insertion order.</li>
+</ul>
+<hr />
+<h2 id="9-out-of-scope-v1">9. Out of Scope (v1)<a class="headerlink" href="#9-out-of-scope-v1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Party addresses (from archetype) — not relevant to AgentLens</li>
+<li><code>PartyIdentifier</code> population — schema added, populated in v2</li>
+<li>Invitation / approval flows for project membership</li>
+<li>Project-level source/destination restrictions</li>
+<li>Audit log for membership changes (enterprise plugin concern)</li>
+<li>UI for project/group management (backend API only in v1)</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 16, 2026 06:25:58 UTC"><span class="timeago" datetime="2026-04-16T06:25:58+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 16, 2026 06:25:58 UTC">2026-04-16</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 16, 2026 06:25:58 UTC"><span class="timeago" datetime="2026-04-16T06:25:58+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 16, 2026 06:25:58 UTC">2026-04-16</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../js/timeago.min.js"></script>
+      
+        <script src="../../../js/timeago_mkdocs_material.js"></script>
+      
+    
+  </body>
+</html>

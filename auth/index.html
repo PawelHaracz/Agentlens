@@ -830,6 +830,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#project-scoped-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project-Scoped RBAC
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project-Scoped RBAC">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#project-roles-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Roles (model)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-enforcement-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current enforcement model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#unauthenticated-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1045,6 +1095,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#project-scoped-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project-Scoped RBAC
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project-Scoped RBAC">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#project-roles-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Roles (model)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-enforcement-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current enforcement model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#unauthenticated-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1249,6 +1349,46 @@
 </tbody>
 </table>
 <hr />
+<h2 id="project-scoped-rbac">Project-Scoped RBAC<a class="headerlink" href="#project-scoped-rbac" title="Permanent link">&para;</a></h2>
+<p>In addition to global roles, AgentLens models <strong>project-scoped roles</strong> via the party archetype. A user (or any group they belong to) can be assigned a role on a specific project, and <code>GET /api/v1/auth/me/projects</code> resolves the user's effective role per project per <a href="../adr/014-project-role-resolution-highest-privilege/">ADR-014</a>.</p>
+<h3 id="project-roles-model">Project Roles (model)<a class="headerlink" href="#project-roles-model" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Intended scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project:owner</code></td>
+<td>Full control over project membership and assigned catalog entries</td>
+</tr>
+<tr>
+<td><code>project:developer</code></td>
+<td>Read + write of catalog entries within the project</td>
+</tr>
+<tr>
+<td><code>project:viewer</code></td>
+<td>Read-only access to the project's catalog entries</td>
+</tr>
+</tbody>
+</table>
+<h3 id="current-enforcement-model">Current enforcement model<a class="headerlink" href="#current-enforcement-model" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Each user has a <strong>Person</strong> party (auto-created on user create; backfilled by <code>migration008</code>).</li>
+<li>Person parties can be members of <strong>Group</strong> parties (hierarchical, transitive closure pre-computed per <a href="../adr/012-materialized-group-closure-for-permission-resolution/">ADR-012</a>).</li>
+<li>Groups or persons can be assigned a role on a <strong>Project</strong> party via a <code>project_member</code> relationship.</li>
+<li><code>GET /api/v1/auth/me/projects</code> resolves the highest-privilege role per project across the user's Person and every ancestor group.</li>
+<li><strong>Mutation endpoints (<code>POST /api/v1/projects/{id}/members</code>, <code>POST /api/v1/catalog/{id}/projects</code>, etc.) currently gate on the global <code>catalog:write</code>/<code>users:write</code> permissions, NOT on project-scoped roles.</strong> Project-role-aware mutation gating is implemented in <code>internal/api/party_middleware.go</code> (<code>RequireProjectPermission</code>) but is intentionally not yet wired into routes — see Spec 2 D6.</li>
+</ol>
+<h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Global <code>admin</code> role bypasses all permission checks (project or otherwise).</li>
+<li>Project membership is managed via <code>POST /api/v1/projects/{id}/members</code>.</li>
+<li>New catalog entries are auto-assigned to the <code>default</code> system project inside the same transaction as the entry create.</li>
+</ul>
+<hr />
 <h2 id="unauthenticated-endpoints">Unauthenticated Endpoints<a class="headerlink" href="#unauthenticated-endpoints" title="Permanent link">&para;</a></h2>
 <p>The following endpoints do <strong>not</strong> require authentication:</p>
 <ul>
@@ -1278,7 +1418,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="March 31, 2026 22:14:53 UTC"><span class="timeago" datetime="2026-03-31T22:14:53+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="March 31, 2026 22:14:53 UTC">2026-03-31</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 16, 2026 06:25:58 UTC"><span class="timeago" datetime="2026-04-16T06:25:58+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 16, 2026 06:25:58 UTC">2026-04-16</span>
   </span>
 
     

@@ -597,10 +597,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#party-archetype-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Party Archetype Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#entity-relationships" class="md-nav__link">
     <span class="md-ellipsis">
       
         Entity Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#party-archetype-groups-projects-and-scoped-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Party Archetype: Groups, Projects, and Scoped RBAC
       
     </span>
   </a>
@@ -1246,10 +1268,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#party-archetype-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Party Archetype Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#entity-relationships" class="md-nav__link">
     <span class="md-ellipsis">
       
         Entity Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#party-archetype-groups-projects-and-scoped-rbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Party Archetype: Groups, Projects, and Scoped RBAC
       
     </span>
   </a>
@@ -1716,11 +1760,47 @@
 </tr>
 </tbody>
 </table>
+<h3 id="party-archetype-types">Party Archetype Types<a class="headerlink" href="#party-archetype-types" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Party</code></td>
+<td>Unified actor: <code>person</code> (1:1 with User), <code>group</code> (hierarchical), or <code>project</code> (catalog namespace).</td>
+</tr>
+<tr>
+<td><code>PartyRelationship</code></td>
+<td>Directed named edge in the party graph: <code>group_member</code> (containment) or <code>project_member</code> (scoped RBAC).</td>
+</tr>
+<tr>
+<td><code>PartyGroupClosure</code></td>
+<td>Pre-computed transitive closure of containment edges. Rebuilt synchronously on every membership change. Enables O(1) permission checks.</td>
+</tr>
+<tr>
+<td><code>GlobalPartyRole</code></td>
+<td>Assigns a global system <code>Role</code> to a group party. Group members inherit the role's permissions.</td>
+</tr>
+<tr>
+<td><code>CatalogProjectMembership</code></td>
+<td>Many-to-many link between catalog entries and projects. New entries auto-assigned to the <code>default</code> project.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="entity-relationships">Entity Relationships<a class="headerlink" href="#entity-relationships" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>erDiagram
     providers ||--o{ agent_types : "owns"
     agent_types ||--o{ capabilities : "has"
     agent_types ||--|| catalog_entries : "cataloged as"
+    catalog_entries }o--o{ parties : "belongs to (via catalog_project_memberships)"
+    parties ||--o{ party_relationships : "from"
+    parties ||--o{ party_relationships : "to"
+    parties ||--o{ party_group_closures : "member"
+    parties ||--o{ party_group_closures : "ancestor"
 
     providers {
         UUID id PK
@@ -1758,7 +1838,89 @@
         DATETIME validity_last_seen
         DATETIME created_at
         DATETIME updated_at
+    }
+    parties {
+        UUID id PK
+        TEXT kind "person|group|project"
+        TEXT name
+        INT version
+        UUID user_id FK "nullable — person parties only"
+        BOOL is_system
+        DATETIME created_at
+        DATETIME updated_at
+    }
+    party_relationships {
+        UUID id PK
+        UUID from_party_id FK
+        TEXT from_role
+        UUID to_party_id FK
+        TEXT to_role
+        TEXT relationship_name "group_member|project_member"
+    }
+    party_group_closures {
+        UUID member_party_id FK
+        UUID ancestor_party_id FK
+    }
+    catalog_project_memberships {
+        UUID catalog_entry_id FK
+        UUID project_party_id FK
+        DATETIME created_at
     }</code></pre>
+<h3 id="party-archetype-groups-projects-and-scoped-rbac">Party Archetype: Groups, Projects, and Scoped RBAC<a class="headerlink" href="#party-archetype-groups-projects-and-scoped-rbac" title="Permanent link">&para;</a></h3>
+<p>AgentLens uses a <strong>party archetype</strong> to manage actors (users, groups, projects) and their relationships in a single unified model.</p>
+<pre class="mermaid"><code>flowchart TD
+    U[User] --&gt;|bootstrap| P[Person Party]
+    P --&gt;|group_member| G[Group Party]
+    G --&gt;|group_member| G2[Nested Group]
+    P --&gt;|project_member\nfrom_role=owner| PR[Project Party]
+    G --&gt;|project_member\nfrom_role=developer| PR
+    PR --&gt;|scopes| CE[CatalogEntry]
+
+    subgraph Closure
+        C[party_group_closures\npre-computed transitive members]
+    end
+    G --&gt; C
+    G2 --&gt; C</code></pre>
+<p><strong>How permission resolution works:</strong></p>
+<ol>
+<li>On every request to a project-scoped endpoint, <code>RequireProjectPermission</code> middleware loads the current user's <code>Person</code> party.</li>
+<li>It fetches all transitive ancestor group IDs from <code>party_group_closures</code> (O(1) lookup).</li>
+<li>It checks <code>party_relationships</code> for <code>project_member</code> edges from the user's party or any ancestor group to the target project.</li>
+<li>The highest <code>from_role</code> found (<code>owner</code> &gt; <code>developer</code> &gt; <code>viewer</code>) determines effective access.</li>
+<li>The permission is checked against the <code>ProjectRolePermissions</code> static map in <code>internal/auth/party_permissions.go</code>.</li>
+</ol>
+<p><strong>Project roles:</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Role</th>
+<th style="text-align: center;"><code>catalog:read</code></th>
+<th style="text-align: center;"><code>catalog:write</code></th>
+<th style="text-align: center;"><code>catalog:delete</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>project:owner</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>project:developer</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">—</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>project:viewer</code></td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+</tr>
+</tbody>
+</table>
+<p>Global system roles (<code>admin</code>, <code>editor</code>, <code>viewer</code>) are orthogonal — admins always pass <code>RequireProjectPermission</code> regardless of party membership.</p>
 <h3 id="capability-kinds">Capability Kinds<a class="headerlink" href="#capability-kinds" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2656,7 +2818,7 @@ docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </sp
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 13, 2026 09:08:27 UTC"><span class="timeago" datetime="2026-04-13T09:08:27+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 13, 2026 09:08:27 UTC">2026-04-13</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="April 16, 2026 06:25:58 UTC"><span class="timeago" datetime="2026-04-16T06:25:58+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="April 16, 2026 06:25:58 UTC">2026-04-16</span>
   </span>
 
     
