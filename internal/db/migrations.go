@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/PawelHaracz/agentlens/internal/model"
@@ -21,7 +22,48 @@ func AllMigrations() []Migration {
 		migration004Settings(),
 		migration005HealthColumns(),
 		migration006RawCards(),
+		migration007PartyArchetype(),
+		migration008BackfillPersonParties(),
+		migration009CatalogProjectMembershipIndexes(),
 	}
+}
+
+// migration009CatalogProjectMembershipIndexes adds non-unique indexes on each
+// half of the (catalog_entry_id, project_party_id) composite PK so lookups
+// filtered by either column alone are well-indexed (notably the project
+// filter on /catalog?project= and the per-entry list on /catalog/:id/projects).
+func migration009CatalogProjectMembershipIndexes() Migration {
+	return Migration{
+		Version:     9,
+		Description: "add per-column indexes on catalog_project_memberships",
+		Up: func(tx *gorm.DB) error {
+			if err := tx.Exec(`CREATE INDEX IF NOT EXISTS idx_cpm_project_party_id
+				ON catalog_project_memberships(project_party_id)`).Error; err != nil {
+				return fmt.Errorf("creating cpm project index: %w", err)
+			}
+			if err := tx.Exec(`CREATE INDEX IF NOT EXISTS idx_cpm_catalog_entry_id
+				ON catalog_project_memberships(catalog_entry_id)`).Error; err != nil {
+				return fmt.Errorf("creating cpm entry index: %w", err)
+			}
+			return nil
+		},
+	}
+}
+
+func migration008BackfillPersonParties() Migration {
+	return Migration{
+		Version:     8,
+		Description: "backfill person parties for users created after migration007",
+		Up:          migration008Up,
+	}
+}
+
+func migration008Up(tx *gorm.DB) error {
+	if err := migration007SeedPersonParties(tx); err != nil {
+		return fmt.Errorf("migration008 backfill: %w", err)
+	}
+	slog.Info("migration008: person party backfill complete")
+	return nil
 }
 
 func migration001CreateTables() Migration {
@@ -311,6 +353,93 @@ func migration006RawCards() Migration {
 			return nil
 		},
 	}
+}
+
+func migration007PartyArchetype() Migration {
+	return Migration{
+		Version:     7,
+		Description: "create party archetype tables and seed default project",
+		Up:          migration007Up,
+	}
+}
+
+func migration007Up(tx *gorm.DB) error {
+	for _, m := range []interface{}{
+		&model.Party{},
+		&model.PartyRelationship{},
+		&model.PartyGroupClosure{},
+		&model.GlobalPartyRole{},
+		&model.CatalogProjectMembership{},
+		&model.PartyIdentifier{},
+	} {
+		if err := tx.AutoMigrate(m); err != nil {
+			return fmt.Errorf("auto migrate %T: %w", m, err)
+		}
+	}
+	if err := tx.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_party_rel_unique
+		ON party_relationships(from_party_id, from_role, to_party_id, to_role, relationship_name)`).Error; err != nil {
+		return fmt.Errorf("creating party_relationships unique index: %w", err)
+	}
+	if err := tx.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_party_identifiers_kind_value
+		ON party_identifiers(kind, value)`).Error; err != nil {
+		return fmt.Errorf("creating party_identifiers unique index: %w", err)
+	}
+	defaultID := uuid.New().String()
+	if err := tx.Exec(`
+		INSERT INTO parties (id, kind, name, version, is_system, created_at, updated_at)
+		SELECT ?, 'project', 'default', 0, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+		WHERE NOT EXISTS (SELECT 1 FROM parties WHERE kind='project' AND is_system=1)
+	`, defaultID).Error; err != nil {
+		return fmt.Errorf("seeding default project: %w", err)
+	}
+	var defaultProjectID string
+	if err := tx.Raw("SELECT id FROM parties WHERE kind='project' AND is_system=1 LIMIT 1").
+		Scan(&defaultProjectID).Error; err != nil {
+		return fmt.Errorf("reading default project id: %w", err)
+	}
+	if err := migration007SeedPersonParties(tx); err != nil {
+		return err
+	}
+	if err := tx.Exec(`
+		INSERT INTO catalog_project_memberships (catalog_entry_id, project_party_id, created_at)
+		SELECT ce.id, ?, CURRENT_TIMESTAMP
+		FROM catalog_entries ce
+		WHERE NOT EXISTS (
+			SELECT 1 FROM catalog_project_memberships
+			WHERE catalog_entry_id = ce.id AND project_party_id = ?
+		)
+	`, defaultProjectID, defaultProjectID).Error; err != nil {
+		return fmt.Errorf("assigning catalog entries to default project: %w", err)
+	}
+	slog.Info("migration007: party archetype tables created and seeded")
+	return nil
+}
+
+func migration007SeedPersonParties(tx *gorm.DB) error {
+	var existingUsers []struct {
+		ID          string `gorm:"column:id"`
+		Username    string `gorm:"column:username"`
+		DisplayName string `gorm:"column:display_name"`
+	}
+	if err := tx.Raw("SELECT id, username, display_name FROM users").Scan(&existingUsers).Error; err != nil {
+		return fmt.Errorf("reading existing users: %w", err)
+	}
+	for _, u := range existingUsers {
+		name := u.Username
+		if u.DisplayName != "" {
+			name = u.DisplayName
+		}
+		partyID := uuid.New().String()
+		userID := u.ID
+		if err := tx.Exec(`
+			INSERT INTO parties (id, kind, name, version, user_id, is_system, created_at, updated_at)
+			SELECT ?, 'person', ?, 0, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+			WHERE NOT EXISTS (SELECT 1 FROM parties WHERE user_id = ?)
+		`, partyID, name, userID, userID).Error; err != nil {
+			return fmt.Errorf("creating person party for user %s: %w", userID, err)
+		}
+	}
+	return nil
 }
 
 // columnExistsAllowedTables is the allowlist of tables that columnExists may inspect.

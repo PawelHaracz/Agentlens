@@ -12,7 +12,7 @@ vi.mock('@/api', () => ({
 
 // A small component that exercises the hook
 function HookHarness() {
-  const { entries, isLoading, isError, filter, setProtocol, setQuery, setSort, clearFilters, refetch } =
+  const { entries, isLoading, isError, filter, setProtocol, setQuery, setSort, setProject, clearFilters, refetch } =
     useCatalogQuery()
 
   return (
@@ -23,12 +23,15 @@ function HookHarness() {
       <div data-testid="protocol">{filter.protocol ?? 'none'}</div>
       <div data-testid="q">{filter.q ?? 'none'}</div>
       <div data-testid="sort">{filter.sort ?? 'none'}</div>
+      <div data-testid="project">{filter.project ?? 'none'}</div>
       <button onClick={() => setProtocol('a2a')}>set-a2a</button>
       <button onClick={() => setProtocol(undefined)}>clear-protocol</button>
       <button onClick={() => setQuery('test')}>set-query</button>
       <button onClick={() => setQuery('')}>clear-query</button>
       <button onClick={() => setSort('displayName_asc')}>set-sort</button>
       <button onClick={() => setSort(undefined)}>clear-sort</button>
+      <button onClick={() => setProject('proj-1')}>set-project</button>
+      <button onClick={() => setProject(undefined)}>clear-project</button>
       <button onClick={() => clearFilters()}>clear-all</button>
       <button onClick={() => refetch()}>refetch</button>
     </div>
@@ -120,6 +123,20 @@ describe('useCatalogQuery', () => {
     await screen.findByText('Agent One')
     fireEvent.click(screen.getByText('clear-sort'))
     await waitFor(() => expect(screen.getByTestId('sort').textContent).toBe('none'))
+  })
+
+  it('setProject updates URL param', async () => {
+    renderHook()
+    await screen.findByText('Agent One')
+    fireEvent.click(screen.getByText('set-project'))
+    await waitFor(() => expect(screen.getByTestId('project').textContent).toBe('proj-1'))
+  })
+
+  it('setProject(undefined) removes URL param', async () => {
+    renderHook('/?project=proj-1')
+    await screen.findByText('Agent One')
+    fireEvent.click(screen.getByText('clear-project'))
+    await waitFor(() => expect(screen.getByTestId('project').textContent).toBe('none'))
   })
 
   it('clearFilters resets all params', async () => {

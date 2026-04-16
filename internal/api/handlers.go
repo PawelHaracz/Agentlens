@@ -49,6 +49,9 @@ func (h *Handler) ListCatalog(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	if projectID := r.URL.Query().Get("project"); projectID != "" {
+		filter.ProjectID = projectID
+	}
 	entries, err := h.store.List(r.Context(), filter)
 	if err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "failed to list catalog entries")

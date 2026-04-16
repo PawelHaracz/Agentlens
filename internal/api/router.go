@@ -40,6 +40,8 @@ type RouterDeps struct {
 	TelemetryEndpoint string
 	// TelemetryServiceName is the service name exposed to the frontend.
 	TelemetryServiceName string
+	// PartyStore is optional. When nil, party/group/project routes are disabled.
+	PartyStore *store.PartyStore
 }
 
 // NewRouter creates and returns a configured HTTP handler with all routes.
@@ -83,6 +85,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 			registerCatalogRoutes(r, h, deps)
 			registerUserRoutes(r, deps)
 			registerSettingsRoutes(r, deps)
+			registerPartyRoutes(r, deps)
 		} else {
 			// No auth configured — register catalog routes without protection.
 			registerUnauthenticatedCatalogRoutes(r, h, deps)
@@ -129,6 +132,9 @@ func registerAuthRoutes(r chi.Router, deps RouterDeps, authHandler *AuthHandler)
 		r.Post("/auth/refresh", authHandler.Refresh)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/password", authHandler.ChangePassword)
+		if deps.PartyStore != nil {
+			r.Get("/auth/me/projects", MyProjectsHandler(deps.PartyStore))
+		}
 	})
 }
 
@@ -159,7 +165,7 @@ func registerUserRoutes(r chi.Router, deps RouterDeps) {
 	if deps.UserStore == nil || deps.RoleStore == nil {
 		return
 	}
-	userHandler := NewUserHandler(deps.UserStore, deps.RoleStore)
+	userHandler := NewUserHandler(deps.UserStore, deps.RoleStore, deps.PartyStore)
 	roleHandler := NewRoleHandler(deps.RoleStore)
 
 	r.Group(func(r chi.Router) {
@@ -196,6 +202,39 @@ func registerSettingsRoutes(r chi.Router, deps RouterDeps) {
 			r.With(RequirePermission(auth.PermSettingsRead)).Get("/", settingsHandler.GetAll)
 			r.With(RequirePermission(auth.PermSettingsRead)).Get("/{category}", settingsHandler.GetByCategory)
 			r.With(RequirePermission(auth.PermSettingsWrite)).Put("/", settingsHandler.Update)
+		})
+	})
+}
+
+// registerPartyRoutes mounts group, project, and catalog-project scoping endpoints
+// behind the same auth middleware as other /api/v1 routes.
+func registerPartyRoutes(r chi.Router, deps RouterDeps) {
+	if deps.PartyStore == nil {
+		return
+	}
+	r.Group(func(r chi.Router) {
+		r.Use(RequireAuth(deps.JWTService))
+		RegisterPartyKindRoutes(r, groupKindConfig, deps.PartyStore)
+		RegisterPartyKindRoutes(r, projectKindConfig, deps.PartyStore)
+		r.Get("/parties", ListAllPartiesHandler(deps.PartyStore))
+		registerCatalogProjectRoutes(r, deps.PartyStore)
+	})
+}
+
+// RegisterPartyKindRoutes registers CRUD + member routes for one PartyKindConfig.
+// r must already be a subrouter mounted at /api/v1 with RequireAuth applied.
+// Uses relative paths (no /api/v1/ prefix).
+func RegisterPartyKindRoutes(r chi.Router, cfg PartyKindConfig, partyStore *store.PartyStore) {
+	r.Route("/"+cfg.URLPrefix, func(r chi.Router) {
+		r.Get("/", ListPartiesHandler(cfg, partyStore))
+		r.With(RequirePermission(cfg.CreatePermission)).Post("/", CreatePartyHandler(cfg, partyStore))
+		r.Route("/{partyID}", func(r chi.Router) {
+			r.Get("/", GetPartyHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Delete("/", DeletePartyHandler(cfg, partyStore))
+			r.Get("/members", ListMembersHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Post("/members", AddMemberHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Delete("/members/{memberPartyID}", RemoveMemberHandler(cfg, partyStore))
+			r.With(RequirePermission(cfg.ManagePermission)).Patch("/members/{memberPartyID}", UpdateMemberRoleHandler(cfg, partyStore))
 		})
 	})
 }

@@ -1,0 +1,272 @@
+package api
+
+import (
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+
+	"github.com/PawelHaracz/agentlens/internal/model"
+	"github.com/PawelHaracz/agentlens/internal/store"
+)
+
+type createPartyRequest struct {
+	Name string `json:"name"`
+}
+
+type addMemberRequest struct {
+	PartyID string `json:"party_id"`
+	Role    string `json:"role"`
+}
+
+// ListPartiesHandler returns all parties of cfg.Kind.
+func ListPartiesHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		parties, err := ps.ListParties(r.Context(), cfg.Kind)
+		if err != nil {
+			slog.Error("listing parties", "kind", cfg.Kind, "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to list "+cfg.URLPrefix)
+			return
+		}
+		JSONResponse(w, http.StatusOK, parties)
+	}
+}
+
+// ListAllPartiesHandler returns parties across all kinds, optionally filtered by ?kind=.
+func ListAllPartiesHandler(ps *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		kind := model.PartyKind(r.URL.Query().Get("kind"))
+		parties, err := ps.ListParties(r.Context(), kind)
+		if err != nil {
+			slog.Error("listing all parties", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to list parties")
+			return
+		}
+		if parties == nil {
+			parties = []model.Party{}
+		}
+		JSONResponse(w, http.StatusOK, parties)
+	}
+}
+
+// CreatePartyHandler creates a new party of cfg.Kind.
+// Requires cfg.CreatePermission in the caller's global role.
+func CreatePartyHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req createPartyRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		name := strings.TrimSpace(req.Name)
+		if name == "" {
+			ErrorResponse(w, http.StatusBadRequest, "name is required")
+			return
+		}
+		p := &model.Party{ID: uuid.New().String(), Kind: cfg.Kind, Name: name}
+		if err := ps.CreateParty(r.Context(), p); err != nil {
+			slog.Error("creating party", "kind", cfg.Kind, "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to create")
+			return
+		}
+		JSONResponse(w, http.StatusCreated, p)
+	}
+}
+
+// GetPartyHandler returns a single party by ID, scoped to cfg.Kind.
+func GetPartyHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "partyID")
+		p, err := ps.GetParty(r.Context(), id)
+		if err != nil {
+			ErrorResponse(w, http.StatusInternalServerError, "failed to get")
+			return
+		}
+		if p == nil || p.Kind != cfg.Kind {
+			ErrorResponse(w, http.StatusNotFound, "not found")
+			return
+		}
+		JSONResponse(w, http.StatusOK, p)
+	}
+}
+
+// DeletePartyHandler deletes a non-system party of cfg.Kind.
+// Requires cfg.ManagePermission.
+func DeletePartyHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "partyID")
+		if err := ps.DeleteParty(r.Context(), id); err != nil {
+			ErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// AddMemberHandler adds a party as a member with a role.
+// Validates role against cfg.ValidMemberRoles.
+func AddMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	validRoles := make(map[string]bool, len(cfg.ValidMemberRoles))
+	for _, r := range cfg.ValidMemberRoles {
+		validRoles[r] = true
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		toPartyID := chi.URLParam(r, "partyID")
+		var req addMemberRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if req.PartyID == "" || req.Role == "" {
+			ErrorResponse(w, http.StatusBadRequest, "party_id and role are required")
+			return
+		}
+		if !validRoles[req.Role] {
+			ErrorResponse(w, http.StatusBadRequest, "invalid role for this party kind")
+			return
+		}
+		// Validate target party exists and matches cfg.Kind.
+		target, err := ps.GetParty(r.Context(), toPartyID)
+		if err != nil {
+			slog.Error("loading target party", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to load target party")
+			return
+		}
+		if target == nil || target.Kind != cfg.Kind {
+			ErrorResponse(w, http.StatusNotFound, "target party not found")
+			return
+		}
+		// Validate member party exists and its kind is allowed.
+		member, err := ps.GetParty(r.Context(), req.PartyID)
+		if err != nil {
+			slog.Error("loading member party", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to load member party")
+			return
+		}
+		if member == nil {
+			ErrorResponse(w, http.StatusBadRequest, "member party not found")
+			return
+		}
+		allowedKind := false
+		for _, k := range cfg.CanContainKinds {
+			if member.Kind == k {
+				allowedKind = true
+				break
+			}
+		}
+		if !allowedKind {
+			ErrorResponse(w, http.StatusBadRequest, "member party kind not allowed for this container")
+			return
+		}
+		rel := &model.PartyRelationship{
+			FromPartyID:      req.PartyID,
+			FromRole:         req.Role,
+			ToPartyID:        toPartyID,
+			ToRole:           string(cfg.Kind),
+			RelationshipName: cfg.MemberRelationship,
+		}
+		if err := ps.AddMember(r.Context(), rel); err != nil {
+			slog.Error("adding member", "err", err)
+			msg := err.Error()
+			if strings.Contains(msg, "cycle") || strings.Contains(msg, "cannot add party") {
+				ErrorResponse(w, http.StatusConflict, msg)
+				return
+			}
+			ErrorResponse(w, http.StatusInternalServerError, "failed to add member")
+			return
+		}
+		JSONResponse(w, http.StatusCreated, rel)
+	}
+}
+
+// RemoveMemberHandler removes a party from membership.
+func RemoveMemberHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		toPartyID := chi.URLParam(r, "partyID")
+		memberPartyID := chi.URLParam(r, "memberPartyID")
+		if err := ps.RemoveMember(r.Context(), memberPartyID, toPartyID, cfg.MemberRelationship); err != nil {
+			ErrorResponse(w, http.StatusInternalServerError, "failed to remove member")
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+type updateMemberRoleRequest struct {
+	Role string `json:"role"`
+}
+
+// UpdateMemberRoleHandler changes a member's role on a party in place.
+func UpdateMemberRoleHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	validRoles := make(map[string]bool, len(cfg.ValidMemberRoles))
+	for _, r := range cfg.ValidMemberRoles {
+		validRoles[r] = true
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		toPartyID := chi.URLParam(r, "partyID")
+		memberPartyID := chi.URLParam(r, "memberPartyID")
+		var req updateMemberRoleRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if req.Role == "" || !validRoles[req.Role] {
+			ErrorResponse(w, http.StatusBadRequest, "invalid role for this party kind")
+			return
+		}
+		members, err := ps.ListMembers(r.Context(), toPartyID, cfg.MemberRelationship)
+		if err != nil {
+			slog.Error("listing members for role update", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to load member")
+			return
+		}
+		var oldRole string
+		for _, m := range members {
+			if m.FromPartyID == memberPartyID {
+				oldRole = m.FromRole
+				break
+			}
+		}
+		if oldRole == "" {
+			ErrorResponse(w, http.StatusNotFound, "member not found")
+			return
+		}
+		// Optimistic: another request could mutate this membership between the
+		// ListMembers lookup and the UpdateMemberRole call. The WHERE clause in
+		// UpdateMemberRole includes the OldRole we observed, so the race surfaces
+		// as ErrMemberNotFound (mapped to 404) rather than corrupting state.
+		if err := ps.UpdateMemberRole(r.Context(), store.UpdateMemberRoleParams{
+			FromPartyID:      memberPartyID,
+			ToPartyID:        toPartyID,
+			RelationshipName: cfg.MemberRelationship,
+			OldRole:          oldRole,
+			NewRole:          req.Role,
+		}); err != nil {
+			if errors.Is(err, store.ErrMemberNotFound) {
+				ErrorResponse(w, http.StatusNotFound, "member not found")
+				return
+			}
+			slog.Error("updating member role", "err", err)
+			ErrorResponse(w, http.StatusInternalServerError, "failed to update role")
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// ListMembersHandler lists all direct members of a party.
+func ListMembersHandler(cfg PartyKindConfig, ps *store.PartyStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		toPartyID := chi.URLParam(r, "partyID")
+		rels, err := ps.ListMembers(r.Context(), toPartyID, cfg.MemberRelationship)
+		if err != nil {
+			ErrorResponse(w, http.StatusInternalServerError, "failed to list members")
+			return
+		}
+		JSONResponse(w, http.StatusOK, rels)
+	}
+}

@@ -304,6 +304,41 @@ test.describe('Unified Catalog View', () => {
     await expect(page).toHaveURL(/protocol=mcp/);
   });
 
+  test('UI: project filter scopes catalog list', async ({ page, request }) => {
+    const token = await loginViaAPI(request)
+
+    // Seed project + catalog entry + assign entry to project.
+    const projectRes = await request.post(`${BASE}/api/v1/projects`, {
+      headers: authHeader(token),
+      data: { name: 'e2e-filter-project' },
+    })
+    const project = await projectRes.json()
+
+    const scopedRes = await request.post(`${BASE}/api/v1/catalog`, {
+      headers: authHeader(token),
+      data: {
+        display_name: 'E2E Scoped Agent',
+        description: 'scoped',
+        protocol: 'a2a',
+        endpoint: `http://e2e-scoped-${Date.now()}.example.com`,
+        version: '1.0.0',
+      },
+    })
+    const scoped = await scopedRes.json()
+    await request.post(`${BASE}/api/v1/catalog/${scoped.id}/projects`, {
+      headers: authHeader(token),
+      data: { project_id: project.id },
+    })
+
+    await loginViaUI(page)
+    await page.goto(`/?project=${project.id}`)
+    await expect(page.getByText('E2E Scoped Agent')).toBeVisible()
+
+    // Cleanup
+    await request.delete(`${BASE}/api/v1/catalog/${scoped.id}`, { headers: authHeader(token) }).catch(() => {})
+    await request.delete(`${BASE}/api/v1/projects/${project.id}`, { headers: authHeader(token) }).catch(() => {})
+  });
+
   test('Raw Card tab visible on detail page', async ({ page, request }) => {
     // Seed an entry via API.
     const entry = await createCatalogEntry(request, token, {

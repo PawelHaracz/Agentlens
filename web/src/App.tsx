@@ -9,6 +9,8 @@ import CapabilityListPage from './routes/capabilities/CapabilityListPage'
 import CapabilityDetailPage from './routes/capabilities/CapabilityDetailPage'
 import LoginPage from './pages/LoginPage'
 import SettingsPage from './pages/SettingsPage'
+import PartyDetailPage from './routes/parties/PartyDetailPage'
+import { groupUIConfig, projectUIConfig } from './routes/parties/partyUIConfig'
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
             <Route path="/catalog/capabilities" element={<ProtectedRoute><Layout><CapabilityListPage /></Layout></ProtectedRoute>} />
             <Route path="/catalog/capabilities/:key" element={<ProtectedRoute><Layout><CapabilityDetailPage /></Layout></ProtectedRoute>} />
             <Route path="/catalog/:id" element={<ProtectedRoute><Layout><CatalogDetailPage /></Layout></ProtectedRoute>} />
+            <Route path="/settings/groups/:id" element={<ProtectedRoute><Layout><PartyDetailPage config={groupUIConfig} /></Layout></ProtectedRoute>} />
+            <Route path="/settings/projects/:id" element={<ProtectedRoute><Layout><PartyDetailPage config={projectUIConfig} /></Layout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
           </Routes>
         </AuthProvider>

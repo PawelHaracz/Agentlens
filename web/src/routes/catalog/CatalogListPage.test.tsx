@@ -9,6 +9,7 @@ import * as api from '@/api'
 vi.mock('@/api', () => ({
   listCatalog: vi.fn(),
   getStats: vi.fn(),
+  listParties: vi.fn(),
 }))
 
 const wrapper = ({ children }: { children: React.ReactNode }) =>
@@ -22,6 +23,7 @@ describe('CatalogListPage', () => {
   beforeEach(() => {
     vi.spyOn(api, 'listCatalog').mockResolvedValue([])
     vi.spyOn(api, 'getStats').mockResolvedValue({ total: 0, by_status: {}, by_source: {} })
+    vi.spyOn(api, 'listParties').mockResolvedValue([])
   })
 
   it('shows empty state when no entries', async () => {

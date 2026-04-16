@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -15,15 +17,17 @@ import (
 
 // UserHandler handles user management endpoints.
 type UserHandler struct {
-	userStore *store.UserStore
-	roleStore *store.RoleStore
+	userStore  *store.UserStore
+	roleStore  *store.RoleStore
+	partyStore *store.PartyStore
 }
 
 // NewUserHandler creates a new UserHandler.
-func NewUserHandler(userStore *store.UserStore, roleStore *store.RoleStore) *UserHandler {
+func NewUserHandler(userStore *store.UserStore, roleStore *store.RoleStore, partyStore *store.PartyStore) *UserHandler {
 	return &UserHandler{
-		userStore: userStore,
-		roleStore: roleStore,
+		userStore:  userStore,
+		roleStore:  roleStore,
+		partyStore: partyStore,
 	}
 }
 
@@ -46,6 +50,25 @@ type createUserRequest struct {
 	DisplayName string `json:"display_name"`
 	Password    string `json:"password"`
 	RoleID      string `json:"role_id"`
+}
+
+// syncPersonOrRollback creates the Person party for a freshly inserted user.
+// On failure, compensates the user insert via userStore.Delete so the
+// User↔Person 1:1 invariant (ADR-011) holds at rest — migration008 is a
+// one-time backfill that won't sweep runtime-created orphans. No-op when
+// no PartyStore is wired (test harness that doesn't care about parties).
+func (h *UserHandler) syncPersonOrRollback(ctx context.Context, user *model.User) error {
+	if h.partyStore == nil {
+		return nil
+	}
+	if err := h.partyStore.CreatePersonForUser(ctx, user); err != nil {
+		slog.Error("creating person for new user, rolling back user", "user_id", user.ID, "err", err)
+		if delErr := h.userStore.Delete(ctx, user.ID); delErr != nil {
+			slog.Error("rollback: delete user failed", "user_id", user.ID, "err", delErr)
+		}
+		return err
+	}
+	return nil
 }
 
 // Create handles POST /api/v1/users.
@@ -109,6 +132,11 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.userStore.Create(r.Context(), user); err != nil {
+		ErrorResponse(w, http.StatusInternalServerError, "failed to create user")
+		return
+	}
+
+	if err := h.syncPersonOrRollback(r.Context(), user); err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "failed to create user")
 		return
 	}
@@ -190,6 +218,12 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err := h.userStore.Update(r.Context(), user); err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "failed to update user")
 		return
+	}
+
+	if h.partyStore != nil && req.DisplayName != nil {
+		if err := h.partyStore.UpdatePersonForUser(r.Context(), user); err != nil {
+			slog.Error("syncing person name", "user_id", user.ID, "err", err)
+		}
 	}
 
 	// Re-fetch to get the role preloaded.

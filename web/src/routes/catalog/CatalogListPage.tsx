@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AlertCircle, RefreshCw, SearchX, Inbox } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import type { Stats } from '../../types'
 import { getStats } from '@/api'
+import * as api from '@/api'
 import { useCatalogQuery } from '../../hooks/useCatalogQuery'
 import StatsBar from '../../components/StatsBar'
 import RegisterAgentDialog from '../../components/RegisterAgentDialog'
@@ -18,12 +20,19 @@ import {
 import { Skeleton } from '../../components/ui/skeleton'
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert'
 import { Button } from '../../components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const SKELETON_COUNT = 8
 
 export default function CatalogListPage() {
-  const { entries, isLoading, isError, error, filter, setProtocol, setQuery, clearFilters, refetch } =
+  const { entries, isLoading, isError, error, filter, setProtocol, setQuery, setProject, clearFilters, refetch } =
     useCatalogQuery()
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects-for-filter'],
+    queryFn: () => api.listParties('project'),
+    staleTime: 60_000,
+  })
 
   const [stats, setStats] = useState<Stats | null>(null)
 
@@ -45,7 +54,7 @@ export default function CatalogListPage() {
     fetchStats()
   }, [refetch, fetchStats])
 
-  const hasActiveFilters = Boolean(filter.protocol || filter.q)
+  const hasActiveFilters = Boolean(filter.protocol || filter.q || filter.project)
 
   return (
     <div className="container mx-auto py-6 space-y-4">
@@ -55,6 +64,13 @@ export default function CatalogListPage() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <ProtocolFilter value={filter.protocol} onChange={setProtocol} />
+        <Select value={filter.project ?? '__all__'} onValueChange={v => setProject(v === '__all__' ? undefined : v)}>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder="All projects" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All projects</SelectItem>
+            {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <UnifiedSearchBox value={filter.q} onChange={setQuery} />
         <RegisterAgentDialog onRegistered={handleRegistered} />
       </div>
