@@ -1,20 +1,4 @@
 {
-  "enabledPlugins": {
-    "context7@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true,
-    "gopls-lsp@claude-plugins-official": true,
-    "superpowers-lab@superpowers-marketplace": true,
-    "cc-skills-golang@samber": false,
-    "caveman@caveman": true
-  },
-  "deny": [
-    "Bash(rtk git add *)",
-    "Bash(rtk git commit *)",
-    "Bash(rtk git push *)"
-  ],
   "hooks": {
     "PostToolUse": [
       {
@@ -40,5 +24,19 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "superpowers-lab@superpowers-marketplace": false,
+    "cc-skills-golang@samber": false,
+    "caveman@caveman": true,
+    "maister@maister-plugins": true
+  },
+  "deny": [
+  ]
 }
