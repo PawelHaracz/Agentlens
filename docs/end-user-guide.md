@@ -54,6 +54,12 @@ For architectural details see [docs/architecture.md](architecture.md).
     - [Creating a Role](#creating-a-role)
     - [Editing a Role](#editing-a-role)
     - [Deleting a Role](#deleting-a-role)
+  - [Groups and Projects](#groups-and-projects)
+    - [Concepts](#concepts)
+    - [Managing Groups](#managing-groups)
+    - [Managing Projects](#managing-projects)
+    - [Assigning Catalog Entries to a Project](#assigning-catalog-entries-to-a-project)
+    - [Filtering the Catalog by Project](#filtering-the-catalog-by-project)
   - [Using the REST API](#using-the-rest-api)
     - [Authentication](#authentication)
     - [Quick Reference](#quick-reference)
@@ -628,6 +634,15 @@ The **My Account** tab lets you update your own profile:
 
 > You do not need any special permission to update your own account.
 
+### My projects
+
+Open **Settings → My Account** to see every project you belong to (directly or through a group)
+and your effective role on each. Click a row to jump to the project's detail page.
+
+![My Account tab with a populated My projects card](images/my-account-projects.png)
+*The My projects card — roles resolve via the group closure; the highest-privilege role wins when
+a user belongs via multiple paths ([ADR-014](adr/014-project-role-resolution-highest-privilege.md)).*
+
 ---
 
 ## User Management
@@ -850,3 +865,150 @@ curl -s -X POST https://agentlens.example.com/api/v1/catalog \
 Agents running in Kubernetes are discovered when their `Pod` or `Service` carries the annotation
 `agentlens.io/enabled: "true"`. See [docs/user-guide.md](user-guide.md) and
 [docs/architecture.md](architecture.md) for the full annotation schema.
+
+---
+
+## Groups and Projects
+
+### Concepts
+
+AgentLens uses a **party archetype** to model actors and their relationships:
+
+- **Person** — one per user account, created automatically at bootstrap.
+- **Group** — a named collection of persons or other groups (hierarchical). Members inherit group permissions transitively.
+- **Project** — a namespace that scopes catalog entries. Each entry belongs to one or more projects.
+
+A `default` system project is seeded on first run. All new catalog entries are automatically assigned to it.
+
+**Project roles** describe a member's intended responsibility within a project. They are surfaced in the UI (My Account → My projects, project detail member rows) and via `GET /api/v1/auth/me/projects`, but **catalog mutation endpoints currently gate on the global `catalog:write` permission, not on these project roles**:
+
+| Role | Intended responsibility |
+| --- | --- |
+| `project:owner` | Owns the project; manages members and assigned entries |
+| `project:developer` | Contributes to and maintains catalog entries in the project |
+| `project:viewer` | Read-only consumer of the project's entries |
+
+Project-role-aware enforcement is implemented at the middleware layer (`RequireProjectPermission`) but not yet wired into mutation routes (see [auth.md](auth.md#project-scoped-rbac) and Spec 2 decision D6). Until it is, any user with global `catalog:write` can mutate any project.
+
+Global `admin` users bypass every permission check.
+
+### Managing Groups
+
+Groups can be managed from the **Settings → Groups** tab in the web UI, or via the REST API.
+
+Create a group via the REST API (editor or admin required):
+
+```bash
+curl -X POST http://localhost:8080/api/v1/groups \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "platform-team"}'
+```
+
+![Settings page showing the Groups tab populated with demo groups](images/groups-tab.png)
+*The Groups tab inside Settings — admins can create and delete groups here.*
+
+Add a person to a group (use the person party ID, obtainable from `GET /api/v1/groups`):
+
+```bash
+curl -X POST http://localhost:8080/api/v1/groups/{groupID}/members \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"party_id": "<personPartyID>", "role": "member"}'
+```
+
+![Group detail page showing a mix of person and nested-group members](images/group-detail.png)
+*Group detail page — manage direct members (persons and nested groups).*
+
+Groups can be nested: add a group as a member of another group. Transitive membership is resolved automatically.
+
+### Managing Projects
+
+Projects scope catalog entries and grant role-based access to people and groups. The full project workflow is reachable from the web UI and mirrored on the REST API — the following walkthrough uses the seeded *Docs Demo Project* (containing one A2A agent and one MCP server) to show each step end-to-end.
+
+#### 1. Create a project
+
+From **Settings → Projects**, click *Create project* and enter a name. Or via API:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/projects \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-project"}'
+```
+
+![Settings page showing the Projects tab with default and Docs Demo Project rows](images/projects-tab.png)
+*Projects tab — admins (global `catalog:write`) create and delete projects here. Clicking a row drills into the detail page.*
+
+#### 2. Add members with roles
+
+Projects have three built-in roles: `project:owner`, `project:developer`, `project:viewer`. Members can be persons (linked 1:1 to users) or groups — groups grant their role to every transitive member.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/projects/{projectID}/members \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"party_id": "<partyID>", "role": "project:developer"}'
+```
+
+Change an existing member's role in place (no remove + re-add required):
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/projects/{projectID}/members/{memberID} \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"role": "project:owner"}'
+```
+
+In the UI, click the role badge on a member row to open the edit dialog.
+
+#### 3. Assign catalog entries
+
+Each project owns a set of catalog entries. Assign an entry from the project detail page (*Assign entry* → search the catalog → pick) or via API:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/catalog/{entryID}/projects \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"project_id": "<projectID>"}'
+```
+
+Unassign:
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/catalog/{entryID}/projects/{projectID} \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+![Project detail page showing an owner, an A2A agent, and an MCP server assigned to the project](images/project-detail.png)
+*Project detail — members carry a role; the *Assigned catalog entries* panel mixes protocols (A2A + MCP) within one project. Remove-per-row controls are hidden for viewers.*
+
+Entries can belong to multiple projects; removing from one does not detach from the others.
+
+#### 4. Filter the catalog by project
+
+From the catalog list, use the *Projects* dropdown in the filter bar (or pass `?project=<id>` in the URL):
+
+```bash
+curl "http://localhost:8080/api/v1/catalog?project=<projectID>" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+![Catalog list filtered to the Docs Demo Project, showing both the A2A and MCP entries](images/catalog-project-filter.png)
+*The catalog list, filtered to a single project. "All projects" in the dropdown clears the filter.*
+
+Omitting the parameter returns every entry regardless of project membership.
+
+#### 5. See projects from an entry
+
+The reverse view — which projects does *this entry* belong to — is surfaced on the catalog entry detail page. Project badges are clickable links back to the corresponding project detail page.
+
+![Agent detail page showing the Docs Demo Project badge below the authentication section](images/catalog-entry-projects.png)
+*Catalog entry detail — the *Projects* section lists every project the entry is currently assigned to.*
+
+#### List all projects
+
+```bash
+curl http://localhost:8080/api/v1/projects \
+  -H "Authorization: Bearer $TOKEN"
+```

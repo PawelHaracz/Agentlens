@@ -93,6 +93,7 @@ List all catalog entries with optional filtering.
 | `source` | string | — | Filter by source: `k8s`, `config`, `push`, `upstream` |
 | `team` | string | — | Filter by provider team name |
 | `categories` | string | — | Comma-separated category filter |
+| `project` | string | — | Filter to entries belonging to this project party ID |
 | `limit` | int | — | Maximum results to return (default: no limit) |
 | `offset` | int | — | Pagination offset |
 
@@ -888,6 +889,28 @@ Get the current authenticated user's information. **Requires auth.**
 
 ---
 
+### `GET /api/v1/auth/me/projects`
+
+Return the caller's resolved project memberships (direct and transitive through groups). **Requires auth.**
+
+**Response 200:**
+```json
+[
+  {
+    "project": { "id": "...", "kind": "project", "name": "orion", "is_system": false, "created_at": "...", "updated_at": "..." },
+    "role": "project:developer"
+  }
+]
+```
+
+Sorted by project name ASC. Empty array when the user has no memberships (or no Person party has been created yet — see ADR-011).
+
+**Errors:** `401 Unauthorized` · `500 Internal Server Error`.
+
+**Role resolution.** When a user reaches a project via multiple paths, the highest-privilege role wins (`project:owner > project:developer > project:viewer`) per [ADR-014](../adr/014-project-role-resolution-highest-privilege.md).
+
+---
+
 ### `PUT /api/v1/auth/password`
 
 Change the current user's password. **Requires auth.**
@@ -1112,5 +1135,232 @@ Bulk update settings. **Requires auth.** Permission: `settings:write`.
   "app.default_role": "editor"
 }
 ```
+
+---
+
+## Party Archetype — Groups, Projects, Memberships
+
+AgentLens uses a unified **party archetype** model. Users, groups, and projects are all `Party` entities connected by named directed `PartyRelationship` edges. This enables hierarchical groups and project-scoped RBAC.
+
+**Project-scoped roles:** `project:owner`, `project:developer`, `project:viewer`
+
+| Role | catalog:read | catalog:write | catalog:delete |
+| --- | :---: | :---: | :---: |
+| `project:owner` | ✓ | ✓ | ✓ |
+| `project:developer` | ✓ | ✓ | — |
+| `project:viewer` | ✓ | — | — |
+
+Global role bypass: any user whose JWT carries the required permission is allowed regardless of project membership.
+
+---
+
+### `GET /api/v1/parties`
+
+List all parties across kinds, optionally filtered by `?kind=`. Used by the web UI to populate member-pickers and by E2E setup helpers to resolve person/group IDs without hitting kind-scoped endpoints. **Requires auth.**
+
+**Query parameters:**
+- `kind` (optional) — one of `person`, `group`, `project`. Returns only parties of that kind. Omitted → all kinds.
+
+**Response 200:**
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "kind": "person",
+    "name": "Administrator",
+    "user_id": null,
+    "is_system": false,
+    "created_at": "2026-04-15T00:00:00Z",
+    "updated_at": "2026-04-15T00:00:00Z"
+  }
+]
+```
+
+Returns an empty array (never `null`) when no parties match. No permission required beyond authentication — read access is open by design (the kind-scoped endpoints `/groups`, `/projects` are also read-open).
+
+---
+
+### `GET /api/v1/groups`
+
+List all groups. **Requires auth.**
+
+**Response 200:**
+```json
+[{"id": "...", "kind": "group", "name": "eng-team", "is_system": false, "created_at": "..."}]
+```
+
+---
+
+### `POST /api/v1/groups`
+
+Create a new group. **Requires auth.** Permission: `users:write`.
+
+**Request Body:**
+```json
+{"name": "eng-team"}
+```
+
+**Response 201:** Party object.
+
+**Errors:** `400` name missing · `403` insufficient permissions
+
+---
+
+### `GET /api/v1/groups/{partyID}`
+
+Get a group by ID. **Requires auth.**
+
+**Response 200:** Party object. **Response 404:** Not found.
+
+---
+
+### `DELETE /api/v1/groups/{partyID}`
+
+Delete a group (non-system only). **Requires auth.** Permission: `users:write`.
+
+**Response 204.** **Errors:** `400` system party or not found · `403` insufficient permissions
+
+---
+
+### `GET /api/v1/groups/{partyID}/members`
+
+List direct members of a group. **Requires auth.**
+
+**Response 200:**
+```json
+[{"id": "...", "from_party_id": "alice-id", "from_role": "member", "to_party_id": "eng-id", "to_role": "group", "relationship_name": "group_member"}]
+```
+
+---
+
+### `POST /api/v1/groups/{partyID}/members`
+
+Add a member to a group. **Requires auth.** Permission: `users:write`.
+
+**Request Body:**
+```json
+{"party_id": "<person-or-group-party-id>", "role": "member"}
+```
+
+Valid roles: `member`. **Response 201:** PartyRelationship object.
+
+**Errors:** `400` invalid role / cycle detected · `403` insufficient permissions
+
+---
+
+### `DELETE /api/v1/groups/{partyID}/members/{memberPartyID}`
+
+Remove a member from a group. **Requires auth.** Permission: `users:write`.
+
+**Response 204.**
+
+---
+
+### `GET /api/v1/projects`
+
+List all projects. **Requires auth.**
+
+**Response 200:** Array of Party objects with `kind: "project"`.
+
+---
+
+### `POST /api/v1/projects`
+
+Create a new project. **Requires auth.** Permission: `catalog:write`.
+
+**Request Body:**
+```json
+{"name": "my-project"}
+```
+
+**Response 201:** Party object.
+
+---
+
+### `GET /api/v1/projects/{partyID}`
+
+Get a project by ID. **Requires auth.**
+
+**Response 200:** Party object. **Response 404:** Not found.
+
+---
+
+### `DELETE /api/v1/projects/{partyID}`
+
+Delete a project (non-system only). **Requires auth.** Permission: `catalog:write`.
+
+**Response 204.** **Errors:** `400` system party (default project cannot be deleted).
+
+---
+
+### `GET /api/v1/projects/{partyID}/members`
+
+List direct members of a project. **Requires auth.**
+
+**Response 200:** Array of PartyRelationship objects.
+
+---
+
+### `POST /api/v1/projects/{partyID}/members`
+
+Assign a user or group to a project with a role. **Requires auth.** Permission: `catalog:write`.
+
+**Request Body:**
+```json
+{"party_id": "<person-or-group-party-id>", "role": "project:developer"}
+```
+
+Valid roles: `project:owner`, `project:developer`, `project:viewer`.
+
+**Response 201:** PartyRelationship object.
+
+---
+
+### `DELETE /api/v1/projects/{partyID}/members/{memberPartyID}`
+
+Remove a member from a project. **Requires auth.** Permission: `catalog:write`.
+
+**Response 204.**
+
+---
+
+### `PATCH /api/v1/projects/{partyID}/members/{memberID}`
+
+Update a member's role on a project in place. **Requires auth.** Permission: `catalog:write`.
+
+**Body:** `{"role": "project:owner" | "project:developer" | "project:viewer"}`
+
+**Response 204.**
+
+**Errors:** `400` missing or invalid role · `403` insufficient permissions · `404` member not found · `500 Internal Server Error`
+
+---
+
+### `GET /api/v1/catalog/{id}/projects`
+
+List all projects a catalog entry belongs to. **Requires auth.**
+
+**Response 200:** Array of Party objects.
+
+---
+
+### `POST /api/v1/catalog/{id}/projects`
+
+Assign a catalog entry to a project. **Requires auth.** Permission: `catalog:write`.
+
+**Request Body:**
+```json
+{"project_id": "<project-party-id>"}
+```
+
+**Response 204 (No Content).** No response body. Idempotent — duplicate assignments are silently ignored.
+
+---
+
+### `DELETE /api/v1/catalog/{id}/projects/{projectID}`
+
+Remove a catalog entry from a project. **Requires auth.** Permission: `catalog:write`.
+
+**Response 204.**
 
 **Response 200:** Confirmation message.

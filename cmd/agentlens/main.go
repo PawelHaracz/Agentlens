@@ -149,6 +149,7 @@ func main() {
 
 	// 7. Bootstrap admin
 	userStore := store.NewUserStore(database)
+	partyStore := store.NewPartyStore(database)
 	password, err := auth.BootstrapAdmin(context.Background(), userStore)
 	if err != nil {
 		slog.Error("failed to bootstrap admin", "err", err)
@@ -163,10 +164,22 @@ func main() {
 		_, _ = os.Stdout.WriteString("  Password: " + password + "\n")
 		_, _ = os.Stdout.WriteString("  CHANGE THIS PASSWORD IMMEDIATELY\n")
 		_, _ = os.Stdout.WriteString("============================================\n")
+
+		// Create Person party for the newly bootstrapped admin user.
+		// CreatePersonForUser centralizes the display_name-or-username name
+		// formula and is idempotent, so re-runs (e.g. if a Person already
+		// exists with the admin's user_id) are safe no-ops.
+		adminUser, uErr := userStore.GetByUsername(context.Background(), "admin")
+		if uErr == nil && adminUser != nil {
+			if pErr := partyStore.CreatePersonForUser(context.Background(), adminUser); pErr != nil {
+				slog.Warn("failed to create Person party for bootstrap admin", "err", pErr)
+			}
+		}
 	}
 
 	// 8. Init stores
 	catalogStore := store.NewSQLStore(database)
+	catalogStore.WithPartyStore(partyStore)
 	roleStore := store.NewRoleStore(database)
 	settingsStore := store.NewSettingsStore(database)
 
@@ -289,6 +302,7 @@ func main() {
 		RoleStore:            roleStore,
 		SettingsStore:        settingsStore,
 		JWTService:           jwtService,
+		PartyStore:           partyStore,
 		PromHandler:          telProvider.PromHandler,
 		ReadyzPing:           dbPingFn,
 		TelemetryEnabled:     cfg.Telemetry.Enabled,

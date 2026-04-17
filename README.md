@@ -13,6 +13,7 @@ AgentLens automatically discovers AI agents running in Kubernetes (via Service a
 - **Real-time catalog** — Browse, filter, and inspect agent capabilities via REST API and web dashboard
 - **Health Monitoring** — AgentLens continuously probes registered endpoints and shows real-time status on the dashboard. Entries transition through lifecycle states (`registered → active → degraded → offline`) based on HTTP response codes and latency. Admins can manually deprecate entries and trigger on-demand probes from the UI.
 - **Authentication & Authorization** — JWT-based auth with role-based access control (admin, editor, viewer)
+- **Groups & Projects** — Party archetype for managing users, hierarchical groups, and project namespaces with per-project RBAC (owner/developer/viewer roles). Catalog entries are scoped to projects; new entries auto-assigned to the `default` project.
 - **Multi-database support** — SQLite (single-instance) or PostgreSQL (production)
 
 ---
@@ -230,6 +231,23 @@ To register with full agent capabilities (skills, interfaces, security schemes),
 | `GET` | `/api/v1/settings` | List settings |
 | `GET` | `/api/v1/settings/{category}` | List settings in a category |
 | `PUT` | `/api/v1/settings` | Bulk update settings |
+| `GET` | `/api/v1/groups` | List groups |
+| `POST` | `/api/v1/groups` | Create group |
+| `GET` | `/api/v1/groups/{id}` | Get group by ID |
+| `DELETE` | `/api/v1/groups/{id}` | Delete group |
+| `GET` | `/api/v1/groups/{id}/members` | List group members |
+| `POST` | `/api/v1/groups/{id}/members` | Add member to group |
+| `DELETE` | `/api/v1/groups/{id}/members/{memberID}` | Remove member from group |
+| `GET` | `/api/v1/projects` | List projects |
+| `POST` | `/api/v1/projects` | Create project |
+| `GET` | `/api/v1/projects/{id}` | Get project by ID |
+| `DELETE` | `/api/v1/projects/{id}` | Delete project |
+| `GET` | `/api/v1/projects/{id}/members` | List project members |
+| `POST` | `/api/v1/projects/{id}/members` | Add member to project (with role) |
+| `DELETE` | `/api/v1/projects/{id}/members/{memberID}` | Remove member from project |
+| `GET` | `/api/v1/catalog/{id}/projects` | List projects a catalog entry belongs to |
+| `POST` | `/api/v1/catalog/{id}/projects` | Assign catalog entry to project |
+| `DELETE` | `/api/v1/catalog/{id}/projects/{projectID}` | Remove catalog entry from project |
 
 See [docs/api.md](docs/api.md) for full API documentation.
 
@@ -245,6 +263,8 @@ AgentLens uses a **microkernel plugin architecture**:
 - **Enterprise plugins** — SSO, RBAC, audit, PostgreSQL (license-gated)
 
 The domain model follows the **Product Archetype Pattern** where each discovered agent is an `AgentType` (protocol + endpoint + capabilities) wrapped by a `CatalogEntry` (display metadata, lifecycle state, health).
+
+Access control uses a **Party Archetype** — users, groups, and projects are all `Party` records connected by named relationship edges. Hierarchical group membership is pre-computed into a closure table for O(1) permission checks. Catalog entries are scoped to projects; a `default` project is seeded on first run and all new entries are auto-assigned to it.
 
 ---
 

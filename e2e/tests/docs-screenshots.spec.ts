@@ -180,6 +180,8 @@ test.describe('Documentation Screenshots', () => {
   let mcpEntryId: string;
   let a2aCapEntryId: string; // Entry seeded via register (has capabilities)
   let viewerUserId: string;
+  let projectId: string; // Project party for catalog-project-filter screenshot
+  let demoGroupId: string; // Group party for groups screenshots
 
   test.beforeAll(async ({ request }) => {
     token = await loginViaAPI(request);
@@ -214,6 +216,40 @@ test.describe('Documentation Screenshots', () => {
       data: { state: 'active' },
     });
 
+    // Seed a named project for the project-filter screenshot.
+    const projRes = await request.post(`${BASE}/api/v1/projects`, {
+      headers: authHeader(token),
+      data: { name: 'Docs Demo Project' },
+    });
+    if (projRes.ok()) {
+      const proj = await projRes.json();
+      projectId = proj.id as string;
+      // Assign both protocols to the project so docs screenshots show a mixed catalog.
+      await request.post(`${BASE}/api/v1/catalog/${a2aEntryId}/projects`, {
+        headers: authHeader(token),
+        data: { project_id: projectId },
+      });
+      await request.post(`${BASE}/api/v1/catalog/${mcpEntryId}/projects`, {
+        headers: authHeader(token),
+        data: { project_id: projectId },
+      });
+      await request.post(`${BASE}/api/v1/catalog/${a2aCapEntryId}/projects`, {
+        headers: authHeader(token),
+        data: { project_id: projectId },
+      }).catch(() => {});
+      // Add admin's Person party as project:owner so the detail screenshot shows a populated members table.
+      const partiesRes = await request.get(`${BASE}/api/v1/parties?kind=person`, { headers: authHeader(token) });
+      if (partiesRes.ok()) {
+        const parties = (await partiesRes.json()) as Array<{ id: string }>;
+        if (parties[0] && projectId) {
+          await request.post(`${BASE}/api/v1/projects/${projectId}/members`, {
+            headers: authHeader(token),
+            data: { party_id: parties[0].id, role: 'project:owner' },
+          }).catch(() => {});
+        }
+      }
+    }
+
     // Seed viewer user for settings screenshots
     // Get roles list first
     const rolesRes = await request.get(`${BASE}/api/v1/roles`, {
@@ -230,6 +266,41 @@ test.describe('Documentation Screenshots', () => {
         role_id: viewerRole.id,
       });
       viewerUserId = viewerUser.id;
+    }
+
+    // Seed a demo group with a nested subgroup and the admin person for screenshots.
+    const groupRes = await request.post(`${BASE}/api/v1/groups`, {
+      headers: authHeader(token),
+      data: { name: 'docs-demo-group' },
+    });
+    if (groupRes.ok()) {
+      demoGroupId = (await groupRes.json()).id as string;
+      // Nested subgroup
+      const subRes = await request.post(`${BASE}/api/v1/groups`, {
+        headers: authHeader(token),
+        data: { name: 'docs-demo-subgroup' },
+      });
+      if (subRes.ok()) {
+        const subId = (await subRes.json()).id as string;
+        await request.post(`${BASE}/api/v1/groups/${demoGroupId}/members`, {
+          headers: authHeader(token),
+          data: { party_id: subId, role: 'member' },
+        }).catch(() => {});
+      }
+      // Add admin's person party as a member
+      const partiesRes = await request.get(`${BASE}/api/v1/parties?kind=person`, {
+        headers: authHeader(token),
+      });
+      if (partiesRes.ok()) {
+        const parties = (await partiesRes.json()) as Array<{ id: string; user_id?: string; name: string }>;
+        const adminPerson = parties[0];
+        if (adminPerson) {
+          await request.post(`${BASE}/api/v1/groups/${demoGroupId}/members`, {
+            headers: authHeader(token),
+            data: { party_id: adminPerson.id, role: 'member' },
+          }).catch(() => {});
+        }
+      }
     }
   });
 
@@ -248,6 +319,21 @@ test.describe('Documentation Screenshots', () => {
       await request.delete(`${BASE}/api/v1/users/${viewerUserId}`, {
         headers: authHeader(token),
       }).catch(ignoreCleanupError('delete viewer user'));
+    }
+    if (projectId) {
+      await request.delete(`${BASE}/api/v1/projects/${projectId}`, {
+        headers: authHeader(token),
+      }).catch(ignoreCleanupError('delete docs-demo project'));
+    }
+    // Delete any docs-demo groups (also removes member relationships via cascade)
+    const listRes = await request.get(`${BASE}/api/v1/groups`, { headers: authHeader(token) });
+    if (listRes.ok()) {
+      const groups = (await listRes.json()) as Array<{ id: string; name: string }>;
+      for (const g of groups.filter(g => g.name.startsWith('docs-demo'))) {
+        await request.delete(`${BASE}/api/v1/groups/${g.id}`, {
+          headers: authHeader(token),
+        }).catch(ignoreCleanupError(`delete ${g.name}`));
+      }
     }
   });
 
@@ -803,6 +889,85 @@ test.describe('Documentation Screenshots', () => {
       capHeading?.scrollIntoView({ behavior: 'instant', block: 'center' });
     });
     await page.screenshot({ path: `${DOCS_IMAGES}/capabilities-crosslink.png`, fullPage: false });
+  });
+
+  // ───────── Project filter screenshots ─────────
+
+  test('catalog-project-filter', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Navigate to the catalog filtered to the seeded project.
+    // Shows only the entries assigned to that project. Catalog list is at `/`,
+    // not `/catalog` (which 404s silently to a blank screen).
+    await page.goto(`/?project=${projectId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-project-filter.png`, fullPage: false });
+  });
+
+  test('catalog-entry-projects', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    // Navigate to the A2A entry detail page — shows the entry's project memberships.
+    await page.goto(`/catalog/${a2aEntryId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/catalog-entry-projects.png`, fullPage: false });
+  });
+
+  // ───────── Groups screenshots ─────────
+
+  test('groups-tab', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/settings');
+    await page.getByRole('tab', { name: /groups/i }).click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/groups-tab.png`, fullPage: false });
+  });
+
+  test('group-detail', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/settings/groups/${demoGroupId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/group-detail.png`, fullPage: false });
+  });
+
+  // ───────── Projects screenshots ─────────
+
+  test('projects-tab', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/settings');
+    await page.getByRole('tab', { name: /^projects$/i }).click();
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/projects-tab.png`, fullPage: false });
+  });
+
+  test('project-detail', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto(`/settings/projects/${projectId}`);
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `${DOCS_IMAGES}/project-detail.png`, fullPage: false });
+  });
+
+  test('my-account-my-projects', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/settings');
+    await page.getByRole('tab', { name: /my account/i }).click();
+    await page.waitForLoadState('networkidle');
+    // Scroll the My projects card into view — it sits below the Profile
+    // and Change password cards, off the initial 1050px viewport.
+    await page.getByRole('heading', { name: /^my projects$/i }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${DOCS_IMAGES}/my-account-projects.png`, fullPage: false });
   });
 });
 

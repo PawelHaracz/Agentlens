@@ -10,7 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/auth"
+	"github.com/PawelHaracz/agentlens/internal/db"
+	"github.com/PawelHaracz/agentlens/internal/kernel"
+	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/store"
+	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
+	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
 
 func TestLogin_Success(t *testing.T) {
@@ -253,4 +260,107 @@ func TestLogin_ResponseExcludesPasswordHash(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	// Ensure password_hash is not in the JSON response body.
 	assert.NotContains(t, w.Body.String(), "password_hash")
+}
+
+// testRouterWithParty creates a test router that also wires in a PartyStore.
+func testRouterWithParty(t *testing.T) (http.Handler, *db.DB, *store.PartyStore) {
+	t.Helper()
+
+	database, err := db.OpenMemory()
+	require.NoError(t, err)
+
+	migrator := db.NewMigrator(database, db.AllMigrations())
+	require.NoError(t, migrator.Migrate(t.Context()))
+
+	catalogStore := store.NewSQLStore(database)
+	userStore := store.NewUserStore(database)
+	roleStore := store.NewRoleStore(database)
+	settingsStore := store.NewSettingsStore(database)
+	partyStore := store.NewPartyStore(database)
+
+	core := kernel.NewCore(catalogStore, nil, nil, kernel.LicenseInfo{})
+	a2aParser := a2aplugin.New()
+	_ = a2aParser.Init(core)
+	core.RegisterParser(a2aParser)
+	mcpParser := mcpplugin.New()
+	_ = mcpParser.Init(core)
+	core.RegisterParser(mcpParser)
+
+	jwtService := auth.NewJWTService(auth.JWTConfig{
+		Secret:        "test-secret",
+		Expiration:    time.Hour,
+		RefreshWindow: 10 * time.Minute,
+	})
+
+	router := api.NewRouter(api.RouterDeps{
+		Kernel:        core,
+		UserStore:     userStore,
+		RoleStore:     roleStore,
+		SettingsStore: settingsStore,
+		JWTService:    jwtService,
+		PartyStore:    partyStore,
+	})
+
+	t.Cleanup(func() {
+		sqlDB, _ := database.DB.DB()
+		if sqlDB != nil {
+			_ = sqlDB.Close()
+		}
+	})
+
+	return router, database, partyStore
+}
+
+func TestMyProjectsHandler_ReturnsMemberships(t *testing.T) {
+	router, database, partyStore := testRouterWithParty(t)
+	createAdminRole(t, database)
+	username, password := createTestAdmin(t, database)
+
+	token := loginAndGetToken(t, router, username, password)
+
+	// Get the admin user's person party (created by migration007 seed or find default project).
+	// Seed a Person for the admin and add them to the default project.
+	userStore := store.NewUserStore(database)
+	user, err := userStore.GetByID(t.Context(), "test-admin")
+	require.NoError(t, err)
+	require.NotNil(t, user)
+
+	require.NoError(t, partyStore.CreatePersonForUser(t.Context(), user))
+
+	person, err := partyStore.GetPartyByUserID(t.Context(), "test-admin")
+	require.NoError(t, err)
+	require.NotNil(t, person)
+
+	project, err := partyStore.GetDefaultProject(t.Context())
+	require.NoError(t, err)
+	require.NotNil(t, project)
+
+	require.NoError(t, partyStore.AddMember(t.Context(), &model.PartyRelationship{
+		FromPartyID:      person.ID,
+		FromRole:         "project:owner",
+		ToPartyID:        project.ID,
+		ToRole:           "project",
+		RelationshipName: "project_member",
+	}))
+
+	req := authRequest(http.MethodGet, "/api/v1/auth/me/projects", token, "")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var memberships []map[string]interface{}
+	require.NoError(t, decodeJSON(w, &memberships))
+	assert.Len(t, memberships, 1)
+	assert.Equal(t, "project:owner", memberships[0]["role"])
+}
+
+func TestMyProjectsHandler_Unauthenticated401(t *testing.T) {
+	router, database, _ := testRouterWithParty(t)
+	createAdminRole(t, database)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me/projects", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }

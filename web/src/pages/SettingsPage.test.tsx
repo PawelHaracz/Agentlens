@@ -24,6 +24,15 @@ vi.mock('@/api', () => ({
   updateRole: vi.fn(),
   deleteRole: vi.fn(),
   changePassword: vi.fn(),
+  listGroups: vi.fn(),
+  listGroupMembers: vi.fn(),
+  createGroup: vi.fn(),
+  deleteGroup: vi.fn(),
+  listProjects: vi.fn(),
+  listProjectMembers: vi.fn(),
+  createProject: vi.fn(),
+  deleteProject: vi.fn(),
+  getMyProjects: vi.fn(),
 }))
 
 import { useAuth } from '../contexts/AuthContext'
@@ -67,6 +76,9 @@ beforeEach(() => {
   mockApi.getSettings.mockResolvedValue([])
   mockApi.listUsers.mockResolvedValue([])
   mockApi.listRoles.mockResolvedValue([])
+  mockApi.listGroups.mockResolvedValue([])
+  mockApi.listProjects.mockResolvedValue([])
+  mockApi.getMyProjects.mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -114,6 +126,22 @@ describe('SettingsPage', () => {
   it('renders My Account tab', () => {
     renderSettingsPage()
     expect(screen.getByRole('tab', { name: /my account/i })).toBeInTheDocument()
+  })
+
+  it('My Account tab shows My projects card', async () => {
+    renderSettingsPage()
+    await userEvent.click(screen.getByRole('tab', { name: /my account/i }))
+    await waitFor(() => expect(screen.getByRole('heading', { name: /my projects/i })).toBeInTheDocument())
+  })
+
+  it('renders Groups tab for any authenticated user', async () => {
+    renderSettingsPage()
+    await waitFor(() => expect(screen.getByRole('tab', { name: /groups/i })).toBeInTheDocument())
+  })
+
+  it('renders Projects tab for any authenticated user', async () => {
+    renderSettingsPage()
+    await waitFor(() => expect(screen.getByRole('tab', { name: /projects/i })).toBeInTheDocument())
   })
 
   it('shows theme buttons in General tab', () => {

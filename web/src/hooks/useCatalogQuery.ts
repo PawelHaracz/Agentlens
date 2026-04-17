@@ -10,15 +10,17 @@ export function useCatalogQuery() {
   const protocol = (searchParams.get('protocol') as Protocol) || undefined
   const q = searchParams.get('q') || undefined
   const sort = (searchParams.get('sort') as ListFilter['sort']) || undefined
+  const project = searchParams.get('project') || undefined
 
   const filter: ListFilter = {
     protocol,
     q,
     sort,
+    project,
   }
 
   const result = useQuery({
-    queryKey: ['catalog', { protocol, q, sort }],
+    queryKey: ['catalog', { protocol, q, sort, project }],
     queryFn: () => listCatalog(filter),
   })
 
@@ -58,6 +60,18 @@ export function useCatalogQuery() {
     [setSearchParams]
   )
 
+  const setProject = useCallback(
+    (p: string | undefined) => {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        if (p) next.set('project', p)
+        else next.delete('project')
+        return next
+      })
+    },
+    [setSearchParams]
+  )
+
   const clearFilters = useCallback(() => {
     setSearchParams({})
   }, [setSearchParams])
@@ -71,6 +85,7 @@ export function useCatalogQuery() {
     setProtocol,
     setQuery,
     setSort,
+    setProject,
     clearFilters,
     refetch: result.refetch,
   }
