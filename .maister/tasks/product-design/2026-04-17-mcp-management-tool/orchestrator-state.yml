@@ -1,0 +1,108 @@
+orchestrator:
+  started_phase: phase-0
+  completed_phases: [phase-0, phase-1, phase-2, phase-3, phase-4, phase-5, phase-6, phase-7, phase-8]
+  completed: 2026-04-17T16:15:00Z
+  failed_phases: []
+  auto_fix_attempts:
+    phase-0: 0
+    phase-1: 0
+    phase-2: 0
+    phase-3: 0
+    phase-4: 0
+    phase-5: 0
+    phase-6: 0
+    phase-7: 0
+    phase-8: 0
+  options:
+    visual_enabled: false  # backend-focused design; no UI prototyping
+  created: 2026-04-17T00:00:00Z
+  updated: 2026-04-17T00:00:00Z
+  task_path: .maister/tasks/product-design/2026-04-17-mcp-management-tool
+  task_ids: {}
+
+task:
+  title: "MCP Management Tool for AgentLens"
+  description: |
+    User proposes an MCP tool that allows managing AgentLens. Three alternatives on the table:
+    (1) standalone MCP server exposing AgentLens management operations,
+    (2) auto-registered into the default project on startup,
+    (3) generalized "MCP gateway" that wraps AgentLens REST/OpenAPI surface into MCP tools.
+    User explicitly asked "co sadzisz?" — wants collaborative design exploration before implementation.
+  status: completed
+  tags: [mcp, management, api, plugin, openapi]
+  priority: null
+
+design_context:
+  design_characteristics:
+    is_greenfield: false
+    is_enhancement: true
+    is_ui_focused: false
+    is_backend: true
+    is_complex: true
+    is_simple: false
+  complexity_level: complex
+  collected_urls: []
+  research_topics:
+    - "MCP gateway / OpenAPI-to-MCP converters: architectures, maturity, trade-offs"
+    - "MCP server auth & transport patterns: bearer/OAuth/API-key, stdio/SSE/streamable HTTP, multi-tenant authorization"
+    - "MCP tool design for admin/management APIs: granularity, idempotency, destructive-action safety, resource-vs-tool split"
+  user_files_list: []
+  refinement_iterations:
+    phase_2: 0
+    phase_3: 0
+    phase_5: 0
+    phase_6_sections: {}
+    phase_7: 0
+  visual_companion:
+    available: false
+    port: null
+    pid: null
+    fallback_to_ascii: false
+  research_reference:
+    path: null
+    research_question: null
+  phase_summaries:
+    context_synthesis:
+      summary: "Codebase + MCP spec (2025-11-25) synthesized. AgentLens has no OpenAPI → gateway alternative requires OpenAPI-emission refactor first. Plugin-as-infrastructure (like plugins/health) + self-AS + self-registration into default project are all natural fits. Gateway vs hand-coded tools is the key design tension."
+      sources_count: 4
+    problem_exploration:
+      problem_statement: "LLM apps can't natively consume AgentLens because AgentLens speaks REST, not MCP. Ship a read-only MCP discovery server in v1; strategic arc toward OpenAPI-to-MCP translator in v2."
+      constraints: [spec 2025-11-25, dual auth (OAuth 2.1 + service-account API keys), principal-based multi-project auth, plugin-pattern embedded, p95<100ms, self-registration into default project]
+      success_criteria: [backend app + API key works, Claude.ai Custom Connector works, p95<100ms @ 1000 entries, self-registered in UI, audit log complete]
+    persona_exploration:
+      personas: [Anya (backend LLM app dev, primary), Karol (IDE developer, secondary), Priya (platform operator, enabling)]
+      user_journeys: [service-account-bound backend discovery, OAuth Custom Connector IDE discovery, service-account provisioning + revocation]
+    idea_generation:
+      alternatives_count: 22
+      summary: "6 decision areas, 2-5 alternatives each, full trade-off catalog in analysis/alternatives.md"
+    idea_convergence:
+      selected_approach: "1C loopback + 2A parties/api_client_credentials + 3F-Dex federation + 4B-Plugin DIY wire + 5A store.Create + 6D ToolRegistry"
+      trade_offs_accepted:
+        - "~50 lines error-mapping glue for HTTP-to-MCP status translation"
+        - "One new parties.kind enum value + api_client_credentials table (~1 week)"
+        - "Runtime dependency on Dex (bundled in Helm/compose); Dex DCR spec compliance gated in Phase 6"
+        - "3 weeks DIY wire protocol; in-house spec-update burden"
+        - "Imperative Go self-registration (not declarative card JSON)"
+        - "~50 lines speculative ToolRegistry abstraction if v2 never ships"
+      key_decisions:
+        - "AgentLens keeps authorization (RBAC, Parties); Dex owns authentication federation"
+        - "Basic auth + service-account API keys remain parallel paths to Dex"
+        - "MCP plugin completely disable-able; WireImpl interface allows library swap later"
+        - "v1/v1.5/v2 arc confirmed: hand-coded → OpenAPI emission → translator"
+    feature_specification:
+      spec_sections:
+        "1_data_model": approved
+        "2_configuration": approved
+        "3_authentication_flows": approved
+        "4_authorization_model": approved
+        "5_mcp_plugin_wire_protocol": approved
+        "6_tool_registry_and_tools": approved
+        "7_self_reg_observability": approved
+        "8_deployment_operations": approved
+      sections_count: 8
+    visual_prototyping:
+      mockup_references: []
+      summary: "Skipped — backend-focused design (is_ui_focused=false)"
+    review_handoff:
+      brief_layers: ["Layer0_Core", "Layer1_Personas", "Layer2_DesignDecisions", "Layer3_Mockups_skipped", "Spec_summary", "References", "Handoff"]
+      summary: "Product brief approved 2026-04-17. 8-section implementation-ready spec. Handoff-ready for /maister:development."
