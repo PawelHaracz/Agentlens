@@ -330,18 +330,25 @@ func main() {
 	}
 
 	// 13. Create router with full RouterDeps & 14. HTTP server with graceful shutdown
+	credStore := store.NewApiClientCredentialStore(database)
+	extIdentityStore := store.NewUserExternalIdentityStore(database)
+	apiCredCache := credcache.New()
+
 	routerDeps := api.RouterDeps{
-		Kernel:               core,
-		UserStore:            userStore,
-		RoleStore:            roleStore,
-		SettingsStore:        settingsStore,
-		JWTService:           jwtService,
-		PartyStore:           partyStore,
-		PromHandler:          telProvider.PromHandler,
-		ReadyzPing:           dbPingFn,
-		TelemetryEnabled:     cfg.Telemetry.Enabled,
-		TelemetryEndpoint:    frontendTelemetryEndpoint(cfg.Telemetry),
-		TelemetryServiceName: "agentlens-web",
+		Kernel:                core,
+		UserStore:             userStore,
+		RoleStore:             roleStore,
+		SettingsStore:         settingsStore,
+		JWTService:            jwtService,
+		PartyStore:            partyStore,
+		CredStore:             credStore,
+		CredCache:             apiCredCache,
+		ExternalIdentityStore: extIdentityStore,
+		PromHandler:           telProvider.PromHandler,
+		ReadyzPing:            dbPingFn,
+		TelemetryEnabled:      cfg.Telemetry.Enabled,
+		TelemetryEndpoint:     frontendTelemetryEndpoint(cfg.Telemetry),
+		TelemetryServiceName:  "agentlens-web",
 	}
 	if healthPlugin != nil {
 		routerDeps.HealthProber = healthPlugin
