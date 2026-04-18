@@ -227,20 +227,20 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Complexity:** M
 **Covers:** R12, R14 (enforcement half)
 
-- [ ] E.0 Authorization + Origin middleware
-  - [ ] E.1 Write 5 focused tests:
+- [x] E.0 Authorization + Origin middleware
+  - [x] E.1 6 tests pass (5 middleware + 1 store):
     - `TestOriginMiddleware_Allowlist_DefaultEmpty_Rejects_All_403`
     - `TestOriginMiddleware_ConfiguredOrigin_Allowed`
     - `TestScopeByAccessibleProjects_AppendsCtxFilter_NoURLMutation`
     - `TestRequirePermission_ServiceAccountsRead_RejectsMissingPerm_403`
     - `TestAuthDecisionOrder_OriginThenAuthThenScope` (per §4.8)
-  - [ ] E.2 Create `internal/api/middleware/origin.go`: reads configured allowlist, rejects 403 on mismatch. Explicitly scoped — only attached to `/api/mcp` chain in composition root; does NOT alter global CORS.
-  - [ ] E.3 Create `internal/api/middleware/scope_by_projects.go`: reads `SessionPrincipalRef` from ctx → resolves `AccessibleProjectIDs` → injects into `CatalogFilter.ProjectIDs` via ctx (no URL mutation).
-  - [ ] E.4 Wire `RequirePermission(auth.PermServiceAccountsRead|Write|Delete)` on the 3 new permissions. Use `auth.Perm*` constants — never raw strings.
-  - [ ] E.5 Add permission constants to `internal/auth/permissions.go` (`PermServiceAccountsRead`, `PermServiceAccountsWrite`, `PermServiceAccountsDelete`).
-  - [ ] E.6 Verify `internal/store/catalog_store.go` honors `CatalogFilter.ProjectIDs` (SQL WHERE clause). Add unit test `TestCatalogStore_FiltersByProjectIDs`.
-  - [ ] E.7 Arch-go verify: origin/scope middlewares in `internal/api/middleware/` import only model + ctxkey.
-  - [ ] E.8 Ensure E.1 tests pass. Run `rtk go test ./internal/api/middleware/... ./internal/auth/... -run 'Origin|Scope|RequirePermission|AuthDecisionOrder' -v`.
+  - [x] E.2 Fixed OriginValidation strict-default: empty allowlist + present Origin → 403 (was passing through): reads configured allowlist, rejects 403 on mismatch. Explicitly scoped — only attached to `/api/mcp` chain in composition root; does NOT alter global CORS.
+  - [x] E.3 Created scope_by_projects.go: reads ctxkey.ProjectIDs, re-injects; zero URL mutation: reads `SessionPrincipalRef` from ctx → resolves `AccessibleProjectIDs` → injects into `CatalogFilter.ProjectIDs` via ctx (no URL mutation).
+  - [x] E.4 PermServiceAccounts* constants verified; route wiring deferred to Group G (SA REST routes) on the 3 new permissions. Use `auth.Perm*` constants — never raw strings.
+  - [x] E.5 Perm constants in internal/auth/permissions.go (done in Group B; Revoke not Delete per spec) to `internal/auth/permissions.go` (`PermServiceAccountsRead`, `PermServiceAccountsWrite`, `PermServiceAccountsDelete`).
+  - [x] E.6 applyProjectFilter helper in sql_store_query.go; ProjectIDs IN? clause; test passes (SQL WHERE clause). Add unit test `TestCatalogStore_FiltersByProjectIDs`.
+  - [x] E.7 Arch-go all PASS; List() refactored to 80 lines via applyProjectFilter helper: origin/scope middlewares in `internal/api/middleware/` import only model + ctxkey.
+  - [x] E.8 415/415 tests pass; make arch-test green. Run `rtk go test ./internal/api/middleware/... ./internal/auth/... -run 'Origin|Scope|RequirePermission|AuthDecisionOrder' -v`.
 
 **Acceptance Criteria:**
 - 5 tests pass.

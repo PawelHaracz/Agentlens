@@ -61,11 +61,7 @@ func (s *SQLStore) List(ctx context.Context, filter ListFilter) ([]model.Catalog
 	for _, cat := range filter.Categories {
 		query = query.Where("catalog_entries.categories LIKE ?", "%"+cat+"%")
 	}
-	if filter.ProjectID != "" {
-		query = query.
-			Joins("JOIN catalog_project_memberships cpm ON cpm.catalog_entry_id = catalog_entries.id").
-			Where("cpm.project_party_id = ?", filter.ProjectID)
-	}
+	query = applyProjectFilter(query, filter)
 
 	query = applyListSort(query, filter.Sort)
 	if filter.Limit > 0 {
@@ -97,6 +93,23 @@ func applyListSort(query *gorm.DB, sort string) *gorm.DB {
 	default:
 		return query.Order("catalog_entries.health_last_success_at DESC NULLS LAST, catalog_entries.display_name ASC")
 	}
+}
+
+// applyProjectFilter adds catalog_project_memberships JOIN for project scoping.
+// ProjectIDs (multi-value, ctx-injected) takes precedence over ProjectID (single).
+func applyProjectFilter(q *gorm.DB, filter ListFilter) *gorm.DB {
+	if len(filter.ProjectIDs) > 0 {
+		return q.
+			Joins("JOIN catalog_project_memberships cpm ON cpm.catalog_entry_id = catalog_entries.id").
+			Where("cpm.project_party_id IN ?", filter.ProjectIDs).
+			Distinct("catalog_entries.*")
+	}
+	if filter.ProjectID != "" {
+		return q.
+			Joins("JOIN catalog_project_memberships cpm ON cpm.catalog_entry_id = catalog_entries.id").
+			Where("cpm.project_party_id = ?", filter.ProjectID)
+	}
+	return q
 }
 
 // ListForProbing returns entries due for a health probe. Entries are excluded
