@@ -92,6 +92,13 @@ func NewRouter(deps RouterDeps) http.Handler {
 		}
 	})
 
+	// Mount plugin-registered routes (e.g. /api/mcp from mcpserver plugin).
+	// Plugins call kernel.RegisterRoutes(prefix, handler) during Init(); those
+	// handlers are read here and mounted before the SPA fallback.
+	for prefix, handler := range deps.Kernel.Routes() {
+		r.Mount(prefix, handler)
+	}
+
 	// Serve SPA — all non-/api paths fall back to index.html for client routing.
 	if staticFS, err := web.FS(); err == nil {
 		r.Handle("/*", spaHandler(staticFS))

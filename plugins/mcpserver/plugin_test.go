@@ -57,9 +57,20 @@ func (s *stubSessionStore) Revoke(_ context.Context, id string) error {
 	}
 	return nil
 }
-func (s *stubSessionStore) ReapExpired(_ context.Context, _ time.Time) (int64, error) { return 0, nil }
-func (s *stubSessionStore) ReapOrphanedPrincipals(_ context.Context) (int64, error)   { return 0, nil }
-func (s *stubSessionStore) CountActive(_ context.Context) (int64, error)              { return s.active, nil }
+func (s *stubSessionStore) ReapExpired(_ context.Context, before time.Time) (int64, error) {
+	var count int64
+	for _, sess := range s.sessions {
+		if sess.RevokedAt == nil && sess.ExpiresAt.Before(before) {
+			now := time.Now()
+			sess.RevokedAt = &now
+			s.active--
+			count++
+		}
+	}
+	return count, nil
+}
+func (s *stubSessionStore) ReapOrphanedPrincipals(_ context.Context) (int64, error) { return 0, nil }
+func (s *stubSessionStore) CountActive(_ context.Context) (int64, error)            { return s.active, nil }
 
 // --- fake kernel ---
 
@@ -88,6 +99,7 @@ func (k *fakeKernel) Parser(_ model.Protocol) (kernel.ParserPlugin, bool)  { ret
 func (k *fakeKernel) RegisterRoutes(prefix string, h http.Handler)         { k.routes[prefix] = h }
 func (k *fakeKernel) RegisterMiddleware(_ func(http.Handler) http.Handler) {}
 func (k *fakeKernel) CardStore() kernel.CardStorePlugin                    { return nil }
+func (k *fakeKernel) Routes() map[string]http.Handler                      { return k.routes }
 
 // --- helpers ---
 

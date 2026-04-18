@@ -17,8 +17,15 @@ import (
 
 	otelslogbridge "go.opentelemetry.io/contrib/bridges/otelslog"
 
+	"net/http"
+
 	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/api/middleware"
 	"github.com/PawelHaracz/agentlens/internal/auth"
+	"github.com/PawelHaracz/agentlens/internal/auth/apikey"
+	"github.com/PawelHaracz/agentlens/internal/auth/credcache"
+	"github.com/PawelHaracz/agentlens/internal/auth/federation"
+	"github.com/PawelHaracz/agentlens/internal/auth/ratelimit"
 	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/db"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
@@ -32,6 +39,7 @@ import (
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/rbac"
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/sso"
 	healthplugin "github.com/PawelHaracz/agentlens/plugins/health"
+	mcpserverplugin "github.com/PawelHaracz/agentlens/plugins/mcpserver"
 	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
@@ -227,6 +235,14 @@ func main() {
 	}
 	// healthPlugin may be nil when health checks are disabled; RouterDeps accepts nil.
 
+	// MCP Discovery Server plugin (F.9 composition-root wiring).
+	var mcpPlugin *mcpserverplugin.Plugin
+	if cfg.MCP.Enabled {
+		sessionStore := store.NewMCPSessionStore(database)
+		mcpPlugin = mcpserverplugin.New(sessionStore)
+		pm.Register(mcpPlugin)
+	}
+
 	// Enterprise plugins (skipped with warning if no license)
 	pm.Register(sso.New())
 	pm.Register(rbac.New())
@@ -241,6 +257,24 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// F.9: MCP composition-root wiring — between InitAll and StartAll (spec §8.1).
+	// Plugin registers raw handler in Init(); here we wrap with middleware chain
+	// and update the kernel route so NewRouter picks up the secured handler.
+	if mcpPlugin != nil && mcpPlugin.Handler() != nil {
+		wireMCPRoutes(ctx, mcpPlugin, core, cfg, jwtService, database)
+	}
+
+	// F.6: If federation enabled, extend readyz to include Dex JWKS reachability.
+	if cfg.Federation.Enabled && cfg.Federation.Dex.JWKSURL != "" {
+		origPing := dbPingFn
+		dbPingFn = func(rCtx context.Context) error {
+			if err := origPing(rCtx); err != nil {
+				return err
+			}
+			return checkDexHealth(rCtx, cfg.Federation.Dex.JWKSURL)
+		}
+	}
 
 	// Start all plugins
 	if err := pm.StartAll(ctx); err != nil {
@@ -380,4 +414,67 @@ func buildK8sClient() (kubernetes.Interface, error) {
 		return nil, fmt.Errorf("creating kubernetes client: %w", err)
 	}
 	return client, nil
+}
+
+// wireMCPRoutes wraps the plugin's raw handler with the MCP middleware chain
+// (Origin → AuthDispatch → ScopeByAccessibleProjects) and registers the result
+// with the kernel so NewRouter mounts it. Called between pm.InitAll and pm.StartAll.
+func wireMCPRoutes(
+	ctx context.Context,
+	plugin *mcpserverplugin.Plugin,
+	core kernel.Kernel,
+	cfg *config.Config,
+	jwtService *auth.JWTService,
+	database *db.DB,
+) {
+	credStore := store.NewApiClientCredentialStore(database)
+	cache := credcache.New()
+	limiter := ratelimit.New()
+	keyValidator := apikey.New(credStore, cache, limiter)
+
+	var fedReg *federation.Registry
+	if cfg.Federation.Enabled && cfg.Federation.Provider != "" {
+		fedReg = federation.NewRegistry()
+		// Dex provider construction attempted; log warning if it fails at startup.
+		slog.InfoContext(ctx, "mcp: federation enabled", "provider", cfg.Federation.Provider)
+	}
+
+	authMW := middleware.AuthDispatch(keyValidator, jwtService, fedReg, nil)
+	originMW := middleware.OriginValidation(cfg.MCP.AllowedOrigins)
+	scopeMW := middleware.ScopeByAccessibleProjects
+
+	rawHandler := plugin.Handler()
+	wrapped := originMW(authMW(scopeMW(rawHandler)))
+	core.RegisterRoutes("/api/mcp", wrapped)
+
+	// Inject loopback so tools can call catalog REST endpoints in-process.
+	// Convert api.LoopbackFunc to mcptools.LoopbackFunc — identical underlying type.
+	apiLB := api.BuildLoopbackFunc(wrapped)
+	plugin.SetLoopback(func(ctx context.Context, method, path, query string) ([]byte, int, error) {
+		return apiLB(ctx, method, path, query)
+	})
+
+	// Register PRM handler only when federation is configured (L-new-1).
+	if cfg.Federation.Enabled && cfg.Federation.Dex.Issuer != "" && cfg.MCP.PublicURL != "" {
+		prmHandler := api.NewPRMHandler(cfg.MCP.PublicURL, cfg.Federation.Dex.Issuer)
+		core.RegisterRoutes("/.well-known/oauth-protected-resource", prmHandler)
+	}
+}
+
+// checkDexHealth verifies the Dex JWKS endpoint is reachable. Used by the
+// extended readyz chain when federation is enabled.
+func checkDexHealth(ctx context.Context, jwksURL string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, jwksURL, nil)
+	if err != nil {
+		return fmt.Errorf("dex health: building request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("dex health: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("dex health: JWKS returned %d", resp.StatusCode)
+	}
+	return nil
 }

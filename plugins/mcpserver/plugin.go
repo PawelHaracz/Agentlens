@@ -13,36 +13,38 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/PawelHaracz/agentlens/internal/kernel"
+	"github.com/PawelHaracz/agentlens/internal/model"
+	"github.com/PawelHaracz/agentlens/internal/store"
 	mcptools "github.com/PawelHaracz/agentlens/plugins/mcpserver/tools"
 	"github.com/PawelHaracz/agentlens/plugins/mcpserver/wire"
 )
 
 // Plugin implements the MCP Discovery Server kernel.Plugin.
-// Struct is named Plugin — arch-go's Plugin-suffix rule is satisfied via the
-// mcpserver package namespace (plugins/mcpserver.Plugin).
 type Plugin struct {
-	cfg      pluginConfig
-	sessions *sessionManager
-	worker   *asyncWorker
-	registry ToolRegistry
-	loopback mcptools.LoopbackFunc
+	cfg          pluginConfig
+	sessions     *sessionManager
+	worker       *asyncWorker
+	registry     ToolRegistry
+	loopback     mcptools.LoopbackFunc
+	metrics      *mcpMetrics
+	catalogStore store.Store
 
-	// raw handler exposed for composition-root wrapping
-	handler *dispatcher
-
+	handler      *dispatcher
 	cancelReaper context.CancelFunc
 	startedAt    time.Time
 	log          *slog.Logger
 }
 
 // New creates a Plugin. sessionStore must not be nil.
-func New(store sessionStore) *Plugin {
-	return &Plugin{sessions: newSessionManager(store, 30*time.Minute)}
+func New(sess sessionStore) *Plugin {
+	return &Plugin{sessions: newSessionManager(sess, 30*time.Minute)}
 }
 
 // NewForTest creates a Plugin for unit tests.
-func NewForTest(store sessionStore) *Plugin { return New(store) }
+func NewForTest(sess sessionStore) *Plugin { return New(sess) }
 
 // Name returns the plugin name.
 func (p *Plugin) Name() string { return "mcp-discovery-server" }
@@ -53,8 +55,8 @@ func (p *Plugin) Version() string { return "1.0.0" }
 // Type returns the plugin type.
 func (p *Plugin) Type() kernel.PluginType { return kernel.PluginTypeMiddleware }
 
-// SetLoopback injects the loopback function (built from the chi router by the
-// composition root after pm.InitAll()). Enables tool dispatch via in-process HTTP.
+// SetLoopback injects the loopback function and builds the ToolRegistry.
+// Called by the composition root after pm.InitAll and before pm.StartAll.
 func (p *Plugin) SetLoopback(fn mcptools.LoopbackFunc) {
 	p.loopback = fn
 	if p.registry == nil && fn != nil {
@@ -68,7 +70,7 @@ func (p *Plugin) SetLoopback(fn mcptools.LoopbackFunc) {
 }
 
 // Handler returns the raw http.Handler for the MCP endpoint.
-// The composition root wraps it with Origin → AuthDispatch → Scope before
+// Composition root wraps it with Origin → AuthDispatch → Scope before
 // calling kernel.RegisterRoutes("/api/mcp", wrapped).
 func (p *Plugin) Handler() *dispatcher { return p.handler }
 
@@ -86,10 +88,15 @@ func (p *Plugin) Init(k kernel.Kernel) error {
 		return nil
 	}
 
-	// Update session TTL from resolved config.
+	// F.8: warn when audit logging is disabled.
+	if !p.cfg.auditEnabled {
+		slog.Warn("MCP audit logging disabled — forensic trail unavailable")
+	}
+
+	p.catalogStore = k.Store()
+	p.metrics = newMCPMetrics()
 	p.sessions.ttl = p.cfg.sessionTTL
 
-	// Build the JSON-RPC dispatcher.
 	p.worker = newAsyncWorker(p.sessions.store)
 	p.handler = &dispatcher{
 		sessions: p.sessions,
@@ -98,11 +105,55 @@ func (p *Plugin) Init(k kernel.Kernel) error {
 		worker:   p.worker,
 	}
 
-	// Build the Streamable HTTP transport wrapping the dispatcher.
 	transport := wire.NewStreamableHTTP(p.handler, p.sessions.IsActive, nil)
 	k.RegisterRoutes("/api/mcp", transport.Handler())
 	k.RegisterRoutes("/api/mcp/status", newStatusHandler(p.sessions, time.Now()))
 
+	// F.2: Self-register as a catalog entry (idempotent).
+	if err := p.selfRegister(context.Background()); err != nil {
+		p.log.Warn("mcp self-registration failed (non-fatal)", "err", err)
+	}
+
+	return nil
+}
+
+// selfRegister creates or updates the MCP server's own catalog entry.
+// Endpoint is disambiguated by PublicURL so multi-instance deploys get distinct keys (M6).
+func (p *Plugin) selfRegister(ctx context.Context) error {
+	if p.catalogStore == nil {
+		return nil // no store injected (tests or disabled mode)
+	}
+	endpoint := "agentlens:mcp-discovery:" + p.cfg.publicURL
+	agentKey := model.ComputeAgentKey(model.ProtocolMCP, endpoint)
+
+	existing, err := p.catalogStore.FindByEndpoint(ctx, endpoint)
+	if err != nil {
+		return fmt.Errorf("finding existing catalog entry: %w", err)
+	}
+	if existing != nil {
+		return nil // already registered; idempotent
+	}
+
+	agentTypeID := uuid.New().String()
+	entry := &model.CatalogEntry{
+		ID:          uuid.New().String(),
+		DisplayName: "AgentLens MCP Discovery Server",
+		Description: "Read-only MCP Discovery Server embedded in AgentLens. " +
+			"Exposes 4 tools: agent_search, agent_get, capabilities_list, agent_card.",
+		Source: model.SourcePush,
+		Status: model.LifecycleRegistered,
+		AgentType: &model.AgentType{
+			ID:       agentTypeID,
+			AgentKey: agentKey,
+			Protocol: model.ProtocolMCP,
+			Endpoint: endpoint,
+			Version:  "1.0.0",
+		},
+	}
+	if err := p.catalogStore.Create(ctx, entry); err != nil {
+		return fmt.Errorf("creating self-registration entry: %w", err)
+	}
+	p.log.Info("mcp: self-registered in catalog", "entry_id", entry.ID)
 	return nil
 }
 
@@ -114,7 +165,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 	p.startedAt = time.Now()
 	reaperCtx, cancel := context.WithCancel(ctx)
 	p.cancelReaper = cancel
-
 	go p.runReaper(reaperCtx)
 	go p.worker.Run(reaperCtx)
 	return nil
