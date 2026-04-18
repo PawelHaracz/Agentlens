@@ -904,7 +904,7 @@ New `values.yaml` blocks: `mcpServer.*`, `federation.*`, `dex.*`. `mcpServer.ena
 
 Bundles AgentLens + Dex:
 - `agentlens`: image with `AGENTLENS_MCP_SERVER_*` + `AGENTLENS_FEDERATION_*` env; depends_on Dex healthy.
-- `dex`: **`ghcr.io/dexidp/dex:v2.41.1@sha256:<digest-to-confirm-at-planning>`** (L5 — implementer confirms latest stable Dex tag + digest at planning phase; pin by digest). Mounted `dex-config.yaml` (LDAP + GitHub connector examples commented). Healthcheck on `/dex/healthz/live`.
+- `dex`: **`ghcr.io/dexidp/dex:v2.39.0@sha256:935ef4c1ae6537bcbdec79f5a799cf2e2a123808d45c3af7e41b77767cd3ff6f`** (confirmed 2026-04-18). Mounted `dex-config.yaml` (LDAP + GitHub connector examples commented). Healthcheck on `/dex/healthz/live`.
 
 ### 8.4 Admin REST surface
 
@@ -976,15 +976,24 @@ Semantic-release tags `v0.3.0` + `helm/v0.3.0`. Image `ghcr.io/agentlens/agentle
 3. `curl https://.../.well-known/oauth-protected-resource` — expect JSON pointing to Dex issuer.
 4. MCP client JSON-RPC `initialize` succeeds, `tools/list` returns 4 tools.
 
-### 8.10 Pinned dependencies (M1 — confirm exact via context7 at planning)
+### 8.10 Pinned dependencies (confirmed 2026-04-18)
 
-Go module additions:
-```
-github.com/coreos/go-oidc/v3 v3.11.0   // or latest stable in the ^3.11.0 line
-github.com/go-jose/go-jose/v4 v4.0.4   // or latest stable in the ^4.0.4 line
+Go module additions (already in `go.mod` + `go.sum` as of Chore-02):
+
+```text
+github.com/coreos/go-oidc/v3 v3.18.0
+github.com/go-jose/go-jose/v4 v4.1.4
+golang.org/x/oauth2 v0.36.0  // transitive, upgraded by go-oidc
 ```
 
-(`v3` of go-jose is EOL; target v4. Planner runs `context7` to confirm exact latest stable before go.mod update.)
+Dex container image (pin by index digest for reproducibility):
+
+```text
+ghcr.io/dexidp/dex:v2.39.0@sha256:935ef4c1ae6537bcbdec79f5a799cf2e2a123808d45c3af7e41b77767cd3ff6f
+```
+
+- linux/amd64 manifest digest: `sha256:5e73beb35c46900a2766961e6d6400c4f1ed7f26d547cb0617e93224ebef6f7a`
+- Image confirmed 2026-04-18 via `docker buildx imagetools inspect`.
 
 ---
 

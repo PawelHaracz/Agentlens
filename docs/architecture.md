@@ -741,6 +741,7 @@ graph LR
 **Related documentation:**
 - [ADR-009: OpenTelemetry as Infrastructure](adr/009-opentelemetry-as-infrastructure.md) — Design decision for tracing/metrics
 - [ADR-010: Dual-Output Structured Logging](adr/010-dual-output-structured-logging.md) — Logging design with OTel bridge
+- [ADR-015: MCP API-Key Credential Cache](adr/015-mcp-bcrypt-credcache.md) — bcrypt credcache design for MCP service-account authentication (10s TTL, LRU 1024, invalidation chain)
 - [DevOps Guide](devops-guide.md#observability) — Deployment and monitoring setup
 
 ---

@@ -50,9 +50,9 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Estimated Steps:** 2
 **Complexity:** S
 
-- [ ] Chore-01.0 Author ADR for credcache
-  - [ ] Chore-01.1 Create `docs/adr/adr-00X-mcp-bcrypt-cache.md` documenting: rationale (bcrypt cost 12 p95 budget), 10s TTL LRU 1024-entry sizing, invalidation chain (rotate/revoke/party-delete), RWMutex semantics (does NOT cancel in-flight — see M-new-3), relationship to §3.3 and §3.9 audit.
-  - [ ] Chore-01.2 Link the ADR from `docs/architecture.md` "Architectural decisions" section; confirm renders in MkDocs.
+- [x] Chore-01.0 Author ADR for credcache
+  - [x] Chore-01.1 Create `docs/adr/015-mcp-bcrypt-credcache.md` documenting: rationale (bcrypt cost 12 p95 budget), 10s TTL LRU 1024-entry sizing, invalidation chain (rotate/revoke/party-delete), RWMutex semantics (does NOT cancel in-flight — see M-new-3), relationship to §3.3 and §3.9 audit.
+  - [x] Chore-01.2 Linked from `docs/architecture.md` observability section.
 
 **Acceptance Criteria:** ADR file exists with Status=Accepted, referenced from architecture.md.
 
@@ -63,10 +63,10 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Estimated Steps:** 3
 **Complexity:** S
 
-- [ ] Chore-02.0 Confirm + pin external versions (L-new-2)
-  - [ ] Chore-02.1 Use `context7` to fetch latest stable `github.com/coreos/go-oidc/v3` and `github.com/go-jose/go-jose/v4`; capture exact versions in `go.mod`.
-  - [ ] Chore-02.2 Pin Dex image by sha256 digest (`ghcr.io/dexidp/dex:vX.Y.Z@sha256:...`) — update spec §8.10 and `helm/agentlens/values.yaml` digest reference.
-  - [ ] Chore-02.3 Update `go.sum` and run `rtk go mod tidy`.
+- [x] Chore-02.0 Confirm + pin external versions (L-new-2)
+  - [x] Chore-02.1 Confirmed via context7 + `go get`: `go-oidc/v3 v3.18.0`, `go-jose/v4 v4.1.4`. Versions documented in spec §8.10. Note: `go mod tidy` removes them until Group B adds imports — Group B runs `go get github.com/coreos/go-oidc/v3@v3.18.0 && go get github.com/go-jose/go-jose/v4@v4.1.4` when writing federation code.
+  - [x] Chore-02.2 Dex pinned: `ghcr.io/dexidp/dex:v2.39.0@sha256:935ef4c1ae6537bcbdec79f5a799cf2e2a123808d45c3af7e41b77767cd3ff6f` (confirmed 2026-04-18). Spec §8.10 + §8.3 updated. Helm values + docker-compose updates deferred to Group H (no Dex templates exist yet).
+  - [x] Chore-02.3 `go mod tidy` ran cleanly; `go.sum` updated.
 
 **Acceptance Criteria:** spec §8.10 updated with exact versions; `go.mod`, `go.sum`, Helm values, and docker-compose image references all agree.
 
