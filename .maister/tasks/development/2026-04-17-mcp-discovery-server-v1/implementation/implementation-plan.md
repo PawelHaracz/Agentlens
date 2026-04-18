@@ -151,8 +151,8 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Complexity:** XL
 **Covers:** R1, R3, R11 (session half)
 
-- [ ] C.0 Build plugin + transport + session lifecycle
-  - [ ] C.1 Write 7 focused tests:
+- [x] C.0 Build plugin + transport + session lifecycle
+  - [x] C.1 7 tests written and passing:
     - `TestPlugin_Lifecycle_Register_Init_Start_Stop`
     - `TestPlugin_Disabled_WhenFlagFalse_NoRoutesRegistered`
     - `TestStreamableHTTP_POST_InitializeHandshake_Returns_SessionID`
@@ -160,23 +160,23 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
     - `TestStreamableHTTP_EchoesMCPProtocolVersion_Header`
     - `TestSession_Init_PersistedToDB_InitializedAtSet`
     - `TestStatusEndpoint_ReturnsSessionStats`
-  - [ ] C.2 Create package `plugins/mcpserver/` modeled on `plugins/health/`: `plugin.go`, `config.go`, `routes.go`, `handlers.go`, `session.go`, `errors.go`, `README.md`.
-  - [ ] C.3 Struct name: `Plugin` (satisfies arch-go `Plugin` suffix via package namespacing).
-  - [ ] C.4 Implement `kernel.Plugin` lifecycle: `Register`, `Init` (reads config, constructs ToolRegistry, returns `ErrLicenseRequired` path is N/A — this is OSS), `Start` (launches reaper, async update worker), `Stop` (flushes async channel + stops workers).
-  - [ ] C.5 Add `WireImpl` interface + factory registry in `plugins/mcpserver/wire/` per spec §5.3 (single concrete impl `streamablehttp` initially).
-  - [ ] C.6 Implement Streamable HTTP transport per MCP 2025-11-25 in `plugins/mcpserver/wire/streamablehttp.go`:
+  - [x] C.2 Created `plugins/mcpserver/` modeled on `plugins/health/`: `plugin.go`, `config.go`, `routes.go`, `handlers.go`, `session.go`, `errors.go`, `README.md`.
+  - [x] C.3 Struct named `Plugin` (arch-go suffix via mcpserver package namespace) (satisfies arch-go `Plugin` suffix via package namespacing).
+  - [x] C.4 Lifecycle: Init (validate cfg, build dispatcher+transport, register routes), Start (reaper+worker goroutines), Stop (flush+cancel): `Register`, `Init` (reads config, constructs ToolRegistry, returns `ErrLicenseRequired` path is N/A — this is OSS), `Start` (launches reaper, async update worker), `Stop` (flushes async channel + stops workers).
+  - [x] C.5 `plugins/mcpserver/wire/wire.go` — WireImpl interface + factory registry in `plugins/mcpserver/wire/` per spec §5.3 (single concrete impl `streamablehttp` initially).
+  - [x] C.6 `wire/streamablehttp.go` — POST dispatches JSON-RPC; GET SSE holds connection; echoes MCP-Protocol-Version; session gate on non-initialize per MCP 2025-11-25 in `plugins/mcpserver/wire/streamablehttp.go`:
     - POST handler: accept JSON-RPC; on `initialize`, create `mcp_sessions` row, assign `MCP-Session-Id` response header, set `initialized_at`.
     - GET handler: server-sent events for server→client messages.
     - Echo `MCP-Protocol-Version` header.
     - Reject requests without valid session except `initialize`.
-  - [ ] C.7 Implement DB-backed session management (`session.go`): wraps `MCPSessionStore`; in-memory index for hot path; persist on init and on revocation.
-  - [ ] C.8 JSON-RPC dispatcher (`handlers.go`): `initialize`, `tools/list`, `tools/call`, `ping`. Out-of-scope methods → `method not found` JSON-RPC error.
-  - [ ] C.9 Implement `errors.go` mapping per spec §5.9 (store errors → JSON-RPC codes).
-  - [ ] C.10 Implement `/api/mcp/status` handler returning session counts + uptime (spec §5.10). Not under `/api/mcp` — separate mount at plugin level; registered via `kernel.RegisterRoutes("/api/mcp/status", ...)`.
-  - [ ] C.11 Async `last_used_at` / `last_seen_at` updater: bounded channel (cap 1024) + 30s flush tick + flush on `Stop()` + `agentlens_mcp_last_seen_drops_total` counter on full-channel drop.
-  - [ ] C.12 Config plumbing: `plugins/mcpserver/config.go` reads `cfg.MCP.*` and panics early if enabled-without-required-fields.
-  - [ ] C.13 Arch-go verify: `plugins/mcpserver/` imports only `kernel` + `internal/model` + std/third-party — NEVER `internal/api` or `internal/auth`.
-  - [ ] C.14 Ensure C.1 tests pass. Run `rtk go test ./plugins/mcpserver/... -v`.
+  - [x] C.7 `session.go` — in-memory index + DB-backed; Create/IsActive/MarkInitialized/Revoke/CountActive/Reap (`session.go`): wraps `MCPSessionStore`; in-memory index for hot path; persist on init and on revocation.
+  - [x] C.8 `handlers.go` — dispatcher: initialize/ping/tools-list/tools-call; ToolRegistry interface for Group D injection: `initialize`, `tools/list`, `tools/call`, `ping`. Out-of-scope methods → `method not found` JSON-RPC error.
+  - [x] C.9 `errors.go` — JSON-RPC 2.0 error codes + envelope types mapping per spec §5.9 (store errors → JSON-RPC codes).
+  - [x] C.10 `status.go` — GET /api/mcp/status: enabled, active_sessions, uptime_seconds; registered via kernel.RegisterRoutes returning session counts + uptime (spec §5.10). Not under `/api/mcp` — separate mount at plugin level; registered via `kernel.RegisterRoutes("/api/mcp/status", ...)`.
+  - [x] C.11 `worker.go` — bounded channel cap 1024, 30s tick, flush-on-Stop, drops metric agentlens_mcp_last_seen_drops_total: bounded channel (cap 1024) + 30s flush tick + flush on `Stop()` + `agentlens_mcp_last_seen_drops_total` counter on full-channel drop.
+  - [x] C.12 `config.go` — validate() + resolveConfig(); Init returns error if enabled+no PublicURL: `plugins/mcpserver/config.go` reads `cfg.MCP.*` and panics early if enabled-without-required-fields.
+  - [x] C.13 Arch-go all PASS — plugin imports only kernel+model+config+wire (std/3p); zero internal/api or internal/auth imports: `plugins/mcpserver/` imports only `kernel` + `internal/model` + std/third-party — NEVER `internal/api` or `internal/auth`.
+  - [x] C.14 403/403 tests pass; make arch-test green. Run `rtk go test ./plugins/mcpserver/... -v`.
 
 **Acceptance Criteria:**
 - 7 tests pass.
