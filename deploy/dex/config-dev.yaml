@@ -1,0 +1,43 @@
+# Dex configuration for local development.
+# Reference: https://dexidp.io/docs/connectors/
+
+issuer: http://dex:5556/dex
+
+storage:
+  type: memory
+
+web:
+  http: 0.0.0.0:5556
+
+grpc:
+  addr: 0.0.0.0:5557
+
+telemetry:
+  http: 0.0.0.0:5558
+
+oauth2:
+  skipApprovalScreen: true
+  responseTypes: [code]
+
+# Example connectors — comment in as needed for local testing.
+connectors: []
+# - type: mockCallback
+#   id: mock
+#   name: Mock Login
+
+staticClients:
+  - id: agentlens
+    redirectURIs:
+      - http://localhost:8080/api/v1/auth/federation/callback
+    name: AgentLens
+    # For local dev only — use a real secret in production.
+    secret: agentlens-dev-secret
+    public: false
+
+enablePasswordDB: true
+staticPasswords:
+  - email: "dev@agentlens.local"
+    # bcrypt hash of "devpassword" — for local testing only
+    hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYIF/Rq1t2ENeuKZCnW"
+    username: "devuser"
+    userID: "dev-user-001"

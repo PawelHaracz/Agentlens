@@ -111,3 +111,31 @@ curl -X PUT http://localhost:8080/api/v1/settings \
 - Settings stored in the database override values from config files and environment variables.
 - The `settings:read` permission is required to view settings (all default roles have this).
 - The `settings:write` permission is required to modify settings (admin role only by default).
+
+---
+
+## MCP Discovery Server Configuration
+
+> **Requires:** `mcp_server.enabled=true` in config or `AGENTLENS_MCP_ENABLED=true`.
+
+| Key | Config Path | Env Var | Default | Description |
+|---|---|---|---|---|
+| MCP enabled | `mcp_server.enabled` | `AGENTLENS_MCP_ENABLED` | `false` | Enable MCP Discovery Server plugin |
+| Public URL | `mcp_server.public_url` | `AGENTLENS_MCP_PUBLIC_URL` | `""` | Canonical public URL of the MCP endpoint (required when enabled) |
+| Allowed origins | `mcp_server.allowed_origins` | `AGENTLENS_MCP_ALLOWED_ORIGINS` | `[]` | Comma-separated list of allowed Origin header values (empty = strict deny) |
+| Audit enabled | `mcp_server.audit_enabled` | `AGENTLENS_MCP_AUDIT_ENABLED` | `true` | Emit per-tool-call audit log entries |
+| Session TTL | `mcp_server.session_ttl` | `AGENTLENS_MCP_SESSION_TTL` | `30m` | MCP session expiry duration |
+| Reaper interval | `mcp_server.reaper_interval` | `AGENTLENS_MCP_REAPER_INTERVAL` | `60s` | Session reaper run interval |
+
+## Federation (Dex) Configuration
+
+> **Requires:** `federation.enabled=true` and `mcp_server.enabled=true`.
+
+| Key | Config Path | Env Var | Default | Description |
+|---|---|---|---|---|
+| Federation enabled | `federation.enabled` | `AGENTLENS_FEDERATION_ENABLED` | `false` | Enable OIDC federation |
+| Provider | `federation.provider` | `AGENTLENS_FEDERATION_PROVIDER` | `dex` | Federation provider (only `dex` supported in v1) |
+| Audience | `federation.audience` | `AGENTLENS_FEDERATION_AUDIENCE` | `""` | Expected JWT `aud` claim (typically the MCP public URL) |
+| Dex issuer | `federation.dex.issuer` | `AGENTLENS_FEDERATION_DEX_ISSUER` | `""` | Dex OIDC issuer URL |
+| Dex client ID | `federation.dex.client_id` | `AGENTLENS_FEDERATION_DEX_CLIENT_ID` | `""` | Dex OAuth client ID for AgentLens |
+| Dex JWKS URL | `federation.dex.jwks_url` | `AGENTLENS_FEDERATION_DEX_JWKS_URL` | `""` | Dex JWKS endpoint (auto-derived from issuer if omitted) |

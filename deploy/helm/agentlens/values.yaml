@@ -181,6 +181,41 @@ networkPolicy:
   ingressFrom: []
   egressTo: []
 
+# MCP Discovery Server plugin settings.
+# mcp.enabled=false by default (R20 — safe default for existing deployments).
+mcp:
+  enabled: false
+  publicURL: ""
+  allowedOrigins: []
+  auditEnabled: true
+  sessionTTL: 30m
+  reaperInterval: 60s
+
+# OIDC federation settings (Dex only in v1).
+federation:
+  enabled: false
+  provider: "dex"
+  audience: ""
+  dex:
+    issuer: ""
+    clientID: ""
+    jwksURL: ""
+
+# Bundled Dex subchart (https://charts.dex-idp.io).
+# Enable alongside federation.enabled=true for full OAuth 2.1 flow.
+dex:
+  enabled: false
+  image:
+    repository: ghcr.io/dexidp/dex
+    tag: "v2.39.0"
+    digest: "sha256:935ef4c1ae6537bcbdec79f5a799cf2e2a123808d45c3af7e41b77767cd3ff6f"
+  config:
+    issuer: "http://dex:5556/dex"
+    storage:
+      type: memory
+    web:
+      http: "0.0.0.0:5556"
+
 extraEnv: []
 extraVolumes: []
 extraVolumeMounts: []

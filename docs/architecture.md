@@ -16,6 +16,14 @@ graph TD
 
         AUTH[Auth Middleware<br/>JWT / RequirePermission]
 
+        subgraph MCP["MCP Discovery Server (plugin)"]
+            MCPWIRE[Streamable HTTP<br/>Transport]
+            TOOLREG[ToolRegistry<br/>4 Discovery Tools]
+            SESS[Session Manager<br/>DB-backed]
+            MCPWIRE --> TOOLREG
+            TOOLREG -->|HTTP loopback| API
+        end
+
         API --> AUTH
         UI --> AUTH
         DM --> AUTH
@@ -26,11 +34,15 @@ graph TD
         KERNEL --> DB[(Database<br/>SQLite / PostgreSQL)]
         KERNEL --> PARSERS[Parser Plugins<br/>A2A / MCP]
         KERNEL --> SOURCES[Source Plugins<br/>Static / K8s]
+        KERNEL --> MCP
     end
 
+    DEX[Dex OIDC<br/>Federation] -.->|JWKS| MCP
     AGENTS[External Agents<br/>A2A / MCP] -.->|discovered by| SOURCES
     BROWSER[Browser] -->|HTTP| API
     BROWSER -->|Static files| UI
+    LLMAPP[LLM App<br/>API key] -->|MCP / Streamable HTTP| MCPWIRE
+    IDE[IDE / Claude.ai<br/>OAuth 2.1] -->|MCP / Streamable HTTP| MCPWIRE
 ```
 
 ---

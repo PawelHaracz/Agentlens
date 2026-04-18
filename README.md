@@ -15,6 +15,7 @@ AgentLens automatically discovers AI agents running in Kubernetes (via Service a
 - **Authentication & Authorization** — JWT-based auth with role-based access control (admin, editor, viewer)
 - **Groups & Projects** — Party archetype for managing users, hierarchical groups, and project namespaces with per-project RBAC (owner/developer/viewer roles). Catalog entries are scoped to projects; new entries auto-assigned to the `default` project.
 - **Multi-database support** — SQLite (single-instance) or PostgreSQL (production)
+- **MCP Discovery Server** — Embedded read-only MCP endpoint (`/api/mcp`) exposing 4 discovery tools (`agent_search`, `agent_get`, `capabilities_list`, `agent_card`). Dual auth: service-account API keys for backend LLM apps, OAuth 2.1 via Dex for IDE/Claude.ai clients. Enable with `mcp_server.enabled=true`. See [MCP Quickstart](docs/mcp-quickstart.md).
 
 ---
 

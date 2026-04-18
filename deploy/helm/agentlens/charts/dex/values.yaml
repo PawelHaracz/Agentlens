@@ -1,0 +1,5 @@
+enabled: false
+image:
+  repository: ghcr.io/dexidp/dex
+  tag: "v2.39.0"
+config: {}
