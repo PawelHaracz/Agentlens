@@ -1012,3 +1012,73 @@ The reverse view — which projects does *this entry* belong to — is surfaced 
 curl http://localhost:8080/api/v1/projects \
   -H "Authorization: Bearer $TOKEN"
 ```
+
+---
+
+## MCP Discovery Server
+
+AgentLens includes a built-in **MCP Discovery Server** that exposes the catalog to LLM clients (Claude.ai, Cursor, VS Code + Copilot) via the Model Context Protocol (MCP). Administrators must enable it in configuration before use.
+
+> **Requires:** `mcp_server.enabled=true` in config (default: `false`). See [MCP Quickstart](mcp-quickstart.md).
+
+---
+
+## Service Accounts
+
+Service accounts are machine identities used by backend LLM apps to authenticate against the MCP endpoint via API keys. Administrators with the `service_accounts:write` permission can create, rotate, and delete service accounts.
+
+### Navigate to Service Accounts
+
+Go to **Admin → Service Accounts** (URL: `/admin/service-accounts`).
+
+![Service accounts list page showing a table with Name, ID, Kind columns and action buttons for rotate and delete](images/service-accounts-list.png)
+*The Service Accounts list. Each row shows the account name, a truncated ID, and action buttons.*
+
+### Create a service account
+
+1. Click **New Service Account**.
+2. Enter a descriptive name (e.g. `my-llm-app`).
+3. Click **Create**.
+
+![Create service account dialog with a Name input field](images/service-accounts-create.png)
+*The create dialog. The name field is the only required input.*
+
+A **one-time secret** banner appears immediately after creation. Copy it now — it is never shown again.
+
+![One-time secret display banner with copy and show/hide toggle buttons](images/service-accounts-secret.png)
+*The one-time secret banner. Use the copy button or the eye icon to reveal the full value.*
+
+The secret format is: `agentlens_sk_<client_id>.<raw_secret>`
+
+Pass it to your LLM app as the `Authorization: Bearer` header value when calling `/api/mcp`.
+
+### Rotate a secret
+
+Click the **↻** (rotate) icon on any service account row. A new one-time secret is returned immediately; the old secret is revoked atomically.
+
+> **Note:** After rotation, any cached bcrypt result expires within 10 seconds (ADR-015). Plan a brief overlap window in production.
+
+### Delete a service account
+
+Click the **🗑** (delete) icon. All active API keys are invalidated before the account is removed.
+
+---
+
+## Pending Federated Identities
+
+When Dex federation is enabled and JIT provisioning is disabled (default), first-time federated logins create **pending identity** records that require operator approval before the user can access MCP tools.
+
+### Navigate to Pending Identities
+
+Go to **Admin → External Identities** (URL: `/admin/external-identities`).
+
+![Pending identities page showing a table with Provider, Subject, Email, Status columns and approve/reject action buttons](images/pending-identities.png)
+*The Pending Identities page. Each row shows the federated provider, subject claim, email, and current status.*
+
+### Approve an identity
+
+Click the **✓** (approve) button. The identity is linked to an AgentLens user and the next login attempt succeeds automatically.
+
+### Reject an identity
+
+Click the **✗** (reject) button. The identity is marked rejected; the user sees an authentication error on subsequent logins.
