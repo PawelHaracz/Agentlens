@@ -181,3 +181,33 @@ func rebuildAllClosures(tx *gorm.DB) error {
 
 	return tx.Exec(sql, args...).Error
 }
+
+// CreateServiceAccount inserts a new service_account party with the given name.
+// Service accounts are machine identities; they have no linked UserID.
+func (s *PartyStore) CreateServiceAccount(ctx context.Context, name string) (*model.Party, error) {
+	p := &model.Party{
+		Kind: model.PartyKindServiceAccount,
+		Name: name,
+	}
+	if err := s.CreateParty(ctx, p); err != nil {
+		return nil, fmt.Errorf("creating service account party: %w", err)
+	}
+	return p, nil
+}
+
+// EnumerateActiveCredentials returns the client_ids of active API-key credentials
+// for the given party ID. Callers (service-account DELETE handler) must invoke
+// credcache.Invalidate for each returned ID BEFORE deleting the party row, so
+// the CASCADE does not remove the rows before enumeration completes (H6-residual).
+//
+// This method issues a raw query to avoid importing the credential store,
+// keeping the party_store package self-contained.
+func (s *PartyStore) EnumerateActiveCredentials(ctx context.Context, partyID string) ([]string, error) {
+	var clientIDs []string
+	if err := s.db.WithContext(ctx).
+		Raw("SELECT client_id FROM api_client_credentials WHERE party_id = ? AND revoked_at IS NULL", partyID).
+		Scan(&clientIDs).Error; err != nil {
+		return nil, fmt.Errorf("enumerating active credentials for party: %w", err)
+	}
+	return clientIDs, nil
+}

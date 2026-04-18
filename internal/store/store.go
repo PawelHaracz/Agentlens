@@ -65,8 +65,9 @@ type ListFilter struct {
 	Categories []string
 	Limit      int
 	Offset     int
-	Sort       string // "lastSuccessAt_desc" (default) | "displayName_asc" | "createdAt_desc"
-	ProjectID  string // optional: filter to entries in this project party ID (empty = no filter)
+	Sort       string   // "lastSuccessAt_desc" (default) | "displayName_asc" | "createdAt_desc"
+	ProjectID  string   // optional: filter to entries in this project party ID (empty = no filter)
+	ProjectIDs []string // optional: filter to entries in any of these project IDs (ctx-injected by ScopeByAccessibleProjects; takes precedence over ProjectID when non-empty)
 }
 
 // StoreStats holds aggregate statistics about stored catalog entries.

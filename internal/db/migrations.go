@@ -25,6 +25,7 @@ func AllMigrations() []Migration {
 		migration007PartyArchetype(),
 		migration008BackfillPersonParties(),
 		migration009CatalogProjectMembershipIndexes(),
+		migration010MCPDiscovery(),
 	}
 }
 
@@ -482,4 +483,133 @@ func columnExists(db *gorm.DB, table, column string) (bool, error) {
 		}
 		return false, nil
 	}
+}
+
+// migration010MCPDiscovery adds the MCP Discovery Server data layer:
+//   - api_client_credentials — hashed service-account API keys (one active per party)
+//   - mcp_sessions          — DB-backed MCP session rows with soft-delete
+//   - user_external_identities — federated identity → user mappings with approval queue
+//
+// Partial unique indexes (one active credential per party; active = revoked_at IS NULL)
+// use raw tx.Exec on both SQLite (3.8+) and PostgreSQL — no AutoMigrate magic.
+// Permission seed extends the existing admin role JSON in-place.
+func migration010MCPDiscovery() Migration {
+	return Migration{
+		Version:     10,
+		Description: "mcp_discovery_v1: api_client_credentials, mcp_sessions, user_external_identities, service_account permissions",
+		Up:          migration010Up,
+	}
+}
+
+func migration010Up(tx *gorm.DB) error {
+	if err := migration010ApiClientCredentials(tx); err != nil {
+		return err
+	}
+	if err := migration010McpSessions(tx); err != nil {
+		return err
+	}
+	if err := migration010UserExternalIdentities(tx); err != nil {
+		return err
+	}
+	if err := migration010SeedPermissions(tx); err != nil {
+		return err
+	}
+	_ = uuid.New() // keep uuid import live; SA UUIDs created via admin API, not here
+	slog.Info("migration010: MCP discovery schema created")
+	return nil
+}
+
+func migration010ApiClientCredentials(tx *gorm.DB) error {
+	if err := tx.Exec(`CREATE TABLE IF NOT EXISTS api_client_credentials (
+		id           TEXT PRIMARY KEY,
+		party_id     TEXT NOT NULL REFERENCES parties(id) ON DELETE CASCADE,
+		client_id    TEXT NOT NULL UNIQUE,
+		secret_hash  TEXT NOT NULL,
+		scopes       TEXT NOT NULL DEFAULT '',
+		created_at   DATETIME NOT NULL,
+		last_used_at DATETIME,
+		expires_at   DATETIME,
+		revoked_at   DATETIME
+	)`).Error; err != nil {
+		return fmt.Errorf("creating api_client_credentials: %w", err)
+	}
+	if err := tx.Exec(`CREATE INDEX IF NOT EXISTS idx_acc_party_id ON api_client_credentials(party_id)`).Error; err != nil {
+		return fmt.Errorf("creating acc party index: %w", err)
+	}
+	// Partial unique index: one active (revoked_at IS NULL) credential per party.
+	// Works on SQLite >= 3.8 and PostgreSQL via the same WHERE clause syntax.
+	return tx.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_acc_one_active_per_party ON api_client_credentials(party_id) WHERE revoked_at IS NULL`).Error
+}
+
+func migration010McpSessions(tx *gorm.DB) error {
+	if err := tx.Exec(`CREATE TABLE IF NOT EXISTS mcp_sessions (
+		id               TEXT PRIMARY KEY,
+		principal_id     TEXT NOT NULL,
+		principal_type   TEXT NOT NULL CHECK(principal_type IN ('user_local','user_federated','service_account')),
+		protocol_version TEXT NOT NULL,
+		created_at       DATETIME NOT NULL,
+		last_seen_at     DATETIME NOT NULL,
+		expires_at       DATETIME NOT NULL,
+		initialized_at   DATETIME,
+		revoked_at       DATETIME
+	)`).Error; err != nil {
+		return fmt.Errorf("creating mcp_sessions: %w", err)
+	}
+	if err := tx.Exec(`CREATE INDEX IF NOT EXISTS idx_mcp_sessions_principal ON mcp_sessions(principal_id, principal_type)`).Error; err != nil {
+		return fmt.Errorf("creating mcp_sessions principal index: %w", err)
+	}
+	return tx.Exec(`CREATE INDEX IF NOT EXISTS idx_mcp_sessions_expires ON mcp_sessions(expires_at)`).Error
+}
+
+func migration010UserExternalIdentities(tx *gorm.DB) error {
+	if err := tx.Exec(`CREATE TABLE IF NOT EXISTS user_external_identities (
+		id            TEXT PRIMARY KEY,
+		provider_name TEXT NOT NULL,
+		sub           TEXT NOT NULL,
+		email         TEXT NOT NULL DEFAULT '',
+		display_name  TEXT NOT NULL DEFAULT '',
+		user_id       TEXT REFERENCES users(id) ON DELETE SET NULL,
+		status        TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+		created_at    DATETIME NOT NULL,
+		last_seen_at  DATETIME,
+		approved_at   DATETIME,
+		rejected_at   DATETIME
+	)`).Error; err != nil {
+		return fmt.Errorf("creating user_external_identities: %w", err)
+	}
+	if err := tx.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_uei_provider_sub ON user_external_identities(provider_name, sub)`).Error; err != nil {
+		return fmt.Errorf("creating uei provider+sub unique index: %w", err)
+	}
+	return tx.Exec(`CREATE INDEX IF NOT EXISTS idx_uei_user_id ON user_external_identities(user_id)`).Error
+}
+
+func migration010SeedPermissions(tx *gorm.DB) error {
+	newPerms := []string{"service_accounts:read", "service_accounts:write", "service_accounts:revoke"}
+	var currentJSON string
+	if err := tx.Raw(`SELECT permissions FROM roles WHERE id = 'role-admin'`).Scan(&currentJSON).Error; err != nil {
+		return fmt.Errorf("reading admin role permissions: %w", err)
+	}
+	if currentJSON == "" {
+		slog.Warn("migration010: admin role not found, skipping permission seed")
+		return nil
+	}
+	var perms []string
+	if err := json.Unmarshal([]byte(currentJSON), &perms); err != nil {
+		return fmt.Errorf("unmarshaling admin permissions: %w", err)
+	}
+	existing := make(map[string]bool, len(perms))
+	for _, p := range perms {
+		existing[p] = true
+	}
+	for _, p := range newPerms {
+		if !existing[p] {
+			perms = append(perms, p)
+		}
+	}
+	updated, err := json.Marshal(perms)
+	if err != nil {
+		return fmt.Errorf("marshaling updated permissions: %w", err)
+	}
+	return tx.Exec(`UPDATE roles SET permissions = ?, updated_at = ? WHERE id = 'role-admin'`,
+		string(updated), time.Now().UTC()).Error
 }

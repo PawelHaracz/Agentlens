@@ -13,6 +13,11 @@ const (
 	PermRolesWrite    = "roles:write"
 	PermSettingsRead  = "settings:read"
 	PermSettingsWrite = "settings:write"
+
+	// Service account management permissions (seeded in migration 010 for admin role).
+	PermServiceAccountsRead   = "service_accounts:read"
+	PermServiceAccountsWrite  = "service_accounts:write"
+	PermServiceAccountsRevoke = "service_accounts:revoke"
 )
 
 // HasPermission checks whether the given permission list contains the required permission.

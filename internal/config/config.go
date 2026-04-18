@@ -97,6 +97,53 @@ type PrometheusConfig struct {
 	Enabled bool `yaml:"enabled"`
 }
 
+// MCPServerConfig holds MCP Discovery Server plugin settings.
+type MCPServerConfig struct {
+	Enabled        bool          `yaml:"enabled"`
+	PublicURL      string        `yaml:"public_url"`
+	AllowedOrigins []string      `yaml:"allowed_origins"`
+	AuditEnabled   bool          `yaml:"audit_enabled"`
+	SessionTTL     time.Duration `yaml:"session_ttl"`
+	ReaperInterval time.Duration `yaml:"reaper_interval"`
+}
+
+// DexConfig holds Dex-specific federation configuration.
+type DexConfig struct {
+	Issuer       string `yaml:"issuer"`
+	ClientID     string `yaml:"client_id"`
+	ClientSecret string `yaml:"client_secret"`
+	JWKSURL      string `yaml:"jwks_url"`
+}
+
+// FederationConfig configures the optional OIDC federation provider.
+// Only the "dex" provider is supported in v1.
+type FederationConfig struct {
+	Enabled  bool      `yaml:"enabled"`
+	Provider string    `yaml:"provider"` // "dex" or ""
+	Audience string    `yaml:"audience"` // expected JWT aud claim (typically the MCP public URL)
+	Dex      DexConfig `yaml:"dex"`
+}
+
+// Validate returns an error if the federation config is inconsistent.
+func (f *FederationConfig) Validate() error {
+	if !f.Enabled {
+		return nil
+	}
+	if f.Provider == "" {
+		return fmt.Errorf("federation.provider is required when federation is enabled")
+	}
+	if f.Provider != "dex" {
+		return fmt.Errorf("federation.provider %q is not supported; only \"dex\" is supported in v1", f.Provider)
+	}
+	if f.Dex.Issuer == "" {
+		return fmt.Errorf("federation.dex.issuer is required when provider=dex")
+	}
+	if f.Audience == "" {
+		return fmt.Errorf("federation.audience is required when federation is enabled")
+	}
+	return nil
+}
+
 // Config holds all AgentLens configuration.
 type Config struct {
 	Port         int               `yaml:"port"`
@@ -110,6 +157,8 @@ type Config struct {
 	Database     DatabaseConfig    `yaml:"database"`
 	Auth         AuthTokenConfig   `yaml:"auth"`
 	Telemetry    TelemetryConfig   `yaml:"telemetry"`
+	MCP          MCPServerConfig   `yaml:"mcp_server"`
+	Federation   FederationConfig  `yaml:"federation"`
 }
 
 // Load reads configuration from a YAML file at path (may be empty) and applies
@@ -169,6 +218,12 @@ func defaults() *Config {
 			MetricsInterval:  30 * time.Second,
 			LogExportLevel:   "info",
 		},
+		MCP: MCPServerConfig{
+			Enabled:        false,
+			AuditEnabled:   true,
+			SessionTTL:     30 * time.Minute,
+			ReaperInterval: 60 * time.Second,
+		},
 	}
 }
 
@@ -198,6 +253,8 @@ func applyEnv(cfg *Config) {
 	applyHealthCheckEnv(&cfg.HealthCheck)
 	applyDatabaseEnv(&cfg.Database)
 	applyTelemetryEnv(&cfg.Telemetry)
+	applyMCPEnv(&cfg.MCP)
+	applyFederationEnv(&cfg.Federation)
 	if v := env("JWT_SECRET"); v != "" {
 		cfg.Auth.JWTSecret = v
 	}
@@ -326,4 +383,53 @@ func parseHeaders(s string) map[string]string {
 
 func env(key string) string {
 	return os.Getenv("AGENTLENS_" + key)
+}
+
+func applyMCPEnv(m *MCPServerConfig) {
+	if v := env("MCP_ENABLED"); v != "" {
+		m.Enabled = strings.EqualFold(v, "true") || v == "1"
+	}
+	if v := env("MCP_PUBLIC_URL"); v != "" {
+		m.PublicURL = v
+	}
+	if v := env("MCP_ALLOWED_ORIGINS"); v != "" {
+		m.AllowedOrigins = strings.Split(v, ",")
+	}
+	if v := env("MCP_AUDIT_ENABLED"); v != "" {
+		m.AuditEnabled = strings.EqualFold(v, "true") || v == "1"
+	}
+	if v := env("MCP_SESSION_TTL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			m.SessionTTL = d
+		}
+	}
+	if v := env("MCP_REAPER_INTERVAL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			m.ReaperInterval = d
+		}
+	}
+}
+
+func applyFederationEnv(f *FederationConfig) {
+	if v := env("FEDERATION_ENABLED"); v != "" {
+		f.Enabled = strings.EqualFold(v, "true") || v == "1"
+	}
+	if v := env("FEDERATION_PROVIDER"); v != "" {
+		f.Provider = v
+	}
+	if v := env("FEDERATION_AUDIENCE"); v != "" {
+		f.Audience = v
+	}
+	if v := env("FEDERATION_DEX_ISSUER"); v != "" {
+		f.Dex.Issuer = v
+	}
+	if v := env("FEDERATION_DEX_CLIENT_ID"); v != "" {
+		f.Dex.ClientID = v
+	}
+	if v := env("FEDERATION_DEX_CLIENT_SECRET"); v != "" {
+		f.Dex.ClientSecret = v
+	}
+	if v := env("FEDERATION_DEX_JWKS_URL"); v != "" {
+		f.Dex.JWKSURL = v
+	}
 }
