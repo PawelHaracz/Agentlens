@@ -375,12 +375,12 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Estimated Steps:** 5
 **Complexity:** S
 
-- [ ] I.0 Fill critical testing gaps
-  - [ ] I.1 Review tests from Groups A–H (~55–70 existing feature-scoped tests).
-  - [ ] I.2 Analyze gaps for THIS feature specifically (focus areas: auth decision order, rotation atomicity, credcache invalidation, loopback ctx preservation, Dex stale-serve, origin strict-default).
-  - [ ] I.3 Write up to 10 additional strategic tests (prioritize: multi-dialect migration idempotency end-to-end, chained auth + scope integration, PRM conditional registration, CORS non-interference with global `*`).
-  - [ ] I.4 Run feature-scoped test suite: `rtk go test ./internal/{model,db,store,auth,api}/... ./plugins/mcpserver/... ./cmd/agentlens/... -run '<feature regex>'` plus `rtk make web-test` + `rtk make e2e-test`.
-  - [ ] I.5 Run `rtk make all` end-to-end — must pass clean.
+- [x] I.0 Fill critical testing gaps
+  - [x] I.1 58 feature-scoped tests inventoried across groups A–H.
+  - [x] I.2 Gaps identified: CORS non-interference, PRM conditional, EnumerateActive with real rows, Origin-before-auth chain, ProjectIDs precedence, scope middleware no-op on empty ctx.
+  - [x] I.3 7 strategic gap tests written in internal/api/mcp_gap_test.go (within ≤10 limit).
+  - [x] I.4 313 feature-scoped tests pass; make arch-test 100% compliance.
+  - [x] I.5 make all passes clean (format lint test arch-test build).
 
 **Acceptance Criteria:**
 - All feature tests pass (~65–80 total).
