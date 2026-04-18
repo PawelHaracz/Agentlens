@@ -11,19 +11,14 @@ import (
 
 	"github.com/PawelHaracz/agentlens/internal/model"
 	"github.com/PawelHaracz/agentlens/internal/model/ctxkey"
+	"github.com/PawelHaracz/agentlens/plugins/mcpserver/tools"
 	"github.com/PawelHaracz/agentlens/plugins/mcpserver/wire"
 )
 
-// ToolRegistry handles tool dispatch. Populated by Group D.
+// ToolRegistry handles tool dispatch. Implemented by *tools.Registry.
 type ToolRegistry interface {
 	Call(ctx context.Context, tool string, params json.RawMessage) (any, error)
-	List() []toolMeta
-}
-
-type toolMeta struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	InputSchema any    `json:"inputSchema"`
+	List() []tools.ToolDescriptor
 }
 
 // dispatcher is the JSON-RPC handler used by the Streamable HTTP transport.
@@ -100,14 +95,14 @@ func (d *dispatcher) handleInitialize(w http.ResponseWriter, r *http.Request, re
 }
 
 func (d *dispatcher) handleToolsList(w http.ResponseWriter, req rpcRequest) {
-	var tools []toolMeta
+	var list []tools.ToolDescriptor
 	if d.registry != nil {
-		tools = d.registry.List()
+		list = d.registry.List()
 	}
-	if tools == nil {
-		tools = []toolMeta{}
+	if list == nil {
+		list = []tools.ToolDescriptor{}
 	}
-	writeJSON(w, okResponse(req.ID, map[string]any{"tools": tools}))
+	writeJSON(w, okResponse(req.ID, map[string]any{"tools": list}))
 }
 
 func (d *dispatcher) handleToolsCall(w http.ResponseWriter, ctx context.Context, req rpcRequest) {

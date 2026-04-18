@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/PawelHaracz/agentlens/internal/kernel"
+	mcptools "github.com/PawelHaracz/agentlens/plugins/mcpserver/tools"
 	"github.com/PawelHaracz/agentlens/plugins/mcpserver/wire"
 )
 
@@ -25,6 +26,7 @@ type Plugin struct {
 	sessions *sessionManager
 	worker   *asyncWorker
 	registry ToolRegistry
+	loopback mcptools.LoopbackFunc
 
 	// raw handler exposed for composition-root wrapping
 	handler *dispatcher
@@ -51,8 +53,19 @@ func (p *Plugin) Version() string { return "1.0.0" }
 // Type returns the plugin type.
 func (p *Plugin) Type() kernel.PluginType { return kernel.PluginTypeMiddleware }
 
-// SetRegistry allows Group D to inject the ToolRegistry before Start.
-func (p *Plugin) SetRegistry(r ToolRegistry) { p.registry = r }
+// SetLoopback injects the loopback function (built from the chi router by the
+// composition root after pm.InitAll()). Enables tool dispatch via in-process HTTP.
+func (p *Plugin) SetLoopback(fn mcptools.LoopbackFunc) {
+	p.loopback = fn
+	if p.registry == nil && fn != nil {
+		reg := mcptools.New()
+		mcptools.RegisterAll(reg, fn)
+		p.registry = reg
+		if p.handler != nil {
+			p.handler.registry = reg
+		}
+	}
+}
 
 // Handler returns the raw http.Handler for the MCP endpoint.
 // The composition root wraps it with Origin → AuthDispatch → Scope before

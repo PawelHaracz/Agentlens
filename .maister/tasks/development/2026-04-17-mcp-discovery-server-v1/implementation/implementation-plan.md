@@ -192,27 +192,27 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Complexity:** M
 **Covers:** R2
 
-- [ ] D.0 Build ToolRegistry + 4 tools + loopback
-  - [ ] D.1 Write 6 focused tests:
+- [x] D.0 Build ToolRegistry + 4 tools + loopback
+  - [x] D.1 6 tests pass:
     - `TestToolRegistry_Register_And_Dispatch`
     - `TestAgentSearch_CallsLoopback_WithCtxFilter`
     - `TestAgentGet_NotFound_Returns_JsonRPC_Error`
     - `TestCapabilitiesList_ShapeMatchesRESTContract`
     - `TestAgentCard_Returns_RawCard_When_Present`
     - `TestBuildLoopbackFunc_PreservesContext_Via_WithContext` (M-new-1: asserts outer ctx's SessionPrincipalRef + AccessibleProjectIDs reach the inner handler; asserts user-supplied `?projects=` in tool args CANNOT override ctx filter)
-  - [ ] D.2 Define `ToolRegistry` interface in `plugins/mcpserver/tools/registry.go` per spec §6.1: `Register(name, handler)`, `Dispatch(ctx, name, args) (result, error)`, `List() []ToolDescriptor`.
-  - [ ] D.3 Implement `api.BuildLoopbackFunc(chiRouter)` in `internal/api/loopback.go` — returns a `func(ctx, method, path, body) ([]byte, int, error)` that:
+  - [x] D.2 `tools/registry.go`: ToolDescriptor, ToolHandler, LoopbackFunc, Registry.Register/Call/List in `plugins/mcpserver/tools/registry.go` per spec §6.1: `Register(name, handler)`, `Dispatch(ctx, name, args) (result, error)`, `List() []ToolDescriptor`.
+  - [x] D.3 `internal/api/loopback.go`: BuildLoopbackFunc wraps handler via httptest.ResponseRecorder + .WithContext(outerCtx) (M-new-1) in `internal/api/loopback.go` — returns a `func(ctx, method, path, body) ([]byte, int, error)` that:
     - Builds `http.Request` with `.WithContext(outerCtx)` (M-new-1 requirement).
     - Dispatches through chiRouter using `httptest.ResponseRecorder`.
     - Returns recorder.Code + recorder.Body bytes.
-  - [ ] D.4 Implement `agent_search` tool — maps MCP args to GET `/api/v1/catalog?...`; IGNORES any `projects` arg in MCP input (M4 resolution); filter sourced only from ctx `AccessibleProjectIDs`.
-  - [ ] D.5 Implement `agent_get` tool — GET `/api/v1/catalog/{id}`; error-map 404 → MCP "not found".
-  - [ ] D.6 Implement `capabilities_list` tool — GET `/api/v1/catalog/{id}/capabilities`; shape via mapper in `tools/shapers.go`.
-  - [ ] D.7 Implement `agent_card` tool — GET raw card bytes via existing endpoint; pass-through content-type.
-  - [ ] D.8 Create shapers/mappers in `plugins/mcpserver/tools/shapers.go` — pure funcs, no side effects.
-  - [ ] D.9 Register all 4 tools in `plugins/mcpserver/tools/register.go` called from `Plugin.Init()`.
-  - [ ] D.10 Document (in code comment) the v2 translator path per spec §6.5 — not implemented, structured for future.
-  - [ ] D.11 Ensure D.1 tests pass. Run `rtk go test ./plugins/mcpserver/tools/... ./internal/api/... -run 'Loopback|ToolRegistry|AgentSearch|AgentGet|Capabilities|AgentCard' -v`.
+  - [x] D.4 agent_search → GET /api/v1/catalog; user-supplied projects= arg excluded from query — maps MCP args to GET `/api/v1/catalog?...`; IGNORES any `projects` arg in MCP input (M4 resolution); filter sourced only from ctx `AccessibleProjectIDs`.
+  - [x] D.5 agent_get → GET /api/v1/catalog/{id}; 404 → not-found error — GET `/api/v1/catalog/{id}`; error-map 404 → MCP "not found".
+  - [x] D.6 capabilities_list → GET /api/v1/capabilities?agent_id= — GET `/api/v1/catalog/{id}/capabilities`; shape via mapper in `tools/shapers.go`.
+  - [x] D.7 agent_card → GET /api/v1/catalog/{id}/card; pass-through raw bytes — GET raw card bytes via existing endpoint; pass-through content-type.
+  - [x] D.8 tools/shapers.go: parseAgentSearch, buildSearchQuery, parseID, wrapContent — pure, no side effects — pure funcs, no side effects.
+  - [x] D.9 tools/register.go: RegisterAll(); Plugin.SetLoopback() builds Registry and wires it into dispatcher called from `Plugin.Init()`.
+  - [x] D.10 v2 translator path documented in tools/registry.go + tools/register.go package comments per spec §6.5 — not implemented, structured for future.
+  - [x] D.11 409/409 tests pass; make arch-test green. Run `rtk go test ./plugins/mcpserver/tools/... ./internal/api/... -run 'Loopback|ToolRegistry|AgentSearch|AgentGet|Capabilities|AgentCard' -v`.
 
 **Acceptance Criteria:**
 - 6 tests pass.
