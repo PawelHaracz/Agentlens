@@ -255,22 +255,22 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Complexity:** M
 **Covers:** R8, R9, R10 (mount), R11 (reaper), R16, R17
 
-- [ ] F.0 Self-registration, OTel, and **canonical integration wiring**
-  - [ ] F.1 Write 6 focused tests:
+- [x] F.0 Self-registration, OTel, and **canonical integration wiring**
+  - [x] F.1 Write 6 focused tests:
     - `TestSelfRegistration_CatalogEntry_Created_Idempotent_ByAgentKey`
     - `TestSelfRegistration_MultiInstance_DisambiguatedByPublicURL` (M6)
     - `TestFederationHealthLoop_UpdatesReadyzState`
     - `TestReadyz_Returns503_When_JWKS_Unreachable`
     - `TestSessionReaper_ExpiresStaleSessions_EverY60s`
     - `TestOTelMetrics_Expose_InvocationsAndCredCacheHits`
-  - [ ] F.2 Self-registration in `plugins/mcpserver/plugin.go` `Init()`: compute `AgentKey = SHA256("mcp" + "agentlens:mcp-discovery:" + canonical_public_url)`; `store.Create(CatalogEntry)` idempotently (on duplicate endpoint, update existing).
-  - [ ] F.3 OTel spans in `plugins/mcpserver/telemetry.go`: `agentlens.mcp.initialize`, `agentlens.mcp.tool_call`, `agentlens.mcp.authdispatch`, `agentlens.mcp.jwks_refresh`.
-  - [ ] F.4 OTel metrics: `agentlens_mcp_invocations_total`, `agentlens_mcp_tool_calls_total{tool}`, `agentlens_mcp_active_sessions`, `agentlens_mcp_credcache_hits_total`, `agentlens_mcp_credcache_misses_total`, `agentlens_mcp_credcache_dropped_total`, `agentlens_federation_jwks_stale_serves_total`, `agentlens_federation_dex_health` (gauge).
-  - [ ] F.5 Federation health loop: ticker goroutine ping-probing Dex discovery endpoint; updates shared health state + metric.
-  - [ ] F.6 `/readyz` extension in `internal/api/handlers_health.go`: DB ping + (if federation enabled) JWKS reachable; 503 when either degraded.
-  - [ ] F.7 Session reaper goroutine: 60s ticker calls `MCPSessionStore.ReapExpired` + `ReapOrphanedPrincipals`; metric counter for reaped rows.
-  - [ ] F.8 Startup WARN when `mcp_server.audit_enabled=false` via `slog.Warn` during `Plugin.Init`.
-  - [ ] F.9 **INTEGRATION WIRING (canonical) — `cmd/agentlens/main.go`** per spec §8.1:
+  - [x] F.2 Self-registration in `plugins/mcpserver/plugin.go` `Init()`: compute `AgentKey = SHA256("mcp" + "agentlens:mcp-discovery:" + canonical_public_url)`; `store.Create(CatalogEntry)` idempotently (on duplicate endpoint, update existing).
+  - [x] F.3 OTel spans in `plugins/mcpserver/telemetry.go`: `agentlens.mcp.initialize`, `agentlens.mcp.tool_call`, `agentlens.mcp.authdispatch`, `agentlens.mcp.jwks_refresh`.
+  - [x] F.4 OTel metrics: `agentlens_mcp_invocations_total`, `agentlens_mcp_tool_calls_total{tool}`, `agentlens_mcp_active_sessions`, `agentlens_mcp_credcache_hits_total`, `agentlens_mcp_credcache_misses_total`, `agentlens_mcp_credcache_dropped_total`, `agentlens_federation_jwks_stale_serves_total`, `agentlens_federation_dex_health` (gauge).
+  - [x] F.5 Federation health loop: ticker goroutine ping-probing Dex discovery endpoint; updates shared health state + metric.
+  - [x] F.6 `/readyz` extension in `internal/api/handlers_health.go`: DB ping + (if federation enabled) JWKS reachable; 503 when either degraded.
+  - [x] F.7 Session reaper goroutine: 60s ticker calls `MCPSessionStore.ReapExpired` + `ReapOrphanedPrincipals`; metric counter for reaped rows.
+  - [x] F.8 Startup WARN when `mcp_server.audit_enabled=false` via `slog.Warn` during `Plugin.Init`.
+  - [x] F.9 **INTEGRATION WIRING (canonical) — `cmd/agentlens/main.go`** per spec §8.1:
     - Build chi router first (unchanged path).
     - Call `pm.InitAll(ctx)` — plugin gathers its raw `http.Handler` via `plugin.Handler()` accessor.
     - Between `pm.InitAll` and `pm.StartAll`:
@@ -281,9 +281,9 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
       - If `cfg.Federation.Provider != ""` **AND** provider is non-nil (L-new-1), register PRM handler at `/.well-known/oauth-protected-resource`.
     - Call `pm.StartAll`.
     - Confirm no `Kernel.Router()` accessor was added (spec §5.11).
-  - [ ] F.10 Register auth dispatch middleware globally? No — only on `/api/mcp` chain per §3. Ensure REST auth path (`/api/v1/*`) is unchanged.
-  - [ ] F.11 Arch-go validate: `plugins/mcpserver` still imports only kernel + foundation; `cmd/agentlens` is composition root (can import anything).
-  - [ ] F.12 Ensure F.1 tests pass. Run `rtk go test ./plugins/mcpserver/... ./internal/api/... ./cmd/agentlens/... -run 'SelfRegistration|FederationHealth|Readyz|SessionReaper|OTelMetrics' -v`.
+  - [x] F.10 Register auth dispatch middleware globally? No — only on `/api/mcp` chain per §3. Ensure REST auth path (`/api/v1/*`) is unchanged.
+  - [x] F.11 Arch-go validate: `plugins/mcpserver` still imports only kernel + foundation; `cmd/agentlens` is composition root (can import anything).
+  - [x] F.12 Ensure F.1 tests pass. Run `rtk go test ./plugins/mcpserver/... ./internal/api/... ./cmd/agentlens/... -run 'SelfRegistration|FederationHealth|Readyz|SessionReaper|OTelMetrics' -v`.
 
 **Acceptance Criteria:**
 - 6 tests pass.
@@ -300,32 +300,32 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Complexity:** L
 **Covers:** R13 (REST half), R15
 
-- [ ] G.0 Admin REST endpoints + 3 admin pages
-  - [ ] G.1 Write 6 focused tests (split Go + Vitest):
+- [x] G.0 Admin REST endpoints + 3 admin pages
+  - [x] G.1 Write 6 focused tests (split Go + Vitest):
     - Go: `TestServiceAccountHandler_CreateReturnsOneTimeSecret`
     - Go: `TestServiceAccountHandler_RotateSecret_409_OnConflict_UsesErrorsIs` (M-new-2 — asserts `errors.Is(err, gorm.ErrDuplicatedKey)`)
     - Go: `TestServiceAccountHandler_Delete_InvalidatesCredCache_PerRow` (H6-residual — asserts `credcache.Invalidate` called for every active client_id before cascade)
     - Go: `TestPendingIdentitiesHandler_ApproveRejectFlows`
     - Vitest: `ServiceAccountsPage.test.tsx` (renders table, opens create modal, displays one-time secret)
     - Vitest: `PendingIdentitiesPage.test.tsx` (approve/reject actions)
-  - [ ] G.2 Add REST routes `internal/api/router.go`:
+  - [x] G.2 Add REST routes `internal/api/router.go`:
     - `POST /api/v1/service-accounts` → create + returns one-time secret in response body only.
     - `GET /api/v1/service-accounts`, `GET /api/v1/service-accounts/{id}`.
     - `PATCH /api/v1/service-accounts/{id}/secret` → rotation (M-new-2: handler catches `errors.Is(err, gorm.ErrDuplicatedKey)` → 409).
     - `DELETE /api/v1/service-accounts/{id}` (H6-residual: enumerate `api_client_credentials` for party, call `credcache.Invalidate(clientID)` per row, THEN cascade delete).
     - `GET /api/v1/external-identities/pending`, `POST /api/v1/external-identities/{id}/approve`, `POST /api/v1/external-identities/{id}/reject`.
     - All gated via `RequirePermission(auth.PermServiceAccounts*)`.
-  - [ ] G.3 Create `internal/api/handlers_service_accounts.go` + `handlers_external_identities.go` per spec §8.4.
-  - [ ] G.4 Update `docs/api.md` with new endpoints + permissions matrix.
-  - [ ] G.5 Create `web/src/pages/ServiceAccountsPage.tsx` (list + create modal with one-time-secret display + revoke).
-  - [ ] G.6 Create `web/src/pages/ServiceAccountDetailPage.tsx` (single SA detail, scopes editor, rotate secret dialog).
-  - [ ] G.7 Create `web/src/pages/PendingIdentitiesPage.tsx` (tabs/table of pending federation identities, approve/reject actions).
-  - [ ] G.8 Add routes in `web/src/App.tsx`: `/admin/service-accounts`, `/admin/service-accounts/:id`, `/admin/external-identities`.
-  - [ ] G.9 TanStack React Query hooks for data; `data-testid` on interactive elements per spec §Visual Design.
-  - [ ] G.10 Keep Vitest coverage thresholds 80/80/75/80 — add additional component tests if coverage dips.
-  - [ ] G.11 Playwright E2E screenshot capture: `e2e/tests/service-accounts.spec.ts` — login → create SA → screenshot under `docs/images/service-accounts.png`.
-  - [ ] G.12 Update `docs/end-user-guide.md` with new admin pages + screenshots.
-  - [ ] G.13 Ensure G.1 tests pass. Run `rtk go test ./internal/api/... -run 'ServiceAccount|PendingIdent'`, `rtk make web-test`, `rtk make e2e-test`.
+  - [x] G.3 Create `internal/api/handlers_service_accounts.go` + `handlers_external_identities.go` per spec §8.4.
+  - [x] G.4 Update `docs/api.md` with new endpoints + permissions matrix.
+  - [x] G.5 Create `web/src/pages/ServiceAccountsPage.tsx` (list + create modal with one-time-secret display + revoke).
+  - [x] G.6 Create `web/src/pages/ServiceAccountDetailPage.tsx` (single SA detail, scopes editor, rotate secret dialog).
+  - [x] G.7 Create `web/src/pages/PendingIdentitiesPage.tsx` (tabs/table of pending federation identities, approve/reject actions).
+  - [x] G.8 Add routes in `web/src/App.tsx`: `/admin/service-accounts`, `/admin/service-accounts/:id`, `/admin/external-identities`.
+  - [x] G.9 TanStack React Query hooks for data; `data-testid` on interactive elements per spec §Visual Design.
+  - [x] G.10 Keep Vitest coverage thresholds 80/80/75/80 — add additional component tests if coverage dips.
+  - [x] G.11 Playwright E2E screenshot capture: `e2e/tests/service-accounts.spec.ts` — login → create SA → screenshot under `docs/images/service-accounts.png`.
+  - [x] G.12 Update `docs/end-user-guide.md` with new admin pages + screenshots.
+  - [x] G.13 Ensure G.1 tests pass. Run `rtk go test ./internal/api/... -run 'ServiceAccount|PendingIdent'`, `rtk make web-test`, `rtk make e2e-test`.
 
 **Acceptance Criteria:**
 - 6 tests pass (4 Go + 2 Vitest).
@@ -342,25 +342,25 @@ Delivery: single feature-branch PR off `feat/mcp-discovery-server-v1`; `mcp_serv
 **Complexity:** M
 **Covers:** R18, R19, R20
 
-- [ ] H.0 Ship deployable artifacts + docs
-  - [ ] H.1 Write 4 focused tests:
+- [x] H.0 Ship deployable artifacts + docs
+  - [x] H.1 Write 4 focused tests:
     - `helm lint --strict` passes with default + ci-values.
     - `helm template ... --debug > /dev/null` succeeds with `dex.enabled=true` and `dex.enabled=false`.
     - `./scripts/test-helm-templates.sh` passes.
     - `docker-compose -f docker-compose.dev.yml config` validates.
-  - [ ] H.2 Bump `helm/agentlens/Chart.yaml` to `version: 0.3.0`, `appVersion: 0.3.0`.
-  - [ ] H.3 Add Dex as conditional subchart dependency with `condition: dex.enabled` and pinned digest (from Chore-02).
-  - [ ] H.4 Add `helm/agentlens/templates/` entries for MCP envs: `AGENTLENS_MCP_ENABLED`, `AGENTLENS_MCP_PUBLIC_URL`, `AGENTLENS_MCP_ALLOWED_ORIGINS`, `AGENTLENS_FEDERATION_*`.
-  - [ ] H.5 Update `helm/agentlens/values.yaml` + `ci/ci-values.yaml` (latter enables mcp + dex for render check).
-  - [ ] H.6 Create `docker-compose.dev.yml` with AgentLens + Dex services; Dex config file at `deploy/dex/config-dev.yaml`.
-  - [ ] H.7 Update `docs/settings.md` with new config keys.
-  - [ ] H.8 Update `docs/architecture.md` with MCP plugin Mermaid diagram (no PlantUML/ASCII per project standards).
-  - [ ] H.9 Update `docs/auth.md` (M7) with service-account + federation flows + PRM.
-  - [ ] H.10 Create `docs/mcp-quickstart.md` — operator 5-min guide.
-  - [ ] H.11 Create `docs/observability.md` — OTel span/metric catalog + operator alerts per spec §7.7.
-  - [ ] H.12 Add README.md MCP callout linking to quickstart.
-  - [ ] H.13 Verify `rtk make all` green (format → lint → test → arch-test → build).
-  - [ ] H.14 Ensure H.1 tests pass. Run `rtk helm lint --strict helm/agentlens`, `rtk helm template helm/agentlens -f helm/agentlens/values.yaml --debug > /dev/null`, `rtk ./scripts/test-helm-templates.sh`, `rtk docker-compose -f docker-compose.dev.yml config`.
+  - [x] H.2 Bump `helm/agentlens/Chart.yaml` to `version: 0.3.0`, `appVersion: 0.3.0`.
+  - [x] H.3 Add Dex as conditional subchart dependency with `condition: dex.enabled` and pinned digest (from Chore-02).
+  - [x] H.4 Add `helm/agentlens/templates/` entries for MCP envs: `AGENTLENS_MCP_ENABLED`, `AGENTLENS_MCP_PUBLIC_URL`, `AGENTLENS_MCP_ALLOWED_ORIGINS`, `AGENTLENS_FEDERATION_*`.
+  - [x] H.5 Update `helm/agentlens/values.yaml` + `ci/ci-values.yaml` (latter enables mcp + dex for render check).
+  - [x] H.6 Create `docker-compose.dev.yml` with AgentLens + Dex services; Dex config file at `deploy/dex/config-dev.yaml`.
+  - [x] H.7 Update `docs/settings.md` with new config keys.
+  - [x] H.8 Update `docs/architecture.md` with MCP plugin Mermaid diagram (no PlantUML/ASCII per project standards).
+  - [x] H.9 Update `docs/auth.md` (M7) with service-account + federation flows + PRM.
+  - [x] H.10 Create `docs/mcp-quickstart.md` — operator 5-min guide.
+  - [x] H.11 Create `docs/observability.md` — OTel span/metric catalog + operator alerts per spec §7.7.
+  - [x] H.12 Add README.md MCP callout linking to quickstart.
+  - [x] H.13 Verify `rtk make all` green (format → lint → test → arch-test → build).
+  - [x] H.14 Ensure H.1 tests pass. Run `rtk helm lint --strict helm/agentlens`, `rtk helm template helm/agentlens -f helm/agentlens/values.yaml --debug > /dev/null`, `rtk ./scripts/test-helm-templates.sh`, `rtk docker-compose -f docker-compose.dev.yml config`.
 
 **Acceptance Criteria:**
 - 4 deployment checks pass.

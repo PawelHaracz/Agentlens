@@ -10,6 +10,7 @@ import CapabilityDetailPage from './routes/capabilities/CapabilityDetailPage'
 import LoginPage from './pages/LoginPage'
 import SettingsPage from './pages/SettingsPage'
 import ServiceAccountsPage from './pages/ServiceAccountsPage'
+import ServiceAccountDetailPage from './pages/ServiceAccountDetailPage'
 import PendingIdentitiesPage from './pages/PendingIdentitiesPage'
 import PartyDetailPage from './routes/parties/PartyDetailPage'
 import { groupUIConfig, projectUIConfig } from './routes/parties/partyUIConfig'
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/settings/projects/:id" element={<ProtectedRoute><Layout><PartyDetailPage config={projectUIConfig} /></Layout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
             <Route path="/admin/service-accounts" element={<ProtectedRoute><Layout><ServiceAccountsPage /></Layout></ProtectedRoute>} />
+            <Route path="/admin/service-accounts/:id" element={<ProtectedRoute><Layout><ServiceAccountDetailPage /></Layout></ProtectedRoute>} />
             <Route path="/admin/external-identities" element={<ProtectedRoute><Layout><PendingIdentitiesPage /></Layout></ProtectedRoute>} />
           </Routes>
         </AuthProvider>

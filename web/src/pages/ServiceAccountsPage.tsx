@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -103,7 +104,11 @@ export default function ServiceAccountsPage() {
             )}
             {accounts.map(sa => (
               <TableRow key={sa.id} data-testid={`sa-row-${sa.id}`}>
-                <TableCell className="font-medium">{sa.name}</TableCell>
+                <TableCell className="font-medium">
+                  <Link to={`/admin/service-accounts/${sa.id}`} className="hover:underline">
+                    {sa.name}
+                  </Link>
+                </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">{sa.id.slice(0, 8)}…</TableCell>
                 <TableCell><Badge variant="secondary">service_account</Badge></TableCell>
                 <TableCell className="text-right">
