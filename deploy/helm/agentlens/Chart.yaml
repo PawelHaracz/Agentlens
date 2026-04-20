@@ -2,8 +2,8 @@ apiVersion: v2
 name: agentlens
 description: AI Agent Discovery Platform — Traefik for AI agents
 type: application
-version: 0.2.0
-appVersion: "0.2.0"
+version: 0.3.0
+appVersion: "0.3.0"
 home: https://github.com/PawelHaracz/agentlens
 sources:
   - https://github.com/PawelHaracz/agentlens
@@ -16,3 +16,7 @@ dependencies:
     version: "~16.x"
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
+  - name: dex
+    version: "~0.18.x"
+    repository: "oci://ghcr.io/dexidp/helm-charts"
+    condition: dex.enabled

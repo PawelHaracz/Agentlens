@@ -969,6 +969,65 @@ test.describe('Documentation Screenshots', () => {
     await page.getByRole('heading', { name: /^my projects$/i }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${DOCS_IMAGES}/my-account-projects.png`, fullPage: false });
   });
+
+  // ──────────── MCP admin pages ────────────
+  // Service Accounts + Pending Identities screenshots for the MCP v1 docs.
+
+  test('service-accounts-list', async ({ page, request }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const token = await loginViaAPI(request);
+
+    // Seed two service accounts (best-effort; idempotent on duplicate name).
+    for (const name of ['production-llm-app', 'dev-chatbot']) {
+      await request.post(`${BASE}/api/v1/service-accounts`, {
+        headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+        data: { name },
+      }).catch(ignoreCleanupError('seed SA ' + name));
+    }
+
+    await loginViaUI(page);
+    await page.goto('/admin/service-accounts');
+    await page.waitForSelector('[data-testid="sa-table"]');
+    await page.getByText('production-llm-app').first().waitFor({ state: 'visible' });
+    await page.screenshot({ path: `${DOCS_IMAGES}/service-accounts-list.png`, fullPage: false });
+  });
+
+  test('service-accounts-create', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/admin/service-accounts');
+    await page.waitForSelector('[data-testid="create-sa-btn"]');
+    await page.click('[data-testid="create-sa-btn"]');
+    await page.getByTestId('create-sa-dialog').waitFor({ state: 'visible' });
+    await page.screenshot({ path: `${DOCS_IMAGES}/service-accounts-create.png`, fullPage: false });
+  });
+
+  test('service-accounts-secret', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/admin/service-accounts');
+    await page.waitForSelector('[data-testid="create-sa-btn"]');
+    await page.click('[data-testid="create-sa-btn"]');
+    await page.fill('[data-testid="sa-name-input"]', 'analytics-service');
+    await page.getByRole('button', { name: 'Create' }).click();
+    await page.getByTestId('one-time-secret-display').waitFor({
+      state: 'visible',
+      timeout: ASYNC_OP_TIMEOUT_MS,
+    });
+    await page.screenshot({ path: `${DOCS_IMAGES}/service-accounts-secret.png`, fullPage: false });
+  });
+
+  test('pending-identities', async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginViaUI(page);
+    await page.goto('/admin/external-identities');
+    await page.waitForSelector('[data-testid="pending-identities-table"]');
+    await page.screenshot({ path: `${DOCS_IMAGES}/pending-identities.png`, fullPage: false });
+  });
 });
 
 // Export nothing — this file is a generator, not a module with exports.

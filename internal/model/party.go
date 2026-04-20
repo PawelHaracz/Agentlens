@@ -6,16 +6,18 @@ import "time"
 type PartyKind string
 
 const (
-	PartyKindPerson  PartyKind = "person"
-	PartyKindGroup   PartyKind = "group"
-	PartyKindProject PartyKind = "project"
+	PartyKindPerson         PartyKind = "person"
+	PartyKindGroup          PartyKind = "group"
+	PartyKindProject        PartyKind = "project"
+	PartyKindServiceAccount PartyKind = "service_account"
 )
 
 // ValidPartyKinds is the set of allowed PartyKind values.
 var ValidPartyKinds = map[PartyKind]bool{
-	PartyKindPerson:  true,
-	PartyKindGroup:   true,
-	PartyKindProject: true,
+	PartyKindPerson:         true,
+	PartyKindGroup:          true,
+	PartyKindProject:        true,
+	PartyKindServiceAccount: true,
 }
 
 // ContainmentRelationships is the set of relationship names that form hierarchical

@@ -622,11 +622,111 @@ describe('Parties API', () => {
         role: 'project:developer',
       },
     ]
-    ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true, status: 200, json: () => Promise.resolve(mock),
     })
     const got = await api.getMyProjects()
     expect(got).toEqual(mock)
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/auth/me/projects', expect.any(Object))
+  })
+})
+
+describe('service accounts API', () => {
+  beforeEach(() => {
+    setToken('test-token')
+  })
+
+  it('listServiceAccounts GETs /api/v1/service-accounts', async () => {
+    const mock: api.ServiceAccount[] = [
+      { id: 'sa1', kind: 'service_account', name: 'app', is_system: false, created_at: '', updated_at: '' },
+    ]
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: () => Promise.resolve(mock),
+    })
+    const got = await api.listServiceAccounts()
+    expect(got).toEqual(mock)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/service-accounts', expect.any(Object))
+  })
+
+  it('createServiceAccount POSTs name and returns secret', async () => {
+    const mock: api.CreateServiceAccountResponse = {
+      party: { id: 'sa2', kind: 'service_account', name: 'bot', is_system: false, created_at: '', updated_at: '' },
+      client_id: 'cid123',
+      secret: 'agentlens_sk_cid123.secret',
+      secret_format: 'agentlens_sk_<client_id>.<secret>',
+    }
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 201, json: () => Promise.resolve(mock),
+    })
+    const got = await api.createServiceAccount('bot')
+    expect(got.secret).toContain('agentlens_sk_')
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/v1/service-accounts',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
+
+  it('rotateServiceAccountSecret PATCHes and returns new secret', async () => {
+    const mock: api.RotateSecretResponse = { client_id: 'newcid', secret: 'agentlens_sk_newcid.newsecret' }
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: () => Promise.resolve(mock),
+    })
+    const got = await api.rotateServiceAccountSecret('sa1')
+    expect(got.secret).toContain('agentlens_sk_')
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/v1/service-accounts/sa1/secret',
+      expect.objectContaining({ method: 'PATCH' })
+    )
+  })
+
+  it('deleteServiceAccount DELETEs the account', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 204, json: () => Promise.resolve(null),
+    })
+    await api.deleteServiceAccount('sa1')
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/v1/service-accounts/sa1',
+      expect.objectContaining({ method: 'DELETE' })
+    )
+  })
+})
+
+describe('external identities API', () => {
+  beforeEach(() => {
+    setToken('test-token')
+  })
+
+  it('listPendingIdentities GETs pending endpoint', async () => {
+    const mock: api.ExternalIdentity[] = [
+      { id: 'ei1', provider_name: 'dex', sub: 'sub1', email: 'u@test.io', display_name: '', status: 'pending', created_at: '' },
+    ]
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: () => Promise.resolve(mock),
+    })
+    const got = await api.listPendingIdentities()
+    expect(got).toHaveLength(1)
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/external-identities/pending', expect.any(Object))
+  })
+
+  it('approveIdentity POSTs to approve endpoint', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 204, json: () => Promise.resolve(null),
+    })
+    await api.approveIdentity('ei1')
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/v1/external-identities/ei1/approve',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
+
+  it('rejectIdentity POSTs to reject endpoint', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true, status: 204, json: () => Promise.resolve(null),
+    })
+    await api.rejectIdentity('ei1')
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/v1/external-identities/ei1/reject',
+      expect.objectContaining({ method: 'POST' })
+    )
   })
 })

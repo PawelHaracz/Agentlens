@@ -1012,3 +1012,113 @@ The reverse view — which projects does *this entry* belong to — is surfaced 
 curl http://localhost:8080/api/v1/projects \
   -H "Authorization: Bearer $TOKEN"
 ```
+
+---
+
+## MCP Discovery Server
+
+AgentLens includes a built-in **MCP Discovery Server** that lets LLM clients (Claude.ai, Cursor, VS Code + Copilot, backend apps) query the agent catalog using the [Model Context Protocol](https://modelcontextprotocol.io).
+
+When enabled, AgentLens exposes four discovery tools at `/api/mcp`:
+
+| Tool | What it does |
+| --- | --- |
+| `agent_search` | Free-text search across agents and their capabilities |
+| `agent_get` | Retrieve full details for a specific agent by ID |
+| `capabilities_list` | List capabilities (tools, skills, resources) offered by an agent |
+| `agent_card` | Fetch the raw A2A or MCP protocol card for an agent |
+
+**Enabling MCP:** set `mcp_server.enabled=true` in config (default: `false`). See the [MCP Quickstart](mcp-quickstart.md) for a step-by-step guide.
+
+Two authentication paths are supported:
+
+- **Service-account API keys** — for backend LLM apps (no user interaction)
+- **OAuth 2.1 via Dex** — for IDE clients and Claude.ai Custom Connectors
+
+---
+
+## Service Accounts
+
+Service accounts are machine identities used by backend LLM apps to authenticate against `/api/mcp` using API keys. Only administrators with `service_accounts:write` permission can create or manage them.
+
+### Navigating to Service Accounts
+
+Go to **Admin → Service Accounts** (URL: `/admin/service-accounts`).
+
+![Service accounts list page showing two accounts — production-llm-app and dev-chatbot — with rotate and delete action buttons](images/service-accounts-list.png)
+
+*The Service Accounts page lists all machine identities. Each row shows the account name, a truncated ID, the `service_account` kind badge, and action buttons for rotating the secret (↻) and deleting the account (🗑).*
+
+---
+
+### Creating a service account
+
+1. Click **+ New Service Account** in the top-right corner.
+2. Enter a descriptive name in the dialog that appears (e.g. `production-llm-app`).
+3. Click **Create**.
+
+![New Service Account dialog with a Name input field, Cancel and Create buttons](images/service-accounts-create.png)
+
+*The create dialog. Name is the only required field. Use a meaningful name — it cannot be changed after creation.*
+
+---
+
+### Copying the one-time secret
+
+Immediately after creation, a yellow **One-Time Secret** banner appears at the top of the page.
+
+![One-Time Secret banner showing masked characters with eye and copy icon buttons, and a Dismiss button below](images/service-accounts-secret.png)
+
+*The one-time secret is displayed once and never stored in plaintext. Use the **eye** icon to reveal the value, the **copy** icon to copy it to the clipboard, then click **Dismiss**.*
+
+The secret is formatted as:
+
+```text
+agentlens_sk_<client_id>.<raw_secret>
+```
+
+Store it in a secrets manager or environment variable (e.g. `AGENTLENS_API_KEY`). Use it as the `Authorization: Bearer` value when calling `/api/mcp`:
+
+```bash
+curl -X POST https://agentlens.example.com/api/mcp \
+  -H "Authorization: Bearer agentlens_sk_abc123.yoursecret" \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://your-app.example.com" \
+  -d '{"jsonrpc":"2.0","id":"1","method":"initialize","params":{}}'
+```
+
+---
+
+### Rotating a secret
+
+Click the **↻** icon on any row. AgentLens atomically revokes the old secret and issues a new one-time secret, which is displayed in the same yellow banner.
+
+> **Note:** The previous secret becomes invalid immediately. Allow up to 10 seconds for any cached authentication to expire before the rotation takes full effect.
+
+### Deleting a service account
+
+Click the **🗑** icon. All active API keys for that account are invalidated before the account is permanently removed. This action cannot be undone.
+
+---
+
+## Pending Federated Identities
+
+When Dex federation is enabled and JIT provisioning is off (the default), the first login from a federated user creates a **pending identity** record. An administrator must approve it before that user can call MCP tools.
+
+### Navigating to Pending Identities
+
+Go to **Admin → External Identities** (URL: `/admin/external-identities`).
+
+![Pending Identities page showing an empty table with columns Provider, Subject, Email, Status, Actions and a "No pending identities" message](images/pending-identities.png)
+
+*The Pending Identities page. When a federated user attempts to log in for the first time, a row appears here with their provider name, subject claim, email, and pending status. Administrators approve or reject each identity individually.*
+
+---
+
+### Approving an identity
+
+Click the **✓** (green check) button on a row. The identity is linked to an AgentLens user account and subsequent logins from that user succeed automatically.
+
+### Rejecting an identity
+
+Click the **✗** (red cross) button. The identity is marked rejected and the user receives an authentication error on subsequent login attempts.

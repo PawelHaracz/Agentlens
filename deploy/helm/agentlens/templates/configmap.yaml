@@ -35,3 +35,27 @@ data:
       log_export_level: {{ .Values.telemetry.logExportLevel }}
       prometheus:
         enabled: {{ .Values.metrics.prometheus.enabled }}
+    mcp_server:
+      enabled: {{ .Values.mcp.enabled }}
+      {{- if .Values.mcp.publicURL }}
+      public_url: {{ .Values.mcp.publicURL | quote }}
+      {{- end }}
+      {{- if .Values.mcp.allowedOrigins }}
+      allowed_origins:
+        {{- range .Values.mcp.allowedOrigins }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- end }}
+      audit_enabled: {{ .Values.mcp.auditEnabled }}
+      session_ttl: {{ .Values.mcp.sessionTTL }}
+      reaper_interval: {{ .Values.mcp.reaperInterval }}
+    {{- if .Values.federation.enabled }}
+    federation:
+      enabled: true
+      provider: {{ .Values.federation.provider | quote }}
+      audience: {{ .Values.federation.audience | quote }}
+      dex:
+        issuer: {{ .Values.federation.dex.issuer | quote }}
+        client_id: {{ .Values.federation.dex.clientID | quote }}
+        jwks_url: {{ .Values.federation.dex.jwksURL | quote }}
+    {{- end }}

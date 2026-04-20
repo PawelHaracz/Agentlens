@@ -175,3 +175,57 @@ The following endpoints do **not** require authentication:
 - `POST /api/v1/auth/login` — login
 
 All other `/api/v1/*` endpoints require a valid JWT token.
+
+---
+
+## Service-Account API Keys (MCP)
+
+Service accounts are machine identities for backend LLM apps. A service account has one active API key at a time.
+
+**Secret format:** `agentlens_sk_<client_id>.<raw_secret>`
+
+### Lifecycle
+
+1. **Create** via `POST /api/v1/service-accounts` — returns one-time secret (shown once, never stored plaintext).
+2. **Rotate** via `PATCH /api/v1/service-accounts/{id}/secret` — atomically revokes old, issues new; returns new one-time secret.
+3. **Revoke** (implicitly on rotate) or **Delete** the service account — cached bcrypt results are invalidated within ≤10s (see ADR-015).
+
+### Required Permissions
+
+| Operation | Permission |
+|---|---|
+| List / Get SA | `service_accounts:read` |
+| Create / Rotate | `service_accounts:write` |
+| Delete | `service_accounts:revoke` |
+
+### Staleness Window
+
+After revocation, a cached credential remains valid for at most 10 seconds (ADR-015 credcache TTL). For immediate revocation requirements, block at the network layer.
+
+---
+
+## Federation (Dex OAuth 2.1)
+
+When `federation.enabled=true`, human users can authenticate via Dex using OAuth 2.1 + PKCE.
+
+### Flow
+
+1. MCP client fetches `/.well-known/oauth-protected-resource` → discovers Dex issuer URL.
+2. Client initiates OAuth 2.1 authorization code flow with PKCE S256 at Dex.
+3. Dex issues JWT with `aud` = `mcp_server.public_url`.
+4. Client presents `Authorization: Bearer <dex-jwt>` to `/api/mcp`.
+5. AgentLens verifies `aud`, `iss`, and signature via Dex JWKS.
+
+### JIT Provisioning
+
+New federated logins default to **pending** status. Platform operators approve via `POST /api/v1/external-identities/{id}/approve`.
+
+### Protected Resource Metadata
+
+When federation is enabled, AgentLens exposes an RFC 9728 document at:
+
+```
+GET /.well-known/oauth-protected-resource
+```
+
+This document lists the Dex issuer as the authorization server, enabling MCP clients to auto-discover the OAuth endpoint.

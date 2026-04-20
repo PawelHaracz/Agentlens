@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/PawelHaracz/agentlens/internal/auth"
+	"github.com/PawelHaracz/agentlens/internal/auth/credcache"
 	"github.com/PawelHaracz/agentlens/internal/kernel"
 	"github.com/PawelHaracz/agentlens/internal/service"
 	"github.com/PawelHaracz/agentlens/internal/store"
@@ -42,6 +43,11 @@ type RouterDeps struct {
 	TelemetryServiceName string
 	// PartyStore is optional. When nil, party/group/project routes are disabled.
 	PartyStore *store.PartyStore
+	// CredStore + CredCache enable service-account admin routes. Both or neither.
+	CredStore *store.ApiClientCredentialStore
+	CredCache *credcache.Cache
+	// ExternalIdentityStore enables pending-identity admin routes.
+	ExternalIdentityStore *store.UserExternalIdentityStore
 }
 
 // NewRouter creates and returns a configured HTTP handler with all routes.
@@ -86,11 +92,20 @@ func NewRouter(deps RouterDeps) http.Handler {
 			registerUserRoutes(r, deps)
 			registerSettingsRoutes(r, deps)
 			registerPartyRoutes(r, deps)
+			registerServiceAccountRoutes(r, deps)
+			registerExternalIdentityRoutes(r, deps)
 		} else {
 			// No auth configured — register catalog routes without protection.
 			registerUnauthenticatedCatalogRoutes(r, h, deps)
 		}
 	})
+
+	// Mount plugin-registered routes (e.g. /api/mcp from mcpserver plugin).
+	// Plugins call kernel.RegisterRoutes(prefix, handler) during Init(); those
+	// handlers are read here and mounted before the SPA fallback.
+	for prefix, handler := range deps.Kernel.Routes() {
+		r.Mount(prefix, handler)
+	}
 
 	// Serve SPA — all non-/api paths fall back to index.html for client routing.
 	if staticFS, err := web.FS(); err == nil {
@@ -256,6 +271,38 @@ func registerUnauthenticatedCatalogRoutes(r chi.Router, h *Handler, deps RouterD
 	r.Get("/stats", h.GetStats)
 	r.Get("/capabilities", ch.ListCapabilities)
 	r.Get("/capabilities/{key}", ch.GetCapabilityAgents)
+}
+
+// registerServiceAccountRoutes mounts service-account admin endpoints.
+// Skipped when CredStore or PartyStore is nil.
+func registerServiceAccountRoutes(r chi.Router, deps RouterDeps) {
+	if deps.CredStore == nil || deps.PartyStore == nil || deps.CredCache == nil {
+		return
+	}
+	h := NewServiceAccountHandler(deps.PartyStore, deps.CredStore, deps.CredCache)
+	r.Group(func(r chi.Router) {
+		r.Use(RequireAuth(deps.JWTService))
+		r.With(RequirePermission(auth.PermServiceAccountsRead)).Get("/service-accounts", h.List)
+		r.With(RequirePermission(auth.PermServiceAccountsRead)).Get("/service-accounts/{id}", h.Get)
+		r.With(RequirePermission(auth.PermServiceAccountsWrite)).Post("/service-accounts", h.Create)
+		r.With(RequirePermission(auth.PermServiceAccountsWrite)).Patch("/service-accounts/{id}/secret", h.RotateSecret)
+		r.With(RequirePermission(auth.PermServiceAccountsRevoke)).Delete("/service-accounts/{id}", h.Delete)
+	})
+}
+
+// registerExternalIdentityRoutes mounts pending-identity admin endpoints.
+// Skipped when ExternalIdentityStore is nil.
+func registerExternalIdentityRoutes(r chi.Router, deps RouterDeps) {
+	if deps.ExternalIdentityStore == nil {
+		return
+	}
+	h := NewExternalIdentityHandler(deps.ExternalIdentityStore)
+	r.Group(func(r chi.Router) {
+		r.Use(RequireAuth(deps.JWTService))
+		r.With(RequirePermission(auth.PermServiceAccountsRead)).Get("/external-identities/pending", h.ListPending)
+		r.With(RequirePermission(auth.PermServiceAccountsWrite)).Post("/external-identities/{id}/approve", h.Approve)
+		r.With(RequirePermission(auth.PermServiceAccountsWrite)).Post("/external-identities/{id}/reject", h.Reject)
+	})
 }
 
 // spaHandler serves static files and falls back to index.html for client-side routing.

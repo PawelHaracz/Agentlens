@@ -425,3 +425,72 @@ export interface UserProjectMembership {
 export function getMyProjects(): Promise<UserProjectMembership[]> {
   return request<UserProjectMembership[]>('/auth/me/projects')
 }
+
+/* ─── Service Accounts ─── */
+
+export interface ServiceAccount {
+  id: string
+  kind: 'service_account'
+  name: string
+  is_system: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateServiceAccountResponse {
+  party: ServiceAccount
+  client_id: string
+  secret: string
+  secret_format: string
+}
+
+export interface RotateSecretResponse {
+  client_id: string
+  secret: string
+}
+
+export function listServiceAccounts(): Promise<ServiceAccount[]> {
+  return request<ServiceAccount[]>('/service-accounts')
+}
+
+export function createServiceAccount(name: string): Promise<CreateServiceAccountResponse> {
+  return request<CreateServiceAccountResponse>('/service-accounts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+}
+
+export function rotateServiceAccountSecret(id: string): Promise<RotateSecretResponse> {
+  return request<RotateSecretResponse>(`/service-accounts/${id}/secret`, { method: 'PATCH' })
+}
+
+export function deleteServiceAccount(id: string): Promise<void> {
+  return request<void>(`/service-accounts/${id}`, { method: 'DELETE' })
+}
+
+/* ─── External Identities ─── */
+
+export interface ExternalIdentity {
+  id: string
+  provider_name: string
+  sub: string
+  email: string
+  display_name: string
+  user_id?: string
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+  last_seen_at?: string
+}
+
+export function listPendingIdentities(): Promise<ExternalIdentity[]> {
+  return request<ExternalIdentity[]>('/external-identities/pending')
+}
+
+export function approveIdentity(id: string): Promise<void> {
+  return request<void>(`/external-identities/${id}/approve`, { method: 'POST' })
+}
+
+export function rejectIdentity(id: string): Promise<void> {
+  return request<void>(`/external-identities/${id}/reject`, { method: 'POST' })
+}

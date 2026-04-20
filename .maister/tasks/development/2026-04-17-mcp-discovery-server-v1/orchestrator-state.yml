@@ -1,0 +1,122 @@
+orchestrator:
+  started_phase: phase-8
+  completed_phases: [phase-1, phase-2, phase-5, phase-6, phase-7]
+  spec_revision: 2
+  paused_at: phase-8-entry
+  paused_reason: "Scope too large for single-session autonomous execution (10 groups / ~132 steps / 68-82 tests). Run groups in separate sessions via task-group-implementer; resume orchestrator at phase-10 after all groups complete."
+  failed_phases: []
+  auto_fix_attempts:
+    phase-1: 0
+    phase-2: 0
+    phase-5: 0
+    phase-6: 0
+    phase-7: 0
+    phase-8: 0
+    phase-11: 0
+  options:
+    spec_audit_enabled: true
+    skip_test_suite: true
+    e2e_enabled: null
+    user_docs_enabled: null
+    code_review_enabled: true
+    pragmatic_review_enabled: true
+    reality_check_enabled: true
+    production_check_enabled: true
+  created: 2026-04-17T00:00:00Z
+  updated: 2026-04-17T00:00:00Z
+  task_path: .maister/tasks/development/2026-04-17-mcp-discovery-server-v1
+  task_ids: {}
+
+task:
+  title: "MCP Discovery Server for AgentLens (v1)"
+  description: |
+    Implement the MCP Discovery Server per the product-design brief at
+    .maister/tasks/product-design/2026-04-17-mcp-management-tool/.
+    V1 scope: read-only MCP server embedded as plugin with 4 tools
+    (agent_search, agent_get, capabilities_list, agent_card), dual auth
+    (service-account API keys + OAuth 2.1 via Dex federation), principal-based
+    project scoping, self-registration into default project, Streamable HTTP
+    transport (spec 2025-11-25). Handoff from product-design. 8 task groups
+    (A-H), ~8-9 weeks.
+  status: in_progress
+  tags: [mcp, discovery, plugin, auth, federation, dex, service-account]
+  priority: high
+
+task_context:
+  risk_level: high
+  clarifications_resolved: true
+  scope_expanded: false
+  architecture_decision: "1C loopback + 2A parties/api_client_credentials + 3F-Dex federation + 4B-Plugin DIY wire + 5A store.Create + 6D ToolRegistry (per design-decisions.md)"
+  task_characteristics:
+    has_reproducible_defect: false
+    modifies_existing_code: true
+    creates_new_entities: true
+    involves_data_operations: true
+    ui_heavy: false
+  research_reference:
+    path: .maister/tasks/product-design/2026-04-17-mcp-management-tool
+    research_question: "How to ship an MCP tool that lets LLM apps consume AgentLens?"
+    research_type: product-design
+    confidence_level: high
+  phase_summaries:
+    research:
+      summary: "Product-design handoff. V1: read-only MCP server + 4 discovery tools + dual auth (service-account + Dex OAuth) + self-registration + plugin pattern. Ships 8-9 weeks."
+      key_findings:
+        - "MCP spec 2025-11-25, Streamable HTTP transport"
+        - "plugins/mcpserver/ layout modeled on plugins/health/"
+        - "parties.kind=service_account + api_client_credentials table (migration 008)"
+        - "Dex federation (bundled in Helm + docker-compose)"
+        - "HTTP loopback adapter: tools call chi router via ServeHTTP(recorder, req)"
+        - "ToolRegistry abstraction prepares for v2 OpenAPI-to-MCP translator"
+      recommended_approach: "1C+2A+3F-Dex+4B-Plugin+5A+6D per design-decisions.md"
+    codebase_analysis:
+      key_files:
+        - plugins/health/health.go
+        - internal/kernel/kernel.go
+        - internal/api/router.go
+        - internal/api/auth_middleware.go
+        - internal/db/migrations.go
+        - internal/model/party.go
+        - internal/store/party_store.go
+        - internal/auth/permissions.go
+        - internal/config/config.go
+        - internal/telemetry/metrics.go
+        - cmd/agentlens/main.go
+        - deploy/helm/agentlens/Chart.yaml
+        - arch-go.yml
+      primary_language: go
+      summary: "HIGH-complexity cross-layer feature. Strong templates (plugins/health, migration007, bitnami/postgresql subchart) but structural gap: kernel.RegisterRoutes exists but router.go doesn't mount plugin routes. Migration highest=9. JWKS client is new dep. arch-go forbids plugins from importing internal/api \u2014 loopback adapter needs kernel router accessor."
+    clarifications:
+      - "Kernel.Router() chi.Router accessor chosen (vs RegisterRoutes fix or handler-factory)"
+      - "JWKS client: coreos/go-oidc + go-jose"
+      - "Migration version: 010 (codebase highest is 9; spec-stated 008 is stale)"
+      - "Delivery: single large feature-branch PR with mcp_server.enabled=false default"
+      - "Dex E2E testing strategy: unresolved \u2014 defer to spec phase"
+    gap_analysis:
+      integration_points:
+        - internal/kernel/kernel.go
+        - internal/api/router.go
+        - internal/api/auth_middleware.go
+        - internal/db/migrations.go
+        - internal/model/party.go
+        - internal/store/party_store.go
+        - plugins/mcpserver/
+        - internal/auth/federation/
+        - cmd/agentlens/main.go
+        - deploy/helm/agentlens/
+        - web/src/routes/admin/
+      summary: "Additive-dominant with targeted kernel/router/auth surgery. 3 new packages, 2 new tables, 25 files touched, new Dex runtime dep. Risk: high. Change type: compatibility-strict behind mcp_server.enabled=false."
+    scope_clarifications:
+      scope_expanded: false
+      summary: "All 3 critical decisions resolved (hybrid Dex E2E, mcp_sessions DB table, Group G admin UI in v1 PR). 4 housekeeping defaults approved. Spec migration numbering 008\u2192010 tracked for implementation."
+    ui_mockups: {components_designed: [], summary: null}
+    specification:
+      summary: "Implementation-ready spec.md adapting design-phase 8-section feature-spec with Phase 1/2/5 deltas: migration 010 (not 008), Kernel.Router() accessor, mcp_sessions DB-backed with revoked_at, configurable Origin allowlist, one-active-secret rotation, single-PR flag-off delivery. 20 requirements, 13 reusable components, 11 new components, 11 test groups estimated."
+    architecture_decision: {decision: null, summary: null}
+
+verification_context:
+  last_status: null
+  issues_found: []
+  fixes_applied: []
+  decisions_made: []
+  reverify_count: 0

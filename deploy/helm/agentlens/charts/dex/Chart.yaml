@@ -1,0 +1,5 @@
+apiVersion: v2
+name: dex
+version: 0.18.0
+description: "Dex OIDC provider (stub chart for local dev; replace with helm dependency update in CI)"
+appVersion: "2.39.0"

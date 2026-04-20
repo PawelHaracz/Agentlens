@@ -17,8 +17,16 @@ import (
 
 	otelslogbridge "go.opentelemetry.io/contrib/bridges/otelslog"
 
+	"net/http"
+
 	"github.com/PawelHaracz/agentlens/internal/api"
+	"github.com/PawelHaracz/agentlens/internal/api/middleware"
 	"github.com/PawelHaracz/agentlens/internal/auth"
+	"github.com/PawelHaracz/agentlens/internal/auth/apikey"
+	"github.com/PawelHaracz/agentlens/internal/auth/credcache"
+	"github.com/PawelHaracz/agentlens/internal/auth/federation"
+	"github.com/PawelHaracz/agentlens/internal/auth/federation/dex"
+	"github.com/PawelHaracz/agentlens/internal/auth/ratelimit"
 	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/db"
 	"github.com/PawelHaracz/agentlens/internal/discovery"
@@ -32,6 +40,7 @@ import (
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/rbac"
 	"github.com/PawelHaracz/agentlens/plugins/enterprise/sso"
 	healthplugin "github.com/PawelHaracz/agentlens/plugins/health"
+	mcpserverplugin "github.com/PawelHaracz/agentlens/plugins/mcpserver"
 	a2aplugin "github.com/PawelHaracz/agentlens/plugins/parsers/a2a"
 	mcpplugin "github.com/PawelHaracz/agentlens/plugins/parsers/mcp"
 )
@@ -227,6 +236,21 @@ func main() {
 	}
 	// healthPlugin may be nil when health checks are disabled; RouterDeps accepts nil.
 
+	// Shared stores and credcache used by both the MCP plugin wiring
+	// and the admin REST handlers — MUST be a single instance so that
+	// credential invalidation from admin handlers reaches the MCP auth path.
+	credStore := store.NewApiClientCredentialStore(database)
+	extIdentityStore := store.NewUserExternalIdentityStore(database)
+	apiCredCache := credcache.New()
+
+	// MCP Discovery Server plugin (F.9 composition-root wiring).
+	var mcpPlugin *mcpserverplugin.Plugin
+	if cfg.MCP.Enabled {
+		sessionStore := store.NewMCPSessionStore(database)
+		mcpPlugin = mcpserverplugin.New(sessionStore)
+		pm.Register(mcpPlugin)
+	}
+
 	// Enterprise plugins (skipped with warning if no license)
 	pm.Register(sso.New())
 	pm.Register(rbac.New())
@@ -241,6 +265,29 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// F.9: Wrap MCP plugin handler BEFORE the router is built so NewRouter
+	// mounts the wrapped (origin → auth → scope → transport) version at /api/mcp.
+	if mcpPlugin != nil && mcpPlugin.Handler() != nil {
+		wrapMCPHandler(ctx, mcpPlugin, mcpWireDeps{
+			core:       core,
+			cfg:        cfg,
+			jwtService: jwtService,
+			credStore:  credStore,
+			credCache:  apiCredCache,
+		})
+	}
+
+	// F.6: If federation enabled, extend readyz to include Dex JWKS reachability.
+	if cfg.Federation.Enabled && cfg.Federation.Dex.JWKSURL != "" {
+		origPing := dbPingFn
+		dbPingFn = func(rCtx context.Context) error {
+			if err := origPing(rCtx); err != nil {
+				return err
+			}
+			return checkDexHealth(rCtx, cfg.Federation.Dex.JWKSURL)
+		}
+	}
 
 	// Start all plugins
 	if err := pm.StartAll(ctx); err != nil {
@@ -296,23 +343,35 @@ func main() {
 	}
 
 	// 13. Create router with full RouterDeps & 14. HTTP server with graceful shutdown
+	// credStore/extIdentityStore/apiCredCache were created earlier so the MCP
+	// plugin wiring and the admin handlers share a single credcache instance.
 	routerDeps := api.RouterDeps{
-		Kernel:               core,
-		UserStore:            userStore,
-		RoleStore:            roleStore,
-		SettingsStore:        settingsStore,
-		JWTService:           jwtService,
-		PartyStore:           partyStore,
-		PromHandler:          telProvider.PromHandler,
-		ReadyzPing:           dbPingFn,
-		TelemetryEnabled:     cfg.Telemetry.Enabled,
-		TelemetryEndpoint:    frontendTelemetryEndpoint(cfg.Telemetry),
-		TelemetryServiceName: "agentlens-web",
+		Kernel:                core,
+		UserStore:             userStore,
+		RoleStore:             roleStore,
+		SettingsStore:         settingsStore,
+		JWTService:            jwtService,
+		PartyStore:            partyStore,
+		CredStore:             credStore,
+		CredCache:             apiCredCache,
+		ExternalIdentityStore: extIdentityStore,
+		PromHandler:           telProvider.PromHandler,
+		ReadyzPing:            dbPingFn,
+		TelemetryEnabled:      cfg.Telemetry.Enabled,
+		TelemetryEndpoint:     frontendTelemetryEndpoint(cfg.Telemetry),
+		TelemetryServiceName:  "agentlens-web",
 	}
 	if healthPlugin != nil {
 		routerDeps.HealthProber = healthPlugin
 	}
 	router := api.NewRouter(routerDeps)
+
+	// F.9 (cont.): Loopback targets the root router so MCP tools can invoke
+	// /api/v1/* in-process. Must run AFTER api.NewRouter.
+	if mcpPlugin != nil {
+		setupMCPLoopback(mcpPlugin, router)
+	}
+
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := server.New(addr, router)
 	if err := srv.Start(ctx); err != nil {
@@ -380,4 +439,87 @@ func buildK8sClient() (kubernetes.Interface, error) {
 		return nil, fmt.Errorf("creating kubernetes client: %w", err)
 	}
 	return client, nil
+}
+
+// mcpWireDeps bundles the shared services needed to wrap the MCP handler
+// and build its loopback. Kept as a struct so the composition root does not
+// exceed the 5-parameter function limit.
+type mcpWireDeps struct {
+	core       kernel.Kernel
+	cfg        *config.Config
+	jwtService *auth.JWTService
+	credStore  *store.ApiClientCredentialStore
+	credCache  *credcache.Cache
+}
+
+// wrapMCPHandler builds the MCP middleware chain and re-registers the wrapped
+// transport handler in the kernel (overwriting the raw transport installed by
+// Plugin.Init). Called BEFORE api.NewRouter so the router mounts the wrapped
+// handler. Dex provider is constructed and registered when federation is on.
+func wrapMCPHandler(ctx context.Context, plugin *mcpserverplugin.Plugin, deps mcpWireDeps) {
+	limiter := ratelimit.New()
+	keyValidator := apikey.New(deps.credStore, deps.credCache, limiter)
+
+	fedReg := buildFederationRegistry(ctx, deps.cfg)
+
+	authMW := middleware.AuthDispatch(keyValidator, deps.jwtService, fedReg, nil)
+	originMW := middleware.OriginValidation(deps.cfg.MCP.AllowedOrigins)
+	scopeMW := middleware.ScopeByAccessibleProjects
+
+	transport := plugin.Handler()
+	wrapped := originMW(authMW(scopeMW(transport)))
+	deps.core.RegisterRoutes("/api/mcp", wrapped)
+
+	if deps.cfg.Federation.Enabled && deps.cfg.Federation.Dex.Issuer != "" && deps.cfg.MCP.PublicURL != "" {
+		prmHandler := api.NewPRMHandler(deps.cfg.MCP.PublicURL, deps.cfg.Federation.Dex.Issuer)
+		deps.core.RegisterRoutes("/.well-known/oauth-protected-resource", prmHandler)
+	}
+}
+
+// setupMCPLoopback points the plugin's loopback function at the root API
+// router so MCP tools can invoke /api/v1/* routes in-process. Called AFTER
+// api.NewRouter so the root router is available.
+func setupMCPLoopback(plugin *mcpserverplugin.Plugin, rootRouter http.Handler) {
+	apiLB := api.BuildLoopbackFunc(rootRouter)
+	plugin.SetLoopback(func(ctx context.Context, method, path, query string) ([]byte, int, error) {
+		return apiLB(ctx, method, path, query)
+	})
+}
+
+// buildFederationRegistry constructs and registers the configured federation
+// provider (Dex in v1). Returns nil when federation is disabled or the
+// provider cannot be constructed (logged).
+func buildFederationRegistry(ctx context.Context, cfg *config.Config) *federation.Registry {
+	if !cfg.Federation.Enabled || cfg.Federation.Provider == "" {
+		return nil
+	}
+	reg := federation.NewRegistry()
+	if cfg.Federation.Provider == "dex" && cfg.Federation.Dex.Issuer != "" {
+		dexProvider, err := dex.New(ctx, cfg.Federation.Dex, cfg.Federation.Audience)
+		if err != nil {
+			slog.WarnContext(ctx, "mcp: dex provider init failed; federation auth will fail", "err", err)
+			return reg
+		}
+		reg.Register("dex", dexProvider)
+		slog.InfoContext(ctx, "mcp: dex federation provider registered", "issuer", cfg.Federation.Dex.Issuer)
+	}
+	return reg
+}
+
+// checkDexHealth verifies the Dex JWKS endpoint is reachable. Used by the
+// extended readyz chain when federation is enabled.
+func checkDexHealth(ctx context.Context, jwksURL string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, jwksURL, nil)
+	if err != nil {
+		return fmt.Errorf("dex health: building request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("dex health: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("dex health: JWKS returned %d", resp.StatusCode)
+	}
+	return nil
 }

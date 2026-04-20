@@ -1,4 +1,25 @@
-# CI values for helm lint
+# CI values for helm lint + template render check
 image:
   repository: ghcr.io/pawelharacz/agentlens
   tag: "dev"
+
+# Enable MCP to exercise MCP configmap rendering in CI.
+mcp:
+  enabled: true
+  publicURL: "http://agentlens.ci.local/api/mcp"
+  auditEnabled: true
+
+# Enable federation to exercise federation config rendering in CI.
+federation:
+  enabled: true
+  provider: "dex"
+  audience: "http://agentlens.ci.local/api/mcp"
+  dex:
+    issuer: "http://dex:5556/dex"
+    clientID: "agentlens"
+    jwksURL: "http://dex:5556/dex/keys"
+
+# Enable Dex subchart to verify Dex values render correctly.
+# Dex itself not deployed in CI unit checks — template render only.
+dex:
+  enabled: true

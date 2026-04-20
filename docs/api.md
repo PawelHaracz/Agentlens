@@ -1364,3 +1364,178 @@ Remove a catalog entry from a project. **Requires auth.** Permission: `catalog:w
 **Response 204.**
 
 **Response 200:** Confirmation message.
+
+---
+
+## MCP Discovery Server
+
+The MCP Discovery Server exposes the catalog to LLM clients via the Model Context Protocol. Requires `mcp_server.enabled=true` in config. See [MCP Quickstart](mcp-quickstart.md) for setup.
+
+### `POST /api/mcp`
+
+JSON-RPC 2.0 endpoint for MCP clients. Supports `initialize`, `ping`, `tools/list`, `tools/call`. **Requires auth** (service-account API key OR local JWT OR federation JWT).
+
+**Headers:**
+
+- `Authorization: Bearer <token>` (required)
+- `Origin: <allowed-origin>` (required — see `mcp_server.allowed_origins`)
+- `MCP-Protocol-Version: 2025-11-25` (echoed in response)
+- `MCP-Session-Id: <session-id>` (required after first `initialize`)
+
+**Response 200:** JSON-RPC 2.0 envelope. On `initialize`, response sets `MCP-Session-Id` header.
+**Response 401:** Missing/invalid auth; `WWW-Authenticate` header included.
+**Response 403:** Missing/invalid Origin.
+
+### `GET /api/mcp`
+
+Server-sent events stream for server→client MCP notifications. **Requires auth + valid MCP-Session-Id.**
+
+### `GET /api/mcp/status`
+
+Plugin status endpoint. **No auth required.**
+
+**Response 200:**
+
+```json
+{
+  "enabled": true,
+  "active_sessions": 3,
+  "uptime_seconds": 1234.56,
+  "started_at": "2026-04-18T10:00:00Z"
+}
+```
+
+### `GET /.well-known/oauth-protected-resource`
+
+RFC 9728 Protected Resource Metadata document. **No auth required.** Only registered when `federation.enabled=true`.
+
+**Response 200:**
+
+```json
+{
+  "resource": "https://agentlens.example.com/api/mcp",
+  "authorization_servers": ["https://dex.example.com"],
+  "bearer_methods_supported": ["header"],
+  "scopes_supported": ["openid", "profile", "email"]
+}
+```
+
+---
+
+## Service Accounts
+
+Machine identities for MCP API-key authentication. See [auth.md](auth.md#service-account-api-keys-mcp) for secret lifecycle details.
+
+### Permissions matrix
+
+| Operation | Permission |
+| --- | --- |
+| List / Get | `service_accounts:read` |
+| Create / Rotate | `service_accounts:write` |
+| Delete | `service_accounts:revoke` |
+
+All three permissions are seeded on the `admin` role in migration 010.
+
+---
+
+### `GET /api/v1/service-accounts`
+
+List all service-account parties. **Requires auth.** Permission: `service_accounts:read`.
+
+**Response 200:** Array of `Party` objects with `kind: "service_account"`.
+
+---
+
+### `GET /api/v1/service-accounts/{id}`
+
+Get a single service account by party ID. **Requires auth.** Permission: `service_accounts:read`.
+
+**Response 200:** `Party` object.
+**Response 404:** Not found or not a `service_account` kind.
+
+---
+
+### `POST /api/v1/service-accounts`
+
+Create a new service account and issue its initial API key. **Requires auth.** Permission: `service_accounts:write`.
+
+**Request Body:**
+
+```json
+{"name": "my-llm-app"}
+```
+
+**Response 201:**
+
+```json
+{
+  "party": {"id": "...", "kind": "service_account", "name": "my-llm-app", ...},
+  "client_id": "abc123...",
+  "secret": "agentlens_sk_abc123....rawsecret",
+  "secret_format": "agentlens_sk_<client_id>.<secret>"
+}
+```
+
+> ⚠️ The `secret` field is the **one-time plaintext secret**. It is not stored and cannot be retrieved later. Copy it immediately.
+
+**Response 400:** `name` missing or empty.
+
+---
+
+### `PATCH /api/v1/service-accounts/{id}/secret`
+
+Rotate the active credential for a service account. Atomically revokes the old secret and issues a new one. **Requires auth.** Permission: `service_accounts:write`.
+
+**Response 200:**
+
+```json
+{"client_id": "newid...", "secret": "agentlens_sk_newid....newsecret"}
+```
+
+**Response 409:** Concurrent rotation detected (partial unique index violation — retry). Detected via `errors.Is(err, gorm.ErrDuplicatedKey)`.
+
+> The previous secret is invalidated immediately at the DB layer; cached bcrypt results clear within 10 seconds (ADR-015).
+
+---
+
+### `DELETE /api/v1/service-accounts/{id}`
+
+Delete a service account and all its credentials. **Requires auth.** Permission: `service_accounts:revoke`.
+
+Handler enumerates active `api_client_credentials` rows and calls `credcache.Invalidate(clientID)` for each **before** the DB cascade removes them (H6-residual).
+
+**Response 204:** Deleted.
+
+---
+
+## External Identities
+
+Federated (OIDC / Dex) identity mappings with admin-approval queue. JIT provisioning is off by default, so first-time federated logins land in `pending` and require approval.
+
+### `GET /api/v1/external-identities/pending`
+
+List all identities with status `pending`. **Requires auth.** Permission: `service_accounts:read`.
+
+**Response 200:** Array of `UserExternalIdentity` objects with `status: "pending"`.
+
+---
+
+### `POST /api/v1/external-identities/{id}/approve`
+
+Approve a pending identity, optionally linking it to an AgentLens user. **Requires auth.** Permission: `service_accounts:write`.
+
+**Request Body (optional):**
+
+```json
+{"user_id": "<user-id>"}
+```
+
+**Response 204.**
+
+---
+
+### `POST /api/v1/external-identities/{id}/reject`
+
+Reject a pending identity. The user will see an authentication error on subsequent logins. **Requires auth.** Permission: `service_accounts:write`.
+
+**Response 204.**

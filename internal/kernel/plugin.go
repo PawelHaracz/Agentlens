@@ -79,4 +79,6 @@ type Kernel interface {
 	RegisterRoutes(prefix string, handler http.Handler)
 	RegisterMiddleware(mw func(http.Handler) http.Handler)
 	CardStore() CardStorePlugin
+	// Routes returns all plugin-registered route handlers for the router to mount.
+	Routes() map[string]http.Handler
 }
