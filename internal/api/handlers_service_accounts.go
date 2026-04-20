@@ -96,8 +96,17 @@ func (h *ServiceAccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // RotateSecret handles PATCH /api/v1/service-accounts/{id}/secret.
 // Returns new one-time secret; 409 on concurrent rotation (M-new-2).
+//
+// credcache invalidation targets the OLD client_id(s) being revoked, not the
+// new one (which was never cached). Enumerated BEFORE the rotate transaction
+// so revoked credentials cannot keep authenticating via the cache up to TTL.
 func (h *ServiceAccountHandler) RotateSecret(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+
+	oldClientIDs, enumErr := h.partyStore.EnumerateActiveCredentials(r.Context(), id)
+	if enumErr != nil {
+		slog.WarnContext(r.Context(), "rotate: failed to enumerate active credentials", "err", enumErr)
+	}
 
 	newSecret, newCred, err := buildCredential(id)
 	if err != nil {
@@ -112,7 +121,9 @@ func (h *ServiceAccountHandler) RotateSecret(w http.ResponseWriter, r *http.Requ
 		ErrorResponse(w, http.StatusInternalServerError, "rotation failed")
 		return
 	}
-	h.credCache.Invalidate(newCred.ClientID)
+	for _, cid := range oldClientIDs {
+		h.credCache.Invalidate(cid)
+	}
 	JSONResponse(w, http.StatusOK, map[string]any{
 		"client_id": newCred.ClientID,
 		"secret":    newSecret,

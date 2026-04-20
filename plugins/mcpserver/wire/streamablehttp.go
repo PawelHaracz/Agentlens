@@ -1,7 +1,9 @@
 package wire
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -77,10 +79,27 @@ func (s *StreamableHTTP) handlePost(w http.ResponseWriter, r *http.Request) {
 
 	sessionID := r.Header.Get(headerSessionID)
 
-	// initialize is the only method allowed without a pre-existing session.
-	// The dispatcher will call newSession when it processes an "initialize" method.
+	// Sessionless path: only `initialize` is permitted. Peek at the JSON-RPC
+	// method before delegating to the dispatcher to prevent callers from
+	// invoking tools/list or tools/call by simply omitting the session header.
 	if sessionID == "" {
-		// Delegate to dispatcher; it will call newSession if the method is "initialize".
+		body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		var probe struct {
+			Method string `json:"method"`
+		}
+		if err := json.Unmarshal(body, &probe); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON-RPC request")
+			return
+		}
+		if probe.Method != "initialize" {
+			writeJSONError(w, http.StatusUnauthorized, "session required")
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewReader(body))
 		s.dispatcher.ServeHTTP(w, r.WithContext(
 			withNewSessionFn(r.Context(), func(id string) {
 				w.Header().Set(headerSessionID, id)
@@ -90,11 +109,19 @@ func (s *StreamableHTTP) handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !s.isActive(sessionID) {
-		http.Error(w, fmt.Sprintf(`{"error":"unknown or expired session %q"}`, sessionID), http.StatusNotFound)
+		writeJSONError(w, http.StatusNotFound, "unknown or expired session")
 		return
 	}
 
 	s.dispatcher.ServeHTTP(w, r)
+}
+
+// writeJSONError writes a well-formed JSON error body with the correct Content-Type.
+func writeJSONError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	payload, _ := json.Marshal(map[string]string{"error": msg})
+	_, _ = w.Write(payload)
 }
 
 // handleGet serves the server-sent events stream for server→client messages.

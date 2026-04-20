@@ -60,25 +60,27 @@ describe('ServiceAccountDetailPage', () => {
       client_id: 'newcid',
       secret: 'agentlens_sk_newcid.rotated',
     })
+    const user = userEvent.setup()
     renderPage('sa-1')
     await waitFor(() => screen.getByTestId('rotate-secret-btn'))
 
-    await userEvent.click(screen.getByTestId('rotate-secret-btn'))
+    await user.click(screen.getByTestId('rotate-secret-btn'))
     expect(screen.getByTestId('rotate-confirm-dialog')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTestId('rotate-confirm'))
+    await user.click(screen.getByTestId('rotate-confirm'))
     await waitFor(() => expect(api.rotateServiceAccountSecret).toHaveBeenCalledWith('sa-1'))
   })
 
   it('opens delete confirm dialog and calls API on confirm', async () => {
     vi.mocked(api.deleteServiceAccount).mockResolvedValue(undefined)
+    const user = userEvent.setup()
     renderPage('sa-1')
     await waitFor(() => screen.getByTestId('delete-sa-btn'))
 
-    await userEvent.click(screen.getByTestId('delete-sa-btn'))
+    await user.click(screen.getByTestId('delete-sa-btn'))
     expect(screen.getByTestId('delete-confirm-dialog')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTestId('delete-confirm'))
+    await user.click(screen.getByTestId('delete-confirm'))
     await waitFor(() => expect(api.deleteServiceAccount).toHaveBeenCalledWith('sa-1'))
   })
 })

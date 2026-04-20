@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 
@@ -37,12 +39,16 @@ func (h *ExternalIdentityHandler) ListPending(w http.ResponseWriter, r *http.Req
 }
 
 // Approve handles POST /api/v1/external-identities/{id}/approve.
+// Body is optional; when present it must be valid JSON with an optional user_id.
 func (h *ExternalIdentityHandler) Approve(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req struct {
 		UserID *string `json:"user_id"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req) // optional body
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && !errors.Is(err, io.EOF) {
+		ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
 	if err := h.identityStore.Approve(r.Context(), id, req.UserID); err != nil {
 		ErrorResponse(w, http.StatusInternalServerError, "failed to approve identity")

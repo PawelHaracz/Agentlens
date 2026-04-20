@@ -3,6 +3,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -48,6 +49,11 @@ func AuthDispatch(
 			ref, err := dispatch(r.Context(), rawToken, keyValidator, jwtSvc, fedRegistry)
 			if err != nil {
 				slog.DebugContext(r.Context(), "mcp auth dispatch failed", "err", err)
+				if errors.Is(err, apikey.ErrRateLimited) {
+					w.Header().Set("Retry-After", "60")
+					http.Error(w, `{"error":"rate limited"}`, http.StatusTooManyRequests)
+					return
+				}
 				writeMCPChallenge(w, "")
 				return
 			}

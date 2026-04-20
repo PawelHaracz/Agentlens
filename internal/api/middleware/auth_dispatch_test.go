@@ -131,5 +131,6 @@ func TestRateLimit_429_After_Threshold(t *testing.T) {
 		handler.ServeHTTP(w, req)
 		lastCode = w.Code
 	}
-	assert.Equal(t, http.StatusUnauthorized, lastCode, "rate-limited requests return 401 (challenge)")
+	assert.Equal(t, http.StatusTooManyRequests, lastCode,
+		"rate-limited requests return 429 with Retry-After header")
 }

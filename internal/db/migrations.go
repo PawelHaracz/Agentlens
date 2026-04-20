@@ -514,7 +514,6 @@ func migration010Up(tx *gorm.DB) error {
 	if err := migration010SeedPermissions(tx); err != nil {
 		return err
 	}
-	_ = uuid.New() // keep uuid import live; SA UUIDs created via admin API, not here
 	slog.Info("migration010: MCP discovery schema created")
 	return nil
 }

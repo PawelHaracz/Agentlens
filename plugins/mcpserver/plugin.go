@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,10 +33,11 @@ type Plugin struct {
 	metrics      *mcpMetrics
 	catalogStore store.Store
 
-	handler      *dispatcher
-	cancelReaper context.CancelFunc
-	startedAt    time.Time
-	log          *slog.Logger
+	handler          *dispatcher  // JSON-RPC dispatcher (inner)
+	transportHandler http.Handler // Streamable HTTP transport (wraps dispatcher; exposed via Handler())
+	cancelReaper     context.CancelFunc
+	startedAt        time.Time
+	log              *slog.Logger
 }
 
 // New creates a Plugin. sessionStore must not be nil.
@@ -69,10 +71,12 @@ func (p *Plugin) SetLoopback(fn mcptools.LoopbackFunc) {
 	}
 }
 
-// Handler returns the raw http.Handler for the MCP endpoint.
+// Handler returns the Streamable HTTP transport wrapping the JSON-RPC dispatcher.
 // Composition root wraps it with Origin → AuthDispatch → Scope before
-// calling kernel.RegisterRoutes("/api/mcp", wrapped).
-func (p *Plugin) Handler() *dispatcher { return p.handler }
+// calling kernel.RegisterRoutes("/api/mcp", wrapped). The transport enforces
+// session validation, protocol headers, and GET/SSE routing; the wrapped
+// handler must NOT bypass these by pointing at the raw dispatcher.
+func (p *Plugin) Handler() http.Handler { return p.transportHandler }
 
 // Init configures the plugin from kernel.
 func (p *Plugin) Init(k kernel.Kernel) error {
@@ -106,7 +110,8 @@ func (p *Plugin) Init(k kernel.Kernel) error {
 	}
 
 	transport := wire.NewStreamableHTTP(p.handler, p.sessions.IsActive, nil)
-	k.RegisterRoutes("/api/mcp", transport.Handler())
+	p.transportHandler = transport.Handler()
+	k.RegisterRoutes("/api/mcp", p.transportHandler)
 	k.RegisterRoutes("/api/mcp/status", newStatusHandler(p.sessions, time.Now()))
 
 	// F.2: Self-register as a catalog entry (idempotent).

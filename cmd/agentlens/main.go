@@ -25,6 +25,7 @@ import (
 	"github.com/PawelHaracz/agentlens/internal/auth/apikey"
 	"github.com/PawelHaracz/agentlens/internal/auth/credcache"
 	"github.com/PawelHaracz/agentlens/internal/auth/federation"
+	"github.com/PawelHaracz/agentlens/internal/auth/federation/dex"
 	"github.com/PawelHaracz/agentlens/internal/auth/ratelimit"
 	"github.com/PawelHaracz/agentlens/internal/config"
 	"github.com/PawelHaracz/agentlens/internal/db"
@@ -235,6 +236,13 @@ func main() {
 	}
 	// healthPlugin may be nil when health checks are disabled; RouterDeps accepts nil.
 
+	// Shared stores and credcache used by both the MCP plugin wiring
+	// and the admin REST handlers — MUST be a single instance so that
+	// credential invalidation from admin handlers reaches the MCP auth path.
+	credStore := store.NewApiClientCredentialStore(database)
+	extIdentityStore := store.NewUserExternalIdentityStore(database)
+	apiCredCache := credcache.New()
+
 	// MCP Discovery Server plugin (F.9 composition-root wiring).
 	var mcpPlugin *mcpserverplugin.Plugin
 	if cfg.MCP.Enabled {
@@ -258,11 +266,16 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// F.9: MCP composition-root wiring — between InitAll and StartAll (spec §8.1).
-	// Plugin registers raw handler in Init(); here we wrap with middleware chain
-	// and update the kernel route so NewRouter picks up the secured handler.
+	// F.9: Wrap MCP plugin handler BEFORE the router is built so NewRouter
+	// mounts the wrapped (origin → auth → scope → transport) version at /api/mcp.
 	if mcpPlugin != nil && mcpPlugin.Handler() != nil {
-		wireMCPRoutes(ctx, mcpPlugin, core, cfg, jwtService, database)
+		wrapMCPHandler(ctx, mcpPlugin, mcpWireDeps{
+			core:       core,
+			cfg:        cfg,
+			jwtService: jwtService,
+			credStore:  credStore,
+			credCache:  apiCredCache,
+		})
 	}
 
 	// F.6: If federation enabled, extend readyz to include Dex JWKS reachability.
@@ -330,10 +343,8 @@ func main() {
 	}
 
 	// 13. Create router with full RouterDeps & 14. HTTP server with graceful shutdown
-	credStore := store.NewApiClientCredentialStore(database)
-	extIdentityStore := store.NewUserExternalIdentityStore(database)
-	apiCredCache := credcache.New()
-
+	// credStore/extIdentityStore/apiCredCache were created earlier so the MCP
+	// plugin wiring and the admin handlers share a single credcache instance.
 	routerDeps := api.RouterDeps{
 		Kernel:                core,
 		UserStore:             userStore,
@@ -354,6 +365,13 @@ func main() {
 		routerDeps.HealthProber = healthPlugin
 	}
 	router := api.NewRouter(routerDeps)
+
+	// F.9 (cont.): Loopback targets the root router so MCP tools can invoke
+	// /api/v1/* in-process. Must run AFTER api.NewRouter.
+	if mcpPlugin != nil {
+		setupMCPLoopback(mcpPlugin, router)
+	}
+
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := server.New(addr, router)
 	if err := srv.Start(ctx); err != nil {
@@ -423,49 +441,69 @@ func buildK8sClient() (kubernetes.Interface, error) {
 	return client, nil
 }
 
-// wireMCPRoutes wraps the plugin's raw handler with the MCP middleware chain
-// (Origin → AuthDispatch → ScopeByAccessibleProjects) and registers the result
-// with the kernel so NewRouter mounts it. Called between pm.InitAll and pm.StartAll.
-func wireMCPRoutes(
-	ctx context.Context,
-	plugin *mcpserverplugin.Plugin,
-	core kernel.Kernel,
-	cfg *config.Config,
-	jwtService *auth.JWTService,
-	database *db.DB,
-) {
-	credStore := store.NewApiClientCredentialStore(database)
-	cache := credcache.New()
+// mcpWireDeps bundles the shared services needed to wrap the MCP handler
+// and build its loopback. Kept as a struct so the composition root does not
+// exceed the 5-parameter function limit.
+type mcpWireDeps struct {
+	core       kernel.Kernel
+	cfg        *config.Config
+	jwtService *auth.JWTService
+	credStore  *store.ApiClientCredentialStore
+	credCache  *credcache.Cache
+}
+
+// wrapMCPHandler builds the MCP middleware chain and re-registers the wrapped
+// transport handler in the kernel (overwriting the raw transport installed by
+// Plugin.Init). Called BEFORE api.NewRouter so the router mounts the wrapped
+// handler. Dex provider is constructed and registered when federation is on.
+func wrapMCPHandler(ctx context.Context, plugin *mcpserverplugin.Plugin, deps mcpWireDeps) {
 	limiter := ratelimit.New()
-	keyValidator := apikey.New(credStore, cache, limiter)
+	keyValidator := apikey.New(deps.credStore, deps.credCache, limiter)
 
-	var fedReg *federation.Registry
-	if cfg.Federation.Enabled && cfg.Federation.Provider != "" {
-		fedReg = federation.NewRegistry()
-		// Dex provider construction attempted; log warning if it fails at startup.
-		slog.InfoContext(ctx, "mcp: federation enabled", "provider", cfg.Federation.Provider)
-	}
+	fedReg := buildFederationRegistry(ctx, deps.cfg)
 
-	authMW := middleware.AuthDispatch(keyValidator, jwtService, fedReg, nil)
-	originMW := middleware.OriginValidation(cfg.MCP.AllowedOrigins)
+	authMW := middleware.AuthDispatch(keyValidator, deps.jwtService, fedReg, nil)
+	originMW := middleware.OriginValidation(deps.cfg.MCP.AllowedOrigins)
 	scopeMW := middleware.ScopeByAccessibleProjects
 
-	rawHandler := plugin.Handler()
-	wrapped := originMW(authMW(scopeMW(rawHandler)))
-	core.RegisterRoutes("/api/mcp", wrapped)
+	transport := plugin.Handler()
+	wrapped := originMW(authMW(scopeMW(transport)))
+	deps.core.RegisterRoutes("/api/mcp", wrapped)
 
-	// Inject loopback so tools can call catalog REST endpoints in-process.
-	// Convert api.LoopbackFunc to mcptools.LoopbackFunc — identical underlying type.
-	apiLB := api.BuildLoopbackFunc(wrapped)
+	if deps.cfg.Federation.Enabled && deps.cfg.Federation.Dex.Issuer != "" && deps.cfg.MCP.PublicURL != "" {
+		prmHandler := api.NewPRMHandler(deps.cfg.MCP.PublicURL, deps.cfg.Federation.Dex.Issuer)
+		deps.core.RegisterRoutes("/.well-known/oauth-protected-resource", prmHandler)
+	}
+}
+
+// setupMCPLoopback points the plugin's loopback function at the root API
+// router so MCP tools can invoke /api/v1/* routes in-process. Called AFTER
+// api.NewRouter so the root router is available.
+func setupMCPLoopback(plugin *mcpserverplugin.Plugin, rootRouter http.Handler) {
+	apiLB := api.BuildLoopbackFunc(rootRouter)
 	plugin.SetLoopback(func(ctx context.Context, method, path, query string) ([]byte, int, error) {
 		return apiLB(ctx, method, path, query)
 	})
+}
 
-	// Register PRM handler only when federation is configured (L-new-1).
-	if cfg.Federation.Enabled && cfg.Federation.Dex.Issuer != "" && cfg.MCP.PublicURL != "" {
-		prmHandler := api.NewPRMHandler(cfg.MCP.PublicURL, cfg.Federation.Dex.Issuer)
-		core.RegisterRoutes("/.well-known/oauth-protected-resource", prmHandler)
+// buildFederationRegistry constructs and registers the configured federation
+// provider (Dex in v1). Returns nil when federation is disabled or the
+// provider cannot be constructed (logged).
+func buildFederationRegistry(ctx context.Context, cfg *config.Config) *federation.Registry {
+	if !cfg.Federation.Enabled || cfg.Federation.Provider == "" {
+		return nil
 	}
+	reg := federation.NewRegistry()
+	if cfg.Federation.Provider == "dex" && cfg.Federation.Dex.Issuer != "" {
+		dexProvider, err := dex.New(ctx, cfg.Federation.Dex, cfg.Federation.Audience)
+		if err != nil {
+			slog.WarnContext(ctx, "mcp: dex provider init failed; federation auth will fail", "err", err)
+			return reg
+		}
+		reg.Register("dex", dexProvider)
+		slog.InfoContext(ctx, "mcp: dex federation provider registered", "issuer", cfg.Federation.Dex.Issuer)
+	}
+	return reg
 }
 
 // checkDexHealth verifies the Dex JWKS endpoint is reachable. Used by the

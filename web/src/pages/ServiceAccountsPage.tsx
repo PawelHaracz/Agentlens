@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
@@ -28,6 +28,7 @@ export default function ServiceAccountsPage() {
   const createMut = useMutation({
     mutationFn: (name: string) => api.createServiceAccount(name),
     onSuccess: (res) => {
+      setSecretVisible(false)
       setOneTimeSecret(res.secret)
       setCreateOpen(false)
       setName('')
@@ -41,7 +42,17 @@ export default function ServiceAccountsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-accounts'] }),
   })
 
-  const handleCreate = (e: React.FormEvent) => {
+  const rotateMut = useMutation({
+    mutationFn: (id: string) => api.rotateServiceAccountSecret(id),
+    onSuccess: (res) => {
+      setSecretVisible(false)
+      setOneTimeSecret(res.secret)
+      qc.invalidateQueries({ queryKey: ['service-accounts'] })
+    },
+    onError: () => setError('Failed to rotate service account secret'),
+  })
+
+  const handleCreate = (e: FormEvent) => {
     e.preventDefault()
     setError('')
     if (!name.trim()) return
@@ -113,10 +124,13 @@ export default function ServiceAccountsPage() {
                 <TableCell><Badge variant="secondary">service_account</Badge></TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" title="Rotate secret"
-                      onClick={() => rotateSecret(sa.id, qc, setOneTimeSecret)}>
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
+                    {hasPermission('service_accounts:write') && (
+                      <Button variant="ghost" size="icon" title="Rotate secret"
+                        data-testid={`rotate-${sa.id}`}
+                        onClick={() => rotateMut.mutate(sa.id)}>
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    )}
                     {hasPermission('service_accounts:revoke') && (
                       <Button variant="ghost" size="icon" title="Delete"
                         onClick={() => deleteMut.mutate(sa.id)}>
@@ -152,10 +166,3 @@ export default function ServiceAccountsPage() {
   )
 }
 
-async function rotateSecret(id: string, qc: ReturnType<typeof useQueryClient>, setSecret: (s: string) => void) {
-  try {
-    const res = await api.rotateServiceAccountSecret(id)
-    setSecret(res.secret)
-    qc.invalidateQueries({ queryKey: ['service-accounts'] })
-  } catch { /* handled by toast in production */ }
-}
